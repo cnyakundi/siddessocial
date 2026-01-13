@@ -1,13 +1,9 @@
-# sd_148a_rooms_term_ban_v0.9.33
+# sd_148b_fix_readonly_copy_v0.9.34a
 
-Summary: Ban Rooms term globally; use Sets
+Summary: Restore Sets read-only banner copy
 
 ## Files
-- backend/siddes_sets/__init__.py
-- backend/siddes_sets/models.py
-- docs/SETS_BACKEND.md
 - docs/STATE.md
-- frontend/src/lib/server/setsStore.ts
-- frontend/src/lib/sets.ts
-- frontend/tsconfig.tsbuildinfo
-- scripts/checks/rooms_term_banned_check.sh
+- frontend/src/app/siddes-sets/page.tsx
+- frontend/src/components/CreateSetSheet.tsx
+- scripts/checks/create_set_sheet_check.sh

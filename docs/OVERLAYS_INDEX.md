@@ -214,3 +214,4 @@ Rule: Apply overlays with `scripts/apply_overlay.sh`. The script appends a row a
 | 2026-01-13 12:39:03 | sd_146c_posts_db_persistence_smoke_v0.9.31.zip | Add posts DB persistence smoke test |
 | 2026-01-13 12:55:14 | sd_147a_smoke_env_autoload_v0.9.32.zip | Smoke scripts auto-load ops/docker/.env to avoid port confusion |
 | 2026-01-13 13:50:39 | sd_148a_rooms_term_ban_v0.9.33.zip | Ban Rooms term globally; use Sets |
+| 2026-01-13 14:11:03 | sd_148b_fix_readonly_copy_v0.9.34a.zip | Restore Sets read-only banner copy |

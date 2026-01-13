@@ -5,6 +5,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { DownloadCloud, Plus, RefreshCcw, Search } from "lucide-react";
 
 import { ImportSetSheet } from "@/src/components/ImportSetSheet";
+import { CreateSetSheet } from "@/src/components/CreateSetSheet";
 import { getSetsProvider } from "@/src/lib/setsProvider";
 import type { SetDef } from "@/src/lib/sets";
 import type { SideId } from "@/src/lib/sides";
@@ -80,6 +81,7 @@ export default function SiddesSetsPage() {
   const [creating, setCreating] = useState(false);
 
   const [importOpen, setImportOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
 
   const refresh = async () => {
     setLoading(true);
@@ -159,7 +161,9 @@ export default function SiddesSetsPage() {
         await refresh();
       }
     } catch (e: any) {
-      setErr(e?.message || "Create failed.");
+      const msg = e?.message || "Create failed.";
+      setErr(msg);
+      throw new Error(msg);
     } finally {
       setCreating(false);
     }
@@ -229,7 +233,7 @@ export default function SiddesSetsPage() {
         {readOnly ? (
           <div className="mb-3 p-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 text-sm">
             <div className="font-bold mb-1">
-              Read-only: you are viewing as <span className="font-mono">{viewer}</span>.
+              Read-only: you are viewing as • Create disabled (read-only) <span className="font-mono">{viewer}</span>.
             </div>
             <div className="text-xs leading-relaxed text-slate-600">
               In <span className="font-mono">backend_stub</span> mode, only <span className="font-mono">sd_viewer=me</span> can create or edit Sets.
@@ -246,183 +250,28 @@ export default function SiddesSetsPage() {
         ) : null}
 
         {canWrite ? (
-          <div className="mb-3 p-3 rounded-2xl bg-white border border-gray-200">
-          <div className="font-bold text-gray-900 mb-2 flex items-center gap-2">
-            <Plus size={16} />
-            Create a Set
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
-            <input
-              type="text"
-              value={newLabel}
-              onChange={(e) => setNewLabel(e.target.value)}
-              placeholder="e.g., Weekend Crew"
-              className="sm:col-span-2 px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm font-semibold outline-none focus:ring-2 ring-gray-900/10"
-            />
-
-            <select
-              value={newSide}
-              onChange={(e) => setNewSide(e.target.value as SideId)}
-              className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm font-semibold outline-none focus:ring-2 ring-gray-900/10"
-              aria-label="Side"
-            >
-              {Object.values(SIDES).map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
-            <select
-              value={newColor}
-              onChange={(e) => setNewColor(e.target.value as SetColor)}
-              className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm font-semibold outline-none focus:ring-2 ring-gray-900/10"
-              aria-label="Color"
-            >
-              {COLOR_OPTIONS.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-
-            <div className="sm:col-span-2">
-              <input
-                type="text"
-                value={newMembersRaw}
-                onChange={(e) => setNewMembersRaw(e.target.value)}
-                placeholder="Members: @marc_us, @sara_j"
-                className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm font-semibold outline-none focus:ring-2 ring-gray-900/10"
-              />
-              <div className="text-[11px] text-gray-400 mt-1">Comma or newline separated. We auto-add “@”.</div>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            disabled={creating || !newLabel.trim()}
-            onClick={() => void create(newLabel, newMembersRaw, newSide, newColor)}
-            className={cn(
-              "w-full py-2.5 rounded-xl font-bold text-sm border flex items-center justify-center gap-2",
-              creating || !newLabel.trim()
-                ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                : "bg-gray-900 text-white border-gray-900 hover:opacity-95"
-            )}
-          >
-            <Plus size={16} />
-            {creating ? "Creating…" : "Create Set"}
-          </button>
-          </div>
-        ) : (
-          <div className="mb-3 p-3 rounded-2xl bg-white border border-gray-200">
-            <div className="font-bold text-gray-900 mb-1">Create disabled (read-only)</div>
-            <div className="text-sm text-gray-500">
-              In <span className="font-mono">backend_stub</span> mode, creating/editing Sets is locked to{" "}
-              <span className="font-mono">sd_viewer=me</span>.
-            </div>
-          </div>
-        )}
-
-        <div className="mb-3 flex flex-wrap gap-2">
-          {SIDE_FILTERS.map((f) => {
-            const active = sideFilter === f.id;
-            return (
-              <button
-                key={f.id}
-                type="button"
-                onClick={() => setSideFilter(f.id)}
-                className={cn(
-                  "px-3 py-1.5 rounded-full text-xs font-bold border",
-                  active ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
-                )}
-              >
-                {f.label}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="mb-3 flex items-center gap-2">
-          <div className="relative flex-1">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search Sets…"
-              className="w-full pl-9 pr-3 py-2 rounded-2xl border border-gray-200 bg-white text-sm font-semibold outline-none focus:ring-2 ring-gray-900/10"
-            />
-          </div>
-
-          <div className="text-xs text-gray-500 font-semibold whitespace-nowrap">
-            {loading ? "Loading…" : `${filtered.length} shown`}
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          {filtered.map((s) => {
-            const theme = getSetTheme(s.color);
-            const sideTheme = SIDE_THEMES[s.side];
-
-            return (
-              <Link
-                key={s.id}
-                href={`/siddes-sets/${encodeURIComponent(s.id)}`}
-                className="block p-3 rounded-2xl bg-white border border-gray-200 hover:bg-gray-50"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <div className={cn("px-2 py-0.5 rounded-full text-xs font-black border", theme.bg, theme.text, theme.border)}>
-                        {s.label}
-                      </div>
-
-                      <div className={cn("px-2 py-0.5 rounded-full text-[11px] font-black border", sideTheme.lightBg, sideTheme.text, sideTheme.border)}>
-                        {SIDES[s.side].label}
-                      </div>
-                      {readOnly ? <SetsJoinedPill /> : null}
-                    </div>
-
-                    <div className="text-[12px] text-gray-500">
-                      {s.members.length ? (
-                        <>
-                          {s.members.slice(0, 4).join(", ")}
-                          {s.members.length > 4 ? " …" : ""}
-                        </>
-                      ) : (
-                        "No members yet"
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="text-xs font-bold text-gray-500 whitespace-nowrap">
-                    {s.members.length} member{s.members.length === 1 ? "" : "s"}
-                  </div>
-                </div>
-
-                <div className="mt-2 flex items-center justify-between text-[11px] text-gray-400">
-                  <span className="font-mono">{s.id}</span>
-                  <span className="font-bold">{SET_THEMES[s.color] ? s.color : "color"}</span>
-                </div>
-              </Link>
-            );
-          })}
-
-          {!loading && !filtered.length ? (
-            <div className="p-8 rounded-2xl border border-dashed border-gray-200 bg-white text-center">
-              <div className="font-black text-gray-900 mb-1">No Sets yet</div>
-              <div className="text-sm text-gray-500 mb-4">Create one above, or import from contacts.</div>
-              <button
-                type="button"
-                onClick={() => setImportOpen(true)}
-                className="px-4 py-2 rounded-full bg-gray-900 text-white font-bold text-sm hover:opacity-95"
-              >
-                Import from contacts
-              </button>
-            </div>
-          ) : null}
+  <div className="mb-3 p-3 rounded-2xl bg-white border border-gray-200">
+    <div className="font-bold text-gray-900 mb-2 flex items-center gap-2">
+      <Plus size={16} />
+      Create a Set
+    </div>
+    <div className="text-xs text-gray-600 leading-relaxed">
+      Guided flow: <span className="font-semibold">Name → Side → Theme → Members → Create</span>
+    </div>
+    <button
+      type="button"
+      onClick={() => setCreateOpen(true)}
+      disabled={!canWrite}
+      className={cn(
+        "mt-3 w-full py-2.5 rounded-xl font-bold text-sm border flex items-center justify-center gap-2",
+        !canWrite ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed" : "bg-gray-900 text-white border-gray-900 hover:opacity-95"
+      )}
+    >
+      <Plus size={16} />
+      Start guided creator
+    </button>
+  </div>
+) : null}
         </div>
       </div>
 

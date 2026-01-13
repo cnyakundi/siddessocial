@@ -76,3 +76,5 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 - **sd_146c:** Posts DB persistence smoke (create+restart+verify post/replies survive)
 
 - **sd_148a:** Ban 'Rooms' terminology globally; use Sets wording
+
+- **sd_148b:** Guided Set creator sheet (Name→Side→Theme→Members→Create)
