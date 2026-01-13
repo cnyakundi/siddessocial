@@ -1,7 +1,7 @@
 # Sets backend scaffold (Subsides)
 **Updated:** 2026-01-11
 
-Sets are "rooms inside a Side".
+Sets are curated sets inside a Side.
 
 Today, the frontend stores Sets in `localStorage` (viewer-private). The *endgame* requires a server-backed model so Sets:
 - sync across devices

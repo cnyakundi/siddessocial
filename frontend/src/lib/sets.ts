@@ -7,7 +7,7 @@ export type SetId = string;
 
 export type SetDef = {
   id: SetId;
-  // Sets are "rooms" inside a Side. Today we mostly surface them on Friends,
+  // Sets are curated sets inside a Side. Today we mostly surface them on Friends,
   // but the endgame is Side-scoped Sets/Subsides across contexts.
   side: SideId;
   label: string;

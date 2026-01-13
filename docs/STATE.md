@@ -74,3 +74,5 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 - **sd_146b:** Posts+Replies views handle DB-mode reply errors safely (no crashes; default-safe 404)
 
 - **sd_146c:** Posts DB persistence smoke (create+restart+verify post/replies survive)
+
+- **sd_148a:** Ban 'Rooms' terminology globally; use Sets wording

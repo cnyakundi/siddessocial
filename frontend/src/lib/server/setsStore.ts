@@ -2,7 +2,7 @@
  * In-memory sets store (dev/stub).
  * Persists only for the lifetime of the Next.js node process.
  *
- * Sets are "rooms" inside a Side (Friends/Close/Work/Public). Today they are
+ * Sets are "sets" inside a Side (Friends/Close/Work/Public). Today they are
  * user-scoped and only readable/writable by `viewerRole=me` in stub mode.
  *
  * Includes a simple per-set event log to prep history UI.

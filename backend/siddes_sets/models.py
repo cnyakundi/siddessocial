@@ -1,6 +1,6 @@
 """Sets (Subsides) DB models.
 
-Sets are "rooms inside a Side".
+Sets are curated sets inside a Side.
 
 This app becomes the persistent backing store for Sets and the DRF endpoints
 under `/api/sets/*`.

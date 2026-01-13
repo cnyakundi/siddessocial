@@ -1,6 +1,6 @@
 """Siddes Sets / Subsides backend scaffolding.
 
-Sets are "rooms inside a Side". In early dev, the frontend keeps Sets in localStorage.
+Sets are curated sets inside a Side. In early dev, the frontend keeps Sets in localStorage.
 This backend module is the server-ready scaffold so we can later enforce:
 - ownership
 - membership
