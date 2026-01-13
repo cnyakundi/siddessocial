@@ -68,3 +68,20 @@ Then apply normally:
 - Never include `node_modules`, `.next`, `__pycache__` in overlays.
 - Fix **check failures first** (docs/STATE.md and grep tokens matter).
 - Keep overlay zips **diff-only**.
+
+### Zsh gotcha: paths with [id]
+If you're using zsh, file paths containing brackets like `[id]` are treated as glob patterns.
+That's why you see:
+`zsh: no matches found: frontend/src/app/api/post/[id]/route.ts`
+
+Fix by quoting the path:
+```bash
+git add 'frontend/src/app/api/post/[id]/route.ts'
+```
+
+Or use `noglob`:
+```bash
+noglob git add frontend/src/app/api/post/[id]/route.ts
+```
+
+Beginner tip: you can skip staging entirely and package with `--changed`.

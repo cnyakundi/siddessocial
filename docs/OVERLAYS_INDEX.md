@@ -206,3 +206,4 @@ Rule: Apply overlays with `scripts/apply_overlay.sh`. The script appends a row a
 | 2026-01-13 05:45:14 | sd_143b_state_mentions_sd_142_v0.9.25.zip |  |
 | 2026-01-13 06:06:08 | sd_143c_import_cycles_fix_v0.9.25.zip |  |
 | 2026-01-13 09:00:36 | sd_144a_posts_django_next_proxy_v0.9.26.zip | Posts+Replies: proxy Next /api/post* to Django when NEXT_PUBLIC_API_BASE is set; move siddes_post under /api; add check; bump STATE to sd_14 |
+| 2026-01-13 09:51:33 | sd_144b_docker_compose_warn_cleanup_v0.9.26.zip | Remove obsolete docker-compose version key; add check; document zsh [id] quoting |
