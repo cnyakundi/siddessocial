@@ -173,7 +173,8 @@ export default function SiddesSetsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
+      <div className="min-h-screen bg-gray-50">
       <div className="max-w-2xl mx-auto px-4 py-4">
         <div className="flex items-center justify-between gap-3 mb-3">
           <Link href="/siddes-feed" className="text-sm font-bold text-gray-700 hover:underline">
@@ -253,60 +254,53 @@ export default function SiddesSetsPage() {
         ) : null}
 
         {canWrite ? (
-  <div className="mb-3 p-3 rounded-2xl bg-white border border-gray-200">
-    <div className="font-bold text-gray-900 mb-2 flex items-center gap-2">
-      <Plus size={16} />
-      Create a Set
-    </div>
-    <div className="text-xs text-gray-600 leading-relaxed">
-      Guided flow: <span className="font-semibold">Name → Side → Theme → Members → Create</span>
-    </div>
-    <button
-      type="button"
-      onClick={() => setCreateOpen(true)}
-      disabled={!canWrite}
-      className={cn(
-        "mt-3 w-full py-2.5 rounded-xl font-bold text-sm border flex items-center justify-center gap-2",
-        !canWrite
-          ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-          : "bg-gray-900 text-white border-gray-900 hover:opacity-95"
-      )}
-    >
-      <Plus size={16} />
-      Start guided creator
-    </button>
-  </div>
-) : null}
-        </div>
+          <div className="mb-3 p-3 rounded-2xl bg-white border border-gray-200">
+            <div className="font-bold text-gray-900 mb-2 flex items-center gap-2">
+              <Plus size={16} />
+              Create a Set
+            </div>
+            <div className="text-xs text-gray-600 leading-relaxed">
+              Guided flow: <span className="font-semibold">Name → Side → Theme → Members → Create</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setCreateOpen(true)}
+              disabled={!canWrite}
+              className={cn(
+                "mt-3 w-full py-2.5 rounded-xl font-bold text-sm border flex items-center justify-center gap-2",
+                !canWrite
+                  ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                  : "bg-gray-900 text-white border-gray-900 hover:opacity-95"
+              )}
+            >
+              <Plus size={16} />
+              Start guided creator
+            </button>
+          </div>
+        ) : null}
       </div>
-
-<CreateSetSheet
-  open={createOpen}
-  onClose={() => setCreateOpen(false)}
-  canWrite={canWrite}
-  creating={creating}
-  err={err}
-  label={newLabel}
-  setLabel={setNewLabel}
-  side={newSide}
-  setSide={setNewSide}
-  color={newColor}
-  setColor={setNewColor}
-  membersRaw={newMembersRaw}
-  setMembersRaw={setNewMembersRaw}
-  onCreate={create}
-/>
-
-      <ImportSetSheet
+    </div><CreateSetSheet
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        canWrite={canWrite}
+        creating={creating}
+        err={err}
+        label={newLabel}
+        setLabel={setNewLabel}
+        side={newSide}
+        setSide={setNewSide}
+        color={newColor}
+        setColor={setNewColor}
+        membersRaw={newMembersRaw}
+        setMembersRaw={setNewMembersRaw}
+        onCreate={create} /><ImportSetSheet
         open={importOpen}
         onClose={() => setImportOpen(false)}
         onFinish={({ name, members }) => {
-          void create(name, members.join(", "), newSide, newColor).catch(() => {});
-        }}
+          void create(name, members.join(", "), newSide, newColor).catch(() => { });
+        } }
         onCreateSuggested={({ label, color, members }) => {
-          void create(label, members.join(", "), newSide, color as any).catch(() => {});
-        }}
-      />
-    </div>
+          void create(label, members.join(", "), newSide, color as any).catch(() => { });
+        } } /></>
   );
 }
