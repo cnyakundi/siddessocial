@@ -1,9 +1,6 @@
-# sd_148b_fix_readonly_copy_v0.9.34a
+# sd_148b_fix_sets_page_rebuild_v0.9.34c
 
-Summary: Restore Sets read-only banner copy
+Summary: Fix Sets page JSX parse error (rebuild page, keep guided creator)
 
 ## Files
-- docs/STATE.md
 - frontend/src/app/siddes-sets/page.tsx
-- frontend/src/components/CreateSetSheet.tsx
-- scripts/checks/create_set_sheet_check.sh

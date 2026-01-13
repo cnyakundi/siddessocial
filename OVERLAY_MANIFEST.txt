@@ -1,4 +1,1 @@
-docs/STATE.md
 frontend/src/app/siddes-sets/page.tsx
-frontend/src/components/CreateSetSheet.tsx
-scripts/checks/create_set_sheet_check.sh

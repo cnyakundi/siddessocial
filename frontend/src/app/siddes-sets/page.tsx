@@ -137,8 +137,9 @@ export default function SiddesSetsPage() {
     if (!clean) return;
 
     if (!canWrite) {
-      setErr("Create restricted (stub): switch sd_viewer=me");
-      return;
+      const msg = "Create restricted (stub): switch sd_viewer=me";
+      setErr(msg);
+      throw new Error(msg);
     }
 
     setCreating(true);
@@ -160,6 +161,8 @@ export default function SiddesSetsPage() {
       if (sideFilter !== "all" && created.side !== sideFilter) {
         await refresh();
       }
+
+      return created;
     } catch (e: any) {
       const msg = e?.message || "Create failed.";
       setErr(msg);
@@ -233,7 +236,7 @@ export default function SiddesSetsPage() {
         {readOnly ? (
           <div className="mb-3 p-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 text-sm">
             <div className="font-bold mb-1">
-              Read-only: you are viewing as • Create disabled (read-only) <span className="font-mono">{viewer}</span>.
+              Read-only: you are viewing as <span className="font-mono">{viewer}</span>. • Create disabled (read-only)
             </div>
             <div className="text-xs leading-relaxed text-slate-600">
               In <span className="font-mono">backend_stub</span> mode, only <span className="font-mono">sd_viewer=me</span> can create or edit Sets.
@@ -264,7 +267,9 @@ export default function SiddesSetsPage() {
       disabled={!canWrite}
       className={cn(
         "mt-3 w-full py-2.5 rounded-xl font-bold text-sm border flex items-center justify-center gap-2",
-        !canWrite ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed" : "bg-gray-900 text-white border-gray-900 hover:opacity-95"
+        !canWrite
+          ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+          : "bg-gray-900 text-white border-gray-900 hover:opacity-95"
       )}
     >
       <Plus size={16} />
@@ -275,14 +280,31 @@ export default function SiddesSetsPage() {
         </div>
       </div>
 
+<CreateSetSheet
+  open={createOpen}
+  onClose={() => setCreateOpen(false)}
+  canWrite={canWrite}
+  creating={creating}
+  err={err}
+  label={newLabel}
+  setLabel={setNewLabel}
+  side={newSide}
+  setSide={setNewSide}
+  color={newColor}
+  setColor={setNewColor}
+  membersRaw={newMembersRaw}
+  setMembersRaw={setNewMembersRaw}
+  onCreate={create}
+/>
+
       <ImportSetSheet
         open={importOpen}
         onClose={() => setImportOpen(false)}
         onFinish={({ name, members }) => {
-          void create(name, members.join(", "), newSide, newColor);
+          void create(name, members.join(", "), newSide, newColor).catch(() => {});
         }}
         onCreateSuggested={({ label, color, members }) => {
-          void create(label, members.join(", "), newSide, color as any);
+          void create(label, members.join(", "), newSide, color as any).catch(() => {});
         }}
       />
     </div>
