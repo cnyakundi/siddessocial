@@ -4,14 +4,14 @@ set -euo pipefail
 # Posts+Replies DRF smoke test (fast).
 #
 # Usage:
-#   VIEWER=me BASE=http://localhost:8000 bash scripts/dev/posts_drf_smoke.sh
+#   VIEWER=me BASE=http://localhost:8001 bash scripts/dev/posts_drf_smoke.sh
 #
 # Notes:
-# - Assumes Docker backend is running and exposed on BASE (default http://localhost:8000).
+# - Assumes Docker backend is running and exposed on BASE (default http://localhost:8001).
 # - Uses header x-sd-viewer to simulate auth in dev.
 # - Fails fast with useful output.
 
-BASE="${BASE:-http://localhost:8000}"
+BASE="${BASE:-http://localhost:8001}"
 VIEWER="${VIEWER:-me}"
 SIDE="${SIDE:-public}"
 
@@ -60,26 +60,20 @@ echo "✅ healthz ok"
 echo ""
 
 ts="$(now_ms)"
-post_payload="$(python3 - <<PY
-import json
-print(json.dumps({
-  "side": "${SIDE}",
-  "text": f"smoke post {ts}",
-  "client_key": f"smoke_{ts}",
-}))
-PY
-)"
+
+# Simple JSON bodies (no quotes in generated strings)
+post_payload="$(printf '{"side":"%s","text":"%s","client_key":"%s"}' \
+  "$SIDE" "smoke post ${ts}" "smoke_${ts}")"
 
 echo "-> POST /api/post"
 create="$(call_json POST "${BASE}/api/post" "${post_payload}")"
-post_id="$(python3 - <<'PY' <<<"$create"
-import sys, json
+
+post_id="$(python3 -c 'import sys, json
 d=json.load(sys.stdin)
 p=d.get("post") or {}
-pid=p.get("id") or d.get("id") or ""
-print(pid)
-PY
-)"
+print((p.get("id") or d.get("id") or "").strip())
+' <<<"$create")"
+
 if [[ -z "$post_id" ]]; then
   echo "❌ Could not extract post id from response:"
   echo "$create"
@@ -93,25 +87,18 @@ _="$(call_json GET "${BASE}/api/post/${post_id}")"
 echo "✅ get post ok"
 echo ""
 
-reply_payload="$(python3 - <<PY
-import json
-print(json.dumps({
-  "text": f"smoke reply {ts}",
-  "client_key": f"smoke_r_{ts}",
-}))
-PY
-)"
+reply_payload="$(printf '{"text":"%s","client_key":"%s"}' \
+  "smoke reply ${ts}" "smoke_r_${ts}")"
 
 echo "-> POST /api/post/<id>/reply"
 reply_create="$(call_json POST "${BASE}/api/post/${post_id}/reply" "${reply_payload}")"
-reply_id="$(python3 - <<'PY' <<<"$reply_create"
-import sys, json
+
+reply_id="$(python3 -c 'import sys, json
 d=json.load(sys.stdin)
 r=d.get("reply") or {}
-rid=r.get("id") or d.get("id") or ""
-print(rid)
-PY
-)"
+print((r.get("id") or d.get("id") or "").strip())
+' <<<"$reply_create")"
+
 if [[ -z "$reply_id" ]]; then
   echo "❌ Could not extract reply id from response:"
   echo "$reply_create"
@@ -122,13 +109,13 @@ echo ""
 
 echo "-> GET /api/post/<id>/replies"
 replies="$(call_json GET "${BASE}/api/post/${post_id}/replies")"
-count="$(python3 - <<'PY' <<<"$replies"
-import sys, json
+
+count="$(python3 -c 'import sys, json
 d=json.load(sys.stdin)
 reps=d.get("replies") or []
 print(len(reps))
-PY
-)"
+' <<<"$replies")"
+
 if [[ "${count}" -lt 1 ]]; then
   echo "❌ Expected at least 1 reply; got ${count}"
   echo "$replies"
