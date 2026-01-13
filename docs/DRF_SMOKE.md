@@ -50,7 +50,7 @@ chmod +x scripts/dev/start_full_stack_docker.sh
 2) Run the Posts smoke test (seconds)
 
 ```bash
-VIEWER=me BASE=http://localhost:8000 bash scripts/dev/posts_drf_smoke.sh
+VIEWER=me BASE="http://localhost:${SIDDES_BACKEND_PORT:-8000}" bash scripts/dev/posts_drf_smoke.sh
 ```
 
 If you see **restricted** or 401/403 errors, you likely don't have a viewer identity.

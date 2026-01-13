@@ -1,16 +1,10 @@
-# sd_145a_internal_api_base_v0.9.27
+# sd_145b_env_example_restore_v0.9.28
 
-Summary: SD_INTERNAL_API_BASE for Docker-safe Next server proxies
+Summary: Restore ops/docker/.env.example; ignore .env; align posts smoke base/docs
 
 ## Files
-- docs/STATE.md
-- frontend/src/app/api/post/[id]/replies/route.ts
-- frontend/src/app/api/post/[id]/reply/route.ts
-- frontend/src/app/api/post/[id]/route.ts
-- frontend/src/app/api/post/route.ts
+- .gitignore
+- docs/DRF_SMOKE.md
 - frontend/tsconfig.tsbuildinfo
-- ops/docker/.env
 - ops/docker/.env.example
-- ops/docker/README.md
-- ops/docker/docker-compose.dev.yml
-- scripts/checks/internal_api_base_check.sh
+- scripts/dev/posts_drf_smoke.sh

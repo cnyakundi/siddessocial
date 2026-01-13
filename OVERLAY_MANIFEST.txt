@@ -1,11 +1,5 @@
-docs/STATE.md
-frontend/src/app/api/post/[id]/replies/route.ts
-frontend/src/app/api/post/[id]/reply/route.ts
-frontend/src/app/api/post/[id]/route.ts
-frontend/src/app/api/post/route.ts
+.gitignore
+docs/DRF_SMOKE.md
 frontend/tsconfig.tsbuildinfo
-ops/docker/.env
 ops/docker/.env.example
-ops/docker/README.md
-ops/docker/docker-compose.dev.yml
-scripts/checks/internal_api_base_check.sh
+scripts/dev/posts_drf_smoke.sh

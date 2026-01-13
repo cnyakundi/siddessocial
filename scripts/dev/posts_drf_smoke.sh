@@ -4,14 +4,14 @@ set -euo pipefail
 # Posts+Replies DRF smoke test (fast).
 #
 # Usage:
-#   VIEWER=me BASE=http://localhost:8001 bash scripts/dev/posts_drf_smoke.sh
+#   VIEWER=me BASE="http://localhost:${SIDDES_BACKEND_PORT:-8000}" bash scripts/dev/posts_drf_smoke.sh
 #
 # Notes:
 # - Assumes Docker backend is running and exposed on BASE (default http://localhost:8001).
 # - Uses header x-sd-viewer to simulate auth in dev.
 # - Fails fast with useful output.
 
-BASE="${BASE:-http://localhost:8001}"
+BASE="${BASE:-http://localhost:${SIDDES_BACKEND_PORT:-8000}}"
 VIEWER="${VIEWER:-me}"
 SIDE="${SIDE:-public}"
 

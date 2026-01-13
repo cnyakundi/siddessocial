@@ -9,3 +9,6 @@ backend/__pycache__/
 venv/
 .DS_Store
 *.pyc
+
+# Local docker env (do not commit)
+ops/docker/.env
