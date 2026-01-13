@@ -212,3 +212,4 @@ Rule: Apply overlays with `scripts/apply_overlay.sh`. The script appends a row a
 | 2026-01-13 11:19:03 | sd_145b_env_example_restore_v0.9.28.zip | Restore ops/docker/.env.example; ignore .env; align posts smoke base/docs |
 | 2026-01-13 12:25:56 | sd_146b_posts_db_wiring_v0.9.30.zip | Wire posts/replies endpoints to SD_POST_STORE; handle post_not_found safely |
 | 2026-01-13 12:39:03 | sd_146c_posts_db_persistence_smoke_v0.9.31.zip | Add posts DB persistence smoke test |
+| 2026-01-13 12:55:14 | sd_147a_smoke_env_autoload_v0.9.32.zip | Smoke scripts auto-load ops/docker/.env to avoid port confusion |

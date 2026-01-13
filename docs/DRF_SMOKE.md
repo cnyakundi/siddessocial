@@ -103,3 +103,20 @@ VIEWER=me BASE="http://localhost:${SIDDES_BACKEND_PORT:-8000}" bash scripts/dev/
 ```
 
 If you see a 404 after restart, you're still in memory mode.
+
+## Smoke scripts auto-detect Docker ports (sd_147a)
+
+If you start the stack with Docker, the smoke scripts will auto-read `ops/docker/.env` so you usually **do not** need to set `BASE` manually:
+
+```bash
+# Start stack
+./scripts/dev/start_full_stack_docker.sh
+
+# Posts smoke (fast)
+VIEWER=me bash scripts/dev/posts_drf_smoke.sh
+
+# Posts persistence smoke (requires SD_POST_STORE=auto + migrations)
+VIEWER=me bash scripts/dev/posts_db_persistence_smoke.sh
+```
+
+If your backend uses a non-default port, set `SIDDES_BACKEND_PORT` in `ops/docker/.env`.

@@ -1,6 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+cd "$ROOT"
+
+# Auto-load docker env so SIDDES_BACKEND_PORT is available.
+if [[ -z "${SIDDES_BACKEND_PORT:-}" ]]; then
+  if [[ -f "ops/docker/.env" ]]; then
+    set -a
+    # shellcheck disable=SC1091
+    source ops/docker/.env || true
+    set +a
+  elif [[ -f "ops/docker/.env.example" ]]; then
+    set -a
+    # shellcheck disable=SC1091
+    source ops/docker/.env.example || true
+    set +a
+  fi
+fi
+
 # Posts+Replies DB persistence smoke test.
 #
 # What it proves:

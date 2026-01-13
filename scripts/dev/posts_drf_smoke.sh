@@ -3,13 +3,32 @@ set -euo pipefail
 
 # Posts+Replies DRF smoke test (fast).
 #
-# Usage:
-#   VIEWER=me BASE="http://localhost:${SIDDES_BACKEND_PORT:-8000}" bash scripts/dev/posts_drf_smoke.sh
+# Beginner-safe:
+# - Auto-loads ops/docker/.env (if present) so you don't need to guess ports.
 #
-# Notes:
-# - Assumes Docker backend is running and exposed on BASE (default http://localhost:8001).
-# - Uses header x-sd-viewer to simulate auth in dev.
-# - Fails fast with useful output.
+# Usage (usually enough):
+#   VIEWER=me bash scripts/dev/posts_drf_smoke.sh
+#
+# Or explicit:
+#   VIEWER=me BASE=http://localhost:8001 bash scripts/dev/posts_drf_smoke.sh
+
+ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+cd "$ROOT"
+
+# Auto-load docker env so SIDDES_BACKEND_PORT is available.
+if [[ -z "${SIDDES_BACKEND_PORT:-}" ]]; then
+  if [[ -f "ops/docker/.env" ]]; then
+    set -a
+    # shellcheck disable=SC1091
+    source ops/docker/.env || true
+    set +a
+  elif [[ -f "ops/docker/.env.example" ]]; then
+    set -a
+    # shellcheck disable=SC1091
+    source ops/docker/.env.example || true
+    set +a
+  fi
+fi
 
 BASE="${BASE:-http://localhost:${SIDDES_BACKEND_PORT:-8000}}"
 VIEWER="${VIEWER:-me}"
@@ -61,7 +80,6 @@ echo ""
 
 ts="$(now_ms)"
 
-# Simple JSON bodies (no quotes in generated strings)
 post_payload="$(printf '{"side":"%s","text":"%s","client_key":"%s"}' \
   "$SIDE" "smoke post ${ts}" "smoke_${ts}")"
 
