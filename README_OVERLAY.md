@@ -1,22 +1,10 @@
-# sd_146b_posts_db_wiring_v0.9.30
+# sd_146c_posts_db_persistence_smoke_v0.9.31
 
-Summary: Wire posts/replies endpoints to SD_POST_STORE; handle post_not_found safely
+Summary: Add posts DB persistence smoke test
 
 ## Files
-- backend/siddes_post/runtime_store.py
-- backend/siddes_post/views.py
-- backend/siddes_sets/models.py
-- backend/siddes_sets/models_stub.py
 - docs/DRF_SMOKE.md
 - docs/STATE.md
-- frontend/src/app/siddes-sets/page.tsx
-- frontend/src/lib/server/inboxStore.ts
 - frontend/tsconfig.tsbuildinfo
-- ops/docker/.env
-- ops/docker/.env.example
-- backend/siddes_post/migrations/0001_initial.py
-- backend/siddes_post/migrations/__init__.py
-- backend/siddes_post/models.py
-- backend/siddes_post/store_db.py
-- scripts/checks/posts_db_scaffold_check.sh
-- scripts/checks/posts_db_wiring_check.sh
+- scripts/checks/posts_db_persistence_smoke_check.sh
+- scripts/dev/posts_db_persistence_smoke.sh

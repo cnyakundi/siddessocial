@@ -82,3 +82,24 @@ VIEWER=me BASE="http://localhost:${SIDDES_BACKEND_PORT:-8000}" bash scripts/dev/
 ```
 
 If you restart the stack and the post/replies still exist, DB mode is working.
+
+## Posts DB persistence smoke (survives restart)
+
+This proves Posts+Replies are stored in the database (not in-memory):
+
+```bash
+# 1) Run migrations (Docker)
+bash scripts/dev/django_migrate.sh
+
+# 2) Enable DB store (recommended: auto)
+# edit ops/docker/.env and set:
+# SD_POST_STORE=auto
+
+# 3) Start / restart the stack
+./scripts/dev/start_full_stack_docker.sh
+
+# 4) Run the persistence smoke test
+VIEWER=me BASE="http://localhost:${SIDDES_BACKEND_PORT:-8000}" bash scripts/dev/posts_db_persistence_smoke.sh
+```
+
+If you see a 404 after restart, you're still in memory mode.

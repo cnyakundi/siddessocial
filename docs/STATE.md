@@ -72,3 +72,5 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 - **sd_145a:** SD_INTERNAL_API_BASE for Docker-safe Next server proxies (internal: http://backend:8000)
 
 - **sd_146b:** Posts+Replies views handle DB-mode reply errors safely (no crashes; default-safe 404)
+
+- **sd_146c:** Posts DB persistence smoke (create+restart+verify post/replies survive)
