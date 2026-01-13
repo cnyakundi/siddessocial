@@ -47,7 +47,7 @@ export async function POST(req: Request) {
     const body = await req.json();
 
 
-const base = normalizeApiBase(process.env.NEXT_PUBLIC_API_BASE);
+const base = normalizeApiBase((process.env.SD_INTERNAL_API_BASE || process.env.NEXT_PUBLIC_API_BASE));
 if (base) {
   const trust = resolveStubTrust(req, r.viewerId).trustLevel;
   const url = new URL("/api/post", base).toString();

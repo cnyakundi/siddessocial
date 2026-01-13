@@ -47,7 +47,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   if (!id) return NextResponse.json({ ok: false, error: "missing_post_id" }, { status: 400 });
 
 
-const base = normalizeApiBase(process.env.NEXT_PUBLIC_API_BASE);
+const base = normalizeApiBase((process.env.SD_INTERNAL_API_BASE || process.env.NEXT_PUBLIC_API_BASE));
 if (base && r.viewerId) {
   const url = new URL(`/api/post/${encodeURIComponent(id)}/replies`, base).toString();
   const prox = await fetchJson(url, { method: "GET", headers: { "x-sd-viewer": r.viewerId } });

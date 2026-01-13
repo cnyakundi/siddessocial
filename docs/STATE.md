@@ -68,3 +68,5 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 - Next: TBD
 
 - **sd_144c:** Posts+Replies DRF smoke test script (fast full-stack proof via Docker)
+
+- **sd_145a:** SD_INTERNAL_API_BASE for Docker-safe Next server proxies (internal: http://backend:8000)

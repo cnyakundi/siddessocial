@@ -47,6 +47,7 @@ services:
       - .env
     environment:
       NEXT_PUBLIC_API_BASE: ${NEXT_PUBLIC_API_BASE:-http://localhost:8000}
+      SD_INTERNAL_API_BASE: ${SD_INTERNAL_API_BASE:-http://backend:8000}
     ports:
       - "${SIDDES_FRONTEND_PORT:-3000}:3000"
     volumes:

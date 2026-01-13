@@ -55,7 +55,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     if (!text) return NextResponse.json({ ok: false, error: "empty_text" }, { status: 400 });
 
 
-const base = normalizeApiBase(process.env.NEXT_PUBLIC_API_BASE);
+const base = normalizeApiBase((process.env.SD_INTERNAL_API_BASE || process.env.NEXT_PUBLIC_API_BASE));
 if (base && r.viewerId) {
   const trust = resolveStubTrust(req, r.viewerId).trustLevel;
   const url = new URL(`/api/post/${encodeURIComponent(id)}/reply`, base).toString();
