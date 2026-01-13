@@ -4,7 +4,7 @@ set -euo pipefail
 # Posts+Replies DRF smoke test (fast).
 #
 # Beginner-safe:
-# - Auto-loads ops/docker/.env (if present) so you don't need to guess ports.
+# - Auto-loads ops/docker/.env (or .env.example) so you don't need to guess ports.
 #
 # Usage (usually enough):
 #   VIEWER=me bash scripts/dev/posts_drf_smoke.sh
@@ -12,23 +12,7 @@ set -euo pipefail
 # Or explicit:
 #   VIEWER=me BASE=http://localhost:8001 bash scripts/dev/posts_drf_smoke.sh
 
-ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-cd "$ROOT"
-
-# Auto-load docker env so SIDDES_BACKEND_PORT is available.
-if [[ -z "${SIDDES_BACKEND_PORT:-}" ]]; then
-  if [[ -f "ops/docker/.env" ]]; then
-    set -a
-    # shellcheck disable=SC1091
-    source ops/docker/.env || true
-    set +a
-  elif [[ -f "ops/docker/.env.example" ]]; then
-    set -a
-    # shellcheck disable=SC1091
-    source ops/docker/.env.example || true
-    set +a
-  fi
-fi
+source "$(dirname "$0")/_autoload_docker_env.sh"
 
 BASE="${BASE:-http://localhost:${SIDDES_BACKEND_PORT:-8000}}"
 VIEWER="${VIEWER:-me}"

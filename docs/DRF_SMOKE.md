@@ -106,7 +106,7 @@ If you see a 404 after restart, you're still in memory mode.
 
 ## Smoke scripts auto-detect Docker ports (sd_147a)
 
-If you start the stack with Docker, the smoke scripts will auto-read `ops/docker/.env` so you usually **do not** need to set `BASE` manually:
+If you start the stack with Docker, the smoke scripts will auto-read `ops/docker/.env` (or `.env.example`) so you usually **do not** need to set `BASE` manually:
 
 ```bash
 # Start stack
