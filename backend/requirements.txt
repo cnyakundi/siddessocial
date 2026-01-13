@@ -1,0 +1,13 @@
+# Siddes backend (Django) requirements
+# Kept intentionally small; add as features land.
+
+Django>=5.0,<6.0
+
+# API layer (official): Django REST Framework
+djangorestframework>=3.15,<4.0
+
+# Env-driven DB config (used by siddes_backend/settings.py)
+dj-database-url>=2.1
+
+# Postgres driver for docker-compose dev
+psycopg[binary]>=3.1

@@ -1,0 +1,59 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-siddes}
+      POSTGRES_USER: ${POSTGRES_USER:-siddes}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-siddes_dev_password}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - siddes_pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  backend:
+    build:
+      context: ../..
+      dockerfile: ops/docker/backend.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgres://siddes:siddes_dev_password@db:5432/siddes}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-1}
+    ports:
+      - "${SIDDES_BACKEND_PORT:-8000}:8000"
+    volumes:
+      - ../../backend:/app/backend
+
+  frontend:
+    build:
+      context: ../..
+      dockerfile: ops/docker/frontend.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - backend
+    env_file:
+      - .env
+    environment:
+      NEXT_PUBLIC_API_BASE: ${NEXT_PUBLIC_API_BASE:-http://localhost:8000}
+    ports:
+      - "${SIDDES_FRONTEND_PORT:-3000}:3000"
+    volumes:
+      - ../../frontend:/app/frontend
+      - /app/frontend/node_modules
+
+volumes:
+  siddes_pgdata:

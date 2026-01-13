@@ -1,0 +1,16 @@
+README_OVERLAY.md
+OVERLAY_MANIFEST.txt
+backend/siddes_post/apps.py
+backend/siddes_post/runtime_store.py
+backend/siddes_post/trust_gates.py
+backend/siddes_post/urls.py
+backend/siddes_post/views.py
+backend/siddes_posts/store.py
+backend/siddes_backend/settings.py
+backend/siddes_backend/api.py
+backend/siddes_feed/feed_stub.py
+frontend/src/app/api/post/route.ts
+frontend/src/app/api/post/[id]/route.ts
+frontend/src/app/api/post/[id]/replies/route.ts
+frontend/src/app/api/post/[id]/reply/route.ts
+docs/STATE.md

@@ -1,0 +1,11 @@
+dist/
+patches/
+frontend/node_modules/
+frontend/.next/
+frontend/.turbo/
+backend/__pycache__/
+**/__pycache__/
+.venv/
+venv/
+.DS_Store
+*.pyc

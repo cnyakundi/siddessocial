@@ -1,0 +1,1 @@
+"""Sets invites (scaffold)."""
