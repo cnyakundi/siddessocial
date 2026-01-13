@@ -19,4 +19,5 @@ urlpatterns = [
     path("", include("siddes_sets.urls")),
     path("", include("siddes_invites.urls")),
     path("", include("siddes_feed.urls")),
+    path("", include("siddes_post.urls")),
 ]

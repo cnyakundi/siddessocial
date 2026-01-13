@@ -7,6 +7,28 @@ import { resolveStubViewer } from "@/src/lib/server/stubViewer";
 import { resolveStubTrust } from "@/src/lib/server/stubTrust";
 // sd_viewer gating: resolveStubViewer reads cookie sd_viewer / header x-sd-viewer (never ?viewer=).
 
+function normalizeApiBase(raw: string | undefined | null): string | null {
+  const s = String(raw || "").trim();
+  if (!s) return null;
+  try {
+    const u = new URL(s);
+    return u.origin;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchJson(url: string, init: RequestInit): Promise<{ status: number; data: any | null } | null> {
+  try {
+    const res = await fetch(url, { ...init, cache: "no-store" });
+    const data = await res.json().catch(() => null);
+    return { status: res.status, data };
+  } catch {
+    return null;
+  }
+}
+
+
 export async function POST(req: Request) {
   const r = resolveStubViewer(req);
   const viewer = normalizeViewer(r.viewerId);
@@ -23,6 +45,26 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
+
+
+const base = normalizeApiBase(process.env.NEXT_PUBLIC_API_BASE);
+if (base) {
+  const trust = resolveStubTrust(req, r.viewerId).trustLevel;
+  const url = new URL("/api/post", base).toString();
+  const prox = await fetchJson(url, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-sd-viewer": r.viewerId,
+      ...(trust !== null ? { "x-sd-trust": String(trust) } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (prox && prox.status < 500) {
+    return NextResponse.json(prox.data ?? { ok: false, error: "bad_gateway" }, { status: prox.status });
+  }
+}
     const side = (body?.side || "public").toString() as any;
     const text = (body?.text || "").toString().trim();
     const setId = body?.setId ? String(body.setId) : null;

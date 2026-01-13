@@ -7,6 +7,28 @@ import { normalizeViewer, roleForViewer, viewerAllowed } from "@/src/lib/server/
 import { resolveStubViewer } from "@/src/lib/server/stubViewer";
 
 // sd_viewer gating: resolveStubViewer reads cookie sd_viewer / header x-sd-viewer (never ?viewer=).
+
+function normalizeApiBase(raw: string | undefined | null): string | null {
+  const s = String(raw || "").trim();
+  if (!s) return null;
+  try {
+    const u = new URL(s);
+    return u.origin;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchJson(url: string, init: RequestInit): Promise<{ status: number; data: any | null } | null> {
+  try {
+    const res = await fetch(url, { ...init, cache: "no-store" });
+    const data = await res.json().catch(() => null);
+    return { status: res.status, data };
+  } catch {
+    return null;
+  }
+}
+
 import { resolveStubTrust } from "@/src/lib/server/stubTrust";
 
 function resolveSide(postId: string): string | null {
@@ -31,6 +53,29 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
     if (!id) return NextResponse.json({ ok: false, error: "missing_post_id" }, { status: 400 });
     if (!text) return NextResponse.json({ ok: false, error: "empty_text" }, { status: 400 });
+
+
+const base = normalizeApiBase(process.env.NEXT_PUBLIC_API_BASE);
+if (base && r.viewerId) {
+  const trust = resolveStubTrust(req, r.viewerId).trustLevel;
+  const url = new URL(`/api/post/${encodeURIComponent(id)}/reply`, base).toString();
+  const prox = await fetchJson(url, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-sd-viewer": r.viewerId,
+      ...(trust !== null ? { "x-sd-trust": String(trust) } : {}),
+    },
+    body: JSON.stringify({ text, client_key: clientKey }),
+  });
+
+  if (prox && prox.status < 500) {
+    if (prox.status !== 404) {
+      return NextResponse.json(prox.data ?? { ok: false, error: "bad_gateway" }, { status: prox.status });
+    }
+    // 404 -> fall through to local stubs
+  }
+}
 
     const side = resolveSide(id);
     if (!side) return NextResponse.json({ ok: false, error: "not_found" }, { status: 404 });

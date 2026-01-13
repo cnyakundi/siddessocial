@@ -11,6 +11,5 @@ urlpatterns = [
     path("healthz", healthz),
     # API root (Django REST Framework endpoints live under this tree)
     path("api/", include("siddes_backend.api")),
-    path("", include("siddes_post.urls")),
     path("admin/", admin.site.urls),
 ]

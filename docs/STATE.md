@@ -2,7 +2,7 @@
 **Updated:** 2026-01-13
 
 ## Current milestone
-- **sd_143:** Posts+Replies DRF endpoints + Next proxy; DRF feed returns FeedPost shape + merges runtime posts
+- **sd_144:** Posts+Replies Next API proxies to Django (/api/post...) + move siddes_post under /api; keeps stub fallback
 
 ## Inbox (endgame status)
 Inbox is now “migration-safe” and ready for broader feature work:
