@@ -2,7 +2,7 @@
 **Updated:** 2026-01-13
 
 ## Current milestone
-- **sd_144:** Posts+Replies Next API proxies to Django (/api/post...) + move siddes_post under /api; keeps stub fallback
+- **sd_146:** Posts+Replies DB scaffold (models+migrations+SD_POST_STORE=memory|db|auto)
 
 ## Inbox (endgame status)
 Inbox is now “migration-safe” and ready for broader feature work:
@@ -70,3 +70,5 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 - **sd_144c:** Posts+Replies DRF smoke test script (fast full-stack proof via Docker)
 
 - **sd_145a:** SD_INTERNAL_API_BASE for Docker-safe Next server proxies (internal: http://backend:8000)
+
+- **sd_146b:** Posts+Replies views handle DB-mode reply errors safely (no crashes; default-safe 404)

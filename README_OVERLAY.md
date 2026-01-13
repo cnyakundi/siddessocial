@@ -1,10 +1,22 @@
-# sd_145b_env_example_restore_v0.9.28
+# sd_146b_posts_db_wiring_v0.9.30
 
-Summary: Restore ops/docker/.env.example; ignore .env; align posts smoke base/docs
+Summary: Wire posts/replies endpoints to SD_POST_STORE; handle post_not_found safely
 
 ## Files
-- .gitignore
+- backend/siddes_post/runtime_store.py
+- backend/siddes_post/views.py
+- backend/siddes_sets/models.py
+- backend/siddes_sets/models_stub.py
 - docs/DRF_SMOKE.md
+- docs/STATE.md
+- frontend/src/app/siddes-sets/page.tsx
+- frontend/src/lib/server/inboxStore.ts
 - frontend/tsconfig.tsbuildinfo
+- ops/docker/.env
 - ops/docker/.env.example
-- scripts/dev/posts_drf_smoke.sh
+- backend/siddes_post/migrations/0001_initial.py
+- backend/siddes_post/migrations/__init__.py
+- backend/siddes_post/models.py
+- backend/siddes_post/store_db.py
+- scripts/checks/posts_db_scaffold_check.sh
+- scripts/checks/posts_db_wiring_check.sh

@@ -181,7 +181,7 @@ export default function SiddesSetsPage() {
           <div>
             <h1 className="text-2xl font-black text-gray-900">Sets</h1>
             <div className="text-xs text-gray-500">
-              Rooms inside a Side • provider: <span className="font-mono">{providerName}</span>
+              Sets inside a Side • provider: <span className="font-mono">{providerName}</span>
             </div>
           </div>
 

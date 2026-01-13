@@ -2,7 +2,7 @@
 
 Siddes terminology:
 - Side: Public / Friends / Close / Work
-- Set: a "room" inside a Side (viewer/owner curated)
+- Set: a "set" inside a Side (viewer/owner curated)
 
 In real Django this becomes (rough sketch):
 - Set (id uuid, owner FK, side, label, color, created_at, updated_at)

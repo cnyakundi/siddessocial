@@ -289,7 +289,7 @@ function seedOnce() {
     },
     {
       id: "t_work2",
-      title: "Ops Room (Work)",
+      title: "Ops Set (Work)",
       lockedSide: "work",
       time: "4h",
       messages: [

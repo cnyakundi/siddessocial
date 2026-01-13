@@ -40,7 +40,7 @@ class SetEventKind(models.TextChoices):
 
 
 class SiddesSet(models.Model):
-    """A Set (Subside): a user-curated room inside a Side."""
+    """A Set (Subside): a user-curated set inside a Side."""
 
     id = models.CharField(primary_key=True, max_length=96)
 

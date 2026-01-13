@@ -210,3 +210,4 @@ Rule: Apply overlays with `scripts/apply_overlay.sh`. The script appends a row a
 | 2026-01-13 10:15:56 | sd_144c_posts_drf_smoke_v0.9.26.zip | Add posts/replies DRF smoke script + workflow docs |
 | 2026-01-13 10:56:01 | sd_145a_internal_api_base_v0.9.27.zip | SD_INTERNAL_API_BASE for Docker-safe Next server proxies |
 | 2026-01-13 11:19:03 | sd_145b_env_example_restore_v0.9.28.zip | Restore ops/docker/.env.example; ignore .env; align posts smoke base/docs |
+| 2026-01-13 12:25:56 | sd_146b_posts_db_wiring_v0.9.30.zip | Wire posts/replies endpoints to SD_POST_STORE; handle post_not_found safely |

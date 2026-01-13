@@ -233,7 +233,22 @@ class PostReplyCreateView(APIView):
                     payload["min_trust"] = gate.get("min_trust")
                 return Response(payload, status=st)
 
-        r = REPLY_STORE.create(post_id=post_id, author_id=viewer, text=text, client_key=client_key)
+        try:
+
+            r = REPLY_STORE.create(post_id=post_id, author_id=viewer, text=text, client_key=client_key)
+
+        except ValueError as e:
+
+            # DB store enforces FK integrity; if the post isn't in DB, do not crash.
+
+            msg = str(e)
+
+            if 'post_not_found' in msg:
+
+                return Response({'ok': False, 'error': 'not_found'}, status=status.HTTP_404_NOT_FOUND)
+
+            return Response({'ok': False, 'error': 'server_error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
         return Response(
             {"ok": True, "status": 201, "reply": {"id": r.id, "post_id": post_id, "text": r.text, "client_key": client_key, "created_at": int(float(r.created_at) * 1000)}},
             status=status.HTTP_201_CREATED,

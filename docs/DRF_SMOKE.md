@@ -55,3 +55,30 @@ VIEWER=me BASE="http://localhost:${SIDDES_BACKEND_PORT:-8000}" bash scripts/dev/
 
 If you see **restricted** or 401/403 errors, you likely don't have a viewer identity.
 Use `VIEWER=me` (dev mode) and make sure the backend is reachable at `BASE`.
+
+## Posts DB mode (optional)
+
+To verify **persistence** (survives restart), enable the DB-backed store.
+
+1) Run migrations (Docker)
+```bash
+bash scripts/dev/django_migrate.sh
+```
+
+2) Set store mode (recommended: auto)
+Edit `ops/docker/.env` and set:
+```bash
+SD_POST_STORE=auto
+```
+
+3) Restart backend
+```bash
+docker compose -f ops/docker/docker-compose.dev.yml up -d backend
+```
+
+4) Run Posts smoke
+```bash
+VIEWER=me BASE="http://localhost:${SIDDES_BACKEND_PORT:-8000}" bash scripts/dev/posts_drf_smoke.sh
+```
+
+If you restart the stack and the post/replies still exist, DB mode is working.
