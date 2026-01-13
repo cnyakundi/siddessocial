@@ -10,3 +10,19 @@ Then say:
 > “Continue from NEXT overlay.”
 
 This ensures **zero re-explaining context**.
+
+## Local overlay workflow (no AI zips)
+
+When continuing in a new window, do **not** ask the AI to create zip files.
+
+Instead:
+- Ask the AI for a single `sd_###_apply_helper.sh` script that makes the code changes.
+- Run it locally, then package with:
+```bash
+./scripts/make_overlay.sh sd_###_name_vX --summary "..." --changed
+```
+- Apply and verify:
+```bash
+./scripts/apply_overlay.sh ~/Downloads/sd_###_name_vX.zip
+./verify_overlays.sh
+```

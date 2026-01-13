@@ -35,3 +35,23 @@ Try `VIEWER=me SIDE=Public`.
 - Validates the payload is contract-shaped
 
 This is designed to fail fast so you don't waste time waiting for long builds.
+
+## Posts + Replies smoke (fast)
+
+This is the fastest proof that **Posts + Replies** endpoints work in Docker.
+
+1) Start the stack (Docker)
+
+```bash
+chmod +x scripts/dev/start_full_stack_docker.sh
+./scripts/dev/start_full_stack_docker.sh
+```
+
+2) Run the Posts smoke test (seconds)
+
+```bash
+VIEWER=me BASE=http://localhost:8000 bash scripts/dev/posts_drf_smoke.sh
+```
+
+If you see **restricted** or 401/403 errors, you likely don't have a viewer identity.
+Use `VIEWER=me` (dev mode) and make sure the backend is reachable at `BASE`.

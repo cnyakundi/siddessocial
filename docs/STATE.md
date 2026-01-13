@@ -66,3 +66,5 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 
 ## NEXT overlay
 - Next: TBD
+
+- **sd_144c:** Posts+Replies DRF smoke test script (fast full-stack proof via Docker)

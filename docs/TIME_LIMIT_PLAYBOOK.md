@@ -85,3 +85,28 @@ noglob git add frontend/src/app/api/post/[id]/route.ts
 ```
 
 Beginner tip: you can skip staging entirely and package with `--changed`.
+
+### Preferred workflow: apply helper scripts (beginner-safe)
+
+Avoid patch files. The reliable pattern is:
+
+1) Ask AI for a single downloadable apply script (example: `sd_144c_apply_helper.sh`)
+2) Run it locally:
+```bash
+bash ~/Downloads/sd_144c_apply_helper.sh
+```
+3) Run tests:
+```bash
+./scripts/run_tests.sh
+```
+4) Create the overlay zip locally (no AI zipping):
+```bash
+./scripts/make_overlay.sh sd_144c_example_v0.9.26 --summary "what changed" --changed
+```
+5) Apply + verify:
+```bash
+./scripts/apply_overlay.sh ~/Downloads/sd_144c_example_v0.9.26.zip
+./verify_overlays.sh
+```
+
+This avoids tool limits and prevents broken patch files.
