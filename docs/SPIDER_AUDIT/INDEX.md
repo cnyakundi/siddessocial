@@ -34,3 +34,5 @@ This folder contains the **Structural Mapping (Phase 1)** and the **Phase 2 Spid
 - `PHASE2_SEARCH_PRISM_SPIDERPACK.md` - Search + Prism (Discovery + identity facets).
 
 -  - Slate (Public profile guestbook entries; DB-backed read endpoint).
+
+- `PHASE2_MEDIA_SPIDERPACK.md` - Media (R2 attachments + /m serving).
