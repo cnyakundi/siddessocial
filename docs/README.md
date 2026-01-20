@@ -1,28 +1,47 @@
 # Siddes Docs
-**Updated:** 2026-01-10
+**Updated:** 2026-01-19
 
-Start here (zero-context handoff):
-- `MIGRATION_PACK.md` — master doc (product + tech + overlays)
-- `STATE.md` — where we are + NEXT overlay
-- `OVERLAYS_INDEX.md` — applied overlays log
+If you have zero context, start with:
+- `SIDDES_BOOK.md` — consolidated overview (philosophy + architecture + feature surface)
+- `MIGRATION_PACK.md` — master handoff doc (product + tech)
+- `STATE.md` — where we are + what to do next
+- `DEPLOYMENT_GATES.md` — launch readiness checklist
 
-Core build docs:
-- `PHASES.md` — phases + subphases roadmap
-- `OVERLAY_WORKFLOW.md` — rules for every overlay zip
-- `TESTING.md` — test ladder + what must pass each overlay
+## Core (read these first)
+- `UI_HEARTBEAT.md` — non-negotiable UI laws
+- `PRIVACY_SECURITY.md` — privacy + authz rules (no cross-side leakage)
+- `SESSIONS.md` — session auth truths
+- `ARCHITECTURE.md` — system overview
 
-Engine docs:
-- `COMPOSE_INTELLIGENCE.md` — compose “as you type” suggestions (Side/Set/Chip)
-- `PRIVACY_SECURITY.md` — contact hashing (HMAC) + consent + abuse controls
+## Feature docs
+- Feed: `FEED_BACKEND.md`, `PERFORMANCE_SUPERSONIC.md`
+- Posts: `POSTS_CREATE_BACKEND.md`, `POST_DETAIL_BACKEND.md`, `POST_EDIT_DELETE.md`
+- Sets: `SETS_BACKEND.md`
+- Inbox: `INBOX_BACKEND_CONTRACT.md`, `INBOX_DB.md`
+- Search: `SEARCH.md`
+- Safety: `LEGAL.md` (policy framing), `VISIBILITY_POLICY.md`
+- Media: `MEDIA_R2.md`
 
-Platform docs:
-- `ARCHITECTURE.md` — system overview + models + endpoints
-- `PWA_PLAN.md` — Twitter-grade PWA plan
-- `AI_HANDOFF.md` — how to move to a new chat window cleanly
-- `STYLE_GUIDE.md` — naming + conventions
+## ML / on-device intelligence
+- `ML_PART_0.md`
+- `ML_PART_1_ON_DEVICE.md`
+- `ML_PART_2_LOCAL_CLUSTERING.md`
+- `ML_PART_6_HUMAN_REVIEW.md`
+- `ML_PART_7_SIDE_GUARDS.md`
+- `ML_PART_8_PRIVACY_SAFE_TELEMETRY.md`
 
-Feature docs:
-- `INBOX_BACKEND_CONTRACT.md` — the stable backend contract the Inbox UI expects (real Django target)
-- `INBOX_PAGINATION.md` — backend_stub thread list pagination notes
-- `INBOX_UNREAD_HINTS.md` — stub unread semantics + debug knobs
-- `INBOX_VISIBILITY_STUB.md` — stub visibility rules (anon/friends/close/work/me)
+## Dev + ops
+- Docker dev: `../ops/docker/README.md`
+- Testing ladder: `TESTING.md`, `SMOKE_TESTS.md`, `DRF_SMOKE.md`
+- Observability: `OBSERVABILITY.md`, `THROTTLING.md`
+
+## Historical / workflow docs
+- Overlays workflow rules: `OVERLAY_WORKFLOW.md`
+- Overlays log: `OVERLAYS_INDEX.md`
+- Multi-chat handoff: `AI_HANDOFF.md`
+
+## Go-live
+- `GO_LIVE_ISSUE_REGISTER.md` - single source of truth for launch gaps and fixes
+
+## Spider-Audit Maps
+- `SPIDER_AUDIT/INDEX.md` — system map (Phase 1 registry + Phase 2 spider packs)

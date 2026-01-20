@@ -1,7 +1,8 @@
 "use client";
+export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { RefreshCcw, Save } from "lucide-react";
 
 import { getSetsProvider } from "@/src/lib/setsProvider";
@@ -12,12 +13,11 @@ import type { SetColor } from "@/src/lib/setThemes";
 import { getSetTheme } from "@/src/lib/setThemes";
 import type { SetEvent } from "@/src/lib/setEvents";
 
-import { getInviteProvider, type SetInvite } from "@/src/lib/inviteProvider";
-import { suggestInviteHandles } from "@/src/lib/inviteSuggestions";
+import type { SetInvite } from "@/src/lib/inviteProvider";
+import { getInviteProvider } from "@/src/lib/inviteProvider";
+import { fetchInviteSuggestionHandles } from "@/src/lib/inviteSuggestions";
 import { InviteActionSheet } from "@/src/components/Invites/InviteActionSheet";
 import { InviteList } from "@/src/components/Invites/InviteList";
-import { SetsJoinedBanner, SetsJoinedPill } from "@/src/components/SetsJoinedBanner";
-import { getStubViewerCookie, isStubMe } from "@/src/lib/stubViewerClient";
 import { onSetsChanged } from "@/src/lib/setsSignals";
 
 function cn(...parts: Array<string | undefined | false | null>) {
@@ -91,19 +91,15 @@ export default function SiddesSetDetailPage({ params }: { params: { id: string }
   const setId = decodeURIComponent(params.id || "");
   const setsProvider = useMemo(() => getSetsProvider(), []);
   const invitesProvider = useMemo(() => getInviteProvider(), []);
-  const providerName = setsProvider.name;
 
-  const [viewer, setViewer] = useState<string | null>(() => getStubViewerCookie() || null);
-  useEffect(() => {
-    setViewer(getStubViewerCookie() || null);
-  }, []);
-
-  const canWrite = providerName !== "backend_stub" || isStubMe(viewer);
-  const readOnly = providerName === "backend_stub" && Boolean(viewer) && !isStubMe(viewer);
+  // sd_256: Sets UI is session-auth only (no viewer cookie gating).
+  const canWrite = true;
 
   const [item, setItem] = useState<SetDef | null>(null);
   const [events, setEvents] = useState<SetEvent[]>([]);
   const [outInvites, setOutInvites] = useState<SetInvite[]>([]);
+  const [inviteChips, setInviteChips] = useState<string[]>([]);
+  const [inviteChipsLoading, setInviteChipsLoading] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [prefillTo, setPrefillTo] = useState<string | null>(null);
   const [lastInvite, setLastInvite] = useState<SetInvite | null>(null);
@@ -115,6 +111,38 @@ export default function SiddesSetDetailPage({ params }: { params: { id: string }
   const [side, setSide] = useState<SideId>("friends");
   const [color, setColor] = useState<SetColor>("emerald");
   const [membersRaw, setMembersRaw] = useState("");
+
+
+
+
+
+  // sd_181h: Invite suggestion chips from DB (no mock lists)
+  useEffect(() => {
+    let alive = true;
+
+    (async () => {
+      if (!item || !canWrite) {
+        if (alive) setInviteChips([]);
+        return;
+      }
+
+      try {
+        setInviteChipsLoading(true);
+        const pool = await fetchInviteSuggestionHandles(item.side, item.members || []);
+        const cur = new Set((item.members || []).map((x) => String(x || "").trim()));
+        const filtered = pool.filter((h) => !cur.has(h));
+        if (alive) setInviteChips(filtered);
+      } catch {
+        if (alive) setInviteChips([]);
+      } finally {
+        if (alive) setInviteChipsLoading(false);
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, [item, canWrite]);
 
   const refresh = async () => {
     setLoading(true);
@@ -161,22 +189,8 @@ export default function SiddesSetDetailPage({ params }: { params: { id: string }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setId]);
-
-
-  const showViewerHint = React.useMemo(() => {
-    if (providerName !== "backend_stub") return false;
-    const hasCookie = typeof document !== "undefined" && document.cookie.includes("sd_viewer=");
-    return !hasCookie;
-  }, [providerName]);
-
   const save = async () => {
     if (!item) return;
-
-    if (!canWrite) {
-      setErr("Read-only: switch sd_viewer=me to edit this Set.");
-      return;
-    }
-
     setSaving(true);
     setErr(null);
     try {
@@ -214,22 +228,13 @@ export default function SiddesSetDetailPage({ params }: { params: { id: string }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-2xl mx-auto px-4 py-4">
-        <div className="flex items-center justify-between gap-3 mb-3">
-          <Link href="/siddes-sets" className="text-sm font-bold text-gray-700 hover:underline">
-            ← Sets
-          </Link>
-          <Link href="/siddes-feed" className="text-sm font-bold text-gray-700 hover:underline">
-            Feed
-          </Link>
-        </div>
-
-        <div className="flex items-start justify-between gap-3 mb-3">
+      <div className="px-4 py-4">
+<div className="flex items-start justify-between gap-3 mb-3">
           <div className="min-w-0">
             <div className="text-xs text-gray-500 mb-1">
-              provider: <span className="font-mono">{providerName}</span>
+              
             </div>
-            <h1 className="text-2xl font-black text-gray-900 truncate">{item ? item.label : "Set"}</h1>
+            <div className="text-lg font-extrabold text-gray-900 truncate">{item ? item.label : "Set"}</div>
             <div className="text-[11px] text-gray-400 font-mono truncate">{setId}</div>
           </div>
 
@@ -245,11 +250,11 @@ export default function SiddesSetDetailPage({ params }: { params: { id: string }
 
             <button
               type="button"
-              disabled={saving || !item || !canWrite}
+              disabled={saving || !item}
               onClick={() => void save()}
               className={cn(
                 "px-3 py-2 rounded-full border font-bold text-sm flex items-center gap-2",
-                saving || !item || !canWrite
+                saving || !item
                   ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
                   : "bg-gray-900 text-white border-gray-900 hover:opacity-95"
               )}
@@ -259,28 +264,6 @@ export default function SiddesSetDetailPage({ params }: { params: { id: string }
             </button>
           </div>
         </div>
-
-        {showViewerHint ? (
-          <div className="mb-3 p-3 rounded-2xl border border-amber-200 bg-amber-50 text-amber-800 text-sm">
-            <div className="font-bold mb-1">backend_stub is ON but sd_viewer is missing.</div>
-            <div className="text-xs leading-relaxed">
-              Stub APIs are default-safe and return restricted results without a viewer cookie/header.
-              <span className="block mt-2 font-mono">
-                document.cookie = "sd_viewer=me; Path=/; SameSite=Lax";
-              </span>
-            </div>
-          </div>
-        ) : null}
-
-        {readOnly ? (
-          <>
-            <SetsJoinedBanner viewer={viewer || ""} />
-            <div className="mb-3 text-xs text-slate-500">
-              Joined as <span className="font-mono">{viewer}</span>
-            </div>
-          </>
-        ) : null}
-
         {err ? (
           <div className="mb-3 p-3 rounded-2xl border border-red-200 bg-red-50 text-red-700 text-sm">
             <div className="font-bold">Error</div>
@@ -296,7 +279,7 @@ export default function SiddesSetDetailPage({ params }: { params: { id: string }
             <div className={cn("px-2 py-0.5 rounded-full text-xs font-black border", sideTheme.lightBg, sideTheme.text, sideTheme.border)}>
               {SIDES[side].label}
             </div>
-            {readOnly ? <SetsJoinedPill /> : null}
+            
             {loading ? <div className="text-xs text-gray-400 font-bold">Loading…</div> : null}
           </div>
 
@@ -377,7 +360,7 @@ export default function SiddesSetDetailPage({ params }: { params: { id: string }
           <div className="flex items-center justify-between gap-3 mb-3">
             <div>
               <div className="font-black text-gray-900">Invites</div>
-              <div className="text-xs text-gray-500">Invite more people to this Set (stub scaffold)</div>
+              <div className="text-xs text-gray-500">Invite more people to this Set</div>
             </div>
 	            <div className="flex items-center gap-2">
 	              <Link href="/siddes-invites" className="text-xs font-bold text-gray-700 hover:underline whitespace-nowrap">Inbox</Link>
@@ -400,8 +383,10 @@ export default function SiddesSetDetailPage({ params }: { params: { id: string }
           </div>
 
           {item && canWrite ? (
+            <>
+            <div className="text-[11px] text-gray-400 mb-2">{inviteChipsLoading ? "Loading suggestions…" : ""}</div>
             <div className="flex flex-wrap gap-2 mb-3">
-              {suggestInviteHandles(item.side, item.members).slice(0, 6).map((h) => (
+              {inviteChips.slice(0, 6).map((h) => (
                 <button
                   key={h}
                   type="button"
@@ -415,6 +400,7 @@ export default function SiddesSetDetailPage({ params }: { params: { id: string }
                 </button>
               ))}
             </div>
+            </>
           ) : item && !canWrite ? (
             <div className="mb-3 text-xs text-gray-500">
               Read-only: only the Set owner can send invites.
@@ -435,7 +421,7 @@ export default function SiddesSetDetailPage({ params }: { params: { id: string }
           <div className="flex items-center justify-between gap-3 mb-3">
             <div>
               <div className="font-black text-gray-900">History</div>
-              <div className="text-xs text-gray-500">Event log for this Set (stub / local history)</div>
+              <div className="text-xs text-gray-500">Server-truth event log for this Set</div>
             </div>
             <div className="text-xs text-gray-500 font-bold whitespace-nowrap">{events.length} events</div>
           </div>

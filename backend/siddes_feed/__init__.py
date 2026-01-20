@@ -3,7 +3,7 @@
 Keep imports lightweight.
 
 Do NOT import heavy modules (like feed stubs) at import time. Importing a
-submodule (e.g. `siddes_feed.mock_db`) always executes this file first, so
+submodule always executes this file first, so
 any eager imports here can create circular import chains.
 
 We expose `list_feed` via a lazy wrapper to preserve the old API:

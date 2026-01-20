@@ -1,16 +1,8 @@
 """siddes_post package.
 
-Keep imports lightweight.
-
-Importing a submodule (e.g. `siddes_post.detail_stub`) may pull in other
-packages (visibility, feed mocks). Avoid eager imports here so that tooling
-and demo scripts don't hit circular import chains.
+World-ready rule:
+- Do not expose or import demo/stub helpers from this package.
+- All post detail should come from DB-backed DRF views.
 """
 
-
-def get_post_detail(*args, **kwargs):
-    from .detail_stub import get_post_detail as _get_post_detail
-    return _get_post_detail(*args, **kwargs)
-
-
-__all__ = ["get_post_detail"]
+__all__ = []

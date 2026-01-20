@@ -1,0 +1,1082 @@
+[
+  {
+    "path": "src/components/AppProviders.tsx",
+    "rel": "components/AppProviders.tsx",
+    "file": "AppProviders.tsx",
+    "exports": [
+      "AppProviders"
+    ],
+    "hooks": [],
+    "imports": [
+      "@/src/components/AppShell",
+      "@/src/components/AuthBootstrap",
+      "@/src/components/FirstRunSidePicker",
+      "@/src/components/PwaClient",
+      "@/src/components/QueueIndicator",
+      "@/src/components/SideProvider",
+      "@/src/components/StubViewerCookie",
+      "@/src/components/ToastHost",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/AppShell.tsx",
+    "rel": "components/AppShell.tsx",
+    "file": "AppShell.tsx",
+    "exports": [
+      "AppShell"
+    ],
+    "hooks": [
+      "usePathname"
+    ],
+    "imports": [
+      "@/src/components/AppTopBar",
+      "@/src/components/BottomNav",
+      "@/src/components/DesktopRightRail",
+      "@/src/components/DesktopSideRail",
+      "@/src/components/DesktopTopBar",
+      "@/src/components/PanicBanner",
+      "next/navigation",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/AppTopBar.tsx",
+    "rel": "components/AppTopBar.tsx",
+    "file": "AppTopBar.tsx",
+    "exports": [
+      "AppTopBar"
+    ],
+    "hooks": [
+      "useEffect",
+      "useSide",
+      "useState"
+    ],
+    "imports": [
+      "@/src/components/DesktopSearchOverlay",
+      "@/src/components/DesktopUserMenu",
+      "@/src/components/PeekSheet",
+      "@/src/components/SideBadge",
+      "@/src/components/SideProvider",
+      "@/src/components/SideSwitcherSheet",
+      "@/src/lib/authMe",
+      "@/src/lib/sideActivity",
+      "@/src/lib/sides",
+      "@/src/lib/stubViewerClient",
+      "lucide-react",
+      "next/link",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/AuthBootstrap.tsx",
+    "rel": "components/AuthBootstrap.tsx",
+    "file": "AuthBootstrap.tsx",
+    "exports": [
+      "AuthBootstrap"
+    ],
+    "hooks": [
+      "useEffect",
+      "usePathname"
+    ],
+    "imports": [
+      "@/src/lib/authMe",
+      "@/src/lib/csrf",
+      "next/navigation",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/BottomNav.tsx",
+    "rel": "components/BottomNav.tsx",
+    "file": "BottomNav.tsx",
+    "exports": [
+      "BottomNav"
+    ],
+    "hooks": [
+      "usePathname",
+      "useRouter",
+      "useSide",
+      "useState"
+    ],
+    "imports": [
+      "@/src/components/PublicEnterConfirmSheet",
+      "@/src/components/SideProvider",
+      "@/src/lib/sideStore",
+      "@/src/lib/sides",
+      "lucide-react",
+      "next/link",
+      "next/navigation",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/ChipOverflowSheet.tsx",
+    "rel": "components/ChipOverflowSheet.tsx",
+    "file": "ChipOverflowSheet.tsx",
+    "exports": [
+      "ChipOverflowSheet"
+    ],
+    "hooks": [
+      "useEffect"
+    ],
+    "imports": [
+      "@/src/lib/chips",
+      "lucide-react",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/ComposeSuggestionBar.tsx",
+    "rel": "components/ComposeSuggestionBar.tsx",
+    "file": "ComposeSuggestionBar.tsx",
+    "exports": [
+      "ComposeSuggestionBar"
+    ],
+    "hooks": [
+      "useMemo"
+    ],
+    "imports": [
+      "@/src/lib/composeIntent",
+      "@/src/lib/sets",
+      "@/src/lib/sides",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/ContentColumn.tsx",
+    "rel": "components/ContentColumn.tsx",
+    "file": "ContentColumn.tsx",
+    "exports": [
+      "ContentColumn"
+    ],
+    "hooks": [],
+    "imports": [
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/CreateSetSheet.tsx",
+    "rel": "components/CreateSetSheet.tsx",
+    "file": "CreateSetSheet.tsx",
+    "exports": [
+      "CreateSetSheet"
+    ],
+    "hooks": [
+      "useEffect",
+      "useMemo",
+      "useState"
+    ],
+    "imports": [
+      "@/src/lib/setThemes",
+      "@/src/lib/sides",
+      "lucide-react",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/DesktopButlerTray.tsx",
+    "rel": "components/DesktopButlerTray.tsx",
+    "file": "DesktopButlerTray.tsx",
+    "exports": [
+      "DesktopButlerTray"
+    ],
+    "hooks": [
+      "useEffect",
+      "useMemo",
+      "useSide",
+      "useState"
+    ],
+    "imports": [
+      "@/src/components/NotificationsView",
+      "@/src/components/SideProvider",
+      "@/src/lib/sides",
+      "lucide-react",
+      "next/link",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/DesktopRightRail.tsx",
+    "rel": "components/DesktopRightRail.tsx",
+    "file": "DesktopRightRail.tsx",
+    "exports": [
+      "DesktopRightRail"
+    ],
+    "hooks": [
+      "useEffect",
+      "useMemo",
+      "useSide",
+      "useState"
+    ],
+    "imports": [
+      "@/src/components/SideProvider",
+      "@/src/lib/sets",
+      "@/src/lib/setsProvider",
+      "@/src/lib/sides",
+      "lucide-react",
+      "next/link",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/DesktopSearchOverlay.tsx",
+    "rel": "components/DesktopSearchOverlay.tsx",
+    "file": "DesktopSearchOverlay.tsx",
+    "exports": [
+      "DesktopSearchOverlay"
+    ],
+    "hooks": [
+      "useEffect",
+      "useRef",
+      "useRouter",
+      "useState"
+    ],
+    "imports": [
+      "lucide-react",
+      "next/navigation",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/DesktopSideRail.tsx",
+    "rel": "components/DesktopSideRail.tsx",
+    "file": "DesktopSideRail.tsx",
+    "exports": [
+      "DesktopSideRail"
+    ],
+    "hooks": [
+      "useEffect",
+      "usePathname",
+      "useSide",
+      "useState"
+    ],
+    "imports": [
+      "@/src/components/PublicEnterConfirmSheet",
+      "@/src/components/SideProvider",
+      "@/src/lib/sideActivity",
+      "@/src/lib/sides",
+      "next/link",
+      "next/navigation",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/DesktopTopBar.tsx",
+    "rel": "components/DesktopTopBar.tsx",
+    "file": "DesktopTopBar.tsx",
+    "exports": [
+      "DesktopTopBar"
+    ],
+    "hooks": [
+      "useEffect",
+      "useMemo",
+      "usePathname",
+      "useSide",
+      "useState"
+    ],
+    "imports": [
+      "@/src/components/DesktopButlerTray",
+      "@/src/components/DesktopSearchOverlay",
+      "@/src/components/DesktopUserMenu",
+      "@/src/components/SideProvider",
+      "@/src/lib/authMe",
+      "@/src/lib/sideActivity",
+      "@/src/lib/sides",
+      "@/src/lib/stubViewerClient",
+      "lucide-react",
+      "next/link",
+      "next/navigation",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/DesktopUserMenu.tsx",
+    "rel": "components/DesktopUserMenu.tsx",
+    "file": "DesktopUserMenu.tsx",
+    "exports": [
+      "DesktopUserMenu"
+    ],
+    "hooks": [
+      "useEffect"
+    ],
+    "imports": [
+      "lucide-react",
+      "next/link",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/EchoSheet.tsx",
+    "rel": "components/EchoSheet.tsx",
+    "file": "EchoSheet.tsx",
+    "exports": [
+      "EchoSheet"
+    ],
+    "hooks": [
+      "useEffect"
+    ],
+    "imports": [
+      "@/src/lib/feedTypes",
+      "@/src/lib/sides",
+      "lucide-react",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/EditPostSheet.tsx",
+    "rel": "components/EditPostSheet.tsx",
+    "file": "EditPostSheet.tsx",
+    "exports": [
+      "EditPostSheet"
+    ],
+    "hooks": [
+      "useEffect",
+      "useMemo",
+      "useRef",
+      "useState"
+    ],
+    "imports": [
+      "@/src/lib/toast",
+      "lucide-react",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/FirstRunSidePicker.tsx",
+    "rel": "components/FirstRunSidePicker.tsx",
+    "file": "FirstRunSidePicker.tsx",
+    "exports": [
+      "FirstRunSidePicker"
+    ],
+    "hooks": [
+      "useCallback",
+      "useEffect",
+      "useMemo",
+      "useSide",
+      "useState"
+    ],
+    "imports": [
+      "@/src/components/SideProvider",
+      "@/src/lib/sideStore",
+      "@/src/lib/sides",
+      "lucide-react",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/ImportSetSheet.tsx",
+    "rel": "components/ImportSetSheet.tsx",
+    "file": "ImportSetSheet.tsx",
+    "exports": [
+      "ImportSetSheet"
+    ],
+    "hooks": [
+      "useMemo",
+      "useSide",
+      "useState"
+    ],
+    "imports": [
+      "@/src/components/SideProvider",
+      "@/src/components/SuggestedSetsSheet",
+      "@/src/lib/localIntelligence/onDeviceContextEngine",
+      "@/src/lib/sides",
+      "lucide-react",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/InboxBanner.tsx",
+    "rel": "components/InboxBanner.tsx",
+    "file": "InboxBanner.tsx",
+    "exports": [
+      "InboxBanner"
+    ],
+    "hooks": [],
+    "imports": [
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/Invites/InviteActionSheet.tsx",
+    "rel": "components/Invites/InviteActionSheet.tsx",
+    "file": "InviteActionSheet.tsx",
+    "exports": [
+      "InviteActionSheet"
+    ],
+    "hooks": [
+      "useEffect",
+      "useMemo",
+      "useState"
+    ],
+    "imports": [
+      "@/src/lib/inviteProvider",
+      "@/src/lib/sides",
+      "lucide-react",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/Invites/InviteList.tsx",
+    "rel": "components/Invites/InviteList.tsx",
+    "file": "InviteList.tsx",
+    "exports": [
+      "InviteList"
+    ],
+    "hooks": [],
+    "imports": [
+      "@/src/lib/inviteProvider",
+      "next/link",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/MentionPicker.tsx",
+    "rel": "components/MentionPicker.tsx",
+    "file": "MentionPicker.tsx",
+    "exports": [
+      "MentionPicker"
+    ],
+    "hooks": [
+      "useMemo"
+    ],
+    "imports": [
+      "@/src/lib/mentions",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/NotificationsView.tsx",
+    "rel": "components/NotificationsView.tsx",
+    "file": "NotificationsView.tsx",
+    "exports": [
+      "NotificationsView"
+    ],
+    "hooks": [
+      "useEffect",
+      "useMemo",
+      "useRouter",
+      "useSide",
+      "useState"
+    ],
+    "imports": [
+      "@/src/components/SideProvider",
+      "@/src/lib/sides",
+      "@/src/lib/toast",
+      "lucide-react",
+      "next/navigation",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/PanicBanner.tsx",
+    "rel": "components/PanicBanner.tsx",
+    "file": "PanicBanner.tsx",
+    "exports": [
+      "PanicBanner"
+    ],
+    "hooks": [],
+    "imports": [
+      "@/src/lib/flags",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/PeekSheet.tsx",
+    "rel": "components/PeekSheet.tsx",
+    "file": "PeekSheet.tsx",
+    "exports": [
+      "PeekSheet"
+    ],
+    "hooks": [
+      "useEffect",
+      "useMemo",
+      "useRouter",
+      "useState"
+    ],
+    "imports": [
+      "@/src/lib/sides",
+      "@/src/lib/toast",
+      "lucide-react",
+      "next/navigation",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/PostActionsSheet.tsx",
+    "rel": "components/PostActionsSheet.tsx",
+    "file": "PostActionsSheet.tsx",
+    "exports": [
+      "PostActionsSheet"
+    ],
+    "hooks": [
+      "useEffect"
+    ],
+    "imports": [
+      "@/src/lib/feedTypes",
+      "@/src/lib/sides",
+      "@/src/lib/toast",
+      "lucide-react",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/PostCard.tsx",
+    "rel": "components/PostCard.tsx",
+    "file": "PostCard.tsx",
+    "exports": [
+      "PostCard"
+    ],
+    "hooks": [
+      "useMemo",
+      "useRouter",
+      "useState"
+    ],
+    "imports": [
+      "@/src/components/ChipOverflowSheet",
+      "@/src/components/EchoSheet",
+      "@/src/components/EditPostSheet",
+      "@/src/components/PostActionsSheet",
+      "@/src/components/QuoteEchoComposer",
+      "@/src/lib/chips",
+      "@/src/lib/feedTypes",
+      "@/src/lib/flags",
+      "@/src/lib/sides",
+      "@/src/lib/toast",
+      "lucide-react",
+      "next/navigation",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/PrismProfile.tsx",
+    "rel": "components/PrismProfile.tsx",
+    "file": "PrismProfile.tsx",
+    "exports": [
+      "CopyLinkButton",
+      "EditFacetButton",
+      "OwnerTopRow",
+      "PrismFacetEditSheet",
+      "PrismIdentityCard",
+      "SideActionButtons",
+      "SideWithSheet"
+    ],
+    "hooks": [
+      "useEffect",
+      "useMemo",
+      "useState"
+    ],
+    "imports": [
+      "@/src/lib/sides",
+      "lucide-react",
+      "next/link",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/PublicChannelPrefsSheet.tsx",
+    "rel": "components/PublicChannelPrefsSheet.tsx",
+    "file": "PublicChannelPrefsSheet.tsx",
+    "exports": [
+      "PublicChannelPrefsSheet"
+    ],
+    "hooks": [
+      "useEffect",
+      "useMemo",
+      "useState"
+    ],
+    "imports": [
+      "@/src/lib/publicChannels",
+      "@/src/lib/publicSiding",
+      "lucide-react",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/PublicEnterConfirmSheet.tsx",
+    "rel": "components/PublicEnterConfirmSheet.tsx",
+    "file": "PublicEnterConfirmSheet.tsx",
+    "exports": [
+      "PublicEnterConfirmSheet"
+    ],
+    "hooks": [
+      "useEffect"
+    ],
+    "imports": [
+      "@/src/lib/sides",
+      "lucide-react",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/PublicSlate.tsx",
+    "rel": "components/PublicSlate.tsx",
+    "file": "PublicSlate.tsx",
+    "exports": [
+      "PublicSlate"
+    ],
+    "hooks": [
+      "useEffect",
+      "useMemo",
+      "useState"
+    ],
+    "imports": [
+      "@/src/lib/trustLevels",
+      "lucide-react",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/PublicTuneSheet.tsx",
+    "rel": "components/PublicTuneSheet.tsx",
+    "file": "PublicTuneSheet.tsx",
+    "exports": [
+      "PublicTuneSheet"
+    ],
+    "hooks": [
+      "useEffect"
+    ],
+    "imports": [
+      "@/src/lib/publicChannels",
+      "@/src/lib/publicTrustDial",
+      "lucide-react",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/PwaClient.tsx",
+    "rel": "components/PwaClient.tsx",
+    "file": "PwaClient.tsx",
+    "exports": [
+      "PwaClient"
+    ],
+    "hooks": [
+      "useEffect",
+      "useMemo",
+      "useState"
+    ],
+    "imports": [
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/QueueIndicator.tsx",
+    "rel": "components/QueueIndicator.tsx",
+    "file": "QueueIndicator.tsx",
+    "exports": [
+      "QueueIndicator"
+    ],
+    "hooks": [
+      "useEffect",
+      "useState"
+    ],
+    "imports": [
+      "@/src/lib/offlineQueue",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/QuoteEchoComposer.tsx",
+    "rel": "components/QuoteEchoComposer.tsx",
+    "file": "QuoteEchoComposer.tsx",
+    "exports": [
+      "QuoteEchoComposer"
+    ],
+    "hooks": [
+      "useEffect",
+      "useMemo",
+      "useState"
+    ],
+    "imports": [
+      "@/src/lib/feedTypes",
+      "@/src/lib/sides",
+      "lucide-react",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/ReplyComposer.tsx",
+    "rel": "components/ReplyComposer.tsx",
+    "file": "ReplyComposer.tsx",
+    "exports": [
+      "ReplyComposer"
+    ],
+    "hooks": [
+      "useEffect",
+      "useMemo",
+      "useState"
+    ],
+    "imports": [
+      "@/src/lib/feedTypes",
+      "@/src/lib/flags",
+      "@/src/lib/publicChannels",
+      "@/src/lib/sides",
+      "lucide-react",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/RitualCreateSheet.tsx",
+    "rel": "components/RitualCreateSheet.tsx",
+    "file": "RitualCreateSheet.tsx",
+    "exports": [
+      "RitualCreateSheet"
+    ],
+    "hooks": [
+      "useEffect",
+      "useMemo",
+      "useState"
+    ],
+    "imports": [
+      "@/src/lib/ritualsProvider",
+      "@/src/lib/ritualsTypes",
+      "@/src/lib/sides",
+      "@/src/lib/toast",
+      "lucide-react",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/RitualDock.tsx",
+    "rel": "components/RitualDock.tsx",
+    "file": "RitualDock.tsx",
+    "exports": [
+      "RitualDock"
+    ],
+    "hooks": [
+      "useEffect",
+      "useMemo",
+      "useState"
+    ],
+    "imports": [
+      "@/src/components/RitualCreateSheet",
+      "@/src/components/RitualSheet",
+      "@/src/lib/ritualsProvider",
+      "@/src/lib/ritualsTypes",
+      "@/src/lib/sets",
+      "@/src/lib/sides",
+      "@/src/lib/toast",
+      "lucide-react",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/RitualSheet.tsx",
+    "rel": "components/RitualSheet.tsx",
+    "file": "RitualSheet.tsx",
+    "exports": [
+      "RitualSheet"
+    ],
+    "hooks": [
+      "useEffect",
+      "useMemo",
+      "useState"
+    ],
+    "imports": [
+      "@/src/lib/ritualsProvider",
+      "@/src/lib/ritualsTypes",
+      "@/src/lib/sides",
+      "@/src/lib/toast",
+      "lucide-react",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/SetFilterBar.tsx",
+    "rel": "components/SetFilterBar.tsx",
+    "file": "SetFilterBar.tsx",
+    "exports": [
+      "SetFilterBar"
+    ],
+    "hooks": [
+      "useMemo",
+      "useState"
+    ],
+    "imports": [
+      "@/src/components/SetPickerSheet",
+      "@/src/lib/setThemes",
+      "@/src/lib/sets",
+      "lucide-react",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/SetPickerSheet.tsx",
+    "rel": "components/SetPickerSheet.tsx",
+    "file": "SetPickerSheet.tsx",
+    "exports": [
+      "SetPickerSheet"
+    ],
+    "hooks": [
+      "useEffect"
+    ],
+    "imports": [
+      "@/src/lib/setThemes",
+      "@/src/lib/sets",
+      "lucide-react",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/SetsChipsRow.tsx",
+    "rel": "components/SetsChipsRow.tsx",
+    "file": "SetsChipsRow.tsx",
+    "exports": [
+      "SetsChipsRow"
+    ],
+    "hooks": [],
+    "imports": [
+      "@/src/lib/sets",
+      "lucide-react",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/SetsJoinedBanner.tsx",
+    "rel": "components/SetsJoinedBanner.tsx",
+    "file": "SetsJoinedBanner.tsx",
+    "exports": [
+      "SetsJoinedBanner",
+      "SetsJoinedPill"
+    ],
+    "hooks": [],
+    "imports": [
+      "lucide-react",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/SideBadge.tsx",
+    "rel": "components/SideBadge.tsx",
+    "file": "SideBadge.tsx",
+    "exports": [
+      "SideBadge"
+    ],
+    "hooks": [
+      "useRef",
+      "useSide"
+    ],
+    "imports": [
+      "@/src/components/SideProvider",
+      "@/src/lib/sides",
+      "lucide-react",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/SideChrome.tsx",
+    "rel": "components/SideChrome.tsx",
+    "file": "SideChrome.tsx",
+    "exports": [
+      "SideChrome"
+    ],
+    "hooks": [
+      "useEffect",
+      "useSide",
+      "useState"
+    ],
+    "imports": [
+      "@/src/components/PeekSheet",
+      "@/src/components/SideBadge",
+      "@/src/components/SideProvider",
+      "@/src/components/SideSwitcherSheet",
+      "@/src/lib/sideActivity",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/SideFeed.tsx",
+    "rel": "components/SideFeed.tsx",
+    "file": "SideFeed.tsx",
+    "exports": [
+      "SideFeed"
+    ],
+    "hooks": [
+      "useCallback",
+      "useEffect",
+      "useMemo",
+      "useRef",
+      "useRouter",
+      "useSide",
+      "useState",
+      "useWindowVirtualizer"
+    ],
+    "imports": [
+      "@/src/components/ImportSetSheet",
+      "@/src/components/PostCard",
+      "@/src/components/PublicTuneSheet",
+      "@/src/components/RitualDock",
+      "@/src/components/SetPickerSheet",
+      "@/src/components/SideProvider",
+      "@/src/components/feedModules/FeedModuleCard",
+      "@/src/lib/audienceStore",
+      "@/src/lib/feedModules",
+      "@/src/lib/feedProvider",
+      "@/src/lib/flags",
+      "@/src/lib/lastSeen",
+      "@/src/lib/publicCalmUi",
+      "@/src/lib/publicChannels",
+      "@/src/lib/publicSiding",
+      "@/src/lib/publicTrustDial",
+      "@/src/lib/restricted",
+      "@/src/lib/sets",
+      "@/src/lib/setsProvider",
+      "@/src/lib/sides",
+      "@/src/lib/toast",
+      "@tanstack/react-virtual",
+      "lucide-react",
+      "next/link",
+      "next/navigation",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/SideProvider.tsx",
+    "rel": "components/SideProvider.tsx",
+    "file": "SideProvider.tsx",
+    "exports": [
+      "SideProvider",
+      "useSide"
+    ],
+    "hooks": [
+      "useContext",
+      "useEffect",
+      "useSide",
+      "useState"
+    ],
+    "imports": [
+      "@/src/lib/sideStore",
+      "@/src/lib/sides",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/SideSwitcherSheet.tsx",
+    "rel": "components/SideSwitcherSheet.tsx",
+    "file": "SideSwitcherSheet.tsx",
+    "exports": [
+      "SideSwitcherSheet"
+    ],
+    "hooks": [
+      "useEffect",
+      "useState"
+    ],
+    "imports": [
+      "@/src/components/PublicEnterConfirmSheet",
+      "@/src/lib/sideActivity",
+      "@/src/lib/sides",
+      "lucide-react",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/StubViewerCookie.tsx",
+    "rel": "components/StubViewerCookie.tsx",
+    "file": "StubViewerCookie.tsx",
+    "exports": [
+      "StubViewerCookie"
+    ],
+    "hooks": [
+      "useEffect"
+    ],
+    "imports": [
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/SuggestedSetsSheet.tsx",
+    "rel": "components/SuggestedSetsSheet.tsx",
+    "file": "SuggestedSetsSheet.tsx",
+    "exports": [
+      "SuggestedSetsSheet"
+    ],
+    "hooks": [
+      "useEffect",
+      "useMemo",
+      "useState"
+    ],
+    "imports": [
+      "@/src/lib/setSuggestions",
+      "@/src/lib/setThemes",
+      "@/src/lib/sides",
+      "@/src/lib/telemetry/sdTelemetry",
+      "lucide-react",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/SuggestedSetsTray.tsx",
+    "rel": "components/SuggestedSetsTray.tsx",
+    "file": "SuggestedSetsTray.tsx",
+    "exports": [
+      "SuggestedSetsTray"
+    ],
+    "hooks": [
+      "useEffect",
+      "useMemo",
+      "useRef",
+      "useState"
+    ],
+    "imports": [
+      "@/src/components/SuggestedSetsSheet",
+      "@/src/lib/localIntelligence/localSuggestedSetsCache",
+      "@/src/lib/localIntelligence/localSuggestionLedger",
+      "@/src/lib/setSuggestions",
+      "@/src/lib/sides",
+      "@/src/lib/telemetry/sdTelemetry",
+      "lucide-react",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/ToastHost.tsx",
+    "rel": "components/ToastHost.tsx",
+    "file": "ToastHost.tsx",
+    "exports": [
+      "ToastHost"
+    ],
+    "hooks": [
+      "useEffect",
+      "useMemo",
+      "useState"
+    ],
+    "imports": [
+      "@/src/lib/toast",
+      "lucide-react",
+      "react"
+    ]
+  },
+  {
+    "path": "src/components/TopNav.tsx",
+    "rel": "components/TopNav.tsx",
+    "file": "TopNav.tsx",
+    "exports": [
+      "TopNav"
+    ],
+    "hooks": [
+      "usePathname"
+    ],
+    "imports": [
+      "lucide-react",
+      "next/link",
+      "next/navigation"
+    ]
+  },
+  {
+    "path": "src/components/feedModules/FeedModuleCard.tsx",
+    "rel": "components/feedModules/FeedModuleCard.tsx",
+    "file": "FeedModuleCard.tsx",
+    "exports": [
+      "FeedModuleCard"
+    ],
+    "hooks": [],
+    "imports": [
+      "@/src/lib/feedModules",
+      "@/src/lib/sides",
+      "@/src/lib/toast",
+      "lucide-react",
+      "next/link",
+      "react"
+    ]
+  }
+]

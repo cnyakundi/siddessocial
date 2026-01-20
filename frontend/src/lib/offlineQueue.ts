@@ -19,12 +19,13 @@ export type QueuedReply = {
   postId: string;
   side: "public" | "friends" | "close" | "work";
   text: string;
+  parentId?: string;
 };
 
 export type QueueItem = QueuedPost | QueuedReply;
 
 const STORAGE_KEY = "sd.offlineQueue.v0";
-const USE_API = process.env.NEXT_PUBLIC_FEED_PROVIDER === "backend_stub";
+const USE_API = true; // sd_245: never pretend-send; always attempt real /api writes
 const EVT = "sd.offlineQueue.changed";
 
 function hasWindow(): boolean {
@@ -87,7 +88,7 @@ export function enqueuePost(
   return item;
 }
 
-export function enqueueReply(side: QueuedReply["side"], postId: string, text: string): QueuedReply {
+export function enqueueReply(side: QueuedReply["side"], postId: string, text: string, parentId?: string | null): QueuedReply {
   const item: QueuedReply = {
     id: makeId("qreply"),
     createdAt: Date.now(),
@@ -95,10 +96,20 @@ export function enqueueReply(side: QueuedReply["side"], postId: string, text: st
     side,
     postId,
     text,
+    parentId: (parentId || "").trim() ? String(parentId).trim() : undefined,
   };
   const next = [item, ...loadQueue()];
   saveQueue(next);
   return item;
+}
+
+
+export function removeQueuedItem(id: string): boolean {
+  const items = loadQueue();
+  const next = items.filter((x) => x.id !== id);
+  if (next.length === items.length) return false;
+  saveQueue(next);
+  return true;
 }
 
 export function clearQueue() {
@@ -149,6 +160,7 @@ async function sendQueuedReply(item: QueuedReply): Promise<boolean> {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         text: item.text,
+        parentId: (item.parentId || null),
         client_key: item.id,
       }),
     });

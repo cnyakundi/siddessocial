@@ -9,7 +9,7 @@ Viewer gating:
 - In DEBUG, a dev viewer can be provided via header/cookie (see drf_auth.py).
 - Missing viewer => restricted.
 
-Write rules (stub):
+Write rules (v0):
 - Create invites: only `viewer=me` (owner) can create (default-safe).
 - Accept/reject: only the invite recipient can accept/reject.
 - Revoke: only the sender can revoke.
@@ -21,7 +21,7 @@ from typing import Any, Dict, Optional, Tuple
 
 from django.conf import settings
 from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
+from siddes_backend.csrf import dev_csrf_exempt
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -36,7 +36,8 @@ _store = DbInvitesStore()
 def _raw_viewer_from_request(request) -> Optional[str]:
     user = getattr(request, "user", None)
     if user is not None and getattr(user, "is_authenticated", False):
-        return str(getattr(user, "id", "") or "").strip() or None
+        uid = str(getattr(user, "id", "") or "").strip()
+        return f"me_{uid}" if uid else None
 
     if not getattr(settings, "DEBUG", False):
         return None
@@ -61,9 +62,20 @@ def _restricted_payload(has_viewer: bool, viewer: str, role: str, *, extra: Opti
     return out
 
 
-@method_decorator(csrf_exempt, name="dispatch")
+@method_decorator(dev_csrf_exempt, name="dispatch")
 class InvitesView(APIView):
     """GET/POST /api/invites"""
+
+    throttle_scope = "invites_list"
+
+    def get_throttles(self):
+        # Method-specific throttle scopes.
+        # POST (create) is more expensive than GET (list).
+        if getattr(self, "request", None) is not None and self.request.method == "POST":
+            self.throttle_scope = "invites_create"
+        else:
+            self.throttle_scope = "invites_list"
+        return super().get_throttles()
 
     def get(self, request):
         has_viewer, viewer, role = _viewer_ctx(request)
@@ -106,9 +118,20 @@ class InvitesView(APIView):
         return Response({"ok": True, "restricted": False, "viewer": viewer, "role": role, "item": item}, status=status.HTTP_200_OK)
 
 
-@method_decorator(csrf_exempt, name="dispatch")
+@method_decorator(dev_csrf_exempt, name="dispatch")
 class InviteDetailView(APIView):
     """GET/PATCH /api/invites/<id>"""
+
+    throttle_scope = "invites_detail"
+
+    def get_throttles(self):
+        # Method-specific throttle scopes.
+        # PATCH (accept/reject/revoke) is more expensive than GET (read).
+        if getattr(self, "request", None) is not None and self.request.method == "PATCH":
+            self.throttle_scope = "invites_action"
+        else:
+            self.throttle_scope = "invites_detail"
+        return super().get_throttles()
 
     def get(self, request, invite_id: str):
         has_viewer, viewer, role = _viewer_ctx(request)

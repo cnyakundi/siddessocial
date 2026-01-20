@@ -1,0 +1,780 @@
+{
+  "pages": [
+    {
+      "route": "/about",
+      "file": "about/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/about/page.tsx"
+    },
+    {
+      "route": "/account-deletion",
+      "file": "account-deletion/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/account-deletion/page.tsx"
+    },
+    {
+      "route": "/community-guidelines",
+      "file": "community-guidelines/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/community-guidelines/page.tsx"
+    },
+    {
+      "route": "/confirm-delete",
+      "file": "confirm-delete/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/confirm-delete/page.tsx"
+    },
+    {
+      "route": "/confirm-email-change",
+      "file": "confirm-email-change/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/confirm-email-change/page.tsx"
+    },
+    {
+      "route": "/developer",
+      "file": "developer/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/developer/page.tsx"
+    },
+    {
+      "route": "/developer/telemetry",
+      "file": "developer/telemetry/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/developer/telemetry/page.tsx"
+    },
+    {
+      "route": "/forgot-password",
+      "file": "forgot-password/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/forgot-password/page.tsx"
+    },
+    {
+      "route": "/invite/[id]",
+      "file": "invite/[id]/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/invite/[id]/page.tsx"
+    },
+    {
+      "route": "/launchpad/composer-studio",
+      "file": "launchpad/composer-studio/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/launchpad/composer-studio/page.tsx"
+    },
+    {
+      "route": "/launchpad",
+      "file": "launchpad/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/launchpad/page.tsx"
+    },
+    {
+      "route": "/legal/account-deletion",
+      "file": "legal/account-deletion/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/legal/account-deletion/page.tsx"
+    },
+    {
+      "route": "/legal/community-guidelines",
+      "file": "legal/community-guidelines/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/legal/community-guidelines/page.tsx"
+    },
+    {
+      "route": "/legal",
+      "file": "legal/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/legal/page.tsx"
+    },
+    {
+      "route": "/legal/privacy",
+      "file": "legal/privacy/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/legal/privacy/page.tsx"
+    },
+    {
+      "route": "/legal/terms",
+      "file": "legal/terms/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/legal/terms/page.tsx"
+    },
+    {
+      "route": "/login",
+      "file": "login/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/login/page.tsx"
+    },
+    {
+      "route": "/onboarding",
+      "file": "onboarding/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/onboarding/page.tsx"
+    },
+    {
+      "route": "/",
+      "file": "page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/page.tsx"
+    },
+    {
+      "route": "/privacy",
+      "file": "privacy/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/privacy/page.tsx"
+    },
+    {
+      "route": "/reset-password",
+      "file": "reset-password/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/reset-password/page.tsx"
+    },
+    {
+      "route": "/search",
+      "file": "search/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/search/page.tsx"
+    },
+    {
+      "route": "/siddes-broadcasts/[id]/compose",
+      "file": "siddes-broadcasts/[id]/compose/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/siddes-broadcasts/[id]/compose/page.tsx"
+    },
+    {
+      "route": "/siddes-broadcasts/[id]",
+      "file": "siddes-broadcasts/[id]/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/siddes-broadcasts/[id]/page.tsx"
+    },
+    {
+      "route": "/siddes-broadcasts/create",
+      "file": "siddes-broadcasts/create/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/siddes-broadcasts/create/page.tsx"
+    },
+    {
+      "route": "/siddes-broadcasts",
+      "file": "siddes-broadcasts/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/siddes-broadcasts/page.tsx"
+    },
+    {
+      "route": "/siddes-compose",
+      "file": "siddes-compose/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/siddes-compose/page.tsx"
+    },
+    {
+      "route": "/siddes-feed",
+      "file": "siddes-feed/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/siddes-feed/page.tsx"
+    },
+    {
+      "route": "/siddes-inbox/[id]",
+      "file": "siddes-inbox/[id]/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/siddes-inbox/[id]/page.tsx"
+    },
+    {
+      "route": "/siddes-inbox",
+      "file": "siddes-inbox/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/siddes-inbox/page.tsx"
+    },
+    {
+      "route": "/siddes-invites",
+      "file": "siddes-invites/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/siddes-invites/page.tsx"
+    },
+    {
+      "route": "/siddes-moderation/appeals",
+      "file": "siddes-moderation/appeals/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/siddes-moderation/appeals/page.tsx"
+    },
+    {
+      "route": "/siddes-moderation/audit",
+      "file": "siddes-moderation/audit/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/siddes-moderation/audit/page.tsx"
+    },
+    {
+      "route": "/siddes-moderation",
+      "file": "siddes-moderation/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/siddes-moderation/page.tsx"
+    },
+    {
+      "route": "/siddes-moderation/stats",
+      "file": "siddes-moderation/stats/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/siddes-moderation/stats/page.tsx"
+    },
+    {
+      "route": "/siddes-notifications",
+      "file": "siddes-notifications/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/siddes-notifications/page.tsx"
+    },
+    {
+      "route": "/siddes-post/[id]",
+      "file": "siddes-post/[id]/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/siddes-post/[id]/page.tsx"
+    },
+    {
+      "route": "/siddes-profile/account/danger",
+      "file": "siddes-profile/account/danger/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/siddes-profile/account/danger/page.tsx"
+    },
+    {
+      "route": "/siddes-profile/account/email",
+      "file": "siddes-profile/account/email/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/siddes-profile/account/email/page.tsx"
+    },
+    {
+      "route": "/siddes-profile/account/export",
+      "file": "siddes-profile/account/export/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/siddes-profile/account/export/page.tsx"
+    },
+    {
+      "route": "/siddes-profile/account",
+      "file": "siddes-profile/account/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/siddes-profile/account/page.tsx"
+    },
+    {
+      "route": "/siddes-profile/account/password",
+      "file": "siddes-profile/account/password/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/siddes-profile/account/password/page.tsx"
+    },
+    {
+      "route": "/siddes-profile/account/sessions",
+      "file": "siddes-profile/account/sessions/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/siddes-profile/account/sessions/page.tsx"
+    },
+    {
+      "route": "/siddes-profile",
+      "file": "siddes-profile/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/siddes-profile/page.tsx"
+    },
+    {
+      "route": "/siddes-sets/[id]",
+      "file": "siddes-sets/[id]/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/siddes-sets/[id]/page.tsx"
+    },
+    {
+      "route": "/siddes-sets",
+      "file": "siddes-sets/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/siddes-sets/page.tsx"
+    },
+    {
+      "route": "/siddes-settings/appeals",
+      "file": "siddes-settings/appeals/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/siddes-settings/appeals/page.tsx"
+    },
+    {
+      "route": "/siddes-settings/blocked",
+      "file": "siddes-settings/blocked/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/siddes-settings/blocked/page.tsx"
+    },
+    {
+      "route": "/siddes-settings/locality",
+      "file": "siddes-settings/locality/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/siddes-settings/locality/page.tsx"
+    },
+    {
+      "route": "/siddes-settings/muted",
+      "file": "siddes-settings/muted/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/siddes-settings/muted/page.tsx"
+    },
+    {
+      "route": "/siddes-settings",
+      "file": "siddes-settings/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/siddes-settings/page.tsx"
+    },
+    {
+      "route": "/signup",
+      "file": "signup/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/signup/page.tsx"
+    },
+    {
+      "route": "/terms",
+      "file": "terms/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/terms/page.tsx"
+    },
+    {
+      "route": "/u/[username]",
+      "file": "u/[username]/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/u/[username]/page.tsx"
+    },
+    {
+      "route": "/verify-email",
+      "file": "verify-email/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/verify-email/page.tsx"
+    }
+  ],
+  "errors": [
+    {
+      "route": "/",
+      "file": "error.tsx"
+    },
+    {
+      "route": "/invite/[id]",
+      "file": "invite/[id]/error.tsx"
+    },
+    {
+      "route": "/siddes-feed",
+      "file": "siddes-feed/error.tsx"
+    },
+    {
+      "route": "/siddes-inbox/[id]",
+      "file": "siddes-inbox/[id]/error.tsx"
+    },
+    {
+      "route": "/siddes-inbox",
+      "file": "siddes-inbox/error.tsx"
+    },
+    {
+      "route": "/siddes-invites",
+      "file": "siddes-invites/error.tsx"
+    },
+    {
+      "route": "/siddes-post/[id]",
+      "file": "siddes-post/[id]/error.tsx"
+    },
+    {
+      "route": "/siddes-sets/[id]",
+      "file": "siddes-sets/[id]/error.tsx"
+    },
+    {
+      "route": "/siddes-sets",
+      "file": "siddes-sets/error.tsx"
+    }
+  ],
+  "layouts": [
+    {
+      "route": "/",
+      "file": "layout.tsx"
+    }
+  ],
+  "clients": [
+    {
+      "route": "/search",
+      "file": "search/client.tsx"
+    },
+    {
+      "route": "/siddes-compose",
+      "file": "siddes-compose/client.tsx"
+    }
+  ],
+  "route_handlers": [
+    {
+      "route": "/api/appeals/[id]",
+      "file": "api/appeals/[id]/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/appeals/[id]/route.ts"
+    },
+    {
+      "route": "/api/appeals/admin",
+      "file": "api/appeals/admin/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/appeals/admin/route.ts"
+    },
+    {
+      "route": "/api/appeals",
+      "file": "api/appeals/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/appeals/route.ts"
+    },
+    {
+      "route": "/api/auth/account/deactivate",
+      "file": "api/auth/account/deactivate/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/auth/account/deactivate/route.ts"
+    },
+    {
+      "route": "/api/auth/account/delete/confirm",
+      "file": "api/auth/account/delete/confirm/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/auth/account/delete/confirm/route.ts"
+    },
+    {
+      "route": "/api/auth/account/delete/request",
+      "file": "api/auth/account/delete/request/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/auth/account/delete/request/route.ts"
+    },
+    {
+      "route": "/api/auth/age/confirm",
+      "file": "api/auth/age/confirm/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/auth/age/confirm/route.ts"
+    },
+    {
+      "route": "/api/auth/csrf",
+      "file": "api/auth/csrf/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/auth/csrf/route.ts"
+    },
+    {
+      "route": "/api/auth/email/change/confirm",
+      "file": "api/auth/email/change/confirm/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/auth/email/change/confirm/route.ts"
+    },
+    {
+      "route": "/api/auth/email/change/request",
+      "file": "api/auth/email/change/request/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/auth/email/change/request/route.ts"
+    },
+    {
+      "route": "/api/auth/export",
+      "file": "api/auth/export/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/auth/export/route.ts"
+    },
+    {
+      "route": "/api/auth/google",
+      "file": "api/auth/google/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/auth/google/route.ts"
+    },
+    {
+      "route": "/api/auth/login",
+      "file": "api/auth/login/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/auth/login/route.ts"
+    },
+    {
+      "route": "/api/auth/logout",
+      "file": "api/auth/logout/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/auth/logout/route.ts"
+    },
+    {
+      "route": "/api/auth/me",
+      "file": "api/auth/me/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/auth/me/route.ts"
+    },
+    {
+      "route": "/api/auth/onboarding/complete",
+      "file": "api/auth/onboarding/complete/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/auth/onboarding/complete/route.ts"
+    },
+    {
+      "route": "/api/auth/password/change",
+      "file": "api/auth/password/change/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/auth/password/change/route.ts"
+    },
+    {
+      "route": "/api/auth/password/reset/confirm",
+      "file": "api/auth/password/reset/confirm/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/auth/password/reset/confirm/route.ts"
+    },
+    {
+      "route": "/api/auth/password/reset/request",
+      "file": "api/auth/password/reset/request/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/auth/password/reset/request/route.ts"
+    },
+    {
+      "route": "/api/auth/region",
+      "file": "api/auth/region/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/auth/region/route.ts"
+    },
+    {
+      "route": "/api/auth/sessions/logout_all",
+      "file": "api/auth/sessions/logout_all/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/auth/sessions/logout_all/route.ts"
+    },
+    {
+      "route": "/api/auth/sessions/revoke",
+      "file": "api/auth/sessions/revoke/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/auth/sessions/revoke/route.ts"
+    },
+    {
+      "route": "/api/auth/sessions",
+      "file": "api/auth/sessions/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/auth/sessions/route.ts"
+    },
+    {
+      "route": "/api/auth/signup",
+      "file": "api/auth/signup/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/auth/signup/route.ts"
+    },
+    {
+      "route": "/api/auth/verify/confirm",
+      "file": "api/auth/verify/confirm/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/auth/verify/confirm/route.ts"
+    },
+    {
+      "route": "/api/auth/verify/resend",
+      "file": "api/auth/verify/resend/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/auth/verify/resend/route.ts"
+    },
+    {
+      "route": "/api/blocks/[token]",
+      "file": "api/blocks/[token]/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/blocks/[token]/route.ts"
+    },
+    {
+      "route": "/api/blocks",
+      "file": "api/blocks/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/blocks/route.ts"
+    },
+    {
+      "route": "/api/broadcasts/[id]/follow",
+      "file": "api/broadcasts/[id]/follow/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/broadcasts/[id]/follow/route.ts"
+    },
+    {
+      "route": "/api/broadcasts/[id]/notify",
+      "file": "api/broadcasts/[id]/notify/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/broadcasts/[id]/notify/route.ts"
+    },
+    {
+      "route": "/api/broadcasts/[id]/posts",
+      "file": "api/broadcasts/[id]/posts/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/broadcasts/[id]/posts/route.ts"
+    },
+    {
+      "route": "/api/broadcasts/[id]",
+      "file": "api/broadcasts/[id]/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/broadcasts/[id]/route.ts"
+    },
+    {
+      "route": "/api/broadcasts/[id]/seen",
+      "file": "api/broadcasts/[id]/seen/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/broadcasts/[id]/seen/route.ts"
+    },
+    {
+      "route": "/api/broadcasts/[id]/unfollow",
+      "file": "api/broadcasts/[id]/unfollow/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/broadcasts/[id]/unfollow/route.ts"
+    },
+    {
+      "route": "/api/broadcasts/[id]/writers",
+      "file": "api/broadcasts/[id]/writers/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/broadcasts/[id]/writers/route.ts"
+    },
+    {
+      "route": "/api/broadcasts/feed",
+      "file": "api/broadcasts/feed/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/broadcasts/feed/route.ts"
+    },
+    {
+      "route": "/api/broadcasts",
+      "file": "api/broadcasts/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/broadcasts/route.ts"
+    },
+    {
+      "route": "/api/broadcasts/unread",
+      "file": "api/broadcasts/unread/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/broadcasts/unread/route.ts"
+    },
+    {
+      "route": "/api/contacts/match",
+      "file": "api/contacts/match/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/contacts/match/route.ts"
+    },
+    {
+      "route": "/api/contacts/suggestions",
+      "file": "api/contacts/suggestions/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/contacts/suggestions/route.ts"
+    },
+    {
+      "route": "/api/feed",
+      "file": "api/feed/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/feed/route.ts"
+    },
+    {
+      "route": "/api/health",
+      "file": "api/health/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/health/route.ts"
+    },
+    {
+      "route": "/api/inbox/debug/incoming",
+      "file": "api/inbox/debug/incoming/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/inbox/debug/incoming/route.ts"
+    },
+    {
+      "route": "/api/inbox/debug/unread/reset",
+      "file": "api/inbox/debug/unread/reset/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/inbox/debug/unread/reset/route.ts"
+    },
+    {
+      "route": "/api/inbox/thread/[id]",
+      "file": "api/inbox/thread/[id]/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/inbox/thread/[id]/route.ts"
+    },
+    {
+      "route": "/api/inbox/threads",
+      "file": "api/inbox/threads/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/inbox/threads/route.ts"
+    },
+    {
+      "route": "/api/invites/[id]",
+      "file": "api/invites/[id]/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/invites/[id]/route.ts"
+    },
+    {
+      "route": "/api/invites",
+      "file": "api/invites/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/invites/route.ts"
+    },
+    {
+      "route": "/api/ml/suggestions/[id]/[action]",
+      "file": "api/ml/suggestions/[id]/[action]/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/ml/suggestions/[id]/[action]/route.ts"
+    },
+    {
+      "route": "/api/ml/suggestions",
+      "file": "api/ml/suggestions/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/ml/suggestions/route.ts"
+    },
+    {
+      "route": "/api/moderation/audit/export",
+      "file": "api/moderation/audit/export/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/moderation/audit/export/route.ts"
+    },
+    {
+      "route": "/api/moderation/audit",
+      "file": "api/moderation/audit/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/moderation/audit/route.ts"
+    },
+    {
+      "route": "/api/moderation/posts/[id]",
+      "file": "api/moderation/posts/[id]/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/moderation/posts/[id]/route.ts"
+    },
+    {
+      "route": "/api/moderation/stats/export",
+      "file": "api/moderation/stats/export/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/moderation/stats/export/route.ts"
+    },
+    {
+      "route": "/api/moderation/stats",
+      "file": "api/moderation/stats/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/moderation/stats/route.ts"
+    },
+    {
+      "route": "/api/moderation/users/state",
+      "file": "api/moderation/users/state/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/moderation/users/state/route.ts"
+    },
+    {
+      "route": "/api/mutes/[token]",
+      "file": "api/mutes/[token]/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/mutes/[token]/route.ts"
+    },
+    {
+      "route": "/api/mutes",
+      "file": "api/mutes/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/mutes/route.ts"
+    },
+    {
+      "route": "/api/notifications/mark-all-read",
+      "file": "api/notifications/mark-all-read/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/notifications/mark-all-read/route.ts"
+    },
+    {
+      "route": "/api/notifications",
+      "file": "api/notifications/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/notifications/route.ts"
+    },
+    {
+      "route": "/api/post/[id]/echo",
+      "file": "api/post/[id]/echo/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/post/[id]/echo/route.ts"
+    },
+    {
+      "route": "/api/post/[id]/like",
+      "file": "api/post/[id]/like/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/post/[id]/like/route.ts"
+    },
+    {
+      "route": "/api/post/[id]/quote",
+      "file": "api/post/[id]/quote/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/post/[id]/quote/route.ts"
+    },
+    {
+      "route": "/api/post/[id]/replies",
+      "file": "api/post/[id]/replies/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/post/[id]/replies/route.ts"
+    },
+    {
+      "route": "/api/post/[id]/reply",
+      "file": "api/post/[id]/reply/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/post/[id]/reply/route.ts"
+    },
+    {
+      "route": "/api/post/[id]",
+      "file": "api/post/[id]/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/post/[id]/route.ts"
+    },
+    {
+      "route": "/api/post",
+      "file": "api/post/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/post/route.ts"
+    },
+    {
+      "route": "/api/prism",
+      "file": "api/prism/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/prism/route.ts"
+    },
+    {
+      "route": "/api/profile/[username]",
+      "file": "api/profile/[username]/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/profile/[username]/route.ts"
+    },
+    {
+      "route": "/api/reports/[id]",
+      "file": "api/reports/[id]/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/reports/[id]/route.ts"
+    },
+    {
+      "route": "/api/reports/admin/export",
+      "file": "api/reports/admin/export/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/reports/admin/export/route.ts"
+    },
+    {
+      "route": "/api/reports/admin",
+      "file": "api/reports/admin/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/reports/admin/route.ts"
+    },
+    {
+      "route": "/api/reports",
+      "file": "api/reports/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/reports/route.ts"
+    },
+    {
+      "route": "/api/rituals/[id]/ignite",
+      "file": "api/rituals/[id]/ignite/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/rituals/[id]/ignite/route.ts"
+    },
+    {
+      "route": "/api/rituals/[id]/respond",
+      "file": "api/rituals/[id]/respond/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/rituals/[id]/respond/route.ts"
+    },
+    {
+      "route": "/api/rituals/[id]/responses",
+      "file": "api/rituals/[id]/responses/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/rituals/[id]/responses/route.ts"
+    },
+    {
+      "route": "/api/rituals/[id]",
+      "file": "api/rituals/[id]/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/rituals/[id]/route.ts"
+    },
+    {
+      "route": "/api/rituals",
+      "file": "api/rituals/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/rituals/route.ts"
+    },
+    {
+      "route": "/api/search/posts",
+      "file": "api/search/posts/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/search/posts/route.ts"
+    },
+    {
+      "route": "/api/search/users",
+      "file": "api/search/users/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/search/users/route.ts"
+    },
+    {
+      "route": "/api/sets/[id]/events",
+      "file": "api/sets/[id]/events/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/sets/[id]/events/route.ts"
+    },
+    {
+      "route": "/api/sets/[id]",
+      "file": "api/sets/[id]/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/sets/[id]/route.ts"
+    },
+    {
+      "route": "/api/sets",
+      "file": "api/sets/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/sets/route.ts"
+    },
+    {
+      "route": "/api/side",
+      "file": "api/side/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/side/route.ts"
+    },
+    {
+      "route": "/api/slate",
+      "file": "api/slate/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/slate/route.ts"
+    },
+    {
+      "route": "/api/telemetry",
+      "file": "api/telemetry/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/telemetry/route.ts"
+    },
+    {
+      "route": "/api/users/[username]/posts",
+      "file": "api/users/[username]/posts/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/users/[username]/posts/route.ts"
+    },
+    {
+      "route": "/api/users/[username]",
+      "file": "api/users/[username]/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/users/[username]/route.ts"
+    },
+    {
+      "route": "/m/[...key]",
+      "file": "m/[...key]/route.ts",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/m/[...key]/route.ts"
+    }
+  ]
+}

@@ -41,7 +41,7 @@ export function QueueIndicator() {
   const replies = loadQueue().filter((x) => x.kind === "reply").length;
 
   return (
-    <div className="fixed top-3 right-3 z-[120]">
+    <div className="fixed top-20 right-3 z-[120]">
       <div className="bg-white border border-gray-200 shadow-lg rounded-2xl px-4 py-3 max-w-xs">
         <div className="text-sm font-bold text-gray-900">{flushing ? "Sending…" : "Queued"}</div>
         <div className="text-xs text-gray-500 mt-1">

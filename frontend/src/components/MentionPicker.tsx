@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
-import type { MentionCandidate } from "@/src/lib/mockPeople";
+import type { MentionCandidate } from "@/src/lib/mentions";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");

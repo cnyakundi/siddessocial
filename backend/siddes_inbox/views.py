@@ -18,7 +18,7 @@ import os
 from typing import Any, Optional
 
 from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
+from siddes_backend.csrf import dev_csrf_exempt
 from django.conf import settings
 from rest_framework import status
 from rest_framework.response import Response
@@ -29,12 +29,112 @@ from .store_devnull import DevNullInboxStore
 from .store_db import DbInboxStore
 from .store_memory import InMemoryInboxStore
 
+from siddes_safety.policy import is_blocked_pair
+
 
 def _truthy(v: str | None) -> bool:
     return str(v or "").strip().lower() in ("1", "true", "yes", "y", "on")
 
 
 SIDE_IDS = ("public", "friends", "close", "work")
+
+# sd_398: inbox blocks enforcement (hard stop: no view, no DM)
+
+
+def _restricted_meta_payload() -> dict[str, Any]:
+    return {"ok": True, "restricted": True, "meta": None}
+
+
+def _restricted_send_payload() -> dict[str, Any]:
+    return {"ok": True, "restricted": True, "message": None, "meta": None}
+
+
+def _restricted_thread_payload() -> dict[str, Any]:
+    return {
+        "ok": True,
+        "restricted": True,
+        "thread": None,
+        "meta": None,
+        "messages": [],
+        "messagesHasMore": False,
+        "messagesNextCursor": None,
+    }
+
+
+def _other_token_from_thread_payload(thread_obj: Any) -> Optional[str]:
+    try:
+        t = thread_obj or {}
+        if not isinstance(t, dict):
+            return None
+        p = t.get("participant") or {}
+        if not isinstance(p, dict):
+            return None
+        tok = str(p.get("handle") or p.get("userId") or "").strip()
+        return tok or None
+    except Exception:
+        return None
+
+
+def _counterparty_token_for_thread_id(thread_id: str) -> Optional[str]:
+    """Best-effort: look up the DB thread snapshot and return other party token.
+
+    Memory-store threads may not exist in DB; fail-open in that case.
+    """
+    try:
+        from .models import InboxThread  # local import (db store only)
+        t = InboxThread.objects.filter(id=str(thread_id)).first()
+        if not t:
+            return None
+        tok = str(getattr(t, "participant_handle", "") or "").strip()
+        if tok:
+            return tok
+        tok2 = str(getattr(t, "participant_user_id", "") or "").strip()
+        return tok2 or None
+    except Exception:
+        return None
+
+
+def _filter_blocked_threads_payload(viewer_id: Optional[str], payload: Any) -> Any:
+    try:
+        if not viewer_id or not isinstance(payload, dict) or payload.get("restricted"):
+            return payload
+        items = payload.get("items")
+        if not isinstance(items, list) or not items:
+            return payload
+
+        kept = []
+        for it in items:
+            tok = None
+            try:
+                if isinstance(it, dict):
+                    p = it.get("participant")
+                    if isinstance(p, dict):
+                        tok = str(p.get("handle") or p.get("userId") or "").strip() or None
+            except Exception:
+                tok = None
+
+            if tok and is_blocked_pair(str(viewer_id), str(tok)):
+                continue
+            kept.append(it)
+
+        out = dict(payload)
+        out["items"] = kept
+        return out
+    except Exception:
+        return payload
+
+
+def _restrict_blocked_thread_payload(viewer_id: Optional[str], payload: Any) -> Any:
+    try:
+        if not viewer_id or not isinstance(payload, dict) or payload.get("restricted"):
+            return payload
+        tok = _other_token_from_thread_payload(payload.get("thread"))
+        if tok and is_blocked_pair(str(viewer_id), str(tok)):
+            return _restricted_thread_payload()
+        return payload
+    except Exception:
+        return payload
+
 
 def _db_ready() -> bool:
     """Best-effort check: is the DB reachable and are Inbox tables migrated?
@@ -61,76 +161,46 @@ def _db_ready() -> bool:
         return False
 
 
-STORE_MODE = os.environ.get("SD_INBOX_STORE", "memory").strip().lower()
-USE_AUTO = STORE_MODE in ("auto", "smart")
-DUALWRITE_DB = _truthy(os.environ.get("SD_INBOX_DUALWRITE_DB", "0"))
 
-AUTO_DB_READY = _db_ready() if USE_AUTO else False
-USE_MEMORY = STORE_MODE in ("memory", "inmemory") or (USE_AUTO and not AUTO_DB_READY)
-USE_DB = STORE_MODE in ("db", "database", "postgres", "pg") or (USE_AUTO and AUTO_DB_READY)
+IS_DEBUG = getattr(settings, "DEBUG", False)
+ALLOW_MEMORY = (str(os.environ.get("SIDDES_ALLOW_MEMORY_STORES", "")).strip() == "1") and bool(IS_DEBUG)
 
-if USE_DB:
-    store = DbInboxStore()
-elif USE_MEMORY:
+# World-ready default: DB-backed inbox store.
+# Memory/demo inbox is allowed ONLY when DEBUG=True and SIDDES_ALLOW_MEMORY_STORES=1.
+if ALLOW_MEMORY:
     mem = InMemoryInboxStore()
-    if DUALWRITE_DB:
-        from .store_dualwrite import DualWriteInboxStore
-
-        store = DualWriteInboxStore(primary=mem, shadow_db=DbInboxStore())
-    else:
-        store = mem
-else:
-    store = DevNullInboxStore()
-
-
-# Seed demo content once (dev-only). Safe because viewer auth still gates access.
-if USE_MEMORY and getattr(settings, "DEBUG", False):
     try:
-        store.seed_demo()
+        mem.seed_demo()
     except Exception:
-        # If seeding fails, keep the server alive (dev tolerance)
         pass
+    store = mem
+else:
+    store = DbInboxStore()
+
 
 
 def get_viewer_id(request) -> Optional[str]:
-    """Resolve the viewer identity for stub/demo mode.
+    # Resolve viewer id (default-safe).
+    #
+    # Priority:
+    # 1) DRF authenticated user (Session/JWT/etc) -> me_<django_user_id>
+    # 2) DEV-only header/cookie identity (settings.DEBUG=True)
+    #
+    # PROD safety:
+    # - Never trust dev headers/cookies when DEBUG=False.
 
-    Priority:
-    1) DRF authenticated user (real auth, future) → treated as `me` for now.
-    2) DEV-only header/cookie identity (settings.DEBUG=True):
-       - Header `x-sd-viewer`
-       - Cookie `sd_viewer`
-
-    Note: the legacy `?viewer=` query param is **deprecated** and intentionally ignored
-    (even in dev) to avoid leaking viewer identities in URLs.
-
-    Default-safe:
-    - Return None when the viewer is unknown.
-    - Normalize any provided viewer string into a deterministic role:
-      anon | friends | close | work | me
-    """
-
-    # Prefer real authentication (Session/JWT/etc) when present.
     user = getattr(request, "user", None)
     if user is not None and getattr(user, "is_authenticated", False):
-        return "me"
+        uid = str(getattr(user, "id", "") or "").strip()
+        return f"me_{uid}" if uid else None
 
-    # Military-grade direction: never trust dev headers/cookies in production.
     if not getattr(settings, "DEBUG", False):
         return None
 
-    from .visibility_stub import resolve_viewer_role
+    raw = request.headers.get("x-sd-viewer") or getattr(request, "COOKIES", {}).get("sd_viewer")
+    raw = str(raw or "").strip()
+    return raw or None
 
-    raw = request.headers.get("x-sd-viewer")
-    if raw:
-        return resolve_viewer_role(raw)
-
-    # DRF Request delegates to underlying HttpRequest for COOKIES.
-    c = getattr(request, "COOKIES", {}).get("sd_viewer")
-    if c:
-        return resolve_viewer_role(c)
-
-    return None
 
 
 def _clamp_int(raw: Any, *, default: int, min_v: int, max_v: int) -> int:
@@ -141,7 +211,7 @@ def _clamp_int(raw: Any, *, default: int, min_v: int, max_v: int) -> int:
     return max(min_v, min(max_v, v))
 
 
-@method_decorator(csrf_exempt, name="dispatch")
+@method_decorator(dev_csrf_exempt, name="dispatch")
 class InboxThreadsView(APIView):
     """GET /api/inbox/threads"""
 
@@ -154,18 +224,20 @@ class InboxThreadsView(APIView):
 
         if side and side not in SIDE_IDS:
             return Response({"ok": False, "error": "invalid_side"}, status=status.HTTP_400_BAD_REQUEST)
+        viewer_id = get_viewer_id(request)
 
         data = list_threads(
             store,
-            viewer_id=get_viewer_id(request),
+            viewer_id=viewer_id,
             side=side if side else None,
             limit=limit,
             cursor=cursor if cursor else None,
         )
+        data = _filter_blocked_threads_payload(viewer_id, data)
         return Response(data, status=status.HTTP_200_OK)
 
 
-@method_decorator(csrf_exempt, name="dispatch")
+@method_decorator(dev_csrf_exempt, name="dispatch")
 class InboxThreadView(APIView):
     """GET/POST /api/inbox/thread/:id"""
 
@@ -183,19 +255,30 @@ class InboxThreadView(APIView):
     def get(self, request, thread_id: str):
         limit = _clamp_int(request.query_params.get("limit"), default=30, min_v=1, max_v=100)
         cursor = request.query_params.get("cursor")
+        viewer_id = get_viewer_id(request)
 
         data = get_thread(
             store,
-            viewer_id=get_viewer_id(request),
+            viewer_id=viewer_id,
             thread_id=thread_id,
             limit=limit,
             cursor=cursor if cursor else None,
         )
+        data = _restrict_blocked_thread_payload(viewer_id, data)
         return Response(data, status=status.HTTP_200_OK)
 
     def post(self, request, thread_id: str):
         viewer = get_viewer_id(request)
         body: dict[str, Any] = request.data if isinstance(request.data, dict) else {}
+
+        # sd_398: Blocks must hard-stop inbox access.
+        other_token = _counterparty_token_for_thread_id(thread_id)
+        if viewer and other_token and is_blocked_pair(str(viewer), str(other_token)):
+            # Hide existence details: behave like restricted.
+            if body.get("setLockedSide") is not None:
+                return Response(_restricted_meta_payload(), status=status.HTTP_200_OK)
+            return Response(_restricted_send_payload(), status=status.HTTP_200_OK)
+
 
         if body.get("setLockedSide") is not None:
             side = str(body.get("setLockedSide") or "").strip()
@@ -205,10 +288,16 @@ class InboxThreadView(APIView):
             data = set_locked_side(store, viewer_id=viewer, thread_id=thread_id, side=side)  # type: ignore[arg-type]
             return Response(data, status=status.HTTP_200_OK)
 
-        text = str(body.get("text") or "")
-        if not text.strip():
+        raw_text = str(body.get("text") or "")
+        text = raw_text.strip()
+        if not text:
             # Contract: 400 + ok:false
             return Response({"ok": False, "error": "missing_text"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # sd_360: server-side message size limits (prevents DoS/DB bloat)
+        max_len = 2000
+        if len(text) > max_len:
+            return Response({"ok": False, "error": "too_long", "max": max_len}, status=status.HTTP_400_BAD_REQUEST)
 
         client_key = body.get("clientKey") or body.get("client_key")
 
@@ -252,7 +341,7 @@ def _debug_enabled() -> bool:
     return _truthy(os.environ.get("DJANGO_DEBUG", "0"))
 
 
-@method_decorator(csrf_exempt, name="dispatch")
+@method_decorator(dev_csrf_exempt, name="dispatch")
 class InboxDebugResetUnreadView(APIView):
     """POST /api/inbox/debug/unread/reset (dev-only)
 
@@ -292,7 +381,7 @@ class InboxDebugResetUnreadView(APIView):
         return Response({"ok": True}, status=status.HTTP_200_OK)
 
 
-@method_decorator(csrf_exempt, name="dispatch")
+@method_decorator(dev_csrf_exempt, name="dispatch")
 class InboxDebugIncomingView(APIView):
     """POST /api/inbox/debug/incoming (dev-only)
 

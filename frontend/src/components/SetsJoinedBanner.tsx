@@ -31,7 +31,7 @@ export function SetsJoinedBanner({ viewer }: { viewer: string }) {
         </div>
       </div>
       <div className="text-xs leading-relaxed text-slate-600">
-        You can view this Set and its history. Only the owner (<span className="font-mono">sd_viewer=me</span>) can edit or send invites.
+        You can view this Set and its history. Only the owner can edit or send invites.
       </div>
     </div>
   );

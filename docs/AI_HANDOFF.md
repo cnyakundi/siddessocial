@@ -1,4 +1,7 @@
-# AI Handoff (move to a new coding window)
+# AI Handoff
+
+**Read first:** `docs/UI_HEARTBEAT.md` (UI laws + naming + flags)
+ (move to a new coding window)
 **Updated:** 2026-01-09
 
 If a chat window crashes, paste these files into the new window:
@@ -26,3 +29,15 @@ Instead:
 ./scripts/apply_overlay.sh ~/Downloads/sd_###_name_vX.zip
 ./verify_overlays.sh
 ```
+
+
+## UI docs to read in a new window
+Before making UI changes, read:
+- `docs/UI_HEARTBEAT.md`
+- `docs/UI_MASTER_SPEC.md`
+- `docs/UI_STATUS_MATRIX.md`
+- `docs/UI_LAUNCH_MVP.md`
+
+## Migration master prompt (paste into new AI tools)
+- `docs/MIGRATION_MASTER_PROMPT.md`
+- `docs/MIGRATION_PACK_NEXT_AI.md`

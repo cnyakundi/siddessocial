@@ -1,20 +1,37 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import { Sparkles } from "lucide-react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useWindowVirtualizer } from "@tanstack/react-virtual";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ChevronDown, Sparkles } from "lucide-react";
 import { useSide } from "@/src/components/SideProvider";
-import { SIDES, type SideId } from "@/src/lib/sides";
+import type { SideId } from "@/src/lib/sides";
+import { SIDES, SIDE_THEMES } from "@/src/lib/sides";
 import { PostCard } from "@/src/components/PostCard";
-import { SetsChipsRow } from "@/src/components/SetsChipsRow";
+import { PublicTuneSheet } from "@/src/components/PublicTuneSheet";
+import { SetPickerSheet } from "@/src/components/SetPickerSheet";
 import { ImportSetSheet } from "@/src/components/ImportSetSheet";
-import { DEFAULT_SETS, type SetDef, type SetId } from "@/src/lib/sets";
+import { RitualDock } from "@/src/components/RitualDock";
+
+import type { SetDef, SetId } from "@/src/lib/sets";
+import { DEFAULT_SETS } from "@/src/lib/sets";
 import { getSetsProvider } from "@/src/lib/setsProvider";
 import { getLastSeenId, setLastSeenId } from "@/src/lib/lastSeen";
-import { getFeedProvider, type FeedItem } from "@/src/lib/feedProvider";
+import type { FeedItem } from "@/src/lib/feedProvider";
+import { getFeedProvider } from "@/src/lib/feedProvider";
 import { FLAGS } from "@/src/lib/flags";
-import { EVT_PUBLIC_CALM_UI_CHANGED, loadPublicCalmUi, savePublicCalmUi, type PublicCalmUiState } from "@/src/lib/publicCalmUi";
-import { PUBLIC_CHANNELS, type PublicChannelId } from "@/src/lib/publicChannels";
-import { EVT_PUBLIC_SIDING_CHANGED, loadPublicSiding, type PublicSidingState } from "@/src/lib/publicSiding";
+import type { PublicCalmUiState } from "@/src/lib/publicCalmUi";
+import { EVT_PUBLIC_CALM_UI_CHANGED, loadPublicCalmUi, savePublicCalmUi } from "@/src/lib/publicCalmUi";
+import type { PublicChannelId } from "@/src/lib/publicChannels";
+import { PUBLIC_CHANNELS } from "@/src/lib/publicChannels";
+import type { PublicSidingState } from "@/src/lib/publicSiding";
+import { EVT_PUBLIC_SIDING_CHANGED, loadPublicSiding } from "@/src/lib/publicSiding";
+import { toast } from "@/src/lib/toast";
+import { isRestrictedError, isRestrictedPayload, restrictedMessage } from "@/src/lib/restricted";
+import { FeedModuleCard } from "@/src/components/feedModules/FeedModuleCard";
+import type { FeedModulePlanEntry } from "@/src/lib/feedModules";
+import { EVT_FEED_MODULES_CHANGED, planFeedModules } from "@/src/lib/feedModules";
 import {
   EVT_PUBLIC_TRUST_DIAL_CHANGED,
   loadPublicTrustMode,
@@ -22,24 +39,73 @@ import {
   savePublicTrustMode,
   type PublicTrustMode,
 } from "@/src/lib/publicTrustDial";
+import { setStoredLastPublicTopic, setStoredLastSetForSide } from "@/src/lib/audienceStore";
 
-function EmptyState({ side, activeSet }: { side: SideId; activeSet?: SetId | null }) {
+function cn(...parts: Array<string | undefined | false | null>) {
+  return parts.filter(Boolean).join(" ");
+}
+
+function EmptyState({ side, onCreateSet, composeHref }: { side: SideId; onCreateSet?: () => void; composeHref?: string }) {
+  // sd_201: actionable empty state (build the graph, ethically)
+  const meta = SIDES[side];
+  const theme = SIDE_THEMES[side];
+
+  // sd_210_desktop_breathing
   return (
-    <div className="text-center py-16">
-      <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300">
-        <Sparkles size={32} />
+    <div className="mt-2 p-10 rounded-2xl text-center border border-dashed border-gray-200 bg-gray-50">
+      <div className="flex justify-center mb-4">
+        <span
+          className={cn(
+            "text-[10px] px-2 py-1 rounded-full border font-black uppercase tracking-widest",
+            theme.lightBg,
+            theme.text,
+            theme.border
+          )}
+          title={meta.privacyHint}
+        >
+          {side === "public" ? `Public: ${meta.privacyHint}` : `Audience locked: ${meta.label}`}
+        </span>
       </div>
-      <p className="text-gray-500 text-sm mb-2">{activeSet ? "No posts in this Set yet." : "It’s quiet here…"}</p>
-      <p className="text-gray-400 text-xs">
-        This is the {SIDES[side].label} Side. Later we’ll seed and personalize this feed.
-      </p>
+
+      <div className={cn("w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4", theme.lightBg, theme.text)}>
+        <Sparkles size={28} />
+      </div>
+
+      <p className="text-gray-800 text-sm font-semibold mb-1">No posts in {meta.label} yet.</p>
+      <p className="text-gray-500 text-xs mb-6">Start a thread, or build your graph so this Side comes alive.</p>
+
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+        <Link
+          href={composeHref || `/siddes-compose?side=${side}`}
+          className={cn("px-4 py-2 rounded-full text-sm font-extrabold text-white shadow-sm hover:opacity-95 transition", theme.primaryBg)}
+        >
+          New Post
+        </Link>
+
+        {side === "public" ? (
+          <Link
+            href="/siddes-broadcasts"
+            className="px-4 py-2 rounded-full text-sm font-extrabold bg-white border border-gray-200 text-gray-800 shadow-sm hover:bg-gray-100 transition"
+          >
+            Explore Broadcasts
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={onCreateSet}
+            className="px-4 py-2 rounded-full text-sm font-extrabold bg-white border border-gray-200 text-gray-800 shadow-sm hover:bg-gray-100 transition"
+          >
+            Create Set
+          </button>
+        )}
+      </div>
     </div>
   );
 }
 
 function Divider() {
   return (
-    <div className="flex items-center gap-4 my-6 opacity-70" data-testid="new-since-divider">
+    <div className="flex items-center gap-4 py-6 opacity-70" data-testid="new-since-divider">
       <div className="h-px bg-gray-300 flex-1" />
       <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">New since last visit</span>
       <div className="h-px bg-gray-300 flex-1" />
@@ -49,10 +115,29 @@ function Divider() {
 
 export function SideFeed() {
   const { side } = useSide();
+  const router = useRouter();
+  const theme = SIDE_THEMES[side];
+
+  // Audience filter (Sets for private sides; Topics for Public)
   const [activeSet, setActiveSet] = useState<SetId | null>(null);
+  const [setPickerOpen, setSetPickerOpen] = useState(false);
+
   const [publicChannel, setPublicChannel] = useState<"all" | PublicChannelId>("all");
+  const [publicMode, setPublicMode] = useState<"following" | "broadcasts">("following");
+  const [publicTuneOpen, setPublicTuneOpen] = useState(false);
   const [trustMode, setTrustMode] = useState<PublicTrustMode>("standard");
   const [importOpen, setImportOpen] = useState(false);
+
+  // sd_404: context-safe compose entry (inherit Side + audience)
+  const composeHref = useMemo(() => {
+    const base = `/siddes-compose?side=${encodeURIComponent(side)}`;
+    if (side === "public") {
+      const topic = FLAGS.publicChannels && publicChannel !== "all" ? publicChannel : null;
+      return topic ? `${base}&topic=${encodeURIComponent(topic)}` : base;
+    }
+    return activeSet ? `${base}&set=${encodeURIComponent(activeSet)}` : base;
+  }, [side, activeSet, publicChannel]);
+
 
   // Public Granular Siding state (hydration-safe: loaded after mount)
   const [publicSiding, setPublicSiding] = useState<PublicSidingState | null>(null);
@@ -60,28 +145,221 @@ export function SideFeed() {
   // Public Visual Calm (counts) state (hydration-safe: loaded after mount)
   const [publicCalm, setPublicCalm] = useState<PublicCalmUiState | null>(null);
 
+  // Feed modules tick: bumped when a module is dismissed/undismissed
+  const [modulesTick, setModulesTick] = useState(0);
+
   const setsProvider = useMemo(() => getSetsProvider(), []);
   const [sets, setSets] = useState<SetDef[]>(() => DEFAULT_SETS);
 
   const provider = useMemo(() => getFeedProvider(), []);
   const [rawPosts, setRawPosts] = useState<FeedItem[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingInitial, setLoadingInitial] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadMoreErr, setLoadMoreErr] = useState<string | null>(null);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  // sd_365: True list virtualization (window virtualizer)
+  const listTopRef = useRef<HTMLDivElement | null>(null);
+  const [scrollMargin, setScrollMargin] = useState(0);
+
+  const [restricted, setRestricted] = useState(false);
+  const [loadErr, setLoadErr] = useState<string | null>(null);
+
+  // Reset side-scoped UI state when side changes
+  useEffect(() => {
+    setActiveSet(null);
+    if (side !== "public") {
+      setPublicChannel("all");
+      setPublicTuneOpen(false);
+      setPublicMode("following");
+    }
+  }, [side]);
+
+  // sd_403: persist active audience selection so composer can default safely
+  useEffect(() => {
+    if (side !== "public") {
+      setStoredLastSetForSide(side, activeSet);
+    }
+  }, [side, activeSet]);
+
+  useEffect(() => {
+    if (side === "public" && FLAGS.publicChannels) {
+      setStoredLastPublicTopic(publicChannel !== "all" ? String(publicChannel) : null);
+    }
+  }, [side, publicChannel]);
+
+
+  // sd_362: Cursor paging + infinite scroll (supersonic step).
+  // sd_365: True list virtualization keeps mounted cards ~O(30); cap remains a memory guard.
+  const PAGE_LIMIT = 30;
+  const MAX_RAW_POSTS = 180;
+
+  const mergeUnique = useCallback((prev: FeedItem[], next: FeedItem[]) => {
+    if (!next || !next.length) return prev;
+    const seen = new Set(prev.map((p: any) => (p as any)?.id));
+    const out = [...prev];
+    for (const it of next) {
+      const id = (it as any)?.id;
+      if (!id) continue;
+      if (!seen.has(id)) {
+        seen.add(id);
+        out.push(it);
+      }
+    }
+    return out;
+  }, []);
+
+  const loadMore = useCallback(() => {
+    if (side === "public" && publicMode === "broadcasts") return;
+    if (loadingInitial || loadingMore) return;
+    if (!hasMore || !nextCursor) return;
+
+    setLoadingMore(true);
+    setLoadMoreErr(null);
+
+    const topic = side === "public" && FLAGS.publicChannels && publicChannel !== "all" ? publicChannel : null;
+
+    provider
+      .listPage(side, { topic, limit: PAGE_LIMIT, cursor: nextCursor })
+      .then((page) => {
+        setRawPosts((prev) => {
+          const merged = mergeUnique(prev, page.items || []);
+          return merged.length > MAX_RAW_POSTS ? merged.slice(0, MAX_RAW_POSTS) : merged;
+        });
+        setNextCursor(page.nextCursor);
+        setHasMore(page.hasMore);
+      })
+      .catch((e) => {
+        if (isRestrictedError(e)) {
+          setRestricted(true);
+          setLoadErr(null);
+          setRawPosts([]);
+          setNextCursor(null);
+          setHasMore(false);
+        } else {
+          setLoadMoreErr(String(e?.message || "Load more failed"));
+        }
+      })
+      .finally(() => setLoadingMore(false));
+  }, [
+    side,
+    publicMode,
+    loadingInitial,
+    loadingMore,
+    hasMore,
+    nextCursor,
+    provider,
+    publicChannel,
+    mergeUnique,
+  ]);
+
 
   useEffect(() => {
     let mounted = true;
-    provider.list(side).then((items) => {
-      if (!mounted) return;
-      setRawPosts(items);
-    });
+    setRestricted(false);
+    setLoadErr(null);
+    setLoadMoreErr(null);
+    setLoadingInitial(true);
+    setLoadingMore(false);
+    setNextCursor(null);
+    setHasMore(false);
+
+    if (side === "public" && publicMode === "broadcasts") {
+      fetch("/api/broadcasts/feed", { cache: "no-store" })
+        .then(async (r) => {
+          const d = await r.json().catch(() => null);
+          if (!mounted) return;
+
+          if (isRestrictedPayload(r, d)) {
+            setRestricted(true);
+            setRawPosts([]);
+            setLoadingInitial(false);
+            return;
+          }
+
+          if (!r.ok) {
+            setLoadErr(String(d?.error || `Broadcast feed failed (${r.status})`));
+            setRawPosts([]);
+            setLoadingInitial(false);
+            return;
+          }
+
+          const items = Array.isArray(d?.items) ? d.items : [];
+          setRawPosts(items);
+          setLoadingInitial(false);
+        })
+        .catch((e) => {
+          if (!mounted) return;
+          setLoadErr(String(e?.message || "Broadcast feed failed"));
+          setRawPosts([]);
+          setLoadingInitial(false);
+        });
+    } else {
+      const topic = side === "public" && FLAGS.publicChannels && publicChannel !== "all" ? publicChannel : null;
+
+      provider
+        .listPage(side, { topic, limit: PAGE_LIMIT, cursor: null })
+        .then((page) => {
+          if (!mounted) return;
+          setRawPosts(page.items || []);
+          setNextCursor(page.nextCursor);
+          setHasMore(page.hasMore);
+          setLoadingInitial(false);
+        })
+        .catch((e) => {
+          if (!mounted) return;
+          if (isRestrictedError(e)) {
+            setRestricted(true);
+            setLoadErr(null);
+          } else {
+            setLoadErr(String(e?.message || "Feed failed"));
+          }
+          setRawPosts([]);
+          setNextCursor(null);
+          setHasMore(false);
+          setLoadingInitial(false);
+        });
+    }
+
     return () => {
       mounted = false;
     };
-  }, [side, provider]);
+  }, [side, provider, publicMode, publicChannel]);
 
-  // Hydration-safe Sets load: only read localStorage / fetch after mount.
+  useEffect(() => {
+    // Infinite scroll sentinel (normal feed only; broadcasts are separate)
+    if (side === "public" && publicMode === "broadcasts") return;
+    if (!hasMore || !nextCursor) return;
+    const el = sentinelRef.current;
+    if (!el) return;
+
+    const obs = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            loadMore();
+            break;
+          }
+        }
+      },
+      { rootMargin: "600px 0px" }
+    );
+
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [side, publicMode, hasMore, nextCursor, loadMore]);
+
+
+  // Side-scoped Sets load (hydration-safe)
   useEffect(() => {
     let mounted = true;
+    if (side === "public") {
+      setSets([]);
+      return;
+    }
     setsProvider
-      .list({ side: "friends" })
+      .list({ side })
       .then((items) => {
         if (!mounted) return;
         setSets(items);
@@ -92,7 +370,7 @@ export function SideFeed() {
     return () => {
       mounted = false;
     };
-  }, [setsProvider]);
+  }, [side, setsProvider]);
 
   // Hydration-safe: only read localStorage after mount.
   useEffect(() => {
@@ -133,6 +411,14 @@ export function SideFeed() {
     }
   }, []);
 
+  // Feed modules: listen for dismissed/undismissed updates (hydration-safe)
+  useEffect(() => {
+    if (!FLAGS.feedModules) return;
+    const onChanged = () => setModulesTick((x) => x + 1);
+    window.addEventListener(EVT_FEED_MODULES_CHANGED, onChanged);
+    return () => window.removeEventListener(EVT_FEED_MODULES_CHANGED, onChanged);
+  }, []);
+
   const applyTrustMode = (m: PublicTrustMode) => {
     setTrustMode(m);
     savePublicTrustMode(m);
@@ -151,8 +437,22 @@ export function SideFeed() {
   const posts = useMemo(() => {
     let out = rawPosts;
 
-    // Friends: viewer-private Set filter
-    if (side === "friends" && activeSet) {
+    // Enrich posts with Set metadata (label/color) so ContextStamp shows real Set names.
+    // Presentational only: access control remains server-side.
+    if (side !== "public" && Array.isArray(sets) && sets.length) {
+      const byId = new Map(sets.map((s) => [s.id, s] as const));
+      out = out.map((p: any) => {
+        const sid = String(p?.setId || "").trim();
+        if (!sid) return p;
+        if (p?.setLabel && p?.setColor) return p;
+        const meta = byId.get(sid);
+        if (!meta) return p;
+        return { ...p, setLabel: p.setLabel || meta.label, setColor: p.setColor || meta.color };
+      });
+    }
+
+    // Side-private Set filter
+    if (side !== "public" && activeSet) {
       out = out.filter((p: any) => p.setId === activeSet);
     }
 
@@ -165,8 +465,7 @@ export function SideFeed() {
       });
     }
 
-    // Public: Granular Siding (per-author channel prefs)
-    // Safe default: no prefs => allow all.
+    // Public: Granular Siding (per-author topic prefs)
     if (side === "public" && FLAGS.publicChannels && publicSiding) {
       out = out.filter((p: any) => {
         const key = (p.handle || "").toString();
@@ -176,18 +475,42 @@ export function SideFeed() {
         if (!rec) return true;
 
         const ch = ((p.publicChannel || "general") as any).toString();
-        const allowed = Array.isArray(rec.channels) ? rec.channels : [];
+        const allowed = Array.isArray(rec.topics) ? rec.topics : [];
         return allowed.includes(ch);
       });
     }
 
-    // Public: opt-in global channel filter row (prevents context collapse)
+    // Public: global topic filter
     if (side === "public" && FLAGS.publicChannels && publicChannel !== "all") {
       out = out.filter((p: any) => (p.publicChannel || "general") === publicChannel);
     }
 
     return out;
-  }, [rawPosts, side, activeSet, publicChannel, publicSiding, trustMode]);
+  }, [rawPosts, sets, side, activeSet, publicChannel, publicSiding, trustMode]);
+
+  const modulePlan = useMemo(() => {
+    // modulesTick is a deliberate recompute trigger when modules are dismissed/undismissed
+    void modulesTick;
+    if (!FLAGS.feedModules) return [] as FeedModulePlanEntry[];
+    const activeSetDef = activeSet ? sets.find((s) => s.id === activeSet) || null : null;
+    return planFeedModules({
+      side,
+      sets,
+      activeSet: activeSetDef,
+      publicChannel,
+      postCount: posts.length,
+    });
+  }, [side, sets, activeSet, publicChannel, posts.length, modulesTick]);
+
+  const modulesAfter = useMemo(() => {
+    const m = new Map<number, any[]>();
+    for (const e of modulePlan) {
+      const arr = m.get(e.after) || [];
+      arr.push(e.module);
+      m.set(e.after, arr);
+    }
+    return m;
+  }, [modulePlan]);
 
   const lastSeenId = useMemo(() => getLastSeenId(side), [side]);
   const dividerIndex = useMemo(() => {
@@ -196,6 +519,62 @@ export function SideFeed() {
     if (idx === -1) return posts.length ? 0 : -1;
     return idx;
   }, [posts, lastSeenId]);
+
+
+  // sd_365: Flatten feed output into "rows" so we can window-virtualize.
+  type FeedRow =
+    | { kind: "divider"; key: string }
+    | { kind: "post"; key: string; post: FeedItem; postIndex: number }
+    | { kind: "module"; key: string; module: any };
+
+  const rows = useMemo(() => {
+    const out: FeedRow[] = [];
+
+    for (let i = 0; i < posts.length; i++) {
+      if (dividerIndex === i) {
+        out.push({ kind: "divider", key: `divider:${lastSeenId || "start"}` });
+      }
+
+      const p = posts[i] as any;
+      out.push({ kind: "post", key: `post:${p.id}`, post: p as any, postIndex: i });
+
+      if (FLAGS.feedModules) {
+        const mods = modulesAfter.get(i) || [];
+        for (const m of mods) {
+          const mid = String((m as any)?.id || `${i}-${out.length}`);
+          out.push({ kind: "module", key: `module:${mid}:after:${p.id}`, module: m });
+        }
+      }
+    }
+
+    return out;
+  }, [posts, dividerIndex, lastSeenId, modulesAfter]);
+
+  // sd_365: Window virtualizer needs the list's distance from the top of the document.
+  useEffect(() => {
+    const el = listTopRef.current;
+    if (!el) return;
+
+    const compute = () => {
+      const rect = el.getBoundingClientRect();
+      const margin = window.scrollY + rect.top;
+      setScrollMargin(Number.isFinite(margin) ? margin : 0);
+    };
+
+    compute();
+    window.addEventListener("resize", compute);
+    return () => window.removeEventListener("resize", compute);
+  }, [side, publicMode, publicChannel, activeSet, posts.length]);
+
+  const rowVirtualizer = useWindowVirtualizer({
+    count: rows.length,
+    estimateSize: () => 260,
+    overscan: 8,
+    scrollMargin,
+  });
+
+  const virtualRows = rowVirtualizer.getVirtualItems();
+  const totalSize = rowVirtualizer.getTotalSize();
 
   useEffect(() => {
     if (!rawPosts.length) return;
@@ -208,152 +587,294 @@ export function SideFeed() {
     setSets((prev) => [s, ...prev.filter((x) => x.id !== s.id)]);
   };
 
+  const publicChannelLabel = useMemo(() => {
+    if (publicChannel === "all") return "All Topics";
+    const c = PUBLIC_CHANNELS.find((x) => x.id === publicChannel);
+    return c ? c.label : "Topic";
+  }, [publicChannel]);
+
+  const activeSetLabel = useMemo(() => {
+    if (!activeSet) return `All ${SIDES[side].label}`;
+    const s = sets.find((x) => x.id === activeSet);
+    return s ? s.label : "Set";
+  }, [activeSet, sets, side]);
+
+  const showPublicTune = side === "public";
+
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Feed</h1>
-        <p className="text-sm text-gray-500">
-          {SIDES[side].label} • {SIDES[side].desc} • <span className="text-gray-400">Source: {provider.name}</span>
-        </p>
-      </div>
-
-      {side === "public" && FLAGS.publicTrustDial ? (
-        <div className="mb-3 flex gap-2 flex-wrap items-center">
-          <span className="text-xs font-bold text-gray-500 mr-1">Dial</span>
-
-          <button
-            type="button"
-            onClick={() => applyTrustMode("calm")}
-            className={`px-3 py-1.5 rounded-full text-xs font-bold border hover:opacity-90 ${
-              trustMode === "calm" ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-700 border-gray-200"
-            }`}
-            title="Calm: trusted-only (signal)"
-          >
-            Calm
-          </button>
-
-          <button
-            type="button"
-            onClick={() => applyTrustMode("standard")}
-            className={`px-3 py-1.5 rounded-full text-xs font-bold border hover:opacity-90 ${
-              trustMode === "standard" ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-700 border-gray-200"
-            }`}
-            title="Standard: hide obvious low-trust noise"
-          >
-            Standard
-          </button>
-
-          <button
-            type="button"
-            onClick={() => applyTrustMode("arena")}
-            className={`px-3 py-1.5 rounded-full text-xs font-bold border hover:opacity-90 ${
-              trustMode === "arena" ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-700 border-gray-200"
-            }`}
-            title="Arena: everything (noise)"
-          >
-            Arena
-          </button>
-
-          {FLAGS.publicCalmUi ? (
+    <div className="w-full min-h-full bg-white">
+            {/* Feed header: audience pill */}
+      <div className="p-4 border-b border-gray-100 flex items-center justify-between sticky top-14 bg-white/95 backdrop-blur z-10">
+        <div className="flex items-center gap-3 min-w-0">
+          {showPublicTune ? (
             <button
               type="button"
-              onClick={toggleCounts}
-              className={`px-3 py-1.5 rounded-full text-xs font-bold border hover:opacity-90 ${
-                countsShown ? "bg-white text-gray-700 border-gray-200" : "bg-gray-900 text-white border-gray-900"
-              }`}
-              title="Visual Calm: hide engagement numbers until hover/tap"
+              onClick={() => setPublicTuneOpen(true)}
+              className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-extrabold text-gray-700 transition-colors min-w-0"
+              aria-label="Tune public feed"
             >
-              Counts: {countsShown ? "Shown" : "Hidden"}
+              <span className="truncate">{publicChannelLabel}</span>
+              <span className="text-gray-300">•</span>
+              <span className="truncate text-gray-600">{publicMode === "following" ? "Following" : "Broadcasts"}</span>
+              <ChevronDown size={14} className="text-gray-400" />
             </button>
-          ) : null}
+          ) : (
+            <button
+              type="button"
+              onClick={() => setSetPickerOpen(true)}
+              className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-extrabold text-gray-700 transition-colors min-w-0"
+              aria-label="Select set"
+            >
+              <span className="truncate">{activeSetLabel}</span>
+              <ChevronDown size={14} className="text-gray-400" />
+            </button>
+          )}
         </div>
+      </div>
+
+{/* Set picker (private sides) */}
+      {side !== "public" ? (
+        <SetPickerSheet
+          open={setPickerOpen}
+          onClose={() => setSetPickerOpen(false)}
+          sets={(sets || []).filter((s) => s.side === side)}
+          activeSet={activeSet}
+          onPick={(next) => setActiveSet(next)}
+          onNewSet={() => {
+            if (process.env.NODE_ENV !== "production") setImportOpen(true);
+            else router.push("/siddes-sets?create=1");
+          }}
+          title="Choose Set"
+          allLabel={`All ${SIDES[side].label}`}
+        />
       ) : null}
 
-      {side === "public" && FLAGS.publicCalmUi && !FLAGS.publicTrustDial ? (
-        <div className="mb-3 flex gap-2 flex-wrap items-center">
-          <span className="text-xs font-bold text-gray-500 mr-1">Calm UI</span>
-          <button
-            type="button"
-            onClick={toggleCounts}
-            className={`px-3 py-1.5 rounded-full text-xs font-bold border hover:opacity-90 ${
-              countsShown ? "bg-white text-gray-700 border-gray-200" : "bg-gray-900 text-white border-gray-900"
-            }`}
-            title="Visual Calm: hide engagement numbers until hover/tap"
-          >
-            Counts: {countsShown ? "Shown" : "Hidden"}
-          </button>
-        </div>
-      ) : null}
+      {/* Public tune */}
+      <PublicTuneSheet
+        open={publicTuneOpen}
+        onClose={() => setPublicTuneOpen(false)}
+        showTopics={side === "public" && FLAGS.publicChannels}
+        showTrust={side === "public" && FLAGS.publicTrustDial}
+        showCounts={side === "public" && FLAGS.publicCalmUi}
+        publicChannel={publicChannel}
+        onPublicChannel={setPublicChannel}
+        trustMode={trustMode}
+        onTrustMode={applyTrustMode}
+        countsShown={countsShown}
+        onToggleCounts={toggleCounts}
+        showMode={side === "public"}
+        publicMode={publicMode}
+        onPublicMode={setPublicMode}
+      />
 
-      {side === "public" && FLAGS.publicChannels ? (
-        <div className="mb-3 flex gap-2 flex-wrap">
-          <button
-            type="button"
-            onClick={() => setPublicChannel("all")}
-            className={`px-3 py-1.5 rounded-full text-xs font-bold border hover:opacity-90 ${
-              publicChannel === "all" ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-700 border-gray-200"
-            }`}
-          >
-            All
-          </button>
+            {/* Ritual Dock (Pulse) */}
+      <RitualDock side={side} activeSet={activeSet} activeSetLabel={activeSetLabel} onOpenSetPicker={() => setSetPickerOpen(true)} />
 
-          {PUBLIC_CHANNELS.map((c) => {
-            const active = publicChannel === c.id;
-            return (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => setPublicChannel(c.id)}
-                className={`px-3 py-1.5 rounded-full text-xs font-bold border hover:opacity-90 ${
-                  active ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-700 border-gray-200"
-                }`}
-                title={c.desc}
+{/* Composer (in-feed) */}
+      <div className="p-4 border-b border-gray-100">
+        <button
+          type="button"
+          onClick={() => {
+            try {
+              window.sessionStorage.setItem("sd.compose.opened", "1");
+            } catch {}
+            const href = composeHref;
+            try {
+              // prefetch helps on slower devices
+              (router as any).prefetch?.(href);
+            } catch {}
+            router.push(href);
+          }}
+          className="block w-full text-left"
+          aria-label="Write a post"
+        >
+          <div
+            className={cn(
+              "bg-white p-4 rounded-2xl shadow-sm border border-gray-200 border-l-2 transition-shadow hover:shadow-md hover:bg-gray-50",
+              theme.accentBorder
+            )}
+          >
+            <div className="flex gap-3 items-start">
+              <div
+                className={cn(
+                  "w-10 h-10 rounded-full border flex items-center justify-center text-[11px] font-black shrink-0",
+                  theme.lightBg,
+                  theme.text,
+                  theme.border
+                )}
+                aria-hidden="true"
               >
-                {c.label}
-              </button>
-            );
-          })}
-        </div>
-      ) : null}
+                ME
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm text-gray-800 font-semibold">
+                  {side === "work"
+                    ? "Write a work update…"
+                    : side === "public"
+                    ? "Write something public…"
+                    : `Write in ${SIDES[side].label}…`}
+                </div>
+                {side === "public" ? <div className="text-xs text-gray-500 mt-1">{SIDES[side].privacyHint}</div> : null}
 
-      {side === "friends" ? (
-        <div className="mb-3">
-          <SetsChipsRow sets={sets} activeSet={activeSet} onSetChange={setActiveSet} onNewSet={() => setImportOpen(true)} />
-        </div>
-      ) : null}
-
-      {posts.length ? (
-        posts.map((p, i) => (
-          <React.Fragment key={p.id}>
-            {dividerIndex === i ? <Divider /> : null}
-            <PostCard post={p as any} side={side} calmHideCounts={calmHideCounts} />
-          </React.Fragment>
-        ))
-      ) : (
-        <EmptyState side={side} activeSet={activeSet} />
-      )}
-
-      <div className="mt-8 p-8 rounded-2xl text-center border border-dashed border-gray-200 bg-gray-50">
-        <p className="text-gray-500 mb-3 font-medium">You’re all caught up.</p>
-        <button type="button" className="text-sm font-bold text-gray-900 hover:underline" onClick={() => alert("Composer comes later.")}>
-          Create Post
+                <div className="flex items-center justify-between mt-3 gap-3">
+                  <span
+                    className={cn(
+                      "text-[10px] px-2 py-1 rounded-full border font-black uppercase tracking-widest",
+                      theme.lightBg,
+                      theme.text,
+                      theme.border
+                    )}
+                    title={SIDES[side].privacyHint}
+                  >
+                    {side === "public"
+                      ? `Public: ${SIDES[side].privacyHint}`
+                      : `Audience locked: ${SIDES[side].label}`}
+                  </span>
+                  <span className={cn("px-4 py-1.5 rounded-full text-sm font-extrabold text-white", theme.primaryBg)}>
+                    Write
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </button>
       </div>
 
+            {/* Feed content */}
+      <div className="p-4">
+        {restricted ? (
+          <div className="p-6 rounded-2xl border border-amber-200 bg-amber-50 text-amber-900 space-y-2" data-testid="feed-restricted">
+            <div className="text-sm font-extrabold">This feed is restricted.</div>
+            <div className="text-xs text-amber-800">{restrictedMessage(null)}</div>
+            <div className="flex gap-2 flex-wrap pt-2">
+              <Link
+                href="/login"
+                className="px-3 py-2 rounded-full bg-gray-900 text-white text-xs font-extrabold"
+              >
+                Go to Login
+              </Link>
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="px-3 py-2 rounded-full bg-white border border-amber-200 text-amber-900 text-xs font-extrabold"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        ) : loadErr ? (
+          <div className="p-6 rounded-2xl border border-rose-200 bg-rose-50 text-rose-900 space-y-2" data-testid="feed-error">
+            <div className="text-sm font-extrabold">Could not load the feed.</div>
+            <div className="text-xs text-rose-800">{loadErr}</div>
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="px-3 py-2 rounded-full bg-gray-900 text-white text-xs font-extrabold"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        ) : loadingInitial ? (
+          <div className="space-y-3" data-testid="feed-loading">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="p-4 rounded-2xl border border-gray-100 bg-gray-50 animate-pulse">
+                <div className="h-4 bg-gray-200 rounded w-1/3 mb-3" />
+                <div className="h-3 bg-gray-200 rounded w-full mb-2" />
+                <div className="h-3 bg-gray-200 rounded w-5/6" />
+              </div>
+            ))}
+          </div>
+        ) : rows.length ? (
+          <div ref={listTopRef}>
+            <div style={{ height: `${totalSize}px`, position: "relative" }}>
+              {virtualRows.map((vr) => {
+                const row = rows[vr.index];
+                if (!row) return null;
+
+                return (
+                  <div
+                    key={row.key}
+                    data-index={vr.index}
+                    ref={rowVirtualizer.measureElement}
+                    className={row.kind === "divider" ? "" : "pb-4"}
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      transform: `translateY(${vr.start - rowVirtualizer.options.scrollMargin}px)`,
+                    }}
+                  >
+                    {row.kind === "divider" ? (
+                      <Divider />
+                    ) : row.kind === "post" ? (
+                      <PostCard post={row.post as any} side={side} calmHideCounts={calmHideCounts} />
+                    ) : (
+                      <FeedModuleCard module={row.module} />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <>
+            {FLAGS.feedModules && modulePlan.length ? (
+              <div className="space-y-3 mb-6">
+                {modulePlan.map((e) => (
+                  <FeedModuleCard key={e.module.id} module={e.module} />
+                ))}
+              </div>
+            ) : null}
+            <EmptyState side={side} composeHref={composeHref} onCreateSet={() => {
+              if (process.env.NODE_ENV !== "production") setImportOpen(true);
+              else router.push("/siddes-sets?create=1");
+            }} />
+          </>
+        )}
+
+        {!restricted && !loadErr && !loadingInitial ? (
+          hasMore ? (
+            <div className="mt-8 p-8 rounded-2xl text-center border border-dashed border-gray-200 bg-gray-50 space-y-3" data-testid="feed-load-more">
+              <div ref={sentinelRef} className="h-1 w-full" aria-hidden="true" />
+              {loadingMore ? (
+                <p className="text-gray-500 font-medium">Loading more…</p>
+              ) : (
+                <button
+                  type="button"
+                  onClick={loadMore}
+                  className="px-4 py-2 rounded-full bg-gray-900 text-white text-xs font-extrabold"
+                >
+                  Load more
+                </button>
+              )}
+              {loadMoreErr ? <div className="text-xs text-rose-800">{loadMoreErr}</div> : null}
+            </div>
+          ) : posts.length ? (
+            <div className="mt-8 p-8 rounded-2xl text-center border border-dashed border-gray-200 bg-gray-50">
+              <p className="text-gray-500 font-medium">You're all caught up.</p>
+            </div>
+          ) : null
+        ) : null}
+      </div>
+
+      {/* New Set flow */}
       <ImportSetSheet
         open={importOpen}
         onClose={() => setImportOpen(false)}
         onFinish={({ name, members }) => {
           void (async () => {
-            const s = await setsProvider.create({ side: "friends", label: name, members });
+            const s = await setsProvider.create({ side, label: name, members });
             addSetToState(s);
             setActiveSet(s.id);
-            alert(`Created Set "${s.label}" with ${s.members.length} members.`);
+            toast.success(`Created Set \"${s.label}\" with ${s.members.length} members.`);
           })();
         }}
-        onCreateSuggested={({ label, color, members }) => {
+        onCreateSuggested={({ label, color, members, side: suggestedSide }) => {
           void (async () => {
-            const s = await setsProvider.create({ side: "friends", label, members, color });
+            const s = await setsProvider.create({ side: (suggestedSide || side), label, members, color });
             addSetToState(s);
           })();
         }}
@@ -361,3 +882,4 @@ export function SideFeed() {
     </div>
   );
 }
+

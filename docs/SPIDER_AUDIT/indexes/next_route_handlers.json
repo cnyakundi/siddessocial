@@ -1,0 +1,645 @@
+[
+  {
+    "route": "/api/appeals",
+    "file": "frontend/src/app/api/appeals/route.ts",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/appeals/[id]",
+    "file": "frontend/src/app/api/appeals/[id]/route.ts",
+    "methods": [
+      "PATCH"
+    ]
+  },
+  {
+    "route": "/api/appeals/admin",
+    "file": "frontend/src/app/api/appeals/admin/route.ts",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "route": "/api/auth/account/deactivate",
+    "file": "frontend/src/app/api/auth/account/deactivate/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/auth/account/delete/confirm",
+    "file": "frontend/src/app/api/auth/account/delete/confirm/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/auth/account/delete/request",
+    "file": "frontend/src/app/api/auth/account/delete/request/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/auth/age/confirm",
+    "file": "frontend/src/app/api/auth/age/confirm/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/auth/csrf",
+    "file": "frontend/src/app/api/auth/csrf/route.ts",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "route": "/api/auth/email/change/confirm",
+    "file": "frontend/src/app/api/auth/email/change/confirm/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/auth/email/change/request",
+    "file": "frontend/src/app/api/auth/email/change/request/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/auth/export",
+    "file": "frontend/src/app/api/auth/export/route.ts",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "route": "/api/auth/google",
+    "file": "frontend/src/app/api/auth/google/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/auth/login",
+    "file": "frontend/src/app/api/auth/login/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/auth/logout",
+    "file": "frontend/src/app/api/auth/logout/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/auth/me",
+    "file": "frontend/src/app/api/auth/me/route.ts",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "route": "/api/auth/onboarding/complete",
+    "file": "frontend/src/app/api/auth/onboarding/complete/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/auth/password/change",
+    "file": "frontend/src/app/api/auth/password/change/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/auth/password/reset/confirm",
+    "file": "frontend/src/app/api/auth/password/reset/confirm/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/auth/password/reset/request",
+    "file": "frontend/src/app/api/auth/password/reset/request/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/auth/region",
+    "file": "frontend/src/app/api/auth/region/route.ts",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/auth/sessions",
+    "file": "frontend/src/app/api/auth/sessions/route.ts",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "route": "/api/auth/sessions/logout_all",
+    "file": "frontend/src/app/api/auth/sessions/logout_all/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/auth/sessions/revoke",
+    "file": "frontend/src/app/api/auth/sessions/revoke/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/auth/signup",
+    "file": "frontend/src/app/api/auth/signup/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/auth/verify/confirm",
+    "file": "frontend/src/app/api/auth/verify/confirm/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/auth/verify/resend",
+    "file": "frontend/src/app/api/auth/verify/resend/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/blocks",
+    "file": "frontend/src/app/api/blocks/route.ts",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/blocks/[token]",
+    "file": "frontend/src/app/api/blocks/[token]/route.ts",
+    "methods": [
+      "DELETE"
+    ]
+  },
+  {
+    "route": "/api/broadcasts",
+    "file": "frontend/src/app/api/broadcasts/route.ts",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/broadcasts/[id]",
+    "file": "frontend/src/app/api/broadcasts/[id]/route.ts",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "route": "/api/broadcasts/[id]/follow",
+    "file": "frontend/src/app/api/broadcasts/[id]/follow/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/broadcasts/[id]/notify",
+    "file": "frontend/src/app/api/broadcasts/[id]/notify/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/broadcasts/[id]/posts",
+    "file": "frontend/src/app/api/broadcasts/[id]/posts/route.ts",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "route": "/api/broadcasts/[id]/seen",
+    "file": "frontend/src/app/api/broadcasts/[id]/seen/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/broadcasts/[id]/unfollow",
+    "file": "frontend/src/app/api/broadcasts/[id]/unfollow/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/broadcasts/[id]/writers",
+    "file": "frontend/src/app/api/broadcasts/[id]/writers/route.ts",
+    "methods": [
+      "DELETE",
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/broadcasts/feed",
+    "file": "frontend/src/app/api/broadcasts/feed/route.ts",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "route": "/api/broadcasts/unread",
+    "file": "frontend/src/app/api/broadcasts/unread/route.ts",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "route": "/api/contacts/match",
+    "file": "frontend/src/app/api/contacts/match/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/contacts/suggestions",
+    "file": "frontend/src/app/api/contacts/suggestions/route.ts",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "route": "/api/feed",
+    "file": "frontend/src/app/api/feed/route.ts",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "route": "/api/health",
+    "file": "frontend/src/app/api/health/route.ts",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "route": "/api/inbox/debug/incoming",
+    "file": "frontend/src/app/api/inbox/debug/incoming/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/inbox/debug/unread/reset",
+    "file": "frontend/src/app/api/inbox/debug/unread/reset/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/inbox/thread/[id]",
+    "file": "frontend/src/app/api/inbox/thread/[id]/route.ts",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/inbox/threads",
+    "file": "frontend/src/app/api/inbox/threads/route.ts",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "route": "/api/invites",
+    "file": "frontend/src/app/api/invites/route.ts",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/invites/[id]",
+    "file": "frontend/src/app/api/invites/[id]/route.ts",
+    "methods": [
+      "GET",
+      "PATCH"
+    ]
+  },
+  {
+    "route": "/api/ml/suggestions",
+    "file": "frontend/src/app/api/ml/suggestions/route.ts",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "route": "/api/ml/suggestions/[id]/[action]",
+    "file": "frontend/src/app/api/ml/suggestions/[id]/[action]/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/moderation/audit",
+    "file": "frontend/src/app/api/moderation/audit/route.ts",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "route": "/api/moderation/audit/export",
+    "file": "frontend/src/app/api/moderation/audit/export/route.ts",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "route": "/api/moderation/posts/[id]",
+    "file": "frontend/src/app/api/moderation/posts/[id]/route.ts",
+    "methods": [
+      "PATCH"
+    ]
+  },
+  {
+    "route": "/api/moderation/stats",
+    "file": "frontend/src/app/api/moderation/stats/route.ts",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "route": "/api/moderation/stats/export",
+    "file": "frontend/src/app/api/moderation/stats/export/route.ts",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "route": "/api/moderation/users/state",
+    "file": "frontend/src/app/api/moderation/users/state/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/mutes",
+    "file": "frontend/src/app/api/mutes/route.ts",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/mutes/[token]",
+    "file": "frontend/src/app/api/mutes/[token]/route.ts",
+    "methods": [
+      "DELETE"
+    ]
+  },
+  {
+    "route": "/api/notifications",
+    "file": "frontend/src/app/api/notifications/route.ts",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "route": "/api/notifications/mark-all-read",
+    "file": "frontend/src/app/api/notifications/mark-all-read/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/post",
+    "file": "frontend/src/app/api/post/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/post/[id]",
+    "file": "frontend/src/app/api/post/[id]/route.ts",
+    "methods": [
+      "DELETE",
+      "GET",
+      "PATCH"
+    ]
+  },
+  {
+    "route": "/api/post/[id]/echo",
+    "file": "frontend/src/app/api/post/[id]/echo/route.ts",
+    "methods": [
+      "DELETE",
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/post/[id]/like",
+    "file": "frontend/src/app/api/post/[id]/like/route.ts",
+    "methods": [
+      "DELETE",
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/post/[id]/quote",
+    "file": "frontend/src/app/api/post/[id]/quote/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/post/[id]/replies",
+    "file": "frontend/src/app/api/post/[id]/replies/route.ts",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "route": "/api/post/[id]/reply",
+    "file": "frontend/src/app/api/post/[id]/reply/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/prism",
+    "file": "frontend/src/app/api/prism/route.ts",
+    "methods": [
+      "GET",
+      "PATCH"
+    ]
+  },
+  {
+    "route": "/api/profile/[username]",
+    "file": "frontend/src/app/api/profile/[username]/route.ts",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "route": "/api/reports",
+    "file": "frontend/src/app/api/reports/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/reports/[id]",
+    "file": "frontend/src/app/api/reports/[id]/route.ts",
+    "methods": [
+      "PATCH"
+    ]
+  },
+  {
+    "route": "/api/reports/admin",
+    "file": "frontend/src/app/api/reports/admin/route.ts",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "route": "/api/reports/admin/export",
+    "file": "frontend/src/app/api/reports/admin/export/route.ts",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "route": "/api/rituals",
+    "file": "frontend/src/app/api/rituals/route.ts",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/rituals/[id]",
+    "file": "frontend/src/app/api/rituals/[id]/route.ts",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "route": "/api/rituals/[id]/ignite",
+    "file": "frontend/src/app/api/rituals/[id]/ignite/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/rituals/[id]/respond",
+    "file": "frontend/src/app/api/rituals/[id]/respond/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/rituals/[id]/responses",
+    "file": "frontend/src/app/api/rituals/[id]/responses/route.ts",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "route": "/api/search/posts",
+    "file": "frontend/src/app/api/search/posts/route.ts",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "route": "/api/search/users",
+    "file": "frontend/src/app/api/search/users/route.ts",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "route": "/api/sets",
+    "file": "frontend/src/app/api/sets/route.ts",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/sets/[id]",
+    "file": "frontend/src/app/api/sets/[id]/route.ts",
+    "methods": [
+      "DELETE",
+      "GET",
+      "PATCH"
+    ]
+  },
+  {
+    "route": "/api/sets/[id]/events",
+    "file": "frontend/src/app/api/sets/[id]/events/route.ts",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "route": "/api/side",
+    "file": "frontend/src/app/api/side/route.ts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/slate",
+    "file": "frontend/src/app/api/slate/route.ts",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "route": "/api/telemetry",
+    "file": "frontend/src/app/api/telemetry/route.ts",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "route": "/api/users/[username]",
+    "file": "frontend/src/app/api/users/[username]/route.ts",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "route": "/api/users/[username]/posts",
+    "file": "frontend/src/app/api/users/[username]/posts/route.ts",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "route": "/m/[...key]",
+    "file": "frontend/src/app/m/[...key]/route.ts",
+    "methods": [
+      "GET"
+    ]
+  }
+]

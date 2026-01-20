@@ -1,0 +1,16 @@
+name = "siddes-media"
+main = "index.js"
+compatibility_date = "2025-12-01"
+account_id = "023c79daa84ce0cdeee53ad601180836"
+
+workers_dev = false
+routes = [
+  { pattern = "app.siddes.com/m/*", zone_name = "siddes.com" }
+]
+
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "siddes-media"
+
+# Secret required:
+#   npx wrangler secret put MEDIA_TOKEN_SECRET

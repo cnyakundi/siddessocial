@@ -18,10 +18,13 @@ export type SetDef = {
 
 const STORAGE_KEY = "sd.sets.v0";
 
-export const DEFAULT_SETS: SetDef[] = [
-  { id: "gym", side: "friends", label: "Gym Squad", color: "orange", members: ["@marc_us", "@sara_j"], count: 3 },
-  { id: "weekend", side: "friends", label: "Weekend Crew", color: "purple", members: ["@marc_us", "@elena"], count: 1 },
-];
+export const DEFAULT_SETS: SetDef[] =
+  process.env.NODE_ENV === "production"
+    ? []
+    : [
+        { id: "gym", side: "friends", label: "Gym Squad", color: "orange", members: ["@marc_us", "@sara_j"], count: 3 },
+        { id: "weekend", side: "friends", label: "Weekend Crew", color: "purple", members: ["@marc_us", "@elena"], count: 1 },
+      ];
 
 function hasWindow(): boolean {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
@@ -34,7 +37,9 @@ function safeSet(obj: any): SetDef | null {
   const side: SideId = ("public,friends,close,work".split(",") as SideId[]).includes(sideRaw as SideId)
     ? (sideRaw as SideId)
     : "friends";
-  const color = (obj.color as SetColor) || "orange";
+  let color = (obj.color as SetColor) || "orange";
+  // Chameleon law: Blue is reserved for the Public Side. Sets cannot use it.
+  if (color === "blue") color = "slate";
   const members = Array.isArray(obj.members) ? obj.members.filter((x: any) => typeof x === "string") : [];
   const count = typeof obj.count === "number" && Number.isFinite(obj.count) ? obj.count : 0;
   return { id: obj.id, side, label: obj.label, color, members, count };

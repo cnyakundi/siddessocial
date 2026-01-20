@@ -12,6 +12,8 @@ function cn(...parts: Array<string | undefined | false | null>) {
 }
 
 export function PwaClient() {
+  const IS_PROD = process.env.NODE_ENV === "production";
+
   const [offline, setOffline] = useState(false);
 
   // Install prompt
@@ -51,6 +53,7 @@ export function PwaClient() {
 
   // Service worker registration + update detection
   useEffect(() => {
+    if (!IS_PROD) return;
     if (!("serviceWorker" in navigator)) return;
 
     let mounted = true;
@@ -87,7 +90,7 @@ export function PwaClient() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [IS_PROD]);
 
   const showBar = offline || installAvailable || updateAvailable;
 

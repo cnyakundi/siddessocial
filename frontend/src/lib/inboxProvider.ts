@@ -1,9 +1,8 @@
 "use client";
 
-import type { InboxThread } from "@/src/lib/mockInbox";
+import type { InboxThread } from "@/src/lib/inboxTypes";
 import type { SideId } from "@/src/lib/sides";
 import type { ThreadMessage, ThreadMeta } from "@/src/lib/threadStore";
-import { mockProvider } from "@/src/lib/inboxProviders/mock";
 import { backendStubProvider } from "@/src/lib/inboxProviders/backendStub";
 
 export type InboxThreadItem = InboxThread;
@@ -26,19 +25,17 @@ export type InboxThreadsPage = {
 
 export type InboxProviderListOpts = {
   side?: SideId;
-  viewer?: string;
   limit?: number;
   cursor?: string;
 };
 
 export type InboxProviderThreadOpts = {
-  viewer?: string;
   limit?: number;
   cursor?: string;
 };
 
 export type InboxProvider = {
-  name: "mock" | "backend_stub";
+  name: "backend_stub";
   listThreads: (opts?: InboxProviderListOpts) => Promise<InboxThreadsPage>;
   getThread: (id: string, opts?: InboxProviderThreadOpts) => Promise<InboxThreadView>;
   sendMessage: (
@@ -51,13 +48,6 @@ export type InboxProvider = {
 };
 
 export function getInboxProvider(): InboxProvider {
-  const mode = process.env.NEXT_PUBLIC_INBOX_PROVIDER as "mock" | "backend_stub" | undefined;
-  if (mode === "backend_stub") return backendStubProvider;
-  if (mode === "mock") return mockProvider;
-
-  // Beginner-safe default:
-  // - When `NEXT_PUBLIC_API_BASE` is present (Docker full stack), prefer backend_stub.
-  // - Otherwise fall back to mock.
-  const hasApiBase = Boolean(String(process.env.NEXT_PUBLIC_API_BASE || "").trim());
-  return hasApiBase ? backendStubProvider : mockProvider;
+  // sd_181t: No mock provider. Inbox is DB-backed via backend_stub.
+  return backendStubProvider;
 }

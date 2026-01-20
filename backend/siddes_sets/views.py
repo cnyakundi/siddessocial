@@ -17,12 +17,19 @@ Access rule (stub v0):
 
 from __future__ import annotations
 
+
+def _norm_label(label: str) -> str:
+    v = str(label or "").strip()
+    if not v:
+        return "Untitled"
+    return v[:64]
+
 import os
 from typing import Any, Dict, Optional, Tuple
 
 from django.conf import settings
 from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
+from siddes_backend.csrf import dev_csrf_exempt
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -54,12 +61,18 @@ def _db_ready() -> bool:
         return False
 
 
-STORE_MODE = os.environ.get("SD_SETS_STORE", "auto").strip().lower()
-USE_AUTO = STORE_MODE in ("auto", "smart")
-AUTO_DB_READY = _db_ready() if USE_AUTO else False
+IS_DEBUG = getattr(settings, "DEBUG", False)
+DEFAULT_MODE = "auto" if IS_DEBUG else "db"
+STORE_MODE = os.environ.get("SD_SETS_STORE", DEFAULT_MODE).strip().lower()
 
-USE_DB = STORE_MODE in ("db", "database", "postgres", "pg") or (USE_AUTO and AUTO_DB_READY)
-USE_MEMORY = STORE_MODE in ("memory", "inmemory") or (USE_AUTO and not AUTO_DB_READY)
+# Production hard rule: never allow in-memory sets store when DEBUG=False.
+if not IS_DEBUG:
+    STORE_MODE = "db"
+USE_AUTO = STORE_MODE in ("auto", "smart")
+AUTO_DB_READY = _db_ready() if (USE_AUTO and IS_DEBUG) else False
+
+USE_DB = STORE_MODE in ("db", "database", "postgres", "pg") or (USE_AUTO and (not IS_DEBUG or AUTO_DB_READY))
+USE_MEMORY = STORE_MODE in ("memory", "inmemory") or (USE_AUTO and IS_DEBUG and not AUTO_DB_READY)
 
 # Default: auto -> prefer DB when ready, otherwise memory.
 _store = DbSetsStore() if USE_DB else InMemoryApiSetsStore()
@@ -77,7 +90,8 @@ def _raw_viewer_from_request(request) -> Optional[str]:
 
     user = getattr(request, "user", None)
     if user is not None and getattr(user, "is_authenticated", False):
-        return str(getattr(user, "id", "") or "").strip() or None
+        uid = str(getattr(user, "id", "") or "").strip()
+        return f"me_{uid}" if uid else None
 
     if not getattr(settings, "DEBUG", False):
         return None
@@ -109,7 +123,7 @@ def _restricted_payload(has_viewer: bool, viewer: str, role: str, *, extra: Opti
     return out
 
 
-@method_decorator(csrf_exempt, name="dispatch")
+@method_decorator(dev_csrf_exempt, name="dispatch")
 class SetsView(APIView):
     """GET/POST /api/sets"""
 
@@ -152,9 +166,9 @@ class SetsView(APIView):
         return Response({"ok": True, "restricted": False, "viewer": viewer, "role": role, "item": item}, status=status.HTTP_200_OK)
 
 
-@method_decorator(csrf_exempt, name="dispatch")
+@method_decorator(dev_csrf_exempt, name="dispatch")
 class SetDetailView(APIView):
-    """GET/PATCH /api/sets/<id>"""
+    """GET/PATCH/DELETE /api/sets/<id>"""
 
     def get(self, request, set_id: str):
         has_viewer, viewer, role = _viewer_ctx(request)
@@ -196,7 +210,27 @@ class SetDetailView(APIView):
         return Response({"ok": True, "restricted": False, "viewer": viewer, "role": role, "item": item}, status=status.HTTP_200_OK)
 
 
-@method_decorator(csrf_exempt, name="dispatch")
+    def delete(self, request, set_id: str):
+        has_viewer, viewer, role = _viewer_ctx(request)
+
+        if not has_viewer:
+            return Response({"ok": False, "restricted": True, "error": "restricted"}, status=status.HTTP_401_UNAUTHORIZED)
+        if role != "me":
+            return Response({"ok": False, "restricted": True, "error": "restricted"}, status=status.HTTP_403_FORBIDDEN)
+
+        ok = False
+        try:
+            ok = bool(_store.delete(owner_id=viewer, set_id=set_id))
+        except Exception:
+            ok = False
+
+        if not ok:
+            return Response({"ok": False, "restricted": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response({"ok": True, "restricted": False, "viewer": viewer, "role": role, "deleted": True, "id": set_id}, status=status.HTTP_200_OK)
+
+
+@method_decorator(dev_csrf_exempt, name="dispatch")
 class SetEventsView(APIView):
     """GET /api/sets/<id>/events"""
 

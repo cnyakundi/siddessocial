@@ -1,32 +1,93 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { ACTIVE_SIDE_STORAGE_KEY, getStoredActiveSide, setStoredActiveSide } from "@/src/lib/sideStore";
-import { nextSide, type SideId } from "@/src/lib/sides";
+import {
+  ACTIVE_SIDE_STORAGE_KEY,
+  getStoredActiveSide,
+  setStoredActiveSide,
+  setStoredLastNonPublicSide,
+} from "@/src/lib/sideStore";
+import type { SideId } from "@/src/lib/sides";
+import { nextSide } from "@/src/lib/sides";
+import { PublicEnterConfirmSheet } from "@/src/components/PublicEnterConfirmSheet";
+
+type SideSwitchOptions = {
+  afterConfirm?: () => void;
+  afterCancel?: () => void;
+};
 
 type SideContextValue = {
   side: SideId;
-  setSide: (side: SideId) => void;
+  /**
+   * Side-safe switching gateway.
+   * - entering Public requires explicit confirm (unless already in Public)
+   * - callers may pass afterConfirm/afterCancel hooks
+   */
+  setSide: (side: SideId, opts?: SideSwitchOptions) => void;
   cycleSide: (dir?: 1 | -1) => void;
 };
 
 const SideContext = createContext<SideContextValue | null>(null);
 
 export function SideProvider({ children }: { children: React.ReactNode }) {
-  const [side, setSideState] = useState<SideId>("public");
+  const [side, setSideState] = useState<SideId>("friends");
+
+  // Public entry confirm (centralized)
+  const [confirmPublic, setConfirmPublic] = useState(false);
+  const [publicFromSide, setPublicFromSide] = useState<SideId>("friends");
+  const [pendingAfterConfirm, setPendingAfterConfirm] = useState<null | (() => void)>(null);
+  const [pendingAfterCancel, setPendingAfterCancel] = useState<null | (() => void)>(null);
 
   useEffect(() => {
     const stored = getStoredActiveSide();
-    if (stored) setSideState(stored);
+    if (stored) {
+      setSideState(stored);
+      if (stored !== "public") setStoredLastNonPublicSide(stored);
+    }
   }, []);
 
-  const setSide = (s: SideId) => {
+  const setSideImmediate = (s: SideId) => {
     setSideState(s);
     setStoredActiveSide(s);
+    if (s !== "public") setStoredLastNonPublicSide(s);
+  };
+
+  const setSide = (next: SideId, opts?: SideSwitchOptions) => {
+    const afterConfirm = opts?.afterConfirm;
+    const afterCancel = opts?.afterCancel;
+
+    // Threshold moment: entering Public must be deliberate.
+    if (next === "public" && side !== "public") {
+      setPublicFromSide(side);
+      setPendingAfterConfirm(() => afterConfirm || null);
+      setPendingAfterCancel(() => afterCancel || null);
+      setConfirmPublic(true);
+      return;
+    }
+
+    setSideImmediate(next);
+    if (afterConfirm) afterConfirm();
   };
 
   const cycleSide = (dir: 1 | -1 = 1) => {
     setSide(nextSide(side, dir));
+  };
+
+  const confirmEnterPublic = () => {
+    setConfirmPublic(false);
+    setSideImmediate("public");
+    const fn = pendingAfterConfirm;
+    setPendingAfterConfirm(null);
+    setPendingAfterCancel(null);
+    if (fn) fn();
+  };
+
+  const cancelEnterPublic = () => {
+    setConfirmPublic(false);
+    const fn = pendingAfterCancel;
+    setPendingAfterConfirm(null);
+    setPendingAfterCancel(null);
+    if (fn) fn();
   };
 
   useEffect(() => {
@@ -36,6 +97,7 @@ export function SideProvider({ children }: { children: React.ReactNode }) {
       const v = e.newValue as SideId;
       if (v === "public" || v === "friends" || v === "close" || v === "work") {
         setSideState(v);
+        if (v !== "public") setStoredLastNonPublicSide(v);
       }
     }
     window.addEventListener("storage", onStorage);
@@ -44,7 +106,18 @@ export function SideProvider({ children }: { children: React.ReactNode }) {
 
   const value: SideContextValue = { side, setSide, cycleSide };
 
-  return <SideContext.Provider value={value}>{children}</SideContext.Provider>;
+  return (
+    <SideContext.Provider value={value}>
+      {children}
+
+      <PublicEnterConfirmSheet
+        open={confirmPublic}
+        fromSide={publicFromSide}
+        onCancel={cancelEnterPublic}
+        onConfirm={confirmEnterPublic}
+      />
+    </SideContext.Provider>
+  );
 }
 
 export function useSide(): SideContextValue {

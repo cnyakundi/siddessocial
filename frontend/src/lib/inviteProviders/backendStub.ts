@@ -68,48 +68,6 @@ function localOrigin(): string {
   return typeof window !== "undefined" ? window.location.origin : "http://localhost";
 }
 
-function normalizeApiBase(raw: string | undefined | null): string | null {
-  const s = String(raw || "").trim();
-  if (!s) return null;
-  try {
-    const u = new URL(s);
-    return u.origin;
-  } catch {
-    return null;
-  }
-}
-
-function isRemoteBase(base: string): boolean {
-  if (typeof window === "undefined") return true;
-  try {
-    return new URL(base).origin !== window.location.origin;
-  } catch {
-    return false;
-  }
-}
-
-function escapeCookieName(name: string): string {
-  return name.replace(/[^a-zA-Z0-9_\-]/g, "\\$&");
-}
-
-function getCookie(name: string): string | undefined {
-  if (typeof document === "undefined") return undefined;
-  const m = document.cookie.match(new RegExp(`(?:^|; )${escapeCookieName(name)}=([^;]*)`));
-  return m ? decodeURIComponent(m[1]) : undefined;
-}
-
-function withViewerHeader(init: RequestInit, viewer: string): RequestInit {
-  const headers = new Headers(init.headers || {});
-  headers.set("x-sd-viewer", viewer);
-  return { ...init, headers };
-}
-
-function usesDjangoBase(): { enabled: boolean; base: string | null } {
-  const base = normalizeApiBase(process.env.NEXT_PUBLIC_API_BASE);
-  if (!base) return { enabled: false, base: null };
-  return { enabled: isRemoteBase(base), base };
-}
-
 function buildUrl(path: string, direction?: InviteDirection, baseOverride?: string): string {
   const base = baseOverride || localOrigin();
   const u = new URL(path, base);
@@ -117,20 +75,8 @@ function buildUrl(path: string, direction?: InviteDirection, baseOverride?: stri
   return u.toString();
 }
 
-async function fetchWithFallback(path: string, direction: InviteDirection | undefined, init: RequestInit): Promise<Response> {
-  const django = usesDjangoBase();
-  const viewer = getCookie("sd_viewer");
-  const initWithViewer = viewer ? withViewerHeader(init, viewer) : init;
-
-  if (django.enabled && django.base) {
-    try {
-      const res = await fetch(buildUrl(path, direction, django.base), initWithViewer);
-      if (res.status < 500) return res;
-    } catch {
-      // fall through
-    }
-  }
-
+// sd_231: Always SAME-ORIGIN Next API routes (/api/*). No cross-origin Django mode.
+async function fetchSameOrigin(path: string, direction: InviteDirection | undefined, init: RequestInit): Promise<Response> {
   return fetch(buildUrl(path, direction, undefined), init);
 }
 
@@ -139,20 +85,22 @@ export const backendStubProvider: InviteProvider = {
 
   async list(opts?): Promise<SetInvite[]> {
     const direction = (opts?.direction || "all") as InviteDirection;
-    const res = await fetchWithFallback("/api/invites", direction, { cache: "no-store" });
+    const res = await fetchSameOrigin("/api/invites", direction, { cache: "no-store" });
+    if (res.status === 401 || res.status === 403) throw new Error("Restricted (login required).");
     if (!res.ok) return [];
     const data = await j<ListResp>(res);
-    if (data.restricted) return [];
+    if (data.restricted) throw new Error("Restricted (login required).");
     const items = Array.isArray(data.items) ? data.items : [];
     return items.map(coerceInvite).filter(Boolean) as SetInvite[];
   },
 
   async get(id: string): Promise<SetInvite | null> {
     const safeId = encodeURIComponent(id);
-    const res = await fetchWithFallback(`/api/invites/${safeId}`, undefined, { cache: "no-store" });
+    const res = await fetchSameOrigin(`/api/invites/${safeId}`, undefined, { cache: "no-store" });
+    if (res.status === 401 || res.status === 403) throw new Error("Restricted (login required).");
     if (!res.ok) return null;
     const data = await j<ItemResp>(res);
-    if (data.restricted) return null;
+    if (data.restricted) throw new Error("Restricted (login required).");
     const item = coerceInvite((data as any).item);
     return item;
   },
@@ -164,14 +112,14 @@ export const backendStubProvider: InviteProvider = {
       to: input.to,
       message: input.message,
     };
-    const res = await fetchWithFallback("/api/invites", undefined, {
+    const res = await fetchSameOrigin("/api/invites", undefined, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
     });
     if (!res.ok) throw new Error(`invites:create failed (${res.status})`);
     const data = await j<ItemResp>(res);
-    if (data.restricted) throw new Error("invites:create restricted (missing sd_viewer or not me)");
+    if (data.restricted) throw new Error("invites:create restricted (not authenticated)");
     const item = coerceInvite((data as any).item);
     if (!item) throw new Error("invites:create invalid response");
     return item;
@@ -179,7 +127,7 @@ export const backendStubProvider: InviteProvider = {
 
   async act(id: string, action: InviteAction): Promise<SetInvite | null> {
     const safeId = encodeURIComponent(id);
-    const res = await fetchWithFallback(`/api/invites/${safeId}`, undefined, {
+    const res = await fetchSameOrigin(`/api/invites/${safeId}`, undefined, {
       method: "PATCH",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ action }),
@@ -187,7 +135,7 @@ export const backendStubProvider: InviteProvider = {
     if (res.status === 404) return null;
     if (!res.ok) throw new Error(`invites:act failed (${res.status})`);
     const data = await j<ItemResp>(res);
-    if (data.restricted) throw new Error("invites:act restricted (missing sd_viewer)");
+    if (data.restricted) throw new Error("invites:act restricted (not authenticated)");
     const item = coerceInvite((data as any).item);
     if (item && action === "accept" && item.status === "accepted") {
       emitSetsChanged();

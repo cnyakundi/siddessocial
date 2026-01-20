@@ -2,21 +2,27 @@
 
 import React from "react";
 import { SideProvider } from "@/src/components/SideProvider";
-import { SideChrome } from "@/src/components/SideChrome";
+import { AppShell } from "@/src/components/AppShell";
+import { FirstRunSidePicker } from "@/src/components/FirstRunSidePicker";
 import { PwaClient } from "@/src/components/PwaClient";
 import { QueueIndicator } from "@/src/components/QueueIndicator";
 import { StubViewerCookie } from "@/src/components/StubViewerCookie";
-import { TopNav } from "@/src/components/TopNav";
+import { ToastHost } from "@/src/components/ToastHost";
+import { AuthBootstrap } from "@/src/components/AuthBootstrap";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
     <SideProvider>
-      <TopNav />
-      {children}
-      <SideChrome />
+      <FirstRunSidePicker />
+      <AuthBootstrap />
+
+      {/* Reserve space for BottomNav (and iOS safe-area). */}
+      <AppShell>{children}</AppShell>
       <PwaClient />
       <QueueIndicator />
       <StubViewerCookie />
-    </SideProvider>
+    
+      <ToastHost />
+</SideProvider>
   );
 }

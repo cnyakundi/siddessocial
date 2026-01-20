@@ -75,53 +75,8 @@ async function j<T>(res: Response): Promise<T> {
   return data as T;
 }
 
-
 function localOrigin(): string {
   return typeof window !== "undefined" ? window.location.origin : "http://localhost";
-}
-
-function normalizeApiBase(raw: string | undefined | null): string | null {
-  const s = String(raw || "").trim();
-  if (!s) return null;
-  try {
-    const u = new URL(s);
-    // Keep only origin (we always pass absolute paths like /api/sets/...)
-    return u.origin;
-  } catch {
-    return null;
-  }
-}
-
-function isRemoteBase(base: string): boolean {
-  if (typeof window === "undefined") return true;
-  try {
-    return new URL(base).origin !== window.location.origin;
-  } catch {
-    return false;
-  }
-}
-
-function escapeCookieName(name: string): string {
-  return name.replace(/[^a-zA-Z0-9_\-]/g, "\\$&");
-}
-
-function getCookie(name: string): string | undefined {
-  if (typeof document === "undefined") return undefined;
-  const m = document.cookie.match(new RegExp(`(?:^|; )${escapeCookieName(name)}=([^;]*)`));
-  return m ? decodeURIComponent(m[1]) : undefined;
-}
-
-function withViewerHeader(init: RequestInit, viewer: string): RequestInit {
-  const headers = new Headers(init.headers || {});
-  headers.set("x-sd-viewer", viewer);
-  return { ...init, headers };
-}
-
-function usesDjangoBase(): { enabled: boolean; base: string | null } {
-  const base = normalizeApiBase(process.env.NEXT_PUBLIC_API_BASE);
-  if (!base) return { enabled: false, base: null };
-  // Only treat it as "django mode" when it points off-origin (docker dev).
-  return { enabled: isRemoteBase(base), base };
 }
 
 function buildUrl(path: string, opts?: SetsListOpts, baseOverride?: string): string {
@@ -134,44 +89,31 @@ function buildUrl(path: string, opts?: SetsListOpts, baseOverride?: string): str
   return u.toString();
 }
 
-async function fetchWithFallback(path: string, opts: SetsListOpts | undefined, init: RequestInit): Promise<Response> {
-  const django = usesDjangoBase();
-  const viewer = getCookie("sd_viewer");
-  const initWithViewer = viewer ? withViewerHeader(init, viewer) : init;
-
-  // Primary: Django base (cross-origin) when configured.
-  if (django.enabled && django.base) {
-    try {
-      const res = await fetch(buildUrl(path, opts, django.base), initWithViewer);
-      if (res.status < 500) return res;
-    } catch {
-      // fall through to local stub
-    }
-  }
-
-  // Fallback: Next.js stubs (same-origin).
+// sd_231: Always SAME-ORIGIN Next API routes (/api/*). No cross-origin Django mode.
+async function fetchSameOrigin(path: string, opts: SetsListOpts | undefined, init: RequestInit): Promise<Response> {
   return fetch(buildUrl(path, opts, undefined), init);
 }
-
 
 export const backendStubProvider: SetsProvider = {
   name: "backend_stub",
 
   async list(opts?: SetsListOpts): Promise<SetDef[]> {
-    const res = await fetchWithFallback("/api/sets", opts, { cache: "no-store" });
+    const res = await fetchSameOrigin("/api/sets", opts, { cache: "no-store" });
+    if (res.status === 401 || res.status === 403) throw new Error("Restricted (login required).");
     if (!res.ok) return [];
     const data = await j<ListResp>(res);
-    if (data.restricted) return [];
+    if (data.restricted) throw new Error("Restricted (login required).");
     const items = Array.isArray(data.items) ? data.items : [];
     return items.map(coerceSet).filter(Boolean) as SetDef[];
   },
 
   async get(id: string): Promise<SetDef | null> {
     const safeId = encodeURIComponent(id);
-    const res = await fetchWithFallback(`/api/sets/${safeId}`, undefined, { cache: "no-store" });
+    const res = await fetchSameOrigin(`/api/sets/${safeId}`, undefined, { cache: "no-store" });
+    if (res.status === 401 || res.status === 403) throw new Error("Restricted (login required).");
     if (!res.ok) return null;
     const data = await j<ItemResp>(res);
-    if (data.restricted) return null;
+    if (data.restricted) throw new Error("Restricted (login required).");
     return coerceSet((data as any).item);
   },
 
@@ -182,14 +124,14 @@ export const backendStubProvider: SetsProvider = {
       members: input.members || [],
       color: input.color,
     };
-    const res = await fetchWithFallback(`/api/sets`, undefined, {
+    const res = await fetchSameOrigin(`/api/sets`, undefined, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
     });
     if (!res.ok) throw new Error(`sets:create failed (${res.status})`);
     const data = await j<ItemResp>(res);
-    if (data.restricted) throw new Error("sets:create restricted (missing sd_viewer or not me)");
+    if (data.restricted) throw new Error("sets:create restricted (not authenticated)");
     const item = coerceSet((data as any).item || (Array.isArray(data.items) ? data.items[0] : null));
     if (!item) throw new Error("sets:create invalid response");
     return item;
@@ -204,14 +146,14 @@ export const backendStubProvider: SetsProvider = {
         color: i.color,
       })),
     };
-    const res = await fetchWithFallback(`/api/sets`, undefined, {
+    const res = await fetchSameOrigin(`/api/sets`, undefined, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
     });
     if (!res.ok) throw new Error(`sets:bulkCreate failed (${res.status})`);
     const data = await j<ItemResp>(res);
-    if (data.restricted) throw new Error("sets:bulkCreate restricted (missing sd_viewer or not me)");
+    if (data.restricted) throw new Error("sets:bulkCreate restricted (not authenticated)");
     const items = Array.isArray(data.items) ? data.items : [];
     return items.map(coerceSet).filter(Boolean) as SetDef[];
   },
@@ -224,7 +166,7 @@ export const backendStubProvider: SetsProvider = {
     if (typeof patch.side === "string") body.side = patch.side;
     if (typeof patch.color === "string") body.color = patch.color;
 
-    const res = await fetchWithFallback(`/api/sets/${safeId}`, undefined, {
+    const res = await fetchSameOrigin(`/api/sets/${safeId}`, undefined, {
       method: "PATCH",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
@@ -234,7 +176,7 @@ export const backendStubProvider: SetsProvider = {
     if (!res.ok) throw new Error(`sets:update failed (${res.status})`);
 
     const data = await j<ItemResp>(res);
-    if (data.restricted) throw new Error("sets:update restricted (missing sd_viewer or not me)");
+    if (data.restricted) throw new Error("sets:update restricted (not authenticated)");
 
     const item = coerceSet((data as any).item);
     return item || null;
@@ -242,10 +184,11 @@ export const backendStubProvider: SetsProvider = {
 
   async events(id: string): Promise<SetEvent[]> {
     const safeId = encodeURIComponent(id);
-    const res = await fetchWithFallback(`/api/sets/${safeId}/events`, undefined, { cache: "no-store" });
+    const res = await fetchSameOrigin(`/api/sets/${safeId}/events`, undefined, { cache: "no-store" });
+    if (res.status === 401 || res.status === 403) throw new Error("Restricted (login required).");
     if (!res.ok) return [];
     const data = await j<EventsResp>(res);
-    if (data.restricted) return [];
+    if (data.restricted) throw new Error("Restricted (login required).");
     const items = Array.isArray(data.items) ? data.items : [];
     return items.map(coerceEvent).filter(Boolean) as SetEvent[];
   },

@@ -175,8 +175,7 @@ export function CreateSetSheet(props: {
             <div className="p-3 rounded-2xl border border-amber-200 bg-amber-50 text-amber-800 text-sm">
               <div className="font-bold">Create disabled (read-only)</div>
               <div className="text-xs mt-1">
-                In <span className="font-mono">backend_stub</span> mode, only <span className="font-mono">sd_viewer=me</span> can create Sets.
-                Switch your viewer cookie, then refresh.
+                Set creation is enforced server-side. If you do not have permission, you will see an error.
               </div>
             </div>
           </div>
@@ -248,7 +247,7 @@ export function CreateSetSheet(props: {
                 Pick a theme
               </div>
               <div className="grid grid-cols-3 gap-2">
-                {(Object.keys(SET_THEMES) as SetColor[]).map((c) => {
+                {(Object.keys(SET_THEMES) as SetColor[]).filter((c) => c !== "blue").map((c) => {
                   const th = SET_THEMES[c];
                   const active = c === color;
                   return (

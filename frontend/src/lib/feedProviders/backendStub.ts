@@ -1,88 +1,93 @@
 "use client";
 
 import type { SideId } from "@/src/lib/sides";
-import type { FeedItem, FeedProvider } from "@/src/lib/feedProvider";
+import type { FeedItem, FeedPage, FeedProvider } from "@/src/lib/feedProvider";
+import { RestrictedError, isRestrictedPayload } from "@/src/lib/restricted";
 
-function getCookie(name: string): string | null {
-  if (typeof document === "undefined") return null;
-  const safe = name.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
-  const m = document.cookie.match(new RegExp(`(?:^|; )${safe}=([^;]*)`));
-  return m ? decodeURIComponent(m[1]) : null;
-}
-
-function localOrigin(): string {
-  return typeof window !== "undefined" ? window.location.origin : "http://localhost";
-}
-
-function normalizeApiBase(raw: string | undefined | null): string | null {
-  const s = String(raw || "").trim();
-  if (!s) return null;
-  try {
-    const u = new URL(s);
-    return u.origin;
-  } catch {
-    return null;
-  }
-}
-
-function isRemoteBase(base: string): boolean {
-  if (typeof window === "undefined") return true;
-  try {
-    return new URL(base).origin !== window.location.origin;
-  } catch {
-    return true;
-  }
-}
-
-function usesDjangoBase(): { enabled: boolean; base: string | null } {
-  const base = normalizeApiBase(process.env.NEXT_PUBLIC_API_BASE);
-  if (!base) return { enabled: false, base: null };
-  // Only treat it as "django mode" when it points off-origin (docker dev).
-  return { enabled: isRemoteBase(base), base };
-}
-
-function withViewerHeader(init: RequestInit, viewer: string): RequestInit {
-  const h = new Headers(init.headers || {});
-  if (!h.has("x-sd-viewer")) h.set("x-sd-viewer", viewer);
-  return { ...init, headers: h };
-}
-
-function buildUrl(side: SideId, baseOverride?: string): string {
-  const base = baseOverride || localOrigin();
-  const u = new URL("/api/feed", base);
+// sd_231: Client code must NEVER call Django cross-origin or forward viewer identity.
+// Always call SAME-ORIGIN Next API routes so session cookies are truth.
+function buildUrl(
+  side: SideId,
+  opts?: { topic?: string | null; limit?: number; cursor?: string | null }
+): string {
+  const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost";
+  const u = new URL("/api/feed", origin);
   u.searchParams.set("side", side);
+  if (opts?.topic) u.searchParams.set("topic", String(opts.topic));
+  if (typeof opts?.limit === "number") u.searchParams.set("limit", String(opts.limit));
+  if (opts?.cursor) u.searchParams.set("cursor", String(opts.cursor));
   return u.toString();
 }
 
-async function fetchWithFallback(side: SideId): Promise<Response> {
-  const django = usesDjangoBase();
-  const init: RequestInit = { cache: "no-store" };
-  const viewer = getCookie("sd_viewer");
-  const initWithViewer = viewer ? withViewerHeader(init, viewer) : init;
+type FeedResp = {
+  restricted?: boolean;
+  items?: FeedItem[];
+  nextCursor?: string | null;
+  hasMore?: boolean;
+  ok?: boolean;
+  error?: string;
+};
 
-  // Primary: Django base (cross-origin) when configured.
-  if (django.enabled && django.base) {
-    try {
-      const res = await fetch(buildUrl(side, django.base), initWithViewer);
-      if (res.status < 500) return res;
-    } catch {
-      // fall through
-    }
-  }
-
-  // Fallback: local Next API route.
-  return fetch(buildUrl(side, undefined), init);
+function clampLimit(n?: number): number {
+  const raw = typeof n === "number" ? n : 30;
+  if (!Number.isFinite(raw)) return 30;
+  return Math.max(1, Math.min(200, Math.floor(raw)));
 }
 
-type FeedResp = { restricted?: boolean; items?: FeedItem[] };
+// sd_300: fetch helper used by the DB-backed feed provider.
+// - Same-origin only (Next API route)
+// - Sends session cookies (credentials: include)
+// - No mock fallback (fail closed)
+async function fetchWithFallback(
+  side: SideId,
+  opts?: { topic?: string | null; limit?: number; cursor?: string | null }
+): Promise<Response> {
+  const url = buildUrl(side, opts);
+  try {
+    return await fetch(url, {
+      method: "GET",
+      credentials: "include",
+      headers: { accept: "application/json" },
+      cache: "no-store",
+    });
+  } catch (e: any) {
+    // Network / offline / dev server down.
+    const detail = String(e?.message || "network_error");
+    return new Response(JSON.stringify({ ok: false, error: "network_error", detail }), {
+      status: 503,
+      headers: { "content-type": "application/json" },
+    });
+  }
+}
 
 export const backendStubProvider: FeedProvider = {
   name: "backend_stub",
-  async list(side: SideId): Promise<FeedItem[]> {
-    const res = await fetchWithFallback(side);
-    if (!res.ok) return [];
-    const data = (await res.json()) as FeedResp;
-    if (data.restricted) return [];
-    return (data.items || []) as FeedItem[];
+
+  async listPage(side: SideId, opts?: { topic?: string | null; limit?: number; cursor?: string | null }): Promise<FeedPage> {
+    const limit = clampLimit(opts?.limit);
+    const cursor = (opts?.cursor || null) as string | null;
+
+    const res = await fetchWithFallback(side, { topic: opts?.topic ?? null, limit, cursor });
+    const data = (await res.json().catch(() => null)) as FeedResp | null;
+
+    if (isRestrictedPayload(res, data)) {
+      throw new RestrictedError(res.status || 403, "Feed is restricted — sign in as your session user.");
+    }
+
+    if (!res.ok || !data) {
+      const msg = (data as any)?.error || `Feed request failed (${res.status})`;
+      throw new Error(msg);
+    }
+
+    const items = Array.isArray(data.items) ? (data.items as FeedItem[]) : [];
+    const nextCursor = typeof data.nextCursor === "string" && data.nextCursor ? data.nextCursor : null;
+    const hasMore = Boolean(data.hasMore) && !!nextCursor;
+
+    return { items, nextCursor, hasMore };
+  },
+
+  async list(side: SideId, opts?: { topic?: string | null }): Promise<FeedItem[]> {
+    const page = await backendStubProvider.listPage(side, { topic: opts?.topic ?? null, limit: 50, cursor: null });
+    return page.items;
   },
 };

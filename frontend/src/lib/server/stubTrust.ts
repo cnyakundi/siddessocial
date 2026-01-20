@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 
-import { normalizeTrustLevel, type TrustLevel } from "@/src/lib/trustLevels";
+import type { TrustLevel } from "@/src/lib/trustLevels";
+import { normalizeTrustLevel } from "@/src/lib/trustLevels";
 import { roleForViewer } from "@/src/lib/server/inboxVisibility";
 
 export type StubTrustResolution = {

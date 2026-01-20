@@ -4,7 +4,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import { X } from "lucide-react";
 
 import type { SideId } from "@/src/lib/sides";
-import { getInviteProvider, type SetInvite } from "@/src/lib/inviteProvider";
+import type { SetInvite } from "@/src/lib/inviteProvider";
+import { getInviteProvider } from "@/src/lib/inviteProvider";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -124,9 +125,7 @@ export function InviteActionSheet({
             {busy ? "Sending…" : "Send invite"}
           </button>
 
-          <div className="text-[11px] text-gray-400 mt-3">
-            Dev stub: invite creation requires <span className="font-mono">sd_viewer=me</span> when using backend_stub.
-          </div>
+          <div className="text-[11px] text-gray-400 mt-3">Invites are enforced server-side. If you do not have permission, you will see an error.</div>
         </div>
       </div>
     </div>

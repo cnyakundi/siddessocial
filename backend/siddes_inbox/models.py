@@ -51,6 +51,10 @@ class InboxThread(models.Model):
 
     title = models.CharField(max_length=255, default="")
 
+    # sd_242a: real-user scoping. For now Inbox threads are per-owner for safety
+    # until InboxThreadParticipant is introduced.
+    owner_viewer_id = models.CharField(max_length=64, default="")
+
     # Participant snapshot (single-counterparty DM style for now)
     participant_display_name = models.CharField(max_length=255, default="")
     participant_initials = models.CharField(max_length=8, default="")
@@ -67,6 +71,7 @@ class InboxThread(models.Model):
 
     class Meta:
         indexes = [
+            models.Index(fields=["owner_viewer_id", "updated_at"], name="inbox_thread_owner_upd"),
             models.Index(fields=["locked_side", "updated_at"], name="inbox_thread_side_upd"),
             models.Index(fields=["updated_at"], name="inbox_thread_updated"),
         ]
@@ -116,7 +121,12 @@ class InboxThreadReadState(models.Model):
 
     thread = models.ForeignKey(InboxThread, on_delete=models.CASCADE, related_name="read_states")
 
-    # In this stub, the viewer identity is reduced to a deterministic role.
+    # Viewer identity (stable string):
+    # - Authenticated users: me_<django_user_id>
+    # - DEV: may be 'friends', 'work', etc.
+    viewer_id = models.CharField(max_length=64)
+
+    # Derived role classifier (visibility shim / indexing).
     viewer_role = models.CharField(max_length=16, choices=ViewerRoleId.choices)
 
     # Canonical read marker used to derive unread counts.
@@ -127,9 +137,11 @@ class InboxThreadReadState(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=["thread", "viewer_role"], name="inbox_read_thread_viewer_uniq"),
+            models.UniqueConstraint(fields=["thread", "viewer_id"], name="inbox_read_thread_viewerid_uniq"),
         ]
-        indexes = [
+        indexes = [            models.Index(fields=["viewer_id", "thread"], name="inbox_read_viewerid_thread"),
+            models.Index(fields=["thread", "viewer_id"], name="inbox_read_thread_viewerid"),
+
             models.Index(fields=["viewer_role", "thread"], name="inbox_read_role_thread"),
             models.Index(fields=["thread", "viewer_role"], name="inbox_read_thread_role"),
         ]

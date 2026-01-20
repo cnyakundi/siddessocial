@@ -3,17 +3,18 @@
 import React, { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Lock, Pin, Search, X } from "lucide-react";
-import { InboxStubDebugPanel } from "@/src/components/InboxStubDebugPanel";
+import { Lock, Pin, Search, X, UserPlus } from "lucide-react";
 import { InboxBanner } from "@/src/components/InboxBanner";
 import { toast } from "@/src/lib/toastBus";
 import { useSide } from "@/src/components/SideProvider";
-import { SIDE_THEMES, SIDES, type SideId } from "@/src/lib/sides";
-import { MOCK_THREADS, type InboxThread } from "@/src/lib/mockInbox";
-import { getInboxProvider, type InboxThreadItem } from "@/src/lib/inboxProvider";
+import type { SideId } from "@/src/lib/sides";
+import { SIDE_THEMES, SIDES } from "@/src/lib/sides";
+import type { InboxThreadItem } from "@/src/lib/inboxProvider";
+import { getInboxProvider } from "@/src/lib/inboxProvider";
 import { ensureThreadLockedSide, loadThread, loadThreadMeta } from "@/src/lib/threadStore";
 import { loadUnreadMap } from "@/src/lib/inboxState";
 import { loadPinnedSet, togglePinned } from "@/src/lib/inboxPins";
+import { NotificationsView } from "@/src/components/NotificationsView";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -251,14 +252,24 @@ export default function SiddesInboxPage() {
 }
 
 function SiddesInboxPageInner() {
-  const { side } = useSide();
+  const { side, setSide } = useSide();
   const theme = SIDE_THEMES[side];
   const router = useRouter();
   const params = useSearchParams();
 
-  const provider = useMemo(() => getInboxProvider(), []);
+  type InboxTab = "messages" | "alerts";
+  const tabParam = params.get("tab");
+  const tab: InboxTab = tabParam === "alerts" ? "alerts" : "messages";
 
-  const viewer = params.get("viewer") || undefined;
+  const setTab = (next: InboxTab) => {
+    const sp = new URLSearchParams(params.toString());
+    if (next === "alerts") sp.set("tab", "alerts");
+    else sp.delete("tab");
+    const qs = sp.toString();
+    router.replace(qs ? `/siddes-inbox?${qs}` : "/siddes-inbox");
+  };
+
+  const provider = useMemo(() => getInboxProvider(), []);
   const apiSide = (params.get("side") || undefined) as SideId | undefined;
 
   const PAGE_SIZE = 20;
@@ -267,14 +278,13 @@ function SiddesInboxPageInner() {
   // We set the real time after mount.
   const [nowMs, setNowMs] = useState(0);
 
-  const [threads, setThreads] = useState<InboxThreadItem[]>(MOCK_THREADS as unknown as InboxThreadItem[]);
+  const [threads, setThreads] = useState<InboxThreadItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
 
   const [hasMore, setHasMore] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
 
-  const [restricted, setRestricted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [lockedById, setLockedById] = useState<Record<string, SideId> | null>(null);
@@ -293,7 +303,7 @@ function SiddesInboxPageInner() {
     return () => window.clearInterval(id);
   }, []);
 
-  const recomputeLocalMaps = (list: InboxThread[]) => {
+  const recomputeLocalMaps = (list: InboxThreadItem[]) => {
     const locks: Record<string, SideId> = {};
     const fallbackUnread: Record<string, number> = {};
 
@@ -316,17 +326,14 @@ function SiddesInboxPageInner() {
   useEffect(() => {
     let alive = true;
 
-    setRestricted(false);
     setError(null);
 
     setLoading(true);
     setHasMore(false);
     setNextCursor(null);
 
-    // Keep exact substring required by debug-panel gate:
-    // provider.listThreads({ viewer, side: apiSide })
     provider
-      .listThreads({ viewer, side: apiSide, limit: PAGE_SIZE })
+      .listThreads({ side: apiSide, limit: PAGE_SIZE })
       .then((page) => {
         if (!alive) return;
 
@@ -334,11 +341,7 @@ function SiddesInboxPageInner() {
         setThreads(items);
         setHasMore(Boolean(page?.hasMore));
         setNextCursor(page?.nextCursor ?? null);
-        recomputeLocalMaps(items as unknown as InboxThread[]);
-
-        if (provider.name === "backend_stub" && apiSide && items.length === 0) {
-          setRestricted(true);
-        }
+        recomputeLocalMaps(items);
       })
       .catch(() => {
         if (!alive) return;
@@ -357,7 +360,7 @@ function SiddesInboxPageInner() {
       alive = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [provider, viewer, apiSide]);
+  }, [provider, apiSide]);
 
   const loadMore = async () => {
     if (provider.name !== "backend_stub") return;
@@ -366,13 +369,13 @@ function SiddesInboxPageInner() {
 
     setLoadingMore(true);
     try {
-      const page = await provider.listThreads({ viewer, side: apiSide, limit: PAGE_SIZE, cursor: nextCursor });
+      const page = await provider.listThreads({ side: apiSide, limit: PAGE_SIZE, cursor: nextCursor });
       const items = (page?.items || []) as InboxThreadItem[];
 
       setThreads((prev) => {
         const seen = new Set(prev.map((t) => (t as any).id));
         const merged = [...prev, ...items.filter((t) => !seen.has((t as any).id))];
-        recomputeLocalMaps(merged as unknown as InboxThread[]);
+        recomputeLocalMaps(merged);
         return merged;
       });
 
@@ -389,7 +392,7 @@ function SiddesInboxPageInner() {
   // Local-only refresh on focus (unread + pins), no refetch
   useEffect(() => {
     const onFocus = () => {
-      const list = (threads as unknown as InboxThread[]);
+      const list = threads;
       const ids = list.map((t) => t.id);
       const fallbackUnread: Record<string, number> = {};
       for (const t of list) fallbackUnread[t.id] = t.unread ?? 0;
@@ -405,7 +408,7 @@ function SiddesInboxPageInner() {
   }, [threads]);
 
   const rows = useMemo(() => {
-    const seeded = (threads as unknown as InboxThread[]).map((t) => {
+    const seeded = threads.map((t) => {
       const lockedSide = lockedById?.[t.id] ?? t.lockedSide ?? "friends";
       const unread = unreadById?.[t.id] ?? t.unread ?? 0;
       const pinned = pinnedById?.[t.id] ?? false;
@@ -456,7 +459,7 @@ function SiddesInboxPageInner() {
     if (q) {
       base = base.filter((r) => {
         const title = (r.title ?? "").toLowerCase();
-        const last = (r.lastText ?? "").toLowerCase();
+        const last = (r.mismatch ? "" : (r.lastText ?? "")).toLowerCase();
         return title.includes(q) || last.includes(q);
       });
     }
@@ -503,35 +506,67 @@ function SiddesInboxPageInner() {
         const t = filteredRows[activeIdx];
         if (!t) return;
         e.preventDefault();
+        const locked = (t.lockedSide as SideId) ?? side;
+        if (locked !== side) setSide(locked);
         router.push(`/siddes-inbox/${t.id}`);
       }
     };
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [filteredRows, activeIdx, router]);
+  }, [filteredRows, activeIdx, router, side, setSide]);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-2xl mx-auto px-4 py-4">
-        <div className="flex items-center justify-between mb-4">
-          <Link href="/siddes-feed" className="text-sm font-bold text-gray-700 hover:underline">
-            ← Feed
-          </Link>
-          <div className={cn("text-xs font-bold px-3 py-1 rounded-full border", theme.lightBg, theme.border, theme.text)}>
-            {SIDES[side].label} Inbox
+      <div className="px-4 py-4">
+        <div className="mb-3" data-testid="inbox-tabs">
+          <div className="inline-flex rounded-full border border-gray-200 bg-white p-1 shadow-sm">
+            <button
+              type="button"
+              data-testid="inbox-tab-messages"
+              onClick={() => setTab("messages")}
+              className={cn(
+                "px-4 py-2 rounded-full text-xs font-bold",
+                tab === "messages" ? cn(theme.primaryBg, "text-white") : "text-gray-600 hover:bg-gray-50"
+              )}
+            >
+              Messages
+            </button>
+            <button
+              type="button"
+              data-testid="inbox-tab-alerts"
+              onClick={() => setTab("alerts")}
+              className={cn(
+                "px-4 py-2 rounded-full text-xs font-bold",
+                tab === "alerts" ? cn(theme.primaryBg, "text-white") : "text-gray-600 hover:bg-gray-50"
+              )}
+            >
+              Alerts
+            </button>
           </div>
         </div>
 
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight mb-2">Inbox</h1>
+        {tab === "alerts" ? (
+          <NotificationsView embedded />
+        ) : (
+          <>
 
-        <InboxStubDebugPanel />
+                <div className="flex items-center justify-between mb-4">
+          <div className={cn("md:hidden text-xs font-bold px-3 py-1 rounded-full border", theme.lightBg, theme.border, theme.text)}>
+            {SIDES[side].label} Inbox
+          </div>
 
-        {restricted ? (
-          <InboxBanner tone="warn" title="Restricted inbox">
-            Your viewer token can’t access <b>{apiSide}</b> threads. Try <b>viewer=me</b> in the debug panel.
-          </InboxBanner>
-        ) : null}
+          <Link
+            href="/siddes-invites"
+            data-testid="inbox-invites"
+            className="inline-flex items-center gap-2 text-xs font-extrabold px-3 py-2 rounded-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
+            aria-label="Open invites"
+            title="Invites"
+          >
+            <UserPlus size={16} className="text-gray-500" />
+            <span>Invites</span>
+          </Link>
+        </div>
 
         {error ? (
           <InboxBanner tone="danger" title="Inbox error">
@@ -565,7 +600,7 @@ function SiddesInboxPageInner() {
             ) : null}
           </div>
 
-          <div className="mt-1 text-[11px] text-gray-400">
+          <div className="mt-1 text-[11px] text-gray-400 hidden md:block">
             Tip: press <span className="font-bold">J</span>/<span className="font-bold">K</span> to move,{" "}
             <span className="font-bold">Enter</span> to open.
           </div>
@@ -584,6 +619,13 @@ function SiddesInboxPageInner() {
                 data-testid={`thread-row-${t.id}`}
                 role="option"
                 aria-selected={idx === activeIdx}
+                onClick={(e) => {
+                  if (t.mismatch) {
+                    e.preventDefault();
+                    setSide(lockedSide);
+                    router.push(`/siddes-inbox/${t.id}`);
+                  }
+                }}
                 onMouseEnter={() => setActiveIdx(idx)}
                 className={cn(
                   "block px-4 py-4 border-b border-gray-100 hover:bg-gray-50 outline-none",
@@ -615,7 +657,7 @@ function SiddesInboxPageInner() {
                     </button>
 
                     <SidePill sideId={lockedSide} />
-                    <ContextRiskBadge sideId={lockedSide} />
+                    <span className="hidden md:inline-flex"><ContextRiskBadge sideId={lockedSide} /></span>
                     <div
                       className="text-xs text-gray-400"
                       title={formatAbsTime(Number((t as any).updatedAt || 0))}
@@ -626,7 +668,13 @@ function SiddesInboxPageInner() {
                 </div>
 
                 <div className="flex items-center justify-between mt-1">
-                  <div className="text-sm text-gray-600 truncate pr-4">{t.lastText}</div>
+                  {t.mismatch ? (
+                    <div className="text-sm text-gray-400 italic truncate pr-4">
+                      Message hidden — enter {SIDES[lockedSide].label} to view
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-600 truncate pr-4">{t.lastText}</div>
+                  )}
                   {t.unread > 0 ? (
                     <div className="text-[10px] font-bold bg-red-100 text-red-700 px-2 py-0.5 rounded-full">{t.unread}</div>
                   ) : null}
@@ -669,6 +717,8 @@ function SiddesInboxPageInner() {
         <p className="text-xs text-gray-400 mt-4">
           Local-only inbox: unread + pins + last-message sorting persist on this device.
         </p>
+          </>
+        )}
       </div>
     </div>
   );

@@ -1,2 +1,0 @@
-frontend/src/app/siddes-sets/page.tsx
-frontend/tsconfig.tsbuildinfo

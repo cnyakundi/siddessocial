@@ -1,22 +1,33 @@
 "use client";
 
 import type { SideId } from "@/src/lib/sides";
-import type { FeedPost } from "@/src/lib/mockFeed";
-import { mockProvider } from "@/src/lib/feedProviders/mock";
+import type { FeedPost } from "@/src/lib/feedTypes";
 import { backendStubProvider } from "@/src/lib/feedProviders/backendStub";
 
 export type FeedItem = FeedPost;
 
+export type FeedPage = {
+  items: FeedItem[];
+  nextCursor: string | null;
+  hasMore: boolean;
+};
+
 export type FeedProvider = {
-  name: "mock" | "backend_stub";
-  list: (side: SideId) => Promise<FeedItem[]>;
+  name: "backend_stub";
+
+  // Cursor-based paging (supersonic feed step).
+  // - cursor: opaque string returned by previous page; null for first page.
+  // - limit: number of items per page; provider clamps for safety.
+  listPage: (
+    side: SideId,
+    opts?: { topic?: string | null; limit?: number; cursor?: string | null }
+  ) => Promise<FeedPage>;
+
+  // Convenience: returns the first page items (legacy call sites).
+  list: (side: SideId, opts?: { topic?: string | null }) => Promise<FeedItem[]>;
 };
 
 export function getFeedProvider(): FeedProvider {
-  const mode = process.env.NEXT_PUBLIC_FEED_PROVIDER as "mock" | "backend_stub" | undefined;
-  if (mode === "backend_stub") return backendStubProvider;
-  if (mode === "mock") return mockProvider;
-
-  const hasApiBase = Boolean(String(process.env.NEXT_PUBLIC_API_BASE || "").trim());
-  return hasApiBase ? backendStubProvider : mockProvider;
+  // sd_181s: No mock provider. Feed is DB-backed via backend_stub.
+  return backendStubProvider;
 }

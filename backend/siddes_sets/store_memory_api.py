@@ -223,6 +223,32 @@ class InMemoryApiSetsStore:
             "count": int(s.get("count") or 0),
         }
 
+
+    def delete(self, *, owner_id: str, set_id: str) -> bool:
+        st = _ensure(owner_id)
+        if not set_id or set_id not in st["sets"]:
+            return False
+        # Remove set
+        del st["sets"][set_id]
+        # Remove events for this set
+        st["events"] = [e for e in st["events"] if e.get("setId") != set_id]
+        # Add a lightweight deletion event (dev-only)
+        st["events"].append({"id": _event_id(), "setId": set_id, "kind": "deleted", "ts": now_ms(), "by": owner_id, "data": {}})
+        return True
+
+
+    def delete(self, *, owner_id: str, set_id: str) -> bool:
+        st = _ensure(owner_id)
+        if not set_id or set_id not in st["sets"]:
+            return False
+        # Remove set
+        del st["sets"][set_id]
+        # Remove events for this set
+        st["events"] = [e for e in st["events"] if e.get("setId") != set_id]
+        # Add a lightweight deletion event (dev-only)
+        st["events"].append({"id": _event_id(), "setId": set_id, "kind": "deleted", "ts": now_ms(), "by": owner_id, "data": {}})
+        return True
+
     def events(self, *, owner_id: str, set_id: str) -> List[Dict[str, Any]]:
         st = _ensure(owner_id)
         if set_id not in st["sets"]:

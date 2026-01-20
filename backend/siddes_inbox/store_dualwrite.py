@@ -94,10 +94,12 @@ class DualWriteInboxStore:
             title, participant, locked = self._shadow_thread_snapshot(viewer_id=viewer_id, thread_id=thread_id, side_hint=side_hint)
             locked_side: SideId = (locked or side_hint or "friends")  # type: ignore[assignment]
             self.shadow_db.ensure_thread(
+                viewer_id=viewer_id,
                 thread_id=thread_id,
                 locked_side=locked_side,
                 title=str(title or ""),
                 participant=participant,
+                owner_viewer_id=viewer_id,
             )
         except Exception:
             # swallow

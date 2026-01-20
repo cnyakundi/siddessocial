@@ -19,6 +19,8 @@ from typing import Any, Dict, List, Optional
 
 from django.db import transaction
 
+from siddes_backend.identity import viewer_aliases
+
 from siddes_sets.models import SetEventKind, SiddesSet, SiddesSetEvent
 
 from .models import SiddesInvite, VALID_SIDES, VALID_STATUSES
@@ -79,9 +81,10 @@ class DbInvitesStore:
             return None
 
         act = str(action or "").strip().lower()
-        if act in ("accept", "reject") and inv.to_id != viewer_id:
+        aliases = viewer_aliases(viewer_id)
+        if act in ("accept", "reject") and inv.to_id not in aliases:
             return {"_forbidden": True}
-        if act == "revoke" and inv.from_id != viewer_id:
+        if act == "revoke" and inv.from_id not in aliases:
             return {"_forbidden": True}
         return None
 
@@ -89,14 +92,15 @@ class DbInvitesStore:
         if not viewer_id:
             return []
 
+        aliases = list(viewer_aliases(viewer_id))
         qs = SiddesInvite.objects.all()
         d = str(direction or "").strip().lower()
         if d == "incoming":
-            qs = qs.filter(to_id=viewer_id)
+            qs = qs.filter(to_id__in=aliases)
         elif d == "outgoing":
-            qs = qs.filter(from_id=viewer_id)
+            qs = qs.filter(from_id__in=aliases)
         else:
-            qs = qs.filter(models.Q(to_id=viewer_id) | models.Q(from_id=viewer_id))
+            qs = qs.filter(models.Q(to_id__in=aliases) | models.Q(from_id__in=aliases))
 
         qs = qs.order_by("-updated_at")
         return [invite_to_item(i) for i in qs]
@@ -108,7 +112,8 @@ class DbInvitesStore:
             inv = SiddesInvite.objects.get(id=invite_id)
         except SiddesInvite.DoesNotExist:
             return None
-        if inv.to_id != viewer_id and inv.from_id != viewer_id:
+        aliases = viewer_aliases(viewer_id)
+        if inv.to_id not in aliases and inv.from_id not in aliases:
             return None
         return invite_to_item(inv)
 
@@ -121,6 +126,12 @@ class DbInvitesStore:
         side: Any,
         message: str = "",
     ) -> Dict[str, Any]:
+        # sd_243 normalize handle-ish ids for stable matching
+        from_id = str(from_id or "").strip()
+        to_id = str(to_id or "").strip()
+        if from_id.startswith("@"): from_id = "@" + from_id[1:].strip().lower()
+        if to_id.startswith("@"): to_id = "@" + to_id[1:].strip().lower()
+
         side_v = clean_side(side)
         msg = str(message or "")[:280]
 
@@ -175,9 +186,10 @@ class DbInvitesStore:
         # Authorization:
         # - accept/reject only by recipient
         # - revoke only by sender
-        if act in ("accept", "reject") and inv.to_id != viewer_id:
+        aliases = viewer_aliases(viewer_id)
+        if act in ("accept", "reject") and inv.to_id not in aliases:
             return None
-        if act == "revoke" and inv.from_id != viewer_id:
+        if act == "revoke" and inv.from_id not in aliases:
             return None
 
         with transaction.atomic():
@@ -203,6 +215,13 @@ class DbInvitesStore:
                 if nxt != prev_list:
                     s.members = nxt
                     s.save(update_fields=["members", "updated_at"])
+
+                    # sd_366: Keep membership table in sync (best-effort)
+                    try:
+                        from siddes_sets.models import SiddesSetMember  # type: ignore
+                        SiddesSetMember.objects.get_or_create(set=s, member_id=inv.to_id)
+                    except Exception:
+                        pass
                     SiddesSetEvent.objects.create(
                         id=new_id("se"),
                         set=s,

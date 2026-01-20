@@ -1,8 +1,10 @@
 # Siddes — Public Trust Dial (Calm / Standard / Arena) [Draft]
 
+> **Note:** UI says **Topics**. Implementation uses `publicChannel` internally (topics are an implementation detail).
+
 Goal: let users control the **temperature** of the Public feed without an algorithm.
 
-Instead of forcing “For You” vs “Following”, Siddes exposes a simple dial:
+Instead of forcing “For You” vs “Siding”, Siddes exposes a simple dial:
 
 - **Calm** (Signal): trusted-only
 - **Standard**: hides obvious low-trust noise
@@ -29,7 +31,7 @@ Enable in dev:
 
 - `NEXT_PUBLIC_SD_PUBLIC_TRUST_DIAL=1`
 
-Public Channels are independent (optional):
+Public Topics are independent (optional):
 
 - `NEXT_PUBLIC_SD_PUBLIC_CHANNELS=1`
 

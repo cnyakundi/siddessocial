@@ -9,17 +9,24 @@ Why this exists:
 
 from __future__ import annotations
 
+import os
 import time
 import uuid
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
+from django.conf import settings
 from django.db import models, transaction
 
-from .models import SiddesSet, SiddesSetEvent, SideId, SetColor, SetEventKind
+from siddes_backend.identity import viewer_aliases
+
+from .models import SiddesSet, SiddesSetEvent, SideId, SetColor, SetEventKind, SiddesSetMember
 
 
 VALID_SIDES = {"public", "friends", "close", "work"}
 VALID_COLORS = {"orange", "purple", "blue", "emerald", "rose", "slate"}
+
+# Safety: cap Set members to avoid abuse (single-table list field).
+MAX_SET_MEMBERS = 200
 
 
 def now_ms() -> int:
@@ -52,15 +59,46 @@ def clean_color(raw: Any) -> str:
     return v if v in VALID_COLORS else "emerald"
 
 
+def _clean_member_handle(raw: Any) -> Optional[str]:
+    s = str(raw or "").strip()
+    if not s:
+        return None
+
+    if s.startswith("@"):
+        body = s[1:].strip().lower()
+    else:
+        body = s.strip().lower()
+
+    # Basic handle body constraints (no spaces, no '@' in emails).
+    if len(body) < 2 or len(body) > 32:
+        return None
+
+    for ch in body:
+        # allow: a-z, 0-9, underscore, dot, hyphen
+        if ch.isalnum():
+            continue
+        if ch in "_-.":
+            continue
+        return None
+
+    return "@" + body
+
+
 def clean_members(raw: Any) -> List[str]:
     if not isinstance(raw, list):
         return []
     out: List[str] = []
+    seen: set[str] = set()
     for m in raw:
-        s = str(m).strip()
-        if not s:
+        h = _clean_member_handle(m)
+        if not h:
             continue
-        out.append(s)
+        if h in seen:
+            continue
+        seen.add(h)
+        out.append(h)
+        if len(out) >= MAX_SET_MEMBERS:
+            break
     return out
 
 
@@ -91,8 +129,36 @@ def event_to_item(e: SiddesSetEvent) -> Dict[str, Any]:
     return out
 
 
+# sd_366: Normalize Set membership into a join-friendly table.
+# We keep SiddesSet.members (JSON) for payload parity, but rely on SetMember for indexed lookups.
+
+def sync_memberships(*, set_id: str, members: List[str]) -> None:
+    """Best-effort: ensure SiddesSetMember rows match `members`.
+
+    Safe before migrations are applied: if table doesn't exist yet, we fail silently.
+    """
+
+    sid = str(set_id or '').strip()
+    if not sid:
+        return
+
+    try:
+        members_v = clean_members(members)
+        SiddesSetMember.objects.filter(set_id=sid).exclude(member_id__in=members_v).delete()
+        existing = set(SiddesSetMember.objects.filter(set_id=sid).values_list('member_id', flat=True))
+        missing = [m for m in members_v if m not in existing]
+        if missing:
+            SiddesSetMember.objects.bulk_create(
+                [SiddesSetMember(set_id=sid, member_id=m) for m in missing],
+                ignore_conflicts=True,
+            )
+    except Exception:
+        return
+
+
+
 class DbSetsStore:
-    """Database-backed Sets store with a small deterministic seed."""
+    """Database-backed Sets store with an optional dev seed."""
 
     def _is_seed_owner(self, owner_id: str) -> bool:
         """Only seed for the canonical dev owner.
@@ -106,12 +172,25 @@ class DbSetsStore:
         return v == "me" or v.startswith("me_")
 
     def ensure_seed(self, owner_id: str) -> None:
-        """Seed a couple of Sets for a new owner (dev friendliness).
+        """Seed a couple of Sets for a new owner (dev-only).
 
-        We only seed when the owner has zero sets.
+        World-safe rule:
+        - Never seed when DEBUG=False.
+        - Never seed unless SIDDES_SEED_DEFAULT_SETS=1 (explicit opt-in).
         """
 
         if not owner_id:
+            return
+
+        # Production hardening: never seed outside DEBUG.
+        try:
+            from django.conf import settings  # type: ignore
+            import os
+            if not getattr(settings, "DEBUG", False):
+                return
+            if str(os.environ.get("SIDDES_SEED_DEFAULT_SETS", "")).strip() != "1":
+                return
+        except Exception:
             return
 
         # Only seed for the canonical owner.
@@ -146,6 +225,8 @@ class DbSetsStore:
                     count=0,
                 )
 
+                sync_memberships(set_id=s.id, members=members)
+
                 SiddesSetEvent.objects.create(
                     id=new_id("se"),
                     set=s,
@@ -169,25 +250,39 @@ class DbSetsStore:
         if not viewer_id:
             return []
 
-        # Seed only for the canonical owner.
+        # Seed only for the canonical owner, and only when explicitly enabled.
         self.ensure_seed(viewer_id)
 
+        aliases = viewer_aliases(viewer_id)
+
         try:
-            qs = SiddesSet.objects.filter(models.Q(owner_id=viewer_id) | models.Q(members__contains=[viewer_id]))
+            aliases_list = list(aliases) if isinstance(aliases, (set, list, tuple)) else [viewer_id]
+            q = models.Q(owner_id__in=aliases_list)
+
+            # sd_366: membership table (fast) with JSON fallback (pre-migration safety).
+            try:
+                member_set_ids = SiddesSetMember.objects.filter(member_id__in=aliases_list).values_list("set_id", flat=True)
+                q |= models.Q(id__in=member_set_ids)
+            except Exception:
+                for a in aliases_list:
+                    q |= models.Q(members__contains=[a])
+
+            qs = SiddesSet.objects.filter(q).distinct()
             if side and side in VALID_SIDES:
                 qs = qs.filter(side=side)
             qs = qs.order_by("-updated_at")
             return [set_to_item(s) for s in qs]
         except Exception:
             # Backend compatibility fallback (dev only): do a python filter.
-            own = list(SiddesSet.objects.filter(owner_id=viewer_id))
+            aliases_list = list(aliases) if isinstance(aliases, (set, list, tuple)) else [viewer_id]
+            own = list(SiddesSet.objects.filter(owner_id__in=aliases_list))
             extra: List[SiddesSet] = []
             for s in SiddesSet.objects.all():
-                if s.owner_id == viewer_id:
+                if s.owner_id in aliases:
                     continue
                 members = s.members if isinstance(s.members, list) else []
                 mem = {str(m).strip() for m in members if isinstance(m, (str, int, float))}
-                if viewer_id in mem:
+                if mem.intersection(set(aliases)):
                     extra.append(s)
 
             all_visible = own + extra
@@ -203,20 +298,37 @@ class DbSetsStore:
 
         self.ensure_seed(viewer_id)
 
+        aliases = viewer_aliases(viewer_id)
+
         try:
             s = SiddesSet.objects.get(id=set_id)
         except SiddesSet.DoesNotExist:
             return None
 
-        members = s.members if isinstance(s.members, list) else []
-        mem = {str(m).strip() for m in members if isinstance(m, (str, int, float))}
+        if s.owner_id in aliases:
+            return set_to_item(s)
 
-        if s.owner_id != viewer_id and viewer_id not in mem:
-            return None
+        # sd_366: membership table check (fast) + JSON fallback
+        try:
+            if SiddesSetMember.objects.filter(set_id=set_id, member_id__in=list(aliases)).exists():
+                return set_to_item(s)
+        except Exception:
+            members = s.members if isinstance(s.members, list) else []
+            mem = {str(m).strip() for m in members if isinstance(m, (str, int, float))}
+            if mem.intersection(aliases):
+                return set_to_item(s)
 
-        return set_to_item(s)
+        return None
 
-    def create(self, *, owner_id: str, side: str, label: str, members: List[str], color: Optional[str] = None) -> Dict[str, Any]:
+    def create(
+        self,
+        *,
+        owner_id: str,
+        side: str,
+        label: str,
+        members: List[str],
+        color: Optional[str] = None,
+    ) -> Dict[str, Any]:
         t = now_ms()
         side = clean_side(side)
         label = str(label or "Untitled")
@@ -236,6 +348,8 @@ class DbSetsStore:
                 members=members,
                 count=0,
             )
+
+            sync_memberships(set_id=s.id, members=members)
 
             SiddesSetEvent.objects.create(
                 id=new_id("se"),
@@ -261,6 +375,30 @@ class DbSetsStore:
                 )
             )
         return out
+
+
+    def delete(self, *, owner_id: str, set_id: str) -> bool:
+        if not set_id:
+            return False
+        try:
+            s = SiddesSet.objects.get(id=set_id, owner_id=owner_id)
+        except SiddesSet.DoesNotExist:
+            return False
+        # Cascades to events.
+        s.delete()
+        return True
+
+
+    def delete(self, *, owner_id: str, set_id: str) -> bool:
+        if not set_id:
+            return False
+        try:
+            s = SiddesSet.objects.get(id=set_id, owner_id=owner_id)
+        except SiddesSet.DoesNotExist:
+            return False
+        # Cascades to events.
+        s.delete()
+        return True
 
     def update(self, *, owner_id: str, set_id: str, patch: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         if not set_id:
@@ -343,6 +481,14 @@ class DbSetsStore:
 
             s.save()
 
+            # sd_366: Keep membership table in sync with JSON members.
+            try:
+                if any(getattr(e, "kind", "") == SetEventKind.MEMBERS_UPDATED for e in events):
+                    cur = s.members if isinstance(s.members, list) else []
+                    sync_memberships(set_id=s.id, members=cur)
+            except Exception:
+                pass
+
             if events:
                 SiddesSetEvent.objects.bulk_create(events)
 
@@ -355,15 +501,25 @@ class DbSetsStore:
 
         self.ensure_seed(viewer_id)
 
+        aliases = viewer_aliases(viewer_id)
+
         try:
             s = SiddesSet.objects.get(id=set_id)
         except SiddesSet.DoesNotExist:
             return []
 
-        members = s.members if isinstance(s.members, list) else []
-        mem = {str(m).strip() for m in members if isinstance(m, (str, int, float))}
-        if s.owner_id != viewer_id and viewer_id not in mem:
-            return []
+        if s.owner_id not in aliases:
+            ok = False
+            # sd_366: membership table check (fast) + JSON fallback
+            try:
+                ok = SiddesSetMember.objects.filter(set_id=set_id, member_id__in=list(aliases)).exists()
+            except Exception:
+                members = s.members if isinstance(s.members, list) else []
+                mem = {str(m).strip() for m in members if isinstance(m, (str, int, float))}
+                ok = bool(mem.intersection(aliases))
+
+            if not ok:
+                return []
 
         qs = SiddesSetEvent.objects.filter(set=s).order_by("-ts_ms")
         return [event_to_item(e) for e in qs]

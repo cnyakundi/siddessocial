@@ -29,8 +29,10 @@ class PostStore:
         side: SideId,
         text: str,
         set_id: Optional[str] = None,
+        public_channel: Optional[str] = None,
         urgent: bool = False,
         client_key: Optional[str] = None,
+        echo_of_post_id: Optional[str] = None,
     ) -> PostRecord:
         if client_key:
             k = (author_id, client_key)
@@ -45,14 +47,30 @@ class PostStore:
             side=side,
             text=text,
             set_id=set_id,
+            public_channel=public_channel,
             urgent=urgent,
             created_at=time.time(),
             client_key=client_key,
+            echo_of_post_id=echo_of_post_id,
         )
         self._posts[post_id] = rec
         if client_key:
             self._by_author_key[(author_id, client_key)] = post_id
         return rec
+
+    def delete_by_author_client_key(self, *, author_id: str, client_key: str) -> int:
+        """Delete a post by (author_id, client_key). Returns number deleted."""
+        ck = str(client_key or '').strip()
+        if not ck:
+            return 0
+        key = (str(author_id or '').strip(), ck)
+        pid = self._by_author_key.pop(key, None)
+        if not pid:
+            return 0
+        if pid in self._posts:
+            del self._posts[pid]
+            return 1
+        return 0
 
     def list(self) -> List[PostRecord]:
         return sorted(self._posts.values(), key=lambda p: p.created_at, reverse=True)

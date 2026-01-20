@@ -1,51 +1,37 @@
 import { NextResponse } from "next/server";
-import { getSet, updateSet } from "@/src/lib/server/setsStore";
-import { normalizeViewer, roleForViewer } from "@/src/lib/server/inboxVisibility";
-import { resolveStubViewer } from "@/src/lib/server/stubViewer";
-// sd_viewer gating: resolveStubViewer reads cookie sd_viewer / header x-sd-viewer (never ?viewer=).
+import { proxyJson } from "../../auth/_proxy";
 
 export async function GET(req: Request, ctx: { params: { id: string } }) {
-  const r = resolveStubViewer(req);
-  const viewer = normalizeViewer(r.viewerId);
-  const role = roleForViewer(viewer);
-
-  if (!r.viewerId || role !== "me") {
-    return NextResponse.json({ ok: true, restricted: true, viewer: r.viewerId ? viewer : null, role, item: null });
-  }
-
-  const item = getSet(viewer, ctx.params.id);
-  return NextResponse.json({ ok: true, restricted: false, viewer, role, item });
+  const id = ctx?.params?.id;
+  const url = new URL(req.url);
+  const qs = url.search || "";
+  const out = await proxyJson(req, `/api/sets/${id}${qs}`, "GET");
+  if (out instanceof NextResponse) return out;
+  const { res, data, setCookies } = out;
+  const r = NextResponse.json(data, { status: res.status });
+  for (const c of setCookies) r.headers.append("set-cookie", c);
+  return r;
 }
 
+// PATCH parity: the Sets provider uses PATCH /api/sets/:id to update set metadata.
 export async function PATCH(req: Request, ctx: { params: { id: string } }) {
-  const r = resolveStubViewer(req);
-  const viewer = normalizeViewer(r.viewerId);
-  const role = roleForViewer(viewer);
+  const id = ctx?.params?.id;
+  const body = await req.json().catch(() => ({}));
+  const out = await proxyJson(req, `/api/sets/${id}`, "PATCH", body);
+  if (out instanceof NextResponse) return out;
+  const { res, data, setCookies } = out;
+  const r = NextResponse.json(data, { status: res.status });
+  for (const c of setCookies) r.headers.append("set-cookie", c);
+  return r;
+}
 
-  if (!r.viewerId) {
-    return NextResponse.json({ ok: false, restricted: true, error: "restricted" }, { status: 401 });
-  }
-  if (role !== "me") {
-    return NextResponse.json({ ok: false, restricted: true, error: "restricted" }, { status: 403 });
-  }
 
-  let body: any = null;
-  try {
-    body = await req.json();
-  } catch {
-    body = null;
-  }
-
-  const patch: any = {};
-  if (typeof body?.label === "string") patch.label = body.label;
-  if (Array.isArray(body?.members)) patch.members = body.members.filter((m: any) => typeof m === "string");
-  if (typeof body?.side === "string") patch.side = body.side;
-  if (typeof body?.color === "string") patch.color = body.color;
-
-  const item = updateSet(viewer, ctx.params.id, patch);
-  if (!item) {
-    return NextResponse.json({ ok: false, restricted: false, error: "not_found" }, { status: 404 });
-  }
-
-  return NextResponse.json({ ok: true, restricted: false, viewer, role, item });
+export async function DELETE(req: Request, ctx: { params: { id: string } }) {
+  const id = ctx?.params?.id;
+  const out = await proxyJson(req, `/api/sets/${id}`, "DELETE");
+  if (out instanceof NextResponse) return out;
+  const { res, data, setCookies } = out;
+  const r = NextResponse.json(data, { status: res.status });
+  for (const c of setCookies) r.headers.append("set-cookie", c);
+  return r;
 }

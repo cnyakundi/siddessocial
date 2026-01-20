@@ -1,18 +1,15 @@
 import { NextResponse } from "next/server";
-import { listSetEvents } from "@/src/lib/server/setsStore";
-import { normalizeViewer, roleForViewer } from "@/src/lib/server/inboxVisibility";
-import { resolveStubViewer } from "@/src/lib/server/stubViewer";
-// sd_viewer gating: resolveStubViewer reads cookie sd_viewer / header x-sd-viewer (never ?viewer=).
+import { proxyJson } from "../../../auth/_proxy";
 
 export async function GET(req: Request, ctx: { params: { id: string } }) {
-  const r = resolveStubViewer(req);
-  const viewer = normalizeViewer(r.viewerId);
-  const role = roleForViewer(viewer);
+  const id = String(ctx?.params?.id || "").trim();
+  if (!id) return NextResponse.json({ ok: false, error: "not_found" }, { status: 404 });
 
-  if (!r.viewerId || role !== "me") {
-    return NextResponse.json({ ok: true, restricted: true, viewer: r.viewerId ? viewer : null, role, items: [] });
-  }
-
-  const items = listSetEvents(viewer, ctx.params.id);
-  return NextResponse.json({ ok: true, restricted: false, viewer, role, items });
+  const qs = new URL(req.url).search || "";
+  const out = await proxyJson(req, `/api/sets/${encodeURIComponent(id)}/events${qs}`, "GET");
+  if (out instanceof NextResponse) return out;
+  const { res, data, setCookies } = out;
+  const r = NextResponse.json(data, { status: res.status });
+  for (const c of setCookies) r.headers.append("set-cookie", c);
+  return r;
 }

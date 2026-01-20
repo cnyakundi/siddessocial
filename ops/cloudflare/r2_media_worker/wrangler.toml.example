@@ -1,0 +1,15 @@
+name = "siddes-media"
+main = "index.js"
+compatibility_date = "2025-12-01"
+
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "<YOUR_BUCKET_NAME>"
+
+# Route /m/* to this Worker
+routes = [
+  { pattern = "<YOUR_DOMAIN>/m/*", zone_name = "<YOUR_ZONE_NAME>" }
+]
+
+# Secret required:
+#   npx wrangler secret put MEDIA_TOKEN_SECRET

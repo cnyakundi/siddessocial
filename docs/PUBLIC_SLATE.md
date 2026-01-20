@@ -40,3 +40,21 @@ Optional (independent):
 - `frontend/src/lib/mockPublicSlate.ts`
 - `frontend/src/lib/mockUsers.ts` (adds `pinnedStack` demo data)
 - `frontend/src/components/ProfileView.tsx` (wires slate + stack behind the flag)
+
+---
+
+## DB-backed Slate (sd_181i)
+Slate entries are now stored in the database and served by the backend.
+
+### API
+- `GET /api/slate?target=@handle`
+
+### Seed demo entries
+Run:
+- `python manage.py migrate`
+- `python manage.py seed_public_slate_demo --reset --target=@founder`
+
+### Frontend
+- Next proxy: `frontend/src/app/api/slate/route.ts`
+- UI: `frontend/src/components/PublicSlate.tsx` fetches `/api/slate` (no mocks)
+

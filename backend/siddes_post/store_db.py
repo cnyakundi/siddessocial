@@ -21,6 +21,25 @@ def _new_post_id() -> str:
 def _new_reply_id() -> str:
     return f"r_{int(time.time()*1000)}_{uuid.uuid4().hex[:8]}"
 
+def _clean_echo_of_post_id(v: Optional[str]) -> Optional[str]:
+    """Normalize echo_of_post_id inputs.
+
+    - If caller passes None, keep NULL in DB (do NOT persist the string "None").
+    - Blank and sentinel strings (none/null/0) are treated as empty.
+    """
+    if v is None:
+        return None
+    try:
+        s = str(v).strip()
+    except Exception:
+        return None
+    if not s:
+        return None
+    low = s.lower()
+    if low in ("none", "null", "0"):
+        return None
+    return s
+
 
 class DbPostStore:
     def create(
@@ -30,8 +49,10 @@ class DbPostStore:
         side: str,
         text: str,
         set_id: Optional[str] = None,
+        public_channel: Optional[str] = None,
         urgent: bool = False,
         client_key: Optional[str] = None,
+        echo_of_post_id: Optional[str] = None,
     ) -> Post:
         ck = (client_key or "").strip() or None
         if ck:
@@ -39,18 +60,43 @@ class DbPostStore:
             if existing:
                 return existing
 
+        eop = (echo_of_post_id or "").strip()
+
+
+        if not eop or eop.lower() in ("none", "null", "0"):
+
+
+            eop = None
+
+
+
         rec = Post(
             id=_new_post_id(),
             author_id=author_id,
             side=side,
             text=text,
+            parent=parent,
             set_id=set_id,
+            public_channel=public_channel,
             urgent=urgent,
             created_at=time.time(),
+            depth=depth,
             client_key=ck,
+            echo_of_post_id=_clean_echo_of_post_id(echo_of_post_id),
         )
         rec.save()
         return rec
+
+    def delete_by_author_client_key(self, *, author_id: str, client_key: str) -> int:
+        """Delete a post by (author_id, client_key). Returns number deleted."""
+        ck = (client_key or "").strip()
+        if not ck:
+            return 0
+        qs = Post.objects.filter(author_id=str(author_id), client_key=ck)
+        n = int(qs.count())
+        if n:
+            qs.delete()
+        return n
 
     def get(self, post_id: str) -> Optional[Post]:
         return Post.objects.filter(id=post_id).first()
@@ -66,7 +112,7 @@ class DbPostStore:
 
 
 class DbReplyStore:
-    def create(self, post_id: str, author_id: str, text: str, *, client_key: Optional[str] = None) -> Reply:
+    def create(self, post_id: str, author_id: str, text: str, *, client_key: Optional[str] = None, parent_id: Optional[str] = None) -> Reply:
         ck = (client_key or "").strip() or None
         if ck:
             existing = Reply.objects.filter(post_id=post_id, author_id=author_id, client_key=ck).first()
@@ -76,6 +122,20 @@ class DbReplyStore:
         post = Post.objects.filter(id=post_id).first()
         if post is None:
             raise ValueError(f"post_not_found:{post_id}")
+
+        parent = None
+        depth = 0
+        pid = (parent_id or "").strip() or None
+        if pid:
+            parent = Reply.objects.filter(id=pid, post_id=post_id).first()
+            if parent is None:
+                raise ValueError(f"parent_not_found:{pid}")
+            # Facebook-style: one nesting level only
+            if getattr(parent, "parent_id", None):
+                raise ValueError("parent_too_deep")
+            depth = int(getattr(parent, "depth", 0) or 0) + 1
+            if depth > 1:
+                raise ValueError("parent_too_deep")
 
         rec = Reply(
             id=_new_reply_id(),

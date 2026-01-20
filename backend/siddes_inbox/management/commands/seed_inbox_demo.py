@@ -117,14 +117,13 @@ class Command(BaseCommand):
                         boundary_ts = them_msgs[idx].ts
 
                 InboxThreadReadState.objects.update_or_create(
-                    thread=t,
-                    viewer_role="me",
-                    defaults={
-                        "last_read_ts": boundary_ts,
-                    },
-                )
-
-        # Matches the in-memory seed (store_memory.seed_demo).
+    thread=t,
+    viewer_id="me",
+    defaults={
+        "viewer_role": "me",
+        "last_read_ts": boundary_ts,
+    },
+)# Matches the in-memory seed (store_memory.seed_demo).
         add_thread(
             tid="t_friends_1",
             title="Marcus",

@@ -11,3 +11,17 @@ dj-database-url>=2.1
 
 # Postgres driver for docker-compose dev
 psycopg[binary]>=3.1
+
+# Google ID token verification (Sign in with Google)
+google-auth>=2.29,<3.0
+requests>=2.31,<3.0
+
+# Redis cache backend for shared throttling/caching (sd_255)
+redis>=5.0,<6.0
+
+# Production WSGI server (deployment)
+gunicorn>=21.2,<22.0
+
+
+# Static file serving (admin, collectstatic)
+whitenoise>=6.6,<8.0

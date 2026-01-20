@@ -1,5 +1,7 @@
 # Siddes — Public Trust Gates (sd_133)
 
+> **Note:** UI says **Topics**. Implementation uses `publicChannel` internally (topics are an implementation detail).
+
 **Goal:** Keep the Public Side usable without shipping a full moderation or reputation system yet.
 
 These are **server-enforced** (in the Next.js API *stubs*) and **fully opt-in**.
@@ -7,7 +9,7 @@ These are **server-enforced** (in the Next.js API *stubs*) and **fully opt-in**.
 > Important: These stubs are not production auth. In production (`NODE_ENV=production`), the stubs stay default-safe.
 
 ## What this enables
-When enabled, Public writes (posts + replies) follow a minimal capability model:
+When enabled, Public writes (posts + replies) side a minimal capability model:
 
 ### 1) Trust required to write
 - **Trust 0**: cannot write in Public (read-only)
@@ -66,4 +68,4 @@ Implementation helpers:
 
 ## Why this matters
 Public is the highest-risk surface for spam and AI sludge.
-These gates let us ship the **Public Channels + Trust Dial** UX without needing a full-blown moderation stack on day one.
+These gates let us ship the **Public Topics + Trust Dial** UX without needing a full-blown moderation stack on day one.

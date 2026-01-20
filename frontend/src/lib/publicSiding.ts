@@ -1,15 +1,15 @@
 "use client";
 
 /**
- * Public Granular Siding (Channels)
+ * Public Granular Siding (Topics)
  *
  * This is intentionally a client-side, localStorage-backed preference store.
- * It lets a viewer "Side" (follow) a person in Public, then mute lanes per author
- * (e.g. follow Sarah but mute her Politics channel).
+ * It lets a viewer "Side" (side) a person in Public, then mute lanes per author
+ * (e.g. side Sarah but mute her Politics topic).
  *
  * Safe defaults:
  * - No prefs for an author => allow everything from that author.
- * - Following creates a record with ALL channels enabled.
+ * - Siding creates a record with ALL topics enabled.
  *
  * NOTE: This is UI-only in the stub era. Server enforcement comes later.
  */
@@ -22,7 +22,7 @@ import {
 
 export type PublicSidingRecord = {
   key: string; // author handle (recommended) or authorId
-  channels: PublicChannelId[];
+  topics: PublicChannelId[];
   createdAt: number;
   updatedAt: number;
 };
@@ -55,15 +55,15 @@ function defaultChannels(): PublicChannelId[] {
 function safeRecord(key: string, raw: any): PublicSidingRecord | null {
   if (!raw || typeof raw !== "object") return null;
 
-  const chans: PublicChannelId[] = Array.isArray(raw.channels)
-    ? (raw.channels as unknown[]).map(normalizePublicChannel)
+  const chans: PublicChannelId[] = Array.isArray(raw.topics)
+    ? (raw.topics as unknown[]).map(normalizePublicChannel)
     : defaultChannels();
 
   const unique: PublicChannelId[] = Array.from(new Set(chans));
 
   return {
     key,
-    channels: unique,
+    topics: unique,
     createdAt: typeof raw.createdAt === "number" ? raw.createdAt : Date.now(),
     updatedAt: typeof raw.updatedAt === "number" ? raw.updatedAt : Date.now(),
   };
@@ -115,7 +115,7 @@ export function isPublicSiding(key: string): boolean {
 }
 
 /**
- * Toggle follow/unfollow. Returns the new following state.
+ * Toggle side/unside. Returns the new siding state.
  */
 export function togglePublicSiding(key: string): boolean {
   const k = (key || "").toString();
@@ -131,7 +131,7 @@ export function togglePublicSiding(key: string): boolean {
 
   st.byKey[k] = {
     key: k,
-    channels: defaultChannels(),
+    topics: defaultChannels(),
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
@@ -148,22 +148,22 @@ export function getPublicSidingChannels(key: string): PublicChannelId[] {
   if (!rec) return defaultChannels();
 
   // Preserve explicit empty list (mute all lanes)
-  const normalized = Array.from(new Set((rec.channels || []).map(normalizePublicChannel)));
+  const normalized = Array.from(new Set((rec.topics || []).map(normalizePublicChannel)));
   return normalized;
 }
 
-export function setPublicSidingChannels(key: string, channels: PublicChannelId[]) {
+export function setPublicSidingChannels(key: string, topics: PublicChannelId[]) {
   const k = (key || "").toString();
   if (!k) return;
 
   const st = loadPublicSiding();
-  const normalized = Array.from(new Set((channels || []).map(normalizePublicChannel)));
+  const normalized = Array.from(new Set((topics || []).map(normalizePublicChannel)));
 
   const existing = st.byKey[k];
   if (existing) {
-    st.byKey[k] = { ...existing, channels: normalized, updatedAt: Date.now() };
+    st.byKey[k] = { ...existing, topics: normalized, updatedAt: Date.now() };
   } else {
-    st.byKey[k] = { key: k, channels: normalized, createdAt: Date.now(), updatedAt: Date.now() };
+    st.byKey[k] = { key: k, topics: normalized, createdAt: Date.now(), updatedAt: Date.now() };
   }
 
   savePublicSiding(st);
@@ -172,7 +172,7 @@ export function setPublicSidingChannels(key: string, channels: PublicChannelId[]
 /**
  * If a viewer has no prefs for an author, we allow everything.
  */
-export function publicSidingAllows(authorKey: string, channel: PublicChannelId): boolean {
+export function publicSidingAllows(authorKey: string, topic: PublicChannelId): boolean {
   const k = (authorKey || "").toString();
   if (!k) return true;
 
@@ -180,7 +180,7 @@ export function publicSidingAllows(authorKey: string, channel: PublicChannelId):
   const rec = st.byKey[k];
   if (!rec) return true;
 
-  const ch = normalizePublicChannel(channel);
-  const allowed = Array.isArray(rec.channels) ? rec.channels.map(normalizePublicChannel) : [];
+  const ch = normalizePublicChannel(topic);
+  const allowed = Array.isArray(rec.topics) ? rec.topics.map(normalizePublicChannel) : [];
   return allowed.includes(ch);
 }

@@ -1,5 +1,5 @@
 # Siddes — Overlays Index
-**Updated:** 2026-01-13
+**Updated:** 2026-01-19
 
 Rule: Apply overlays with `scripts/apply_overlay.sh`. The script appends a row automatically.
 
@@ -159,9 +159,9 @@ Rule: Apply overlays with `scripts/apply_overlay.sh`. The script appends a row a
 | 2026-01-11 09:28:05 | sd_126a_state_doc_include_sd_121i_v0.8.6.zip |  |
 | 2026-01-11 09:31:42 | sd_126b_state_doc_include_sd_121h_v0.8.7.zip |  |
 | 2026-01-11 09:50:34 | sd_127_api_stub_viewer_gating_v0.8.8.zip | Harden Next API stubs (no ?viewer=; default-safe gating). |
-| 2026-01-11 10:30:59 | sd_128_public_channels_foundation_v0.8.9.zip | Public Side channels foundation (tagging + feed filter row + PostCard chip), fully opt-in behind flags. |
+| 2026-01-11 10:30:59 | sd_128_public_channels_foundation_v0.8.9.zip | Public Side topics foundation (tagging + feed filter row + PostCard chip), fully opt-in behind flags. |
 | 2026-01-11 10:35:00 | sd_128a_public_channels_typecheck_fix_v0.8.10.zip |  |
-| 2026-01-11 11:26:35 | sd_129_public_granular_siding_prefs_v0.9.0.zip | Public Side “Granular Siding” — per-person channel tuning (mute lanes per author), fully opt-in behind Public flags. |
+| 2026-01-11 11:26:35 | sd_129_public_granular_siding_prefs_v0.9.0.zip | Public Side “Granular Siding” — per-person topic tuning (mute lanes per author), fully opt-in behind Public flags. |
 | 2026-01-11 11:47:30 | sd_130_public_trust_dial_mvp_v0.9.1.zip | Public Side “Trust Dial” MVP (Calm / Standard / Arena) — user-controlled feed temperature without an algorithm. Fully opt-in behind Public f |
 | 2026-01-11 11:52:46 | sd_130a_public_trust_dial_typecheck_and_lint_fix_v0.9.2.zip |  |
 | 2026-01-11 12:12:10 | sd_131_public_slate_pinned_stack_v0.9.3.zip | Public profiles become a *homepage*, not a feed dump. |
@@ -217,3 +217,29 @@ Rule: Apply overlays with `scripts/apply_overlay.sh`. The script appends a row a
 | 2026-01-13 14:11:03 | sd_148b_fix_readonly_copy_v0.9.34a.zip | Restore Sets read-only banner copy |
 | 2026-01-13 14:43:34 | sd_148b_fix_sets_page_rebuild_v0.9.34c.zip | Fix Sets page JSX parse error (rebuild page, keep guided creator) |
 | 2026-01-13 14:51:53 | sd_148b_fix_sets_jsx_parent_v0.9.34d.zip | Fix Sets page JSX parent parse error |
+| 2026-01-13 15:52:03 | sd_148c_docs_ai_workflow_hardening_v0.9.35.zip | Docs: no AI zips; apply-helper workflow; add check |
+| 2026-01-13 16:07:56 | sd_148d_repo_hygiene_ignore_artifacts_v0.9.36.zip | Docs: no AI zips; apply-helper workflow; add check |
+| 2026-01-13 16:22:08 | sd_148e_django_tests_minimal_api_v0.9.37.zip | Docs: no AI zips; apply-helper workflow; add check |\n| 2026-01-13 19:43:43 | sd_148f_django_tests_debug_override_v0.9.38.zip | Fix Django tests: force DEBUG=True in tests so x-sd-viewer header auth works in Docker |\n| 2026-01-13 18:29:18 | sd_149d_homepage_launchpad_v0.9.43.zip | Docs: no AI zips; apply-helper workflow; add check |
+| 2026-01-13 21:56:46 | sd_149h_next_remove_pagesdir_api_build_fix_v0.9.48.zip | Fix next build PageNotFoundError on /api/* by removing pagesDir (use App Router route handlers only) + add harness check |
+| 2026-01-14 06:36:16 | sd_150b_home_is_feed_launchpad_dev_only_v0.9.51.zip | UI: make / behave like a social app (redirect to feed); move dev launchpad to /launchpad; disable SW caching in dev |
+| 2026-01-14 03:42:13 | sd_150c_fix_homepage_launchpad_check_v0.9.52.zip | Docs: no AI zips; apply-helper workflow; add check |
+
+## Recent applied overlays (Jan 19, 2026)
+
+These are the overlays applied/created during the current session (evidence: terminal logs):
+
+- sd_376_password_reset_revoke_other_sessions - security: revoke other sessions on password reset
+- sd_377_on_device_token_clustering_v2 - on-device group suggestions (token clustering) + ML_PART_2 doc
+- sd_378_fix_proxy_import_paths - fixed proxyJson relative paths (introduced double-quote typo)
+- sd_379_fix_proxy_double_quote - fixed the broken proxyJson import lines
+- sd_381_remove_mock_suggestions_use_ondevice_engine - removed mock "Gym Squad" suggestions; use on-device engine in Import Set
+- sd_382_fix_desktop_siderail_search_icon - missing lucide Search import (typecheck)
+- sd_383_cce_v12_bulk_accept_undo_delete_sets_telemetry_knob - bulk accept + Undo + delete + telemetry knob (pending apply)
+- sd_384_docs_refresh_status_pack - added status refresh doc + ML part docs
+
+## Known gotchas
+
+- Some helper scripts assume `python` exists; on macOS you often have `python3` only.
+- If your shell prompt shows you are inside `frontend/`, then `cd frontend` will fail; run `npm ...` directly.
+- When Django asks for a one-off default during migrations, it expects valid Python: use `'legacy'` not `legacy`.
+

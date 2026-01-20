@@ -54,6 +54,11 @@ def _age_label(now_ms: int, ts_ms: int) -> str:
     return f"{days}d"
 
 
+
+
+def _is_real_authed_viewer(viewer_id: str) -> bool:
+    """True if this looks like a real authenticated viewer id (me_<id>)."""
+    return str(viewer_id or "").startswith("me_")
 class DbInboxStore(InboxStore):
     """InboxStore backed by Django models."""
 
@@ -87,23 +92,14 @@ class DbInboxStore(InboxStore):
             updated_at=updated_ms,
         )
 
-    def _derive_unread_map_for_threads(self, *, viewer_role: ViewerRole, thread_ids: list[str]) -> dict[str, int]:
-        """Derive unread counts by counting messages after `last_read_ts`.
-
-        This is optional/dev-only scaffolding.
-
-        For now we keep the deterministic stub behavior: only the owning viewer
-        ("me") tracks unread; other roles return 0 unread.
-        """
+    def _derive_unread_map_for_threads(self, *, viewer_id: str, thread_ids: list[str]) -> dict[str, int]:
+        # Derive unread counts from message history + per-viewer last_read_ts.
 
         if not thread_ids:
             return {}
 
-        if viewer_role != "me":
-            return {tid: 0 for tid in thread_ids}
-
         rows = InboxThreadReadState.objects.filter(
-            viewer_role=str(viewer_role),
+            viewer_id=str(viewer_id),
             thread_id__in=thread_ids,
         ).values_list("thread_id", "last_read_ts")
 
@@ -114,8 +110,7 @@ class DbInboxStore(InboxStore):
         for tid in thread_ids:
             key = str(tid)
             if key not in last_read:
-                # Default-safe: if a read-state row doesn't exist yet,
-                # treat the thread as read (0 unread).
+                # Default-safe: if a read-state row doesn't exist yet, treat as read.
                 out[key] = 0
                 continue
 
@@ -123,69 +118,53 @@ class DbInboxStore(InboxStore):
             if cutoff.tzinfo is None:
                 cutoff = cutoff.replace(tzinfo=dt_tz.utc)
 
-            # Unread == incoming messages after last_read_ts.
-            n = InboxMessage.objects.filter(
-                thread_id=key,
-                from_id="them",
-                ts__gt=cutoff,
-            ).count()
-
-            try:
-                out[key] = min(99, max(0, int(n)))
-            except Exception:
-                out[key] = 0
+            out[key] = InboxMessage.objects.filter(thread_id=tid, ts__gt=cutoff).count()
 
         return out
 
-    def _unread_map_for_threads(self, *, viewer_role: ViewerRole, thread_ids: list[str]) -> dict[str, int]:
-        """Return per-thread unread counts for a given viewer role.
-
-        sd_121j: unread is always derived from `last_read_ts` + message history.
-        """
+    def _unread_map_for_threads(self, *, viewer_id: str, thread_ids: list[str]) -> dict[str, int]:
+        # Return per-thread unread counts for a viewer.
 
         if not thread_ids:
             return {}
 
+        role = self._viewer_role(viewer_id)
+
         # Hard rule: anonymous viewers never have unread.
-        if viewer_role == "anon":
+        if role == "anon":
             return {tid: 0 for tid in thread_ids}
 
-        # Deterministic stub behavior: only "me" has unread.
-        if viewer_role != "me":
+        # Deterministic shim: only role==me tracks unread.
+        if role != "me":
             return {tid: 0 for tid in thread_ids}
 
-        return self._derive_unread_map_for_threads(viewer_role=viewer_role, thread_ids=thread_ids)
+        return self._derive_unread_map_for_threads(viewer_id=viewer_id, thread_ids=thread_ids)
 
     def _set_thread_unread(
         self,
         *,
         thread: InboxThread,
-        viewer_role: ViewerRole,
+        viewer_id: str,
         unread: int,
         last_read_ts: datetime | None = None,
     ) -> None:
-        """Best-effort: update per-viewer read state for a thread.
+        # Best-effort: persist per-viewer last_read_ts for a thread.
 
-        sd_121j: cached unread is removed; only `last_read_ts` is persisted.
-        The `unread` arg remains for backwards compatibility with the store interface.
-        """
-
-        if viewer_role == "anon":
+        role = self._viewer_role(viewer_id)
+        if role == "anon":
             return
 
-        defaults: dict[str, object] = {}
+        defaults: dict[str, object] = {"viewer_role": str(role)}
 
         if last_read_ts is not None:
             defaults["last_read_ts"] = last_read_ts
 
-        if not defaults:
-            return
-
         InboxThreadReadState.objects.update_or_create(
             thread=thread,
-            viewer_role=str(viewer_role),
+            viewer_id=str(viewer_id),
             defaults=defaults,
         )
+
 
     def list_threads(
         self,
@@ -199,6 +178,11 @@ class DbInboxStore(InboxStore):
         now_ms = _dt_to_ms(timezone.now())
 
         qs = InboxThread.objects.all()
+
+        # sd_242a: real authenticated users (viewer_id=me_<id>) must only see their own threads.
+        if str(viewer_id).startswith("me_"):
+            qs = qs.filter(owner_viewer_id=str(viewer_id))
+
 
         role = self._viewer_role(viewer_id)
         allowed = allowed_sides_for_role(role)
@@ -224,7 +208,7 @@ class DbInboxStore(InboxStore):
         has_more = len(objs) > limit
         page = objs[:limit]
 
-        unread_map = self._unread_map_for_threads(viewer_role=role, thread_ids=[t.id for t in page])
+        unread_map = self._unread_map_for_threads(viewer_id=viewer_id, thread_ids=[t.id for t in page])
         items = [
             self._thread_record(viewer_id=viewer_id, t=t, now_ms=now_ms, unread=unread_map.get(t.id, 0)) for t in page
         ]
@@ -249,6 +233,17 @@ class DbInboxStore(InboxStore):
             t = InboxThread.objects.get(id=thread_id)
         except InboxThread.DoesNotExist as exc:
             raise KeyError(f"unknown thread: {thread_id}") from exc
+
+        # sd_248: owner scoping for real authenticated viewers.
+        if _is_real_authed_viewer(viewer_id) and str(getattr(t, 'owner_viewer_id', '') or '') != str(viewer_id):
+            # Default-safe: hide existence
+            raise KeyError('restricted')
+
+        # sd_242a: per-viewer thread scoping for real authenticated users (me_<id>).
+        if str(viewer_id).startswith("me_"):
+            if str(getattr(t, "owner_viewer_id", "") or "") != str(viewer_id):
+                # Default-safe: hide existence
+                raise KeyError("restricted")
 
         role = self._viewer_role(viewer_id)
         if not role_can_view(role, str(t.locked_side)):
@@ -300,7 +295,7 @@ class DbInboxStore(InboxStore):
         # Read semantics: opening the thread clears unread *for this viewer*.
         now_dt = timezone.now()
         try:
-            self._set_thread_unread(thread=t, viewer_role=role, unread=0, last_read_ts=now_dt)
+            self._set_thread_unread(thread=t, viewer_id=viewer_id, unread=0, last_read_ts=now_dt)
         except Exception:
             pass
 
@@ -324,6 +319,17 @@ class DbInboxStore(InboxStore):
             t = InboxThread.objects.get(id=thread_id)
         except InboxThread.DoesNotExist as exc:
             raise KeyError(f"unknown thread: {thread_id}") from exc
+
+
+        # sd_248: owner scoping for real authenticated viewers.
+        if _is_real_authed_viewer(viewer_id) and str(getattr(t, 'owner_viewer_id', '') or '') != str(viewer_id):
+            # Default-safe: hide existence
+            raise KeyError('restricted')
+        # sd_242a: per-viewer thread scoping for real authenticated users (me_<id>).
+        if str(viewer_id).startswith("me_"):
+            if str(getattr(t, "owner_viewer_id", "") or "") != str(viewer_id):
+                # Default-safe: hide existence
+                raise KeyError("restricted")
 
         role = self._viewer_role(viewer_id)
         if not role_can_view(role, str(t.locked_side)):
@@ -353,7 +359,7 @@ class DbInboxStore(InboxStore):
 
         # Sender sees unread cleared for their viewer role.
         try:
-            self._set_thread_unread(thread=t, viewer_role=role, unread=0, last_read_ts=now)
+            self._set_thread_unread(thread=t, viewer_id=viewer_id, unread=0, last_read_ts=now)
         except Exception:
             pass
 
@@ -383,6 +389,17 @@ class DbInboxStore(InboxStore):
         except InboxThread.DoesNotExist as exc:
             raise KeyError(f"unknown thread: {thread_id}") from exc
 
+
+        # sd_248: owner scoping for real authenticated viewers.
+        if _is_real_authed_viewer(viewer_id) and str(getattr(t, 'owner_viewer_id', '') or '') != str(viewer_id):
+            # Default-safe: hide existence
+            raise KeyError('restricted')
+        # sd_242a: per-viewer thread scoping for real authenticated users (me_<id>).
+        if str(viewer_id).startswith("me_"):
+            if str(getattr(t, "owner_viewer_id", "") or "") != str(viewer_id):
+                # Default-safe: hide existence
+                raise KeyError("restricted")
+
         role = self._viewer_role(viewer_id)
         if role != "me":
             raise KeyError("restricted")
@@ -398,6 +415,7 @@ class DbInboxStore(InboxStore):
     def ensure_thread(
         self,
         *,
+        viewer_id: str,
         thread_id: str,
         locked_side: SideId,
         title: str = "",
@@ -417,6 +435,16 @@ class DbInboxStore(InboxStore):
         try:
             t = InboxThread.objects.get(id=thread_id)
             update_fields: list[str] = []
+
+            # sd_242a: owner scoping — prevent cross-user overwrite for real users.
+            cur_owner = str(getattr(t, "owner_viewer_id", "") or "")
+            if str(viewer_id).startswith("me_"):
+                if not cur_owner or cur_owner != str(viewer_id):
+                    return
+            else:
+                if not cur_owner:
+                    t.owner_viewer_id = str(viewer_id)
+                    update_fields.append("owner_viewer_id")
 
             if locked_side and str(t.locked_side) != str(locked_side):
                 t.locked_side = str(locked_side)
@@ -455,6 +483,7 @@ class DbInboxStore(InboxStore):
         # Create
         kwargs = {
             "id": thread_id,
+            "owner_viewer_id": str(viewer_id or ""),
             "locked_side": str(locked_side),
             "title": str(title or ""),
             "participant_display_name": "",
@@ -490,12 +519,18 @@ class DbInboxStore(InboxStore):
         except InboxThread.DoesNotExist as exc:
             raise KeyError(f"unknown thread: {thread_id}") from exc
 
+        # sd_242a: per-viewer thread scoping for real authenticated users (me_<id>).
+        if str(viewer_id).startswith("me_"):
+            if str(getattr(t, "owner_viewer_id", "") or "") != str(viewer_id):
+                # Default-safe: hide existence
+                raise KeyError("restricted")
+
         if not role_can_view(role, str(t.locked_side)):
             raise KeyError("restricted")
 
         # Reset unread for this viewer role.
         try:
-            self._set_thread_unread(thread=t, viewer_role=role, unread=0, last_read_ts=timezone.now())
+            self._set_thread_unread(thread=t, viewer_id=viewer_id, unread=0, last_read_ts=timezone.now())
         except Exception:
             pass
 
@@ -516,6 +551,12 @@ class DbInboxStore(InboxStore):
             t = InboxThread.objects.get(id=thread_id)
         except InboxThread.DoesNotExist as exc:
             raise KeyError(f"unknown thread: {thread_id}") from exc
+
+        # sd_242a: per-viewer thread scoping for real authenticated users (me_<id>).
+        if str(viewer_id).startswith("me_"):
+            if str(getattr(t, "owner_viewer_id", "") or "") != str(viewer_id):
+                # Default-safe: hide existence
+                raise KeyError("restricted")
 
         if not role_can_view(role, str(t.locked_side)):
             raise KeyError("restricted")
@@ -546,11 +587,12 @@ class DbInboxStore(InboxStore):
         # If no row exists, create one such that the newly appended incoming message
         # appears as 1 unread (ts > last_read_ts).
         try:
-            state = InboxThreadReadState.objects.filter(thread=t, viewer_role=str(role)).first()
+            state = InboxThreadReadState.objects.filter(thread=t, viewer_id=str(viewer_id)).first()
             if state is None:
                 baseline = now - timedelta(microseconds=1)
                 InboxThreadReadState.objects.create(
                     thread=t,
+                    viewer_id=str(viewer_id),
                     viewer_role=str(role),
                     last_read_ts=baseline,
                 )

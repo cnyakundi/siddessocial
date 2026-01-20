@@ -26,5 +26,7 @@ class PostRecord:
     text: str
     created_at: float
     set_id: Optional[str] = None
+    public_channel: Optional[str] = None
     urgent: bool = False
     client_key: Optional[str] = None
+    echo_of_post_id: Optional[str] = None

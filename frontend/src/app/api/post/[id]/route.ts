@@ -1,70 +1,57 @@
 import { NextResponse } from "next/server";
-import { findPostById } from "@/src/lib/postLookup";
-import { getPost } from "@/src/lib/server/postsStore";
-import { normalizeViewer, viewerAllowed } from "@/src/lib/server/inboxVisibility";
 import { resolveStubViewer } from "@/src/lib/server/stubViewer";
-// sd_viewer gating: resolveStubViewer reads cookie sd_viewer / header x-sd-viewer (never ?viewer=).
+import { proxyJson } from "../../auth/_proxy";
+// NOTE: Dev stub viewer cookie is named sd_viewer (set by StubViewerCookie).
+// resolveStubViewer reads sd_viewer in dev; prod ignores it.
 
-function normalizeApiBase(raw: string | undefined | null): string | null {
-  const s = String(raw || "").trim();
-  if (!s) return null;
-  try {
-    const u = new URL(s);
-    return u.origin;
-  } catch {
-    return null;
-  }
-}
-
-async function fetchJson(url: string, init: RequestInit): Promise<{ status: number; data: any | null } | null> {
-  try {
-    const res = await fetch(url, { ...init, cache: "no-store" });
-    const data = await res.json().catch(() => null);
-    return { status: res.status, data };
-  } catch {
-    return null;
-  }
-}
-
-
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+function withDevViewer(req: Request): Request {
+  if (process.env.NODE_ENV === "production") return req;
   const r = resolveStubViewer(req);
-  const viewer = normalizeViewer(r.viewerId);
-
-  const id = params?.id;
-  if (!id) return NextResponse.json({ ok: false, error: "not_found" }, { status: 404 });
-
-
-const base = normalizeApiBase((process.env.SD_INTERNAL_API_BASE || process.env.NEXT_PUBLIC_API_BASE));
-if (base && r.viewerId) {
-  const url = new URL(`/api/post/${encodeURIComponent(id)}`, base).toString();
-  const prox = await fetchJson(url, { method: "GET", headers: { "x-sd-viewer": r.viewerId } });
-
-  if (prox && prox.status < 500) {
-    if (prox.status !== 404) {
-      return NextResponse.json(prox.data ?? { ok: false, error: "bad_gateway" }, { status: prox.status });
-    }
-    // 404 -> fall through to local stubs (IDs may differ)
-  }
+  if (!r.viewerId) return req;
+  const h = new Headers(req.headers);
+  h.set("x-sd-viewer", r.viewerId);
+  return new Request(req.url, { method: req.method, headers: h });
 }
 
-  // 1) Try mock library (static)
-  const found = findPostById(id);
-  if (found) {
-    if (!r.viewerId || !viewerAllowed(viewer, found.side)) {
-      return NextResponse.json({ ok: false, error: "not_found" }, { status: 404 });
-    }
-    return NextResponse.json({ ok: true, ...found });
-  }
+// GET /api/post/:id -> Django GET /api/post/:id
+export async function GET(req: Request, ctx: { params: { id: string } }) {
+  const id = ctx?.params?.id;
+  const url = new URL(req.url);
+  const qs = url.search || "";
 
-  // 2) Try stored posts
-  const p = getPost(id);
-  if (p) {
-    if (!r.viewerId || !viewerAllowed(viewer, p.side)) {
-      return NextResponse.json({ ok: false, error: "not_found" }, { status: 404 });
-    }
-    return NextResponse.json({ ok: true, post: p, side: p.side });
-  }
+  const req2 = withDevViewer(req);
+  const out = await proxyJson(req2, `/api/post/${id}${qs}`, "GET");
+  if (out instanceof NextResponse) return out;
 
-  return NextResponse.json({ ok: false, error: "not_found" }, { status: 404 });
+  const { res, data, setCookies } = out;
+  const r = NextResponse.json(data, { status: res.status });
+  for (const c of setCookies) r.headers.append("set-cookie", c);
+  return r;
+}
+
+// PATCH /api/post/:id -> Django PATCH /api/post/:id
+export async function PATCH(req: Request, ctx: { params: { id: string } }) {
+  const id = ctx?.params?.id;
+  const body = await req.json().catch(() => ({}));
+  const req2 = withDevViewer(req);
+  const out = await proxyJson(req2, `/api/post/${encodeURIComponent(String(id || "").trim())}`, "PATCH", body);
+  if (out instanceof NextResponse) return out;
+
+  const { res, data, setCookies } = out;
+  const r = NextResponse.json(data, { status: res.status, headers: { "cache-control": "no-store" } });
+  for (const c of setCookies) r.headers.append("set-cookie", c);
+  return r;
+}
+
+// DELETE /api/post/:id -> Django DELETE /api/post/:id
+export async function DELETE(req: Request, ctx: { params: { id: string } }) {
+  const id = ctx?.params?.id;
+  const req2 = withDevViewer(req);
+  const out = await proxyJson(req2, `/api/post/${encodeURIComponent(String(id || "").trim())}`, "DELETE");
+  if (out instanceof NextResponse) return out;
+
+  const { res, data, setCookies } = out;
+  const r = NextResponse.json(data, { status: res.status, headers: { "cache-control": "no-store" } });
+  for (const c of setCookies) r.headers.append("set-cookie", c);
+  return r;
 }

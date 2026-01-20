@@ -1,17 +1,16 @@
 "use client";
+export const dynamic = "force-dynamic";
 
 import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { AlertTriangle, CheckCircle2, ChevronRight, Send, X } from "lucide-react";
-import { InboxStubDebugPanel } from "@/src/components/InboxStubDebugPanel";
 import { InboxBanner } from "@/src/components/InboxBanner";
 import { toast } from "@/src/lib/toastBus";
 import { MentionPicker } from "@/src/components/MentionPicker";
 import { useSide } from "@/src/components/SideProvider";
-import { SIDE_THEMES, SIDES, type SideId } from "@/src/lib/sides";
-import { MOCK_MENTIONS } from "@/src/lib/mockPeople";
-import { MOCK_THREADS } from "@/src/lib/mockInbox";
+import type { SideId } from "@/src/lib/sides";
+import { SIDE_THEMES, SIDES } from "@/src/lib/sides";
 import { getInboxProvider } from "@/src/lib/inboxProvider";
 import {
   appendMessage,
@@ -25,6 +24,7 @@ import {
 } from "@/src/lib/threadStore";
 import { clearThreadUnread } from "@/src/lib/inboxState";
 import { loadRecentMoveSides, pushRecentMoveSide } from "@/src/lib/inboxMoveRecents";
+import type { MentionCandidate } from "@/src/lib/mentions";
 
 
 
@@ -382,20 +382,6 @@ export default function SiddesThreadPage() {
 function SiddesThreadPageInner() {
   const params = useParams();
   const id = (params?.id as string) || "t1";
-  const sp = useSearchParams();
-  const router = useRouter();
-
-  const viewer = sp.get("viewer") || undefined;
-
-  const replaceViewer = (nextViewer: string | null) => {
-    const next = new URLSearchParams(sp.toString());
-    const v = String(nextViewer || "").trim();
-    if (v) next.set("viewer", v);
-    else next.delete("viewer");
-    const qs = next.toString();
-    const base = `/siddes-inbox/${encodeURIComponent(id)}`;
-    router.replace(qs ? `${base}?${qs}` : base);
-  };
 
   const { side, setSide } = useSide();
   const theme = SIDE_THEMES[side];
@@ -420,6 +406,50 @@ function SiddesThreadPageInner() {
 
   const [mentionOpen, setMentionOpen] = useState(false);
   const [mentionQuery, setMentionQuery] = useState("");
+
+  // sd_181o: DB-backed mention candidates (no [])
+  const [mentionCandidates, setMentionCandidates] = useState<MentionCandidate[]>([]);
+  const [mentionCandidatesLoading, setMentionCandidatesLoading] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    if (!mentionOpen) return () => { alive = false; };
+
+    setMentionCandidatesLoading(true);
+
+    fetch("/api/contacts/suggestions", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((j) => {
+        if (!alive) return;
+        const items = Array.isArray(j?.items) ? j.items : [];
+        const mapped = items
+          .map((x: any) => {
+            const name = String(x?.name || x?.handle || "").trim();
+            let handle = String(x?.handle || "").trim();
+            if (!handle && name) handle = name.startsWith("@") ? name : `@${name}`;
+            handle = String(handle || "").trim();
+            if (!handle) return null;
+            if (!handle.startsWith("@")) handle = `@${handle.replace(/^@+/, "")}`;
+            return { name: name || handle, handle };
+          })
+          .filter(Boolean);
+
+        setMentionCandidates((mapped as any[]).slice(0, 80));
+      })
+      .catch(() => {
+        if (!alive) return;
+        setMentionCandidates([]);
+      })
+      .finally(() => {
+        if (!alive) return;
+        setMentionCandidatesLoading(false);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [mentionOpen]);
+
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const isOnline = typeof navigator !== "undefined" ? navigator.onLine : true;
@@ -437,7 +467,7 @@ function SiddesThreadPageInner() {
 
     (async () => {
       try {
-        const view = await provider.getThread(id, { viewer, limit: MSG_PAGE });
+        const view = await provider.getThread(id, { limit: MSG_PAGE });
         if (!alive) return;
 
         if (!view?.thread) {
@@ -451,7 +481,7 @@ function SiddesThreadPageInner() {
         }
 
         const t = (view?.thread as any) || {};
-        setTitle(t?.title ?? (MOCK_THREADS.find((x) => x.id === id)?.title || "Thread"));
+        setTitle(t?.title ?? "Thread");
         setParticipantDisplayName(String(t?.participant?.displayName || "").trim() || null);
         setParticipantInitials(String(t?.participant?.initials || (t?.title || "??").slice(0, 2)));
         setParticipantSeed(String(t?.participant?.avatarSeed || t?.id || id || "").trim() || null);
@@ -475,9 +505,9 @@ function SiddesThreadPageInner() {
         setError("Failed to load thread.");
         if (toast?.error) toast.error("Thread failed to load");
 
-        setTitle(MOCK_THREADS.find((x) => x.id === id)?.title || "Thread");
+        setTitle("Thread");
         setParticipantDisplayName(null);
-        setParticipantInitials(String((MOCK_THREADS.find((x) => x.id === id)?.title || "??").slice(0, 2)));
+        setParticipantInitials("??");
         setParticipantSeed(null);
         const local = loadThread(id);
         setMsgs(local);
@@ -498,7 +528,7 @@ function SiddesThreadPageInner() {
       alive = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, provider, viewer]);
+  }, [id, provider]);
 
   const loadEarlier = async () => {
     if (provider.name !== "backend_stub") return;
@@ -507,7 +537,7 @@ function SiddesThreadPageInner() {
 
     setLoadingEarlier(true);
     try {
-      const view = await provider.getThread(id, { viewer, limit: MSG_PAGE, cursor: msgCursor });
+      const view = await provider.getThread(id, { limit: MSG_PAGE, cursor: msgCursor });
       const older = (view?.messages ?? []) as ThreadMessage[];
 
       setMsgs((prev) => {
@@ -563,7 +593,7 @@ function SiddesThreadPageInner() {
     }
 
     try {
-      const meta = await provider.setLockedSide(id, to, { viewer });
+      const meta = await provider.setLockedSide(id, to);
       setLockedSide(meta.lockedSide);
       saveThreadMeta(id, meta);
       setRecentMoveSides(pushRecentMoveSide(to));
@@ -589,7 +619,7 @@ function SiddesThreadPageInner() {
     }
 
     try {
-      const meta = await provider.setLockedSide(id, moveConfirmTo, { viewer });
+      const meta = await provider.setLockedSide(id, moveConfirmTo);
       setLockedSide(meta.lockedSide);
       saveThreadMeta(id, meta);
       setRecentMoveSides(pushRecentMoveSide(moveConfirmTo));
@@ -642,7 +672,7 @@ function SiddesThreadPageInner() {
     if (!v) return;
 
     if (restricted) {
-      if (toast?.warning) toast.warning("Restricted thread — retry as me");
+      if (toast?.warning) toast.warning("Thread unavailable");
       return;
     }
 
@@ -659,7 +689,7 @@ function SiddesThreadPageInner() {
     }
 
     try {
-      const item = await provider.sendMessage(id, v, "me", { viewer });
+      const item = await provider.sendMessage(id, v, "me");
       if (!(item as any)?.id) {
         setRestricted(true);
         if (toast?.warning) toast.warning("Thread became restricted");
@@ -696,45 +726,19 @@ function SiddesThreadPageInner() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 pb-28">
-        <InboxStubDebugPanel />
-
         {restricted ? (
-          <InboxBanner tone="warn" title="Restricted thread">
+          <InboxBanner tone="warn" title="Thread unavailable">
             <div data-testid="restricted-thread-banner" className="space-y-2">
-              <div>
-                Your viewer token can’t access this thread’s locked Side.
-              </div>
+              <div>This thread is unavailable (restricted or not found).</div>
 
-              <div data-testid="restricted-thread-actions" className="flex gap-2 flex-wrap">
-                <button
-                  type="button"
-                  data-testid="restricted-thread-retry-me"
-                  className="px-3 py-1.5 rounded-full bg-amber-800 text-white text-xs font-bold hover:opacity-90"
-                  onClick={() => replaceViewer("me")}
-                >
-                  Retry as me
-                </button>
-
-                <button
-                  type="button"
-                  data-testid="restricted-thread-clear-viewer"
-                  className="px-3 py-1.5 rounded-full bg-white border border-amber-200 text-amber-900 text-xs font-bold hover:bg-amber-100"
-                  onClick={() => replaceViewer(null)}
-                >
-                  Clear viewer
-                </button>
-
+              <div className="flex gap-2 flex-wrap">
                 <Link
                   data-testid="restricted-thread-back-inbox"
-                  href={viewer ? `/siddes-inbox?viewer=${encodeURIComponent(viewer)}` : "/siddes-inbox"}
+                  href="/siddes-inbox"
                   className="px-3 py-1.5 rounded-full bg-white border border-amber-200 text-amber-900 text-xs font-bold hover:bg-amber-100"
                 >
                   Back to Inbox
                 </Link>
-              </div>
-
-              <div className="text-[11px]">
-                Tip: backend_stub debug mode supports <b>viewer=me</b> to simulate your own access.
               </div>
             </div>
           </InboxBanner>
@@ -753,7 +757,7 @@ function SiddesThreadPageInner() {
               <AvatarBubble initials={participantInitials} sideId={lockedSide} seed={participantSeed} />
               <div className="text-lg font-bold text-gray-900">{participantDisplayName || title}</div>
             </div>
-              <div className="text-sm text-gray-500 mt-1">Messaging (stub)</div>
+              <div className="text-sm text-gray-500 mt-1">Messages</div>
             </div>
             <div className="text-xs font-bold px-3 py-1 rounded-full bg-gray-100 text-gray-700 border border-gray-200">
               Locked: {SIDES[lockedSide].label}
@@ -805,7 +809,7 @@ function SiddesThreadPageInner() {
               value={text}
               onChange={(e) => setText(e.target.value)}
               disabled={restricted}
-              placeholder={restricted ? "Restricted — retry as me" : "Message…"}
+              placeholder={restricted ? "Thread unavailable" : "Message…"}
               className={cn(
                 "flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200",
                 restricted ? "bg-gray-100 text-gray-500 cursor-not-allowed" : "bg-white"
@@ -828,7 +832,7 @@ function SiddesThreadPageInner() {
             </button>
           </div>
 
-          <MentionPicker open={mentionOpen} query={mentionQuery} items={MOCK_MENTIONS} onPick={insertMention} />
+          <MentionPicker open={mentionOpen} query={mentionQuery} items={[]} onPick={insertMention} />
 
           <div data-testid="thread-context-strip" className="mt-2 text-[11px] text-gray-400">
             Context: messages are sent under the thread’s locked Side unless you explicitly move it.

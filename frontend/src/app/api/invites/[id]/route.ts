@@ -1,49 +1,27 @@
 import { NextResponse } from "next/server";
-import { resolveStubViewer } from "@/src/lib/server/stubViewer";
-import { normalizeViewer, roleForViewer } from "@/src/lib/server/inboxVisibility";
-import { actInvite, getInvite } from "@/src/lib/server/invitesStore";
+import { proxyJson } from "../../auth/_proxy";
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
-  const r = resolveStubViewer(req);
-  const viewer = normalizeViewer(r.viewerId);
-  const role = roleForViewer(viewer);
+// GET /api/invites/:id -> Django GET /api/invites/:id
+export async function GET(req: Request, ctx: { params: { id: string } }) {
+  const id = ctx?.params?.id;
+  const out = await proxyJson(req, `/api/invites/${id}`, "GET");
+  if (out instanceof NextResponse) return out;
 
-  if (!r.viewerId) {
-    return NextResponse.json({ ok: true, restricted: true, viewer: null, role: "anon", item: null });
-  }
-
-  const id = decodeURIComponent(params.id || "");
-  const item = getInvite(viewer, id);
-  return NextResponse.json({ ok: true, restricted: false, viewer, role, item });
+  const { res, data, setCookies } = out;
+  const r = NextResponse.json(data, { status: res.status });
+  for (const c of setCookies) r.headers.append("set-cookie", c);
+  return r;
 }
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
-  const r = resolveStubViewer(req);
-  const viewer = normalizeViewer(r.viewerId);
-  const role = roleForViewer(viewer);
+// PATCH /api/invites/:id -> Django PATCH /api/invites/:id
+export async function PATCH(req: Request, ctx: { params: { id: string } }) {
+  const id = ctx?.params?.id;
+  const body = await req.json().catch(() => ({}));
+  const out = await proxyJson(req, `/api/invites/${id}`, "PATCH", body);
+  if (out instanceof NextResponse) return out;
 
-  if (!r.viewerId) {
-    return NextResponse.json({ ok: false, restricted: true, error: "restricted" }, { status: 401 });
-  }
-
-  let body: any = null;
-  try {
-    body = await req.json();
-  } catch {
-    body = null;
-  }
-
-  const action = String(body?.action || "").trim().toLowerCase();
-  if (action !== "accept" && action !== "reject" && action !== "revoke") {
-    return NextResponse.json({ ok: false, restricted: false, error: "bad_request" }, { status: 400 });
-  }
-
-  const id = decodeURIComponent(params.id || "");
-  const item = actInvite(viewer, id, action as any);
-  if (!item) {
-    return NextResponse.json({ ok: false, restricted: false, error: "not_found" }, { status: 404 });
-  }
-
-  // keep parity with other routes by returning viewer role, but we don't use it for gating here.
-  return NextResponse.json({ ok: true, restricted: false, viewer, role, item });
+  const { res, data, setCookies } = out;
+  const r = NextResponse.json(data, { status: res.status });
+  for (const c of setCookies) r.headers.append("set-cookie", c);
+  return r;
 }

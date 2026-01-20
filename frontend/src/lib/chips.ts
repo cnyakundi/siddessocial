@@ -1,11 +1,15 @@
 import { AtSign, FileText, AlertCircle, Users, Hash } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import type { FeedPost } from "@/src/lib/mockFeed";
-import { getSetTheme, type SetColor } from "@/src/lib/setThemes";
+import type { FeedPost } from "@/src/lib/feedTypes";
+import type { SideId } from "@/src/lib/sides";
+import { SIDE_THEMES } from "@/src/lib/sides";
+import type { SetColor } from "@/src/lib/setThemes";
+import { getSetTheme } from "@/src/lib/setThemes";
 import { FLAGS } from "@/src/lib/flags";
-import { labelForPublicChannel, type PublicChannelId } from "@/src/lib/publicChannels";
+import type { PublicChannelId } from "@/src/lib/publicChannels";
+import { labelForPublicChannel } from "@/src/lib/publicChannels";
 
-export type ChipId = "set" | "mention" | "doc" | "urgent" | "channel";
+export type ChipId = "set" | "mention" | "doc" | "urgent" | "topic";
 
 export type Chip = {
   id: ChipId;
@@ -23,7 +27,7 @@ export type ChipBuildContext = {
   doc?: boolean;
   urgent?: boolean;
 
-  // Public Side: channel tag
+  // Public Side: topic tag
   publicChannel?: PublicChannelId;
 };
 
@@ -56,13 +60,18 @@ const CHANNEL_TO_COLOR: Record<PublicChannelId, SetColor> = {
   personal: "rose",
 };
 
-export function buildChips(ctx: ChipBuildContext): Chip[] {
+export function buildChips(ctx: ChipBuildContext, opts?: { side?: SideId }): Chip[] {
   const out: Chip[] = [];
+
+  // Final Polish (6): Chameleon sweep — Side-aware Mention chip
+  const side: SideId = opts?.side ?? "public";
+  const sideTheme = SIDE_THEMES[side];
+
 
   if (FLAGS.publicChannels && ctx.publicChannel) {
     const t = getSetTheme(CHANNEL_TO_COLOR[ctx.publicChannel] ?? "slate");
     out.push({
-      id: "channel",
+      id: "topic",
       label: labelForPublicChannel(ctx.publicChannel),
       icon: Hash,
       className: `border ${t.bg} ${t.text} ${t.border}`,
@@ -84,7 +93,7 @@ export function buildChips(ctx: ChipBuildContext): Chip[] {
       id: "mention",
       label: "Mention",
       icon: AtSign,
-      className: "bg-blue-50 text-blue-700 border border-blue-100",
+      className: `border ${sideTheme.lightBg} ${sideTheme.text} ${sideTheme.border}`,
     });
   }
 

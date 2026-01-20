@@ -5,8 +5,8 @@
  * This version also tracks per-thread unread counters per viewer role.
  */
 
-import { MOCK_THREADS } from "@/src/lib/mockInbox";
-import { allowedSidesForRole, type ViewerRole } from "@/src/lib/server/inboxVisibility";
+import type { ViewerRole } from "@/src/lib/server/inboxVisibility";
+import { allowedSidesForRole } from "@/src/lib/server/inboxVisibility";
 
 export type StoredThread = {
   id: string;
@@ -234,19 +234,6 @@ function seedThread(def: {
 function seedOnce() {
   if (seeded.done) return;
   seeded.done = true;
-
-  // Seed from MOCK_THREADS (parity with mock mode)
-  for (const t of MOCK_THREADS as any[]) {
-    if (!t?.id) continue;
-    seedThread({
-      id: String(t.id),
-      title: String(t.title || "Thread"),
-      lockedSide: (t.lockedSide || "friends") as StoredThread["lockedSide"],
-      time: String(t.time || "10m"),
-      last: String(t.last || "Hello!"),
-      messages: [{ from: "them", text: String(t.last || "Hello!"), dt: String(t.time || "10m") }],
-    });
-  }
 
   // Extra seeds (backend_stub only)
   const extra: Array<Parameters<typeof seedThread>[0]> = [

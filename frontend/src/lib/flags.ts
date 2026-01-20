@@ -1,4 +1,6 @@
 export const FLAGS = {
+  // Emergency kill switch (build-time env)
+  panicMode: process.env.NEXT_PUBLIC_SD_PANIC_MODE === "1",
   // Public Side tuning (all default OFF unless explicitly enabled)
   publicChannels: process.env.NEXT_PUBLIC_SD_PUBLIC_CHANNELS === "1",
   publicTrustDial: process.env.NEXT_PUBLIC_SD_PUBLIC_TRUST_DIAL === "1",
@@ -6,4 +8,7 @@ export const FLAGS = {
   publicTrustGates: process.env.NEXT_PUBLIC_SD_PUBLIC_TRUST_GATES === "1",
   publicSlate: process.env.NEXT_PUBLIC_SD_PUBLIC_SLATE === "1",
   publicCalmUi: process.env.NEXT_PUBLIC_SD_PUBLIC_CALM_UI === "1",
+  // Remixed feed modules (UI-only cards injected into SideFeed)
+  feedModules: process.env.NEXT_PUBLIC_SD_FEED_MODULES === "1",
+
 } as const;

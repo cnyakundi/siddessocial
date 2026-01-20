@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "== Check: Inbox mentions + side context =="
+echo "== Check: Inbox mentions + side context (DB-backed) =="
 
 REQ=(
-  "frontend/src/lib/mockPeople.ts"
+  "frontend/src/lib/mentions.ts"
   "frontend/src/components/MentionPicker.tsx"
   "frontend/src/app/siddes-inbox/[id]/page.tsx"
 )
@@ -30,4 +30,12 @@ if grep -q "MentionPicker" "$PAGE"   && (grep -q 'data-testid="thread-context-st
 else
   echo "❌ MentionPicker/context strip missing"
   exit 1
+fi
+
+# Ensure we are not using the mock dataset
+if grep -q "MOCK_MENTIONS" "$PAGE"; then
+  echo "❌ MOCK_MENTIONS still referenced"
+  exit 1
+else
+  echo "✅ No MOCK_MENTIONS references"
 fi

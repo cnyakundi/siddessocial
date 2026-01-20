@@ -8,6 +8,15 @@ This doc explains how to implement the feed endpoint in Django using the visibil
 ## Endpoint
 `GET /api/feed?side=<public|friends|close|work>`
 
+Optional query params:
+- limit: int (1..200)
+- cursor: opaque (returned as nextCursor)
+
+Response extras:
+- nextCursor: string|null
+- hasMore: boolean
+- serverTs: float
+
 Inputs:
 - viewer_id from auth
 - side from query param
@@ -37,3 +46,23 @@ Run:
 ```bash
 python3 scripts/dev/feed_demo.py --selftest
 ```
+
+---
+
+## DB-backed dev data (sd_157)
+
+To use real DB-backed posts in the Feed:
+
+1) Set `SD_POST_STORE=auto` in `ops/docker/.env` (or copy from `.env.example`).
+2) Run:
+
+```bash
+bash scripts/dev/seed_demo_universe.sh
+```
+
+This seeds:
+- Sets (Friends/Close/Work)
+- Posts across Sides (mostly authored by `me` so visibility is stable)
+- A sample reply
+
+In DB mode, `backend/siddes_feed/feed_stub.py` **does not mix** demo mock posts by default.

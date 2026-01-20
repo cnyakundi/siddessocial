@@ -69,6 +69,37 @@ class SiddesSet(models.Model):
         return f"SiddesSet({self.id})"
 
 
+class SiddesSetMember(models.Model):
+    """Normalized Set membership row.
+
+    Why this exists (sd_366):
+    - JSONField membership (`SiddesSet.members`) is fine for API payload parity, but it is
+      not join-friendly for large-scale membership/visibility checks.
+    - This table enables indexed queries like:
+        SetMember(member_id=X) -> set_ids
+        SetMember(set_id=Y, member_id=X) -> exists
+
+    Contract note:
+    - We keep `SiddesSet.members` (JSON) for response parity and keep this table in sync on writes.
+    """
+
+    id = models.BigAutoField(primary_key=True)
+
+    set = models.ForeignKey(SiddesSet, on_delete=models.CASCADE, related_name="member_links")
+    member_id = models.CharField(max_length=64)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["set", "member_id"], name="set_member_unique"),
+        ]
+        indexes = [
+            models.Index(fields=["member_id"], name="setmem_member"),
+            models.Index(fields=["set", "member_id"], name="setmem_set_member"),
+        ]
+
+
 class SiddesSetEvent(models.Model):
     """A Set history/audit entry (server-truth)."""
 

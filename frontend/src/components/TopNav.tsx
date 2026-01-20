@@ -15,7 +15,7 @@ const NAV = [
   { href: "/siddes-inbox", label: "Inbox", icon: Inbox },
   { href: "/siddes-invites", label: "Invites", icon: UserPlus },
   { href: "/siddes-sets", label: "Sets", icon: Users },
-  { href: "/siddes-profile", label: "Profile", icon: User },
+  { href: "/siddes-profile", label: "Me", icon: User },
 ];
 
 export function TopNav() {
@@ -23,7 +23,7 @@ export function TopNav() {
 
   return (
     <div className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-200">
-      <div className="max-w-5xl mx-auto px-4 py-2 flex items-center gap-2 overflow-x-auto no-scrollbar">
+      <div className="max-w-[680px] mx-auto px-4 py-2 flex items-center gap-2 overflow-x-auto no-scrollbar">
         {NAV.map((n) => {
           const active =
             path === n.href ||

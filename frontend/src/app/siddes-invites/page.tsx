@@ -4,21 +4,12 @@ import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
 import { Check, RefreshCcw, X } from "lucide-react";
 
-import { getInviteProvider, type InviteAction, type InviteDirection, type SetInvite } from "@/src/lib/inviteProvider";
+import type { InviteAction, InviteDirection, SetInvite } from "@/src/lib/inviteProvider";
+import { getInviteProvider } from "@/src/lib/inviteProvider";
 import { getSetsProvider } from "@/src/lib/setsProvider";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
-}
-
-function escapeCookieName(name: string): string {
-  return name.replace(/[^a-zA-Z0-9_\-]/g, "\\$&");
-}
-
-function getCookie(name: string): string | undefined {
-  if (typeof document === "undefined") return undefined;
-  const m = document.cookie.match(new RegExp(`(?:^|; )${escapeCookieName(name)}=([^;]*)`));
-  return m ? decodeURIComponent(m[1]) : undefined;
 }
 
 function fmt(ts: number): string {
@@ -38,6 +29,7 @@ function actionLabel(a: InviteAction): string {
 export default function SiddesInvitesPage() {
   const invites = useMemo(() => getInviteProvider(), []);
   const sets = useMemo(() => getSetsProvider(), []);
+
   const [direction, setDirection] = useState<InviteDirection>("incoming");
   const [items, setItems] = useState<SetInvite[]>([]);
   const [setLabels, setSetLabels] = useState<Record<string, string>>({});
@@ -46,17 +38,14 @@ export default function SiddesInvitesPage() {
   const [banner, setBanner] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
-  const viewer = getCookie("sd_viewer");
-  const hasViewer = Boolean(viewer);
-
-  const hydrateSetLabels = async (list: SetInvite[], viewerId?: string) => {
-    // Best-effort: resolve labels only when likely accessible (accepted OR owner-view).
+  const hydrateSetLabels = async (list: SetInvite[]) => {
+    // Best-effort: resolve labels only for accepted invites.
+    // Pending invites should rely on invite.setLabel snapshot.
     const ids = Array.from(
       new Set(
         list
-          // sd_141c: if invite already carries setLabel snapshot, no need to fetch.
           .filter((inv) => !inv.setLabel)
-          .filter((inv) => inv.status === "accepted" || (viewerId && viewerId === inv.from))
+          .filter((inv) => inv.status === "accepted")
           .map((inv) => inv.setId)
           .filter(Boolean)
       )
@@ -95,7 +84,7 @@ export default function SiddesInvitesPage() {
     try {
       const list = await invites.list({ direction: d });
       setItems(list);
-      void hydrateSetLabels(list, viewer);
+      void hydrateSetLabels(list);
     } catch (e: any) {
       setErr(e?.message || "Failed to load invites.");
       setItems([]);
@@ -120,7 +109,7 @@ export default function SiddesInvitesPage() {
         return;
       }
       setItems((prev) => prev.map((x) => (x.id === nxt.id ? nxt : x)));
-      void hydrateSetLabels([nxt], viewer);
+      void hydrateSetLabels([nxt]);
       setBanner(`${actionLabel(action)} ✓`);
     } catch (e: any) {
       setErr(e?.message || "Action failed.");
@@ -129,8 +118,10 @@ export default function SiddesInvitesPage() {
     }
   };
 
-  const canAcceptReject = (inv: SetInvite) => hasViewer && viewer === inv.to && inv.status === "pending";
-  const canRevoke = (inv: SetInvite) => hasViewer && viewer === inv.from && inv.status === "pending";
+  // Without client-side viewer spoofing, we gate actions by the selected view.
+  // Server remains the source of truth and will enforce permissions.
+  const canAcceptReject = (inv: SetInvite) => direction === "incoming" && inv.status === "pending";
+  const canRevoke = (inv: SetInvite) => direction === "outgoing" && inv.status === "pending";
 
   const tabs: Array<{ id: InviteDirection; label: string }> = [
     { id: "incoming", label: "Incoming" },
@@ -140,33 +131,18 @@ export default function SiddesInvitesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-2xl mx-auto px-4 py-4">
+      <div className="px-4 py-4">
         <div className="flex items-center justify-between gap-3 mb-3">
-          <Link href="/siddes-feed" className="text-sm font-bold text-gray-700 hover:underline">
-            ← Feed
-          </Link>
-          <div className="text-sm font-black text-gray-900">Invites</div>
+          <div className="md:hidden text-sm font-extrabold text-gray-900">Invites</div>
           <button
             type="button"
             onClick={() => void refresh(direction)}
-            className="px-3 py-2 rounded-full bg-white border border-gray-200 text-gray-700 font-bold text-sm hover:bg-gray-50 flex items-center gap-2"
+            className="ml-auto px-3 py-2 rounded-full bg-white border border-gray-200 text-gray-700 font-bold text-sm hover:bg-gray-50 flex items-center gap-2"
           >
             <RefreshCcw size={16} />
             Refresh
           </button>
         </div>
-
-        {!hasViewer ? (
-          <div className="mb-3 p-3 rounded-2xl border border-amber-200 bg-amber-50 text-amber-800 text-sm">
-            <div className="font-bold mb-1">sd_viewer is missing.</div>
-            <div className="text-xs leading-relaxed">
-              Invites are default-safe and return restricted results without a viewer cookie/header.
-              <span className="block mt-2 font-mono">
-                document.cookie = "sd_viewer=@your_handle; Path=/; SameSite=Lax";
-              </span>
-            </div>
-          </div>
-        ) : null}
 
         {banner ? (
           <div className="mb-3 p-3 rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-800 text-sm flex items-center gap-2">
@@ -205,7 +181,7 @@ export default function SiddesInvitesPage() {
           <div className="p-6 rounded-2xl border border-dashed border-gray-200 text-center bg-white">
             <div className="font-black text-gray-900 mb-1">No invites</div>
             <div className="text-sm text-gray-500">
-              Incoming invites appear here when someone invites your handle. Outgoing invites appear after you send.
+              Incoming invites appear here after someone invites you. Outgoing invites appear after you send.
             </div>
           </div>
         ) : (
@@ -213,107 +189,107 @@ export default function SiddesInvitesPage() {
             {items.map((inv) => {
               const setLabel = inv.setLabel || setLabels[inv.setId];
               return (
-              <div key={inv.id} className="p-4 rounded-2xl border border-gray-200 bg-white">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="font-black text-gray-900 text-sm truncate">
-                      {inv.from} → {inv.to}
+                <div key={inv.id} className="p-4 rounded-2xl border border-gray-200 bg-white">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="font-black text-gray-900 text-sm truncate">
+                        {inv.from} → {inv.to}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-0.5">
+                        Set:{" "}
+                        {setLabel ? (
+                          <>
+                            <span className="font-black text-gray-900">{setLabel}</span>
+                            <span className="ml-1 font-mono text-[11px] text-gray-400">{inv.setId.slice(0, 10)}…</span>
+                          </>
+                        ) : (
+                          <span className="font-mono">{inv.setId}</span>
+                        )}
+                        {" "}• Side: <span className="font-mono">{inv.side}</span>
+                      </div>
+                      {inv.message ? <div className="text-xs text-gray-600 mt-2">“{inv.message}”</div> : null}
+                      <div className="text-[11px] text-gray-400 mt-2">
+                        status: <span className="font-mono">{inv.status}</span> • updated:{" "}
+                        <span className="font-mono">{fmt(inv.updatedAt)}</span>
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-500 mt-0.5">
-                      Set:{" "}
-                      {setLabel ? (
-                        <>
-                          <span className="font-black text-gray-900">{setLabel}</span>
-                          <span className="ml-1 font-mono text-[11px] text-gray-400">{inv.setId.slice(0, 10)}…</span>
-                        </>
-                      ) : (
-                        <span className="font-mono">{inv.setId}</span>
-                      )}
-                      {" "}• Side: <span className="font-mono">{inv.side}</span>
-                    </div>
-                    {inv.message ? <div className="text-xs text-gray-600 mt-2">“{inv.message}”</div> : null}
-                    <div className="text-[11px] text-gray-400 mt-2">
-                      status: <span className="font-mono">{inv.status}</span> • updated: <span className="font-mono">{fmt(inv.updatedAt)}</span>
-                    </div>
-                  </div>
 
-                  <div className="flex flex-col items-end gap-2">
-                    {inv.status === "accepted" && hasViewer && (viewer === inv.from || viewer === inv.to) ? (
-                      <Link
-                        href={`/siddes-sets/${encodeURIComponent(inv.setId)}`}
-                        className="px-3 py-1.5 rounded-full text-xs font-black border bg-gray-900 text-white border-gray-900 hover:opacity-95 whitespace-nowrap"
-                      >
-                        Open Set
-                      </Link>
-                    ) : null}
-
-                    <Link
-                      href={`/invite/${encodeURIComponent(inv.id)}`}
-                      className="text-xs font-bold text-gray-900 hover:underline whitespace-nowrap"
-                    >
-                      details
-                    </Link>
-
-                    <div className="flex items-center gap-2">
-                      {canRevoke(inv) ? (
-                        <button
-                          type="button"
-                          disabled={actingId === inv.id}
-                          onClick={() => void doAct(inv, "revoke")}
-                          className={cn(
-                            "px-3 py-1.5 rounded-full text-xs font-black border flex items-center gap-1",
-                            actingId === inv.id
-                              ? "bg-gray-100 text-gray-400 border-gray-200"
-                              : "bg-white text-gray-900 border-gray-300 hover:bg-gray-50"
-                          )}
+                    <div className="flex flex-col items-end gap-2">
+                      {inv.status === "accepted" ? (
+                        <Link
+                          href={`/siddes-sets/${encodeURIComponent(inv.setId)}`}
+                          className="px-3 py-1.5 rounded-full text-xs font-black border bg-gray-900 text-white border-gray-900 hover:opacity-95 whitespace-nowrap"
                         >
-                          <X size={14} />
-                          Revoke
-                        </button>
+                          Open Set
+                        </Link>
                       ) : null}
 
-                      {canAcceptReject(inv) ? (
-                        <>
+                      <Link
+                        href={`/invite/${encodeURIComponent(inv.id)}`}
+                        className="text-xs font-bold text-gray-900 hover:underline whitespace-nowrap"
+                      >
+                        details
+                      </Link>
+
+                      <div className="flex items-center gap-2">
+                        {canRevoke(inv) ? (
                           <button
                             type="button"
                             disabled={actingId === inv.id}
-                            onClick={() => void doAct(inv, "reject")}
+                            onClick={() => void doAct(inv, "revoke")}
                             className={cn(
-                              "px-3 py-1.5 rounded-full text-xs font-black border",
+                              "px-3 py-1.5 rounded-full text-xs font-black border flex items-center gap-1",
                               actingId === inv.id
                                 ? "bg-gray-100 text-gray-400 border-gray-200"
                                 : "bg-white text-gray-900 border-gray-300 hover:bg-gray-50"
                             )}
                           >
-                            Reject
+                            <X size={14} />
+                            Revoke
                           </button>
-                          <button
-                            type="button"
-                            disabled={actingId === inv.id}
-                            onClick={() => void doAct(inv, "accept")}
-                            className={cn(
-                              "px-3 py-1.5 rounded-full text-xs font-black border",
-                              actingId === inv.id
-                                ? "bg-gray-100 text-gray-400 border-gray-200"
-                                : "bg-gray-900 text-white border-gray-900 hover:opacity-95"
-                            )}
-                          >
-                            Accept
-                          </button>
-                        </>
-                      ) : null}
+                        ) : null}
+
+                        {canAcceptReject(inv) ? (
+                          <>
+                            <button
+                              type="button"
+                              disabled={actingId === inv.id}
+                              onClick={() => void doAct(inv, "reject")}
+                              className={cn(
+                                "px-3 py-1.5 rounded-full text-xs font-black border",
+                                actingId === inv.id
+                                  ? "bg-gray-100 text-gray-400 border-gray-200"
+                                  : "bg-white text-gray-900 border-gray-300 hover:bg-gray-50"
+                              )}
+                            >
+                              Reject
+                            </button>
+                            <button
+                              type="button"
+                              disabled={actingId === inv.id}
+                              onClick={() => void doAct(inv, "accept")}
+                              className={cn(
+                                "px-3 py-1.5 rounded-full text-xs font-black border",
+                                actingId === inv.id
+                                  ? "bg-gray-100 text-gray-400 border-gray-200"
+                                  : "bg-gray-900 text-white border-gray-900 hover:opacity-95"
+                              )}
+                            >
+                              Accept
+                            </button>
+                          </>
+                        ) : null}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
               );
             })}
           </div>
         )}
 
         <div className="mt-4 text-[11px] text-gray-400">
-          Dev note: invite creation is gated to <span className="font-mono">sd_viewer=me</span>, but acceptance works for any viewer
-          that matches the <span className="font-mono">to</span> handle.
+          Tip: If you don’t see expected invites, confirm you’re logged in and that the invite was sent to the right identity.
         </div>
       </div>
     </div>

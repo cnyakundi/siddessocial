@@ -1,9 +1,15 @@
 # Siddes — STATE (single source of “where we are”)
-**Updated:** 2026-01-13
+**Updated:** 2026-01-19
 
 ## Current milestone
 - **sd_146:** Posts+Replies DB scaffold (models+migrations+SD_POST_STORE=memory|db|auto)
 
+
+
+## Clerkless Context Engine (Jan 2026)
+- On-device Suggested Sets after contacts match (review-first; never auto-apply)
+- Guardrails: contact-derived Sets cannot be Public
+- Privacy-safe telemetry (counts-only) for suggestion quality
 ## Inbox (endgame status)
 Inbox is now “migration-safe” and ready for broader feature work:
 - Store can run in `memory`, `db`, or `auto`
@@ -33,11 +39,12 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 - **sd_126:** Migration pack links Inbox DB doc + recommends auto mode
 
 ## Public Side ladder (tuning series)
-- **sd_128:** Public Channels foundation (tag + feed filter row)
-- **sd_128a:** Public Channels typecheck hotfix
-- **sd_129:** Granular Siding prefs (per-person channel tuning)
+- **sd_128:** Public Topics foundation (tag + feed filter row)
+- **sd_128a:** Public Topics typecheck hotfix
+- **sd_129:** Granular Siding prefs (per-person topic tuning)
 - **sd_130:** Trust Dial MVP (Calm / Standard / Arena)
 - **sd_131:** Public Slate + Pinned Stack (Public profile becomes a homepage)
+- **sd_181i:** Public Slate DB-backed (no frontend mockPublicSlate; adds /api/slate + seed)
 - **sd_132:** Public Visual Calm (hide counts by default; reveal on hover/tap)
 - **sd_133:** Public Trust Gates (server-enforced capabilities)
 
@@ -77,4 +84,47 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 
 - **sd_148a:** Ban 'Rooms' terminology globally; use Sets wording
 
-- **sd_148b:** Guided Set creator sheet (Name→Side→Theme→Members→Create)
+- **sd_148b:** Guided Set creator sheet (Name→Side→Theme→Members→Create)\n\n- **sd_148e:** Add minimal Django API tests (posts+sets) so manage.py test finds tests\n\n\n- **sd_148f:** Fix Django tests by forcing DEBUG=True (enable x-sd-viewer header in Docker tests)\n
+## Launch hardening
+- **sd_318:** Secure cookies in production (Next-set session cookies include Secure when NODE_ENV=production)
+- Launch Part 0 plan: `docs/LAUNCH_PART_0.md`
+
+## Launch hardening (Part 0)
+See `docs/LAUNCH_PART_0.md` for the closure plan.
+
+- **sd_313:** Email infrastructure foundation (EmailService + `python manage.py send_test_email`)
+
+- **sd_314:** Email verification + resend (tokens + endpoints + minimal UI)
+- **sd_317:** Username policy (reserved + lowercase + anti-impersonation; case-insensitive uniqueness)
+
+## Launch hardening (Part 0)
+- **sd_316:** Password reset + change password (fix for sd_315)
+- **sd_319:** Account state enforcement (read-only/suspended/banned) + staff endpoint + middleware
+- **sd_320:** Staff admin stats cockpit (moderation/stats + export + UI)
+- **sd_321:** Legal/policy pages (Terms, Privacy, Community Guidelines) + login/signup links
+- **sd_324:** Account lifecycle (email change + deactivate/delete + export)
+- **sd_325:** Post edit + delete (edit window + server-truth affordances)
+- **sd_326:** Search v0 (People + Public Posts) + /search + /u/<username>
+- **sd_322:** Device/session management (session list + revoke + logout other devices)
+
+## Recent applied overlays (Jan 19, 2026)
+
+These are the overlays applied/created during the current session (evidence: terminal logs):
+
+- sd_376_password_reset_revoke_other_sessions - security: revoke other sessions on password reset
+- sd_377_on_device_token_clustering_v2 - on-device group suggestions (token clustering) + ML_PART_2 doc
+- sd_378_fix_proxy_import_paths - fixed proxyJson relative paths (introduced double-quote typo)
+- sd_379_fix_proxy_double_quote - fixed the broken proxyJson import lines
+- sd_381_remove_mock_suggestions_use_ondevice_engine - removed mock "Gym Squad" suggestions; use on-device engine in Import Set
+- sd_382_fix_desktop_siderail_search_icon - missing lucide Search import (typecheck)
+- sd_383_cce_v12_bulk_accept_undo_delete_sets_telemetry_knob - bulk accept + Undo + delete + telemetry knob (pending apply)
+- sd_384_docs_refresh_status_pack - added status refresh doc + ML part docs
+
+## Known gotchas
+
+- Some helper scripts assume `python` exists; on macOS you often have `python3` only.
+- If your shell prompt shows you are inside `frontend/`, then `cd frontend` will fail; run `npm ...` directly.
+- When Django asks for a one-off default during migrations, it expects valid Python: use `'legacy'` not `legacy`.
+
+## Server safety (Sets)
+- Set members are normalized to @handles, deduped, and capped server-side.

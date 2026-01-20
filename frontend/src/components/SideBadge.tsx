@@ -2,7 +2,8 @@
 
 import React, { useRef } from "react";
 import { Lock } from "lucide-react";
-import { SIDES, SIDE_THEMES, type SideId } from "@/src/lib/sides";
+import type { SideId } from "@/src/lib/sides";
+import { SIDES, SIDE_THEMES } from "@/src/lib/sides";
 import { useSide } from "@/src/components/SideProvider";
 
 function cn(...parts: Array<string | undefined | false | null>) {

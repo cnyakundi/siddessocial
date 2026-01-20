@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "== Check: Notifications glimpses =="
+echo "== Check: Notifications DB-backed =="
 
 REQ=(
-  "frontend/src/lib/mockNotifications.ts"
+  "frontend/src/app/api/notifications/route.ts"
   "frontend/src/components/NotificationsView.tsx"
   "frontend/src/app/siddes-notifications/page.tsx"
 )
@@ -23,8 +23,16 @@ if [[ "$missing" -ne 0 ]]; then
   exit 1
 fi
 
-if grep -q "Glimpse" "frontend/src/components/NotificationsView.tsx"; then
-  echo "✅ Glimpse UI present"
+if grep -q "/api/notifications" "frontend/src/components/NotificationsView.tsx"; then
+  echo "✅ NotificationsView fetches /api/notifications"
 else
-  echo "✅ NotificationsView present (glimpse is implicit)"
+  echo "❌ NotificationsView does not fetch /api/notifications"
+  exit 1
+fi
+
+if grep -q "MOCK_NOTIFICATIONS" "frontend/src/components/NotificationsView.tsx"; then
+  echo "❌ MOCK_NOTIFICATIONS still referenced"
+  exit 1
+else
+  echo "✅ No MOCK_NOTIFICATIONS references"
 fi

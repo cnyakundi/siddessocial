@@ -24,7 +24,7 @@ export const SIDES: Record<
     label: "Friends",
     desc: "People you know",
     privacyHint: "Visible only to Friends",
-    isPrivate: false,
+    isPrivate: true,
   },
   close: {
     id: "close",

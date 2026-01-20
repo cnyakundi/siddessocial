@@ -1,4 +1,4 @@
-# Siddes — Overlay Workflow (must-follow)
+# Siddes — Overlay Workflow (must-side)
 **Updated:** 2026-01-09
 
 Siddes is built via **overlay zips**. The workflow goal is: **zero context** needed when you move between chat windows.

@@ -2,7 +2,8 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { X } from "lucide-react";
-import { PUBLIC_CHANNELS, type PublicChannelId } from "@/src/lib/publicChannels";
+import type { PublicChannelId } from "@/src/lib/publicChannels";
+import { PUBLIC_CHANNELS } from "@/src/lib/publicChannels";
 import { getPublicSidingChannels, setPublicSidingChannels } from "@/src/lib/publicSiding";
 
 function cn(...parts: Array<string | undefined | false | null>) {
@@ -22,7 +23,7 @@ export function PublicChannelPrefsSheet({
 }) {
   const title = useMemo(() => {
     const who = authorLabel ? authorLabel : authorKey;
-    return `Public Channels • ${who}`;
+    return `Public Topics • ${who}`;
   }, [authorKey, authorLabel]);
 
   const [selected, setSelected] = useState<PublicChannelId[]>([]);
@@ -71,7 +72,7 @@ export function PublicChannelPrefsSheet({
         type="button"
         className="absolute inset-0 bg-black/30 backdrop-blur-sm"
         onClick={onClose}
-        aria-label="Close Public Channels sheet"
+        aria-label="Close Public Topics sheet"
       />
 
       <div className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
@@ -110,7 +111,7 @@ export function PublicChannelPrefsSheet({
 
           {selected.length === 0 ? (
             <span className="text-xs text-amber-600 font-semibold ml-1">
-              Muted (no channels)
+              Muted (no topics)
             </span>
           ) : null}
         </div>

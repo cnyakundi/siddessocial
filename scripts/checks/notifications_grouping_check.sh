@@ -5,7 +5,6 @@ echo "== Check: Notifications grouping =="
 
 REQ=(
   "frontend/src/components/NotificationsView.tsx"
-  "frontend/src/lib/mockNotifications.ts"
 )
 
 missing=0

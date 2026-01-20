@@ -8,26 +8,203 @@ import {
   MessageCircle,
   Repeat,
   Heart,
+  CheckCircle2,
   MoreHorizontal,
+  Megaphone,
+  Share2,
+  Copy,
 } from "lucide-react";
-import { type SideId, SIDE_THEMES } from "@/src/lib/sides";
+import type { SideId } from "@/src/lib/sides";
+import { SIDE_THEMES, SIDES } from "@/src/lib/sides";
 import { FLAGS } from "@/src/lib/flags";
-import { type FeedPost } from "@/src/lib/mockFeed";
-import { buildChips, chipsFromPost, type Chip } from "@/src/lib/chips";
+import type { FeedPost } from "@/src/lib/feedTypes";
+import type { Chip } from "@/src/lib/chips";
+import { buildChips, chipsFromPost } from "@/src/lib/chips";
 import { ChipOverflowSheet } from "@/src/components/ChipOverflowSheet";
-import { SignalsSheet } from "@/src/components/SignalsSheet";
 import { EchoSheet } from "@/src/components/EchoSheet";
 import { QuoteEchoComposer } from "@/src/components/QuoteEchoComposer";
+import { PostActionsSheet } from "@/src/components/PostActionsSheet";
+import { EditPostSheet } from "@/src/components/EditPostSheet";
+import { toast } from "@/src/lib/toast";
+
+// Tailwind-safe hover text tokens (static strings)
+const HOVER_TEXT: Record<SideId, string> = {
+  public: "hover:text-blue-600",
+  friends: "hover:text-emerald-600",
+  close: "hover:text-rose-600",
+  work: "hover:text-slate-700",
+};
+
+
+// 44x44 action hit targets + focus rings (mobile ergonomics)
+const ACTION_BASE =
+  "min-w-[44px] min-h-[44px] p-2 rounded-full inline-flex items-center justify-center transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-900/20 active:scale-[0.98]";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
 }
 
-function Avatar() {
+// sd_384_media: render attachments (R2 served via /m/* redirects)
+type MediaItem = { id: string; url: string; kind: "image" | "video" };
+
+function MediaGrid({ items }: { items: MediaItem[] }) {
+  const it = Array.isArray(items) ? items.slice(0, 4) : [];
+  if (it.length === 0) return null;
+
+  const isSingle = it.length === 1;
+
   return (
-    <div className="w-10 h-10 rounded-full bg-gray-200 border border-gray-100 flex items-center justify-center text-gray-400 flex-shrink-0">
-      <span className="text-xs font-bold">U</span>
+    <div className={cn("w-full mb-3 overflow-hidden", isSingle ? "rounded-2xl border border-gray-200 bg-gray-50" : "")}>
+      {isSingle ? (
+        it[0].kind === "video" ? (
+          <video className="w-full max-h-[420px] object-cover" controls preload="metadata" src={it[0].url} />
+        ) : (
+          <img className="w-full max-h-[420px] object-cover" src={it[0].url} alt="" loading="lazy" />
+        )
+      ) : (
+        <div className="grid grid-cols-2 gap-2">
+          {it.map((m) => (
+            <div key={m.id || m.url} className="rounded-2xl border border-gray-200 bg-gray-50 overflow-hidden">
+              {m.kind === "video" ? (
+                <video className="w-full h-44 object-cover" controls preload="metadata" src={m.url} />
+              ) : (
+                <img className="w-full h-44 object-cover" src={m.url} alt="" loading="lazy" />
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
+  );
+}
+
+
+// ---- Link preview helpers (no external fetch) ----
+type LinkInfo = { href: string; domain: string; display: string };
+
+function extractFirstUrl(text: string): string | null {
+  const s = String(text || "");
+  const m = s.match(/(https?:\/\/[^\s<>()]+|www\.[^\s<>()]+)/i);
+  if (!m) return null;
+
+  let url = String(m[0] || "");
+
+  // Trim punctuation that often sticks to URLs in prose.
+  url = url.replace(/[)\],.!?:;]+$/g, "");
+
+  if (url.startsWith("www.")) url = "https://" + url;
+  return url;
+}
+
+function safeLinkInfo(raw: string): LinkInfo | null {
+  const r = String(raw || "").trim();
+  if (!r) return null;
+  try {
+    const u = new URL(r);
+    if (u.protocol !== "http:" && u.protocol !== "https:") return null;
+    const domain = (u.hostname || "").replace(/^www\./i, "");
+    let display = u.toString().replace(/^https?:\/\//i, "");
+    if (display.length > 72) display = display.slice(0, 69) + "…";
+    return { href: u.toString(), domain: domain || u.hostname, display };
+  } catch {
+    return null;
+  }
+}
+
+async function copyToClipboard(text: string): Promise<boolean> {
+  const t = String(text || "");
+  if (!t) return false;
+  try {
+    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(t);
+      return true;
+    }
+  } catch {}
+
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = t;
+    ta.style.position = "fixed";
+    ta.style.left = "-9999px";
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+
+const AVATAR_STYLES = [
+  // Non-Side palette (Chameleon law: Side colors are reserved for Side meaning)
+  "bg-amber-100 text-amber-800 border-amber-200",
+  "bg-orange-100 text-orange-800 border-orange-200",
+  "bg-yellow-100 text-yellow-800 border-yellow-200",
+  "bg-violet-100 text-violet-800 border-violet-200",
+  "bg-fuchsia-100 text-fuchsia-800 border-fuchsia-200",
+  "bg-stone-100 text-stone-800 border-stone-200",
+  "bg-zinc-100 text-zinc-800 border-zinc-200",
+  "bg-gray-100 text-gray-800 border-gray-200",
+] as const;
+
+function hashToIndex(seed: string, mod: number) {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) {
+    h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  }
+  return mod > 0 ? h % mod : 0;
+}
+
+function initialsFrom(name?: string, handle?: string) {
+  const base = (name && name.trim()) || (handle && handle.replace(/^@/, "").trim()) || "U";
+  const parts = base.split(/\s+/).filter(Boolean);
+  if (parts.length <= 1) return (parts[0] ? parts[0][0] : "U").toUpperCase();
+  const a = parts[0][0] || "U";
+  const b = parts[parts.length - 1][0] || "U";
+  return (a + b).toUpperCase();
+}
+
+function Avatar({ name, handle }: { name?: string; handle?: string }) {
+  const seed = String((handle || name || "siddes").toLowerCase());
+  const idx = hashToIndex(seed, AVATAR_STYLES.length);
+  const initials = initialsFrom(name, handle);
+  return (
+    <div
+      className={cn(
+        "w-10 h-10 rounded-full border flex items-center justify-center font-extrabold text-sm flex-shrink-0 select-none",
+        AVATAR_STYLES[idx]
+      )}
+      aria-hidden="true"
+      title={name || handle || "User"}
+    >
+      {initials}
+    </div>
+  );
+}
+
+function ContextStamp({ side, context }: { side: SideId; context?: string | null }) {
+  const theme = SIDE_THEMES[side];
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] border",
+        theme.lightBg,
+        theme.text,
+        theme.border
+      )}
+      aria-label={context ? `${SIDES[side].label}: ${context}` : `${SIDES[side].label}`}
+      title={context ? `${SIDES[side].label} • ${context}` : SIDES[side].label}
+    >
+      <span className={cn("w-1.5 h-1.5 rounded-full", theme.primaryBg)} aria-hidden="true" />
+      <span className="font-bold uppercase">{SIDES[side].label}</span>
+      {context ? (
+        <span className="font-medium opacity-80 border-l border-current/20 pl-1.5 ml-0.5 truncate max-w-[180px]">
+          {context}
+        </span>
+      ) : null}
+    </span>
   );
 }
 
@@ -47,25 +224,248 @@ export function PostCard({
 
   const hideCounts = side === "public" && FLAGS.publicCalmUi && !!calmHideCounts;
 
-  const allChips: Chip[] = useMemo(() => buildChips(chipsFromPost(post)), [post]);
-  const visible = allChips.slice(0, 2);
-  const overflow = allChips.slice(2);
+  const allChips: Chip[] = useMemo(() => buildChips(chipsFromPost(post), { side }), [post, side]);
+
+  // Context stamp uses Set OR Topic (mutually exclusive), always visible.
+  const topicChip = allChips.find((c) => c.id === "topic") || null;
+  const setChip = allChips.find((c) => c.id === "set") || null;
+  const contextChip = side === "public" ? (topicChip || setChip) : setChip;
+
+  // Keep chips for signals (Mention/Doc/Urgent), with overflow sheet.
+  const signalChips = allChips.filter((c) => c.id !== "topic" && c.id !== "set");
+  const visible = signalChips.slice(0, 1);
+  const overflow = signalChips.slice(1);
   const overflowCount = overflow.length;
 
   const [openOverflow, setOpenOverflow] = useState(false);
-  const [openSignals, setOpenSignals] = useState(false);
   const [openEcho, setOpenEcho] = useState(false);
   const [openQuote, setOpenQuote] = useState(false);
+  const [openActions, setOpenActions] = useState(false);
+  const [openEdit, setOpenEdit] = useState(false);
+  const [contentOverride, setContentOverride] = useState<string | null>(null);
+  const [editedAtMs, setEditedAtMs] = useState<number | null>(null);
+  const [expanded, setExpanded] = useState(false);
 
-  const onChipClick = (chip: Chip) => {
-    alert(`Chip: ${chip.label}`);
+  const displayContent = contentOverride ?? String((post as any)?.content ?? post.content ?? "");
+  const isEdited = editedAtMs !== null || typeof (post as any)?.editedAt === "number";
+  const rawText = String(displayContent || "");
+  const linkInfo = useMemo(() => {
+    const u = extractFirstUrl(rawText);
+    return u ? safeLinkInfo(u) : null;
+  }, [rawText]);
+
+  // sd_384_media: attachments
+  const mediaItems = useMemo(() => {
+    const arr = (post as any)?.media;
+    if (!Array.isArray(arr)) return [] as MediaItem[];
+    return (arr as any[])
+      .map((m: any) => {
+        const url = String(m?.url || "");
+        const id = String(m?.id || url);
+        const k = String(m?.kind || "image").toLowerCase() === "video" ? "video" : "image";
+        return { id, url, kind: k as any };
+      })
+      .filter((m) => Boolean(m.url));
+  }, [post]);
+
+  const hasText = rawText.trim().length > 0;
+  const PREVIEW_LIMIT = side === "public" ? 360 : 520;
+  const isLongText = hasText && rawText.trim().length > PREVIEW_LIMIT;
+  const shownText = expanded || !isLongText ? rawText : rawText.slice(0, PREVIEW_LIMIT).trimEnd() + "…";
+  const [hidden, setHidden] = useState(false);
+
+  const replyCount = (() => {
+    const n = Number((post as any)?.replyCount ?? 0);
+    return Number.isFinite(n) ? n : 0;
+  })();
+
+  // Step 2.2: Echo + Quote Echo (real, DB-backed)
+  const echoOf = ((post as any)?.echoOf ?? null) as any;
+  const echoOfIdRaw = (() => {
+    const v = echoOf?.id;
+    if (typeof v === "string") return v;
+    if (typeof v === "number") return String(v);
+    if (v == null) return "";
+    return String(v);
+  })();
+  const echoOfId = echoOfIdRaw.trim();
+  const echoOfIdOk = !!echoOfId && !/^(none|null|undefined|0)$/i.test(echoOfId);
+  const isEchoPost = echoOfIdOk;
+  const isQuoteEcho = isEchoPost && hasText;
+
+  const [echoBusy, setEchoBusy] = useState(false);
+  const [echoed, setEchoed] = useState<boolean>(() => Boolean((post as any)?.echoed));
+  const [echoCount, setEchoCount] = useState<number>(() => {
+    const n = Number((post as any)?.echoCount ?? 0);
+    return Number.isFinite(n) ? n : 0;
+  });
+
+
+  // sd_180b: real Like toggle (optimistic, backed by /api/post/:id/like)
+  // Final Polish (6): Chameleon sweep
+  const [likeBusy, setLikeBusy] = useState(false);
+  const [liked, setLiked] = useState<boolean>(() => Boolean((post as any)?.liked));
+  const [likeCount, setLikeCount] = useState<number>(() => {
+    const n = Number((post as any)?.likeCount ?? (post as any)?.likes ?? 0);
+    return Number.isFinite(n) ? n : 0;
+  });
+
+  const toggleLike = async () => {
+    if (likeBusy) return;
+    setLikeBusy(true);
+
+    const prevLiked = liked;
+    const prevCount = likeCount;
+    const nextLiked = !prevLiked;
+
+    // Optimistic update
+    setLiked(nextLiked);
+    setLikeCount((c) => Math.max(0, c + (nextLiked ? 1 : -1)));
+
+    try {
+      const res = await fetch(`/api/post/${encodeURIComponent(post.id)}/like`, {
+        method: nextLiked ? "POST" : "DELETE",
+        cache: "no-store",
+      });
+      const j = await res.json().catch(() => null);
+      if (!res.ok || !j || j.ok !== true) {
+        const err = j && typeof j.error === "string" && j.error ? j.error : "request_failed";
+        throw new Error(err);
+      }
+
+      if (typeof j.liked === "boolean") setLiked(j.liked);
+      if (typeof j.likeCount === "number") setLikeCount(j.likeCount);
+    } catch {
+      setLiked(prevLiked);
+      setLikeCount(prevCount);
+      toast.error("Couldn't update like.");
+    } finally {
+      setLikeBusy(false);
+    }
   };
 
-  const signals = post.signals ?? 0;
+  const toggleEcho = async () => {
+    if (echoBusy) return;
+    setEchoBusy(true);
 
-  const doEcho = () => {
+    const prevEchoed = echoed;
+    const prevCount = echoCount;
+    const nextEchoed = !prevEchoed;
+
+    // Optimistic update
+    setEchoed(nextEchoed);
+    setEchoCount((c) => Math.max(0, c + (nextEchoed ? 1 : -1)));
+
+    try {
+      // If this card is an echo/quote-echo, always target the *original* post.
+      // This keeps echo/un-echo stable (backend uses client_key = echo:<post_id>:<side>).
+      const targetId = isEchoPost ? echoOfId : String(post.id);
+      const url = `/api/post/${encodeURIComponent(targetId)}/echo?side=${encodeURIComponent(side)}`;
+      const res = await fetch(url, {
+        method: nextEchoed ? "POST" : "DELETE",
+        cache: "no-store",
+        ...(nextEchoed
+          ? {
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({ side }),
+            }
+          : {}),
+      });
+
+      const j = await res.json().catch(() => null);
+      if (!res.ok || !j || j.ok !== true) {
+        const err = j && typeof j.error === "string" && j.error ? j.error : "request_failed";
+        throw new Error(err);
+      }
+
+      if (typeof j.echoed === "boolean") setEchoed(j.echoed);
+      if (typeof j.echoCount === "number") setEchoCount(j.echoCount);
+
+      toast.success(j.echoed ? "Echoed." : "Echo removed.");
+      try {
+        router.refresh();
+      } catch {
+        // ignore
+      }
+    } catch {
+      setEchoed(prevEchoed);
+      setEchoCount(prevCount);
+      toast.error("Couldn't update echo.");
+    } finally {
+      setEchoBusy(false);
+    }
+  };
+
+  const submitQuoteEcho = async (text: string): Promise<{ ok: boolean; message?: string }> => {
+    const t = String(text || "").trim();
+    if (!t) return { ok: false, message: "Write something first." };
+    if (echoBusy) return { ok: false, message: "Still working — try again." };
+
+    const maxLen = side === "public" ? 800 : 5000;
+    if (t.length > maxLen) return { ok: false, message: `Too long. Max ${maxLen} characters.` };
+
+    setEchoBusy(true);
+    try {
+      const targetId = isEchoPost ? echoOfId : String(post.id);
+      const res = await fetch(`/api/post/${encodeURIComponent(targetId)}/quote`, {
+
+        method: "POST",
+        cache: "no-store",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ text: t, side, client_key: `quote_${Date.now().toString(36)}` }),
+      });
+      const j = await res.json().catch(() => null);
+
+      if (res.ok && j && j.ok === true) {
+        toast.success("Quote Echoed.");
+        // A quote echo is also an echo (state-wise) in this Side.
+        setEchoed(true);
+        setEchoCount((c) => c + 1);
+        try {
+          router.refresh();
+        } catch {
+          // ignore
+        }
+        return { ok: true };
+      }
+
+      const code = j && typeof j.error === "string" ? j.error : "request_failed";
+
+      if (res.status === 400) {
+        if (code === "too_long" && j && typeof j.max === "number") return { ok: false, message: `Too long. Max ${j.max} characters.` };
+        if (code === "empty_text") return { ok: false, message: "Write something first." };
+        return { ok: false, message: "Couldn’t quote echo — check your text." };
+      }
+
+      if (res.status === 401) return { ok: false, message: "Login required." };
+
+      if (res.status === 403) {
+        if (code === "echo_forbidden_private") return { ok: false, message: "Quote Echo is available for Public posts only." };
+        if (code === "public_trust_low" && j && typeof j.min_trust === "number") return { ok: false, message: `Public quote echo requires Trust L${j.min_trust}+.` };
+        if (code === "rate_limited" && j && typeof j.retry_after_ms === "number") {
+          const sec = Math.max(1, Math.round(Number(j.retry_after_ms) / 1000));
+          return { ok: false, message: `Slow down — try again in ${sec}s.` };
+        }
+        return { ok: false, message: "Restricted: you can’t quote echo here." };
+      }
+
+      if (res.status === 404) return { ok: false, message: "Post not found." };
+      if (res.status >= 500) return { ok: false, message: "Server error — try again." };
+
+      return { ok: false, message: "Couldn’t quote echo — try again." };
+    } catch {
+      return { ok: false, message: "Network error — try again." };
+    } finally {
+      setEchoBusy(false);
+    }
+  };
+
+  const openPost = () => router.push(`/siddes-post/${post.id}`);
+  const openReply = () => router.push(`/siddes-post/${post.id}?reply=1`);
+
+  const doEcho = async () => {
     setOpenEcho(false);
-    alert("Echoed to your current Side (stub).");
+    await toggleEcho();
   };
 
   const doQuote = () => {
@@ -73,55 +473,130 @@ export function PostCard({
     setOpenQuote(true);
   };
 
-  const doShare = () => {
+  const doShare = async () => {
     setOpenEcho(false);
-    alert("Share externally (stub). Later: Web Share API + deep link cards.");
+
+    const relUrl = `/siddes-post/${post.id}`;
+    const absUrl = typeof window !== "undefined" ? `${window.location.origin}${relUrl}` : relUrl;
+
+    // Context safety: only Public supports external share. Private sides copy an internal link.
+    if (side !== "public") {
+      const ok = await copyToClipboard(absUrl);
+      toast[ok ? "success" : "error"](ok ? "Internal link copied (requires access)." : "Could not copy link.");
+      return;
+    }
+
+
+    // Prefer the native share menu if available
+    try {
+      if (typeof navigator !== "undefined" && (navigator as any).share) {
+        await (navigator as any).share({
+          title: "Siddes",
+          text: (displayContent || "").slice(0, 140),
+          url: absUrl,
+        });
+        toast.success("Shared.");
+        return;
+      }
+    } catch {
+      // fall through to copy link
+    }
+
+    // Fallback: copy link
+    try {
+      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(absUrl);
+        toast.success("Link copied.");
+        return;
+      }
+    } catch {
+      // continue
+    }
+
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = absUrl;
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      toast.success("Link copied.");
+    } catch {
+      toast.error("Could not share link.");
+    }
   };
+
+  // Launch-safe: Echo is only offered on Public posts (prevents private re-broadcast leaks).
+  const canEcho = side === "public";
+
+  if (hidden) return null;
 
   return (
     <div
       className={cn(
-        "bg-white p-4 rounded-2xl shadow-sm border border-gray-100 border-l-2 mb-4 transition-shadow hover:shadow-md",
+        "bg-white p-4 rounded-2xl shadow-sm border border-gray-200 border-l-2 transition-shadow hover:shadow-md",
         theme.accentBorder
       )}
       data-post-id={post.id}
     >
       {/* Header */}
       <div className="flex justify-between items-start mb-3">
-        <button
-          type="button"
-          onClick={() => router.push(`/siddes-post/${post.id}`)}
-          className="flex gap-3 text-left"
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={(e) => {
+            // Selection-safe: don't navigate when the user is highlighting text.
+            try {
+              const sel = typeof window !== "undefined" ? window.getSelection() : null;
+              if (sel && sel.toString().trim().length > 0) return;
+            } catch {}
+            openPost();
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") openPost();
+            if (e.key === " " ) {
+              e.preventDefault();
+              openPost();
+            }
+          }}
+          className="flex gap-3 text-left cursor-pointer"
           aria-label="Open post"
         >
-          <Avatar />
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-gray-900">{post.author}</span>
-              <span className="text-gray-400 text-sm">{post.handle}</span>
+          <Avatar name={post.author} handle={post.handle} />
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="font-bold text-gray-900 truncate">{post.author}</span>
+              <span className="text-gray-400 text-sm truncate">{post.handle}</span>
             </div>
 
-            {/* Metadata row (time + chips) */}
-            <div className="flex items-center gap-2 mt-1 flex-wrap">
-              <span className="text-xs text-gray-400 mr-1">{post.time}</span>
+            {/* Metadata row (time + stamp + chips) */}
+            <div className="flex items-center gap-2 mt-1 flex-wrap min-w-0">
+              <span className="text-xs text-gray-400">{post.time}</span>
+              {isEdited ? (
+                <>
+                  <span className="text-gray-300 text-[10px]">•</span>
+                  <span className="text-xs text-gray-400 font-semibold">Edited</span>
+                </>
+              ) : null}
+
+              <span className="text-gray-300 text-[10px]">•</span>
+              <ContextStamp side={side} context={contextChip?.label || null} />
 
               {visible.map((c) => (
-                <button
+                <span
                   key={c.id}
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onChipClick(c);
-                  }}
                   className={cn(
-                    "text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity",
+                    "text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-1",
                     c.className
                   )}
                   aria-label={c.label}
+                  title={c.label}
                 >
                   <c.icon size={10} />
                   {c.label}
-                </button>
+                </span>
               ))}
 
               {overflowCount > 0 ? (
@@ -133,108 +608,381 @@ export function PostCard({
                   }}
                   className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-200"
                   aria-label={`More context: ${overflowCount}`}
+                  title="More"
                 >
                   +{overflowCount}
                 </button>
               ) : null}
             </div>
           </div>
-        </button>
+        </div>
 
         <button
           type="button"
-          onClick={() => onMore?.(post)}
-          className="text-gray-400 hover:text-gray-600 p-2 -mr-2"
+          onClick={() => (onMore ? onMore(post) : setOpenActions(true))}
+          className="text-gray-400 hover:text-gray-600 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-900/20 -mr-2"
           aria-label="Post options"
         >
           <MoreHorizontal size={20} />
         </button>
       </div>
 
-      {/* Body */}
-      <div className="text-gray-900 text-[15px] leading-relaxed mb-3">{post.content}</div>
-
-      {post.kind === "image" ? (
-        <div className="w-full h-56 bg-gray-100 rounded-xl mb-3 flex items-center justify-center text-gray-400 overflow-hidden">
-          <ImageIcon size={32} />
-        </div>
-      ) : null}
-
-      {post.kind === "link" ? (
-        <div className="w-full rounded-xl border border-gray-100 bg-gray-50 mb-3 p-3 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-white border border-gray-100 flex items-center justify-center text-gray-500">
-            <LinkIcon size={18} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-sm font-semibold text-gray-900 truncate">Link preview</div>
-            <div className="text-xs text-gray-500 truncate">Attached document or URL</div>
-          </div>
-        </div>
-      ) : null}
-
-      {/* Tags */}
-      {post.tags?.length ? (
-        <div className="flex flex-wrap gap-2 mb-3">
-          {post.tags.map((t) => (
-            <button
-              key={t}
-              type="button"
-              className="text-sm text-gray-500 font-medium hover:text-gray-800 hover:underline"
-              onClick={() => console.log("tag", t)}
-            >
-              #{t}
-            </button>
-          ))}
-        </div>
-      ) : null}
-
-      {/* Footer: Signals + actions */}
-      <div className="flex items-center justify-between pt-2 border-t border-gray-50">
-        <button
-          type="button"
-          onClick={() => setOpenSignals(true)}
-          className={cn(
-            "text-sm font-bold text-gray-900 hover:underline",
-            hideCounts ? "group inline-flex items-center gap-1" : ""
-          )}
-          aria-label="Open signals"
+      {/* Body + Footer (indented under avatar) */}
+      <div className="pl-[52px]">
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={(e) => {
+            // Selection-safe: don't navigate when the user is highlighting text.
+            try {
+              const sel = typeof window !== "undefined" ? window.getSelection() : null;
+              if (sel && sel.toString().trim().length > 0) return;
+            } catch {}
+            openPost();
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") openPost();
+            if (e.key === " ") {
+              e.preventDefault();
+              openPost();
+            }
+          }}
+          className="w-full text-left rounded-xl focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-900/20"
+          aria-label="Open thread"
         >
-          {hideCounts ? (
-            <>
-              <span>Signals</span>
-              <span className="tabular-nums text-gray-400 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 group-active:opacity-100 transition-opacity">
-                ({signals})
+          {post.broadcast ? (
+            <div className="flex items-center gap-2 mb-2 text-[11px] font-extrabold text-gray-500 uppercase tracking-wider">
+              <span
+                className={cn(
+                  "p-1 rounded-md", theme.lightBg, theme.text
+                )}
+              >
+                <Megaphone size={12} />
               </span>
-            </>
-          ) : (
-            <>
-              {signals} Signals
-            </>
-          )}
-        </button>
+              <span>
+                From{" "}
+                <span className={cn("font-bold", theme.text)}>
+                  {post.broadcast.name}
+                </span>
+              </span>
+            </div>
+          ) : null}
 
-        <div className="flex gap-5">
-          <button className="text-gray-400 hover:text-gray-700 transition-colors p-1" aria-label="Reply">
-            <MessageCircle size={22} strokeWidth={1.5} />
-          </button>
-          <button
-            className="text-gray-400 hover:text-gray-700 transition-colors p-1"
-            aria-label="Echo"
-            onClick={() => setOpenEcho(true)}
-          >
-            <Repeat size={22} strokeWidth={1.5} />
-          </button>
-          <button className="text-gray-400 hover:text-gray-700 transition-colors p-1" aria-label="Like">
-            <Heart size={22} strokeWidth={1.5} />
-          </button>
+          {isEchoPost ? (
+            <div className="flex items-center gap-2 mb-2 text-[11px] font-extrabold text-gray-500 uppercase tracking-wider">
+              <span className="p-1 bg-gray-50 rounded-md text-gray-700">
+                <Repeat size={12} />
+              </span>
+              <span>{isQuoteEcho ? "Quote Echo" : "Echo"}</span>
+            </div>
+          ) : null}
+
+          {!isEchoPost || isQuoteEcho || hasText ? (
+            <p className="text-gray-800 text-[15px] leading-relaxed mb-3 whitespace-pre-wrap">
+              {shownText}
+              {isLongText ? (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setExpanded((v) => !v);
+                  }}
+                  className={cn(
+                    "ml-1 text-xs font-extrabold underline-offset-2 hover:underline",
+                    theme.text
+                  )}
+                  aria-label={expanded ? "Show less" : "Read more"}
+                >
+                  {expanded ? "Show less" : "Read more"}
+                </button>
+              ) : null}
+            </p>
+          ) : null}
+
+          {isEchoPost && echoOf ? (
+            <div className="w-full mb-3 p-3 rounded-2xl border border-gray-200 bg-gray-50">
+              <div className="text-xs text-gray-500 mb-1">Echoing</div>
+              <div className="text-sm font-semibold text-gray-900">{echoOf.author}</div>
+              <div className="text-xs text-gray-400">{echoOf.handle}</div>
+              <div className="text-sm text-gray-700 mt-1">{echoOf.content || "(unavailable)"}</div>
+            </div>
+          ) : null}
+
+          {mediaItems.length ? (
+            <MediaGrid items={mediaItems} />
+          ) : null}
+
+
+          {linkInfo ? (
+            <div
+              className="w-full rounded-xl border border-gray-100 bg-gray-50 mb-3 overflow-hidden"
+              data-testid="post-link-preview"
+            >
+              <div className="flex items-stretch">
+                <button
+                  type="button"
+                  className="flex-1 p-3 flex items-center gap-3 text-left hover:bg-gray-100/60 transition-colors"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    try {
+                      window.open(linkInfo.href, "_blank", "noopener,noreferrer");
+                    } catch {
+                      toast.error("Could not open link.");
+                    }
+                  }}
+                  aria-label={"Open link " + linkInfo.domain}
+                  title={linkInfo.href}
+                >
+                  <div className="w-10 h-10 rounded-lg bg-white border border-gray-100 flex items-center justify-center text-gray-500 flex-shrink-0">
+                    <LinkIcon size={18} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-gray-900 truncate">{linkInfo.domain}</div>
+                    <div className="text-xs text-gray-500 truncate">{linkInfo.display}</div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className="px-3 flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-100/60 transition-colors"
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const ok = await copyToClipboard(linkInfo.href);
+                    ok ? toast.success("Link copied.") : toast.error("Could not copy link.");
+                  }}
+                  aria-label="Copy link"
+                  title="Copy link"
+                >
+                  <Copy size={18} />
+                </button>
+              </div>
+            </div>
+          ) : null}
+        </div>
+
+        {/* Tags */}
+        {post.tags?.length ? (
+          <div className="flex flex-wrap gap-2 mb-3">
+            {post.tags.map((t) => (
+              <span key={t} className="text-sm text-gray-500 font-medium">
+                #{t}
+              </span>
+            ))}
+          </div>
+        ) : null}
+
+        {/* Footer: actions (counts inline) */}
+        <div className="flex items-center justify-between pt-2 border-t border-gray-50">
+          <div className="flex items-center gap-5">
+            <button
+              className={cn(ACTION_BASE, "text-gray-500", HOVER_TEXT[side])}
+              aria-label="Reply"
+              onClick={openReply}
+              title={replyCount ? `${replyCount} repl${replyCount === 1 ? "y" : "ies"}` : "Reply"}
+            >
+              <span className="inline-flex items-center gap-1">
+                <MessageCircle size={22} strokeWidth={1.5} />
+                {!hideCounts && replyCount ? (
+                  <span className="text-xs font-extrabold tabular-nums text-gray-500">{replyCount}</span>
+                ) : null}
+              </span>
+            </button>
+
+            {canEcho ? (
+              <button
+                className={cn(
+                  ACTION_BASE,
+                  "transition-colors disabled:opacity-60",
+                  echoed ? theme.text : cn("text-gray-500", HOVER_TEXT[side])
+                )}
+                aria-label={echoed ? "Echoed" : "Echo"}
+                onClick={() => setOpenEcho(true)}
+                disabled={echoBusy}
+                title={echoCount ? `${echoCount} echo${echoCount === 1 ? "" : "es"}` : echoed ? "Echoed" : "Echo"}
+              >
+                <span className="inline-flex items-center gap-1">
+                  <Repeat size={22} strokeWidth={1.5} />
+                  {!hideCounts && echoCount ? (
+                    <span className={cn("text-xs font-extrabold tabular-nums", echoed ? theme.text : "text-gray-500")}>{echoCount}</span>
+                  ) : null}
+                </span>
+              </button>
+            ) : null}
+
+            <button
+              className={cn(
+                ACTION_BASE,
+                "transition-colors disabled:opacity-60",
+                liked ? theme.text : cn("text-gray-400", side === "work" ? HOVER_TEXT[side] : "hover:text-red-500")
+              )}
+              aria-label={side === "work" ? (liked ? "Unack" : "Ack") : (liked ? "Unlike" : "Like")}
+              onClick={toggleLike}
+              disabled={likeBusy}
+              title={likeCount ? (String(likeCount) + " " + (side === "work" ? "ack" : "like") + (likeCount === 1 ? "" : "s")) : side === "work" ? (liked ? "Acked" : "Ack") : (liked ? "Liked" : "Like")}
+            >
+              <span className="inline-flex items-center gap-1">
+                {side === "work" ? <CheckCircle2 size={22} strokeWidth={1.5} /> : <Heart size={22} strokeWidth={1.5} fill={liked ? "currentColor" : "none"} />}
+                {!hideCounts && likeCount ? (
+                  <span className="text-xs font-extrabold tabular-nums text-gray-500">{likeCount}</span>
+                ) : null}
+              </span>
+            </button>
+
+            {side === "public" ? (
+              <button
+                className={cn(ACTION_BASE, "text-gray-500 hover:text-gray-900")}
+                aria-label="Share externally"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  doShare();
+                }}
+                title="Share externally"
+              >
+                <Share2 size={22} strokeWidth={1.5} />
+              </button>
+            ) : (
+              <button
+                className={cn(ACTION_BASE, "text-gray-500 hover:text-gray-900")}
+                aria-label="Copy internal link"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  doShare();
+                }}
+                title="Copy internal link (requires access)"
+              >
+                <LinkIcon size={22} strokeWidth={1.5} />
+              </button>
+            )}
+          </div>
+
+          {/* Calm UI: keep a subtle engagement hint without numbers */}
+          {hideCounts ? <div className="text-[11px] font-bold text-gray-400">Calm</div> : null}
         </div>
       </div>
 
-      <ChipOverflowSheet open={openOverflow} onClose={() => setOpenOverflow(false)} chips={overflow} title="More context" />
-      <SignalsSheet open={openSignals} onClose={() => setOpenSignals(false)} totalSignals={signals} />
+      <ChipOverflowSheet
+        open={openOverflow}
+        onClose={() => setOpenOverflow(false)}
+        chips={overflow}
+        title="More context"
+      />
 
-      <EchoSheet open={openEcho} onClose={() => setOpenEcho(false)} post={post} onEcho={doEcho} onQuoteEcho={doQuote} onShareExternal={doShare} />
-      <QuoteEchoComposer open={openQuote} onClose={() => setOpenQuote(false)} post={post} onSubmit={(text) => { setOpenQuote(false); alert(`Quote Echoed (stub): ${text || "(no text)"}`); }} />
+      <EchoSheet
+        open={openEcho}
+        onClose={() => setOpenEcho(false)}
+        post={post}
+        side={side}
+        onEcho={doEcho}
+        onQuoteEcho={doQuote}
+        onShareExternal={doShare}
+        echoed={echoed}
+        echoBusy={echoBusy}
+      />
+
+      <QuoteEchoComposer
+        open={openQuote}
+        onClose={() => setOpenQuote(false)}
+        post={post}
+        side={side}
+        busy={echoBusy}
+        onSubmit={submitQuoteEcho}
+      />
+
+<EditPostSheet
+        open={openEdit}
+        onClose={() => setOpenEdit(false)}
+        postId={String(post.id)}
+        initialText={displayContent}
+        maxLen={side === "public" ? 800 : 5000}
+        onSaved={(nextText, editedAt) => {
+          setContentOverride(nextText);
+          setEditedAtMs(typeof editedAt === "number" ? editedAt : Date.now());
+          try {
+            router.refresh();
+          } catch {}
+        }}
+      />
+
+      <PostActionsSheet
+        open={openActions}
+        onClose={() => setOpenActions(false)}
+        post={post}
+        side={side}
+        onOpen={openPost}
+        onHide={() => {
+          const pid = String((post as any)?.id || "").trim();
+          if (!pid) {
+            toast.error("Could not hide.");
+            return;
+          }
+
+          // Optimistic hide
+          setHidden(true);
+
+          (async () => {
+            try {
+              const res = await fetch("/api/hidden-posts", {
+                method: "POST",
+                cache: "no-store",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ postId: pid, hidden: true }),
+              });
+              const j = await res.json().catch(() => null);
+              if (!res.ok || !j || j.ok !== true) throw new Error(String((j as any)?.error || "hide_failed"));
+              try {
+                router.refresh();
+              } catch {}
+            } catch {
+              setHidden(false);
+              toast.error("Could not hide.");
+            }
+          })();
+
+          toast.undo("Post hidden.", () => {
+            setHidden(false);
+            (async () => {
+              try {
+                await fetch("/api/hidden-posts", {
+                  method: "POST",
+                  cache: "no-store",
+                  headers: { "content-type": "application/json" },
+                  body: JSON.stringify({ postId: pid, hidden: false }),
+                });
+              } catch {}
+              try {
+                router.refresh();
+              } catch {}
+            })();
+          });
+        }} /* sd_422_user_hide */
+        onEdit={() => setOpenEdit(true)}
+        onDelete={async () => {
+          try {
+            const res = await fetch(`/api/post/${encodeURIComponent(String(post.id))}`, { method: "DELETE", cache: "no-store" });
+            const j = await res.json().catch(() => ({}));
+            if (!res.ok || !j || j.ok !== true) throw new Error(String(j?.error || "delete_failed"));
+            setHidden(true);
+            toast.success("Post deleted.");
+            try {
+              const p = typeof window !== "undefined" ? window.location.pathname : "";
+              if (p && p.startsWith("/siddes-post/")) {
+                window.location.href = "/siddes-feed";
+                return;
+              }
+            } catch {}
+            try {
+              router.refresh();
+            } catch {}
+          } catch {
+            toast.error("Could not delete.");
+          }
+        }}
+      />
     </div>
   );
 }

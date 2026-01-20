@@ -1,0 +1,24 @@
+.git
+.gitignore
+
+# Python caches
+**/__pycache__/
+**/*.pyc
+
+# Local backups / scratch
+.backup_*
+.backup*
+**/*.bak
+**/*.bak.*
+audit_runs/
+.sd_batch_logs/
+patches/
+
+# Dev tool history
+/tools/overlays_history/
+
+# Frontend build/cache
+/frontend/node_modules/
+/frontend/.next/
+/frontend/.next_build/
+/frontend/.turbo/

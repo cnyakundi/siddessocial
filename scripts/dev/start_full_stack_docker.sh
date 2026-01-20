@@ -93,6 +93,102 @@ export SIDDES_FRONTEND_PORT="${FRONTEND_PORT}"
 export SIDDES_BACKEND_PORT="${BACKEND_PORT}"
 export NEXT_PUBLIC_API_BASE="http://localhost:${SIDDES_BACKEND_PORT}"
 
+# sd_340: Persist chosen ports so subsequent shells (and host-run frontend) keep working.
+# - Updates ops/docker/.env with the chosen SIDDES_* ports and NEXT_PUBLIC_API_BASE.
+# - Upserts frontend/.env.local with SD_INTERNAL_API_BASE + NEXT_PUBLIC_API_BASE for Next API proxying.
+
+persist_kv () {
+  python3 - <<'PY2'
+import os, re
+from pathlib import Path
+
+file = Path(os.environ.get('SD340_FILE','').strip())
+key  = os.environ.get('SD340_KEY','').strip()
+val  = os.environ.get('SD340_VAL','').strip()
+
+if not str(file):
+    raise SystemExit('sd_340: SD340_FILE missing')
+if not key:
+    raise SystemExit('sd_340: SD340_KEY missing')
+
+text = file.read_text(encoding='utf-8') if file.exists() else ''
+pat = re.compile(rf"^{re.escape(key)}=.*$", re.M)
+line = f"{key}={val}"
+
+if pat.search(text):
+    text = pat.sub(line, text)
+else:
+    if text and not text.endswith('\n'):
+        text += '\n'
+    text += line + '\n'
+
+file.parent.mkdir(parents=True, exist_ok=True)
+file.write_text(text, encoding='utf-8')
+PY2
+}
+
+# Update ops/docker/.env (Compose env_file)
+if [[ -f "ops/docker/.env" ]]; then
+  SD340_FILE="ops/docker/.env" SD340_KEY="SIDDES_FRONTEND_PORT" SD340_VAL="${SIDDES_FRONTEND_PORT}" persist_kv
+  SD340_FILE="ops/docker/.env" SD340_KEY="SIDDES_BACKEND_PORT"  SD340_VAL="${SIDDES_BACKEND_PORT}"  persist_kv
+  SD340_FILE="ops/docker/.env" SD340_KEY="NEXT_PUBLIC_API_BASE"  SD340_VAL="http://localhost:${SIDDES_BACKEND_PORT}" persist_kv
+fi
+
+# Upsert frontend/.env.local (Next reads this in dev + build/start)
+SD_ENV_LOCAL="frontend/.env.local"
+SD340_FILE="${SD_ENV_LOCAL}" SD340_KEY="SD_INTERNAL_API_BASE" SD340_VAL="http://127.0.0.1:${SIDDES_BACKEND_PORT}" persist_kv
+SD340_FILE="${SD_ENV_LOCAL}" SD340_KEY="NEXT_PUBLIC_API_BASE"  SD340_VAL="http://127.0.0.1:${SIDDES_BACKEND_PORT}" persist_kv
+SD340_FILE="${SD_ENV_LOCAL}" SD340_KEY="SIDDES_BACKEND_PORT"   SD340_VAL="${SIDDES_BACKEND_PORT}" persist_kv
+SD340_FILE="${SD_ENV_LOCAL}" SD340_KEY="SIDDES_FRONTEND_PORT"  SD340_VAL="${SIDDES_FRONTEND_PORT}" persist_kv
+
+# sd_340: Persist chosen ports so subsequent shells (and host-run frontend) keep working.
+# - Updates ops/docker/.env with the chosen SIDDES_* ports and NEXT_PUBLIC_API_BASE.
+# - Upserts frontend/.env.local with SD_INTERNAL_API_BASE + NEXT_PUBLIC_API_BASE for Next API proxying.
+
+persist_kv () {
+  python3 - <<'PY2'
+import os, re
+from pathlib import Path
+
+file = Path(os.environ.get('SD340_FILE','').strip())
+key  = os.environ.get('SD340_KEY','').strip()
+val  = os.environ.get('SD340_VAL','').strip()
+
+if not str(file):
+    raise SystemExit('sd_340: SD340_FILE missing')
+if not key:
+    raise SystemExit('sd_340: SD340_KEY missing')
+
+text = file.read_text(encoding='utf-8') if file.exists() else ''
+pat = re.compile(rf"^{re.escape(key)}=.*$", re.M)
+line = f"{key}={val}"
+
+if pat.search(text):
+    text = pat.sub(line, text)
+else:
+    if text and not text.endswith('\n'):
+        text += '\n'
+    text += line + '\n'
+
+file.parent.mkdir(parents=True, exist_ok=True)
+file.write_text(text, encoding='utf-8')
+PY2
+}
+
+# Update ops/docker/.env (Compose env_file)
+if [[ -f "ops/docker/.env" ]]; then
+  SD340_FILE="ops/docker/.env" SD340_KEY="SIDDES_FRONTEND_PORT" SD340_VAL="${SIDDES_FRONTEND_PORT}" persist_kv
+  SD340_FILE="ops/docker/.env" SD340_KEY="SIDDES_BACKEND_PORT"  SD340_VAL="${SIDDES_BACKEND_PORT}"  persist_kv
+  SD340_FILE="ops/docker/.env" SD340_KEY="NEXT_PUBLIC_API_BASE"  SD340_VAL="http://localhost:${SIDDES_BACKEND_PORT}" persist_kv
+fi
+
+# Upsert frontend/.env.local (Next reads this in dev + build/start)
+SD_ENV_LOCAL="frontend/.env.local"
+SD340_FILE="${SD_ENV_LOCAL}" SD340_KEY="SD_INTERNAL_API_BASE" SD340_VAL="http://127.0.0.1:${SIDDES_BACKEND_PORT}" persist_kv
+SD340_FILE="${SD_ENV_LOCAL}" SD340_KEY="NEXT_PUBLIC_API_BASE"  SD340_VAL="http://127.0.0.1:${SIDDES_BACKEND_PORT}" persist_kv
+SD340_FILE="${SD_ENV_LOCAL}" SD340_KEY="SIDDES_BACKEND_PORT"   SD340_VAL="${SIDDES_BACKEND_PORT}" persist_kv
+SD340_FILE="${SD_ENV_LOCAL}" SD340_KEY="SIDDES_FRONTEND_PORT"  SD340_VAL="${SIDDES_FRONTEND_PORT}" persist_kv
+
 echo "• Using ports:"
 echo "  - Frontend: ${SIDDES_FRONTEND_PORT}"
 echo "  - Backend:  ${SIDDES_BACKEND_PORT}"

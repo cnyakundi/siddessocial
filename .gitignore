@@ -1,14 +1,106 @@
-dist/
-patches/
-frontend/node_modules/
+# ----------------------------
+# Siddes - Git ignore baseline
+# ----------------------------
+
+# Node / package managers
+node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Next.js / Turbopack / Vercel
 frontend/.next/
+frontend/.next_build/
+frontend/out/
 frontend/.turbo/
-backend/__pycache__/
+frontend/.vercel/
+.vercel/
+
+# TypeScript incremental artifacts
+**/*.tsbuildinfo
+
+# Python / Django caches
 **/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Coverage & test artifacts
+.coverage
+coverage/
+htmlcov/
+
+# Logs
+*.log
+
+# Virtualenvs
 .venv/
 venv/
-.DS_Store
-*.pyc
 
-# Local docker env (do not commit)
+# Django artifacts (do not commit)
+backend/staticfiles/
+backend/media/
+*.sqlite3
+*.db
+
+# Env files (never commit secrets)
+.env
+.env.*
+**/.env
+**/.env.*
+frontend/.env.local
+frontend/.env.*.local
 ops/docker/.env
+
+# Cloudflare Wrangler local state
+**/.wrangler/
+.dev.vars
+.dev.vars.*
+wrangler.toml.local
+wrangler.toml.*.local
+
+# OS / Editor junk
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Siddes local safety backups / scratch (do not commit)
+.backup_*
+.backup*
+*.bak
+*.bak.*
+
+# Local run artifacts
+/audit_runs/
+.sd_batch_logs/
+/patches/
+
+# Dev tool history
+/tools/overlays_history/
+
+# Local bundles / exports
+/artifacts/
+/dist/
+
+# Vercel linking metadata (do not commit)
+.vercel/
+
+# Local env files (do not commit)
+.env
+.env.*
+!.env.example
+!.env.*.example
+frontend/.env.local
+frontend/.env.*.local
+backend/.env
+backend/.env.*
+ops/deploy/backend.env.prod.local
+ops/deploy/frontend.env.prod.local

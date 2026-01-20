@@ -9,3 +9,9 @@ html, body {
 body {
   background: #f9fafb; /* gray-50 */
 }
+
+/* sd_363: Feed perf - browser-native virtualization via content-visibility */
+.sd-feed-cv-row {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 220px;
+}

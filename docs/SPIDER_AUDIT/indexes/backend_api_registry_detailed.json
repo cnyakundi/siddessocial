@@ -1,0 +1,484 @@
+{
+  "api_root": "/api/",
+  "includes": [
+    {
+      "prefix": "inbox/",
+      "module": "siddes_inbox.urls",
+      "urls_path": "siddes_inbox/urls.py",
+      "routes": [
+        {
+          "pattern": "threads",
+          "view": "InboxThreadsView.as_view("
+        },
+        {
+          "pattern": "thread/<str:thread_id>",
+          "view": "InboxThreadView.as_view("
+        },
+        {
+          "pattern": "debug/unread/reset",
+          "view": "InboxDebugResetUnreadView.as_view("
+        },
+        {
+          "pattern": "debug/incoming",
+          "view": "InboxDebugIncomingView.as_view("
+        }
+      ]
+    },
+    {
+      "prefix": "auth/",
+      "module": "siddes_auth.urls",
+      "urls_path": "siddes_auth/urls.py",
+      "routes": [
+        {
+          "pattern": "signup",
+          "view": "SignupView.as_view("
+        },
+        {
+          "pattern": "login",
+          "view": "LoginView.as_view("
+        },
+        {
+          "pattern": "logout",
+          "view": "LogoutView.as_view("
+        },
+        {
+          "pattern": "me",
+          "view": "MeView.as_view("
+        },
+        {
+          "pattern": "region",
+          "view": "RegionView.as_view("
+        },
+        {
+          "pattern": "age/confirm",
+          "view": "AgeGateConfirmView.as_view("
+        },
+        {
+          "pattern": "verify/confirm",
+          "view": "VerifyConfirmView.as_view("
+        },
+        {
+          "pattern": "verify/resend",
+          "view": "VerifyResendView.as_view("
+        },
+        {
+          "pattern": "google",
+          "view": "GoogleAuthView.as_view("
+        },
+        {
+          "pattern": "onboarding/complete",
+          "view": "OnboardingCompleteView.as_view("
+        },
+        {
+          "pattern": "password/reset/request",
+          "view": "PasswordResetRequestView.as_view("
+        },
+        {
+          "pattern": "password/reset/confirm",
+          "view": "PasswordResetConfirmView.as_view("
+        },
+        {
+          "pattern": "password/change",
+          "view": "PasswordChangeView.as_view("
+        },
+        {
+          "pattern": "sessions",
+          "view": "SessionsListView.as_view("
+        },
+        {
+          "pattern": "sessions/revoke",
+          "view": "SessionsRevokeView.as_view("
+        },
+        {
+          "pattern": "sessions/logout_all",
+          "view": "SessionsLogoutAllView.as_view("
+        },
+        {
+          "pattern": "email/change/request",
+          "view": "EmailChangeRequestView.as_view("
+        },
+        {
+          "pattern": "email/change/confirm",
+          "view": "EmailChangeConfirmView.as_view("
+        },
+        {
+          "pattern": "account/deactivate",
+          "view": "AccountDeactivateView.as_view("
+        },
+        {
+          "pattern": "account/delete/request",
+          "view": "AccountDeleteRequestView.as_view("
+        },
+        {
+          "pattern": "account/delete/confirm",
+          "view": "AccountDeleteConfirmView.as_view("
+        },
+        {
+          "pattern": "export",
+          "view": "ExportDataView.as_view("
+        }
+      ]
+    },
+    {
+      "prefix": "contacts/",
+      "module": "siddes_contacts.urls",
+      "urls_path": "siddes_contacts/urls.py",
+      "routes": [
+        {
+          "pattern": "match",
+          "view": "ContactsMatchView.as_view("
+        },
+        {
+          "pattern": "suggestions",
+          "view": "ContactsSuggestionsView.as_view("
+        }
+      ]
+    },
+    {
+      "prefix": "",
+      "module": "siddes_broadcasts.urls",
+      "urls_path": "siddes_broadcasts/urls.py",
+      "routes": [
+        {
+          "pattern": "broadcasts",
+          "view": "BroadcastsView.as_view("
+        },
+        {
+          "pattern": "broadcasts/feed",
+          "view": "BroadcastFeedView.as_view("
+        },
+        {
+          "pattern": "broadcasts/unread",
+          "view": "BroadcastUnreadView.as_view("
+        },
+        {
+          "pattern": "broadcasts/<str:broadcast_id>",
+          "view": "BroadcastDetailView.as_view("
+        },
+        {
+          "pattern": "broadcasts/<str:broadcast_id>/follow",
+          "view": "BroadcastFollowView.as_view("
+        },
+        {
+          "pattern": "broadcasts/<str:broadcast_id>/unfollow",
+          "view": "BroadcastUnfollowView.as_view("
+        },
+        {
+          "pattern": "broadcasts/<str:broadcast_id>/notify",
+          "view": "BroadcastNotifyView.as_view("
+        },
+        {
+          "pattern": "broadcasts/<str:broadcast_id>/seen",
+          "view": "BroadcastSeenView.as_view("
+        },
+        {
+          "pattern": "broadcasts/<str:broadcast_id>/writers",
+          "view": "BroadcastWritersView.as_view("
+        },
+        {
+          "pattern": "broadcasts/<str:broadcast_id>/posts",
+          "view": "BroadcastPostsView.as_view("
+        }
+      ]
+    },
+    {
+      "prefix": "",
+      "module": "siddes_sets.urls",
+      "urls_path": "siddes_sets/urls.py",
+      "routes": [
+        {
+          "pattern": "sets",
+          "view": "SetsView.as_view("
+        },
+        {
+          "pattern": "sets/<str:set_id>",
+          "view": "SetDetailView.as_view("
+        },
+        {
+          "pattern": "sets/<str:set_id>/events",
+          "view": "SetEventsView.as_view("
+        }
+      ]
+    },
+    {
+      "prefix": "",
+      "module": "siddes_invites.urls",
+      "urls_path": "siddes_invites/urls.py",
+      "routes": [
+        {
+          "pattern": "invites",
+          "view": "InvitesView.as_view("
+        },
+        {
+          "pattern": "invites/<str:invite_id>",
+          "view": "InviteDetailView.as_view("
+        }
+      ]
+    },
+    {
+      "prefix": "",
+      "module": "siddes_safety.urls",
+      "urls_path": "siddes_safety/urls.py",
+      "routes": [
+        {
+          "pattern": "blocks",
+          "view": "BlocksView.as_view("
+        },
+        {
+          "pattern": "blocks/<path:token>",
+          "view": "BlockDeleteView.as_view("
+        },
+        {
+          "pattern": "mutes",
+          "view": "MutesView.as_view("
+        },
+        {
+          "pattern": "mutes/<path:token>",
+          "view": "MuteDeleteView.as_view("
+        },
+        {
+          "pattern": "reports",
+          "view": "ReportsCreateView.as_view("
+        },
+        {
+          "pattern": "appeals",
+          "view": "AppealsView.as_view("
+        },
+        {
+          "pattern": "reports/admin",
+          "view": "ReportsAdminListView.as_view("
+        },
+        {
+          "pattern": "reports/admin/export",
+          "view": "ReportsAdminExportView.as_view("
+        },
+        {
+          "pattern": "reports/<int:pk>",
+          "view": "ReportAdminUpdateView.as_view("
+        },
+        {
+          "pattern": "appeals/admin",
+          "view": "AppealsAdminListView.as_view("
+        },
+        {
+          "pattern": "appeals/<int:pk>",
+          "view": "AppealAdminUpdateView.as_view("
+        },
+        {
+          "pattern": "moderation/posts/<str:post_id>",
+          "view": "ModerationPostUpdateView.as_view("
+        },
+        {
+          "pattern": "moderation/users/state",
+          "view": "ModerationUserStateView.as_view("
+        },
+        {
+          "pattern": "moderation/stats",
+          "view": "ModerationStatsView.as_view("
+        },
+        {
+          "pattern": "moderation/stats/export",
+          "view": "ModerationStatsExportView.as_view("
+        },
+        {
+          "pattern": "moderation/audit",
+          "view": "ModerationAuditListView.as_view("
+        },
+        {
+          "pattern": "moderation/audit/export",
+          "view": "ModerationAuditExportView.as_view("
+        }
+      ]
+    },
+    {
+      "prefix": "",
+      "module": "siddes_feed.urls",
+      "urls_path": "siddes_feed/urls.py",
+      "routes": [
+        {
+          "pattern": "feed",
+          "view": "FeedView.as_view("
+        }
+      ]
+    },
+    {
+      "prefix": "",
+      "module": "siddes_slate.urls",
+      "urls_path": "siddes_slate/urls.py",
+      "routes": [
+        {
+          "pattern": "slate",
+          "view": "PublicSlateListView.as_view("
+        }
+      ]
+    },
+    {
+      "prefix": "",
+      "module": "siddes_notifications.urls",
+      "urls_path": "siddes_notifications/urls.py",
+      "routes": [
+        {
+          "pattern": "notifications",
+          "view": "NotificationsListView.as_view("
+        },
+        {
+          "pattern": "notifications/mark-all-read",
+          "view": "NotificationsMarkAllReadView.as_view("
+        }
+      ]
+    },
+    {
+      "prefix": "",
+      "module": "siddes_rituals.urls",
+      "urls_path": "siddes_rituals/urls.py",
+      "routes": [
+        {
+          "pattern": "rituals",
+          "view": "RitualsView.as_view("
+        },
+        {
+          "pattern": "rituals/<str:ritual_id>",
+          "view": "RitualDetailView.as_view("
+        },
+        {
+          "pattern": "rituals/<str:ritual_id>/ignite",
+          "view": "RitualIgniteView.as_view("
+        },
+        {
+          "pattern": "rituals/<str:ritual_id>/respond",
+          "view": "RitualRespondView.as_view("
+        },
+        {
+          "pattern": "rituals/<str:ritual_id>/responses",
+          "view": "RitualResponsesView.as_view("
+        }
+      ]
+    },
+    {
+      "prefix": "",
+      "module": "siddes_post.urls",
+      "urls_path": "siddes_post/urls.py",
+      "routes": [
+        {
+          "pattern": "post",
+          "view": "PostCreateView.as_view("
+        },
+        {
+          "pattern": "post/<str:post_id>",
+          "view": "PostDetailView.as_view("
+        },
+        {
+          "pattern": "post/<str:post_id>/replies",
+          "view": "PostRepliesView.as_view("
+        },
+        {
+          "pattern": "post/<str:post_id>/reply",
+          "view": "PostReplyCreateView.as_view("
+        },
+        {
+          "pattern": "post/<str:post_id>/like",
+          "view": "PostLikeView.as_view("
+        },
+        {
+          "pattern": "post/<str:post_id>/echo",
+          "view": "PostEchoView.as_view("
+        },
+        {
+          "pattern": "post/<str:post_id>/quote",
+          "view": "PostQuoteEchoView.as_view("
+        }
+      ]
+    },
+    {
+      "prefix": "",
+      "module": "siddes_ml.urls",
+      "urls_path": "siddes_ml/urls.py",
+      "routes": [
+        {
+          "pattern": "ml/suggestions",
+          "view": "MlSuggestionsView.as_view("
+        },
+        {
+          "pattern": "ml/suggestions/<str:suggestion_id>/<str:action>",
+          "view": "MlSuggestionActionView.as_view("
+        }
+      ]
+    },
+    {
+      "prefix": "",
+      "module": "siddes_search.urls",
+      "urls_path": "siddes_search/urls.py",
+      "routes": [
+        {
+          "pattern": "search/users",
+          "view": "SearchUsersView.as_view("
+        },
+        {
+          "pattern": "search/posts",
+          "view": "SearchPostsView.as_view("
+        },
+        {
+          "pattern": "users/<str:username>",
+          "view": "UserProfileView.as_view("
+        },
+        {
+          "pattern": "users/<str:username>/posts",
+          "view": "UserPublicPostsView.as_view("
+        }
+      ]
+    },
+    {
+      "prefix": "",
+      "module": "siddes_prism.urls",
+      "urls_path": "siddes_prism/urls.py",
+      "routes": [
+        {
+          "pattern": "prism",
+          "view": "PrismView.as_view("
+        },
+        {
+          "pattern": "profile/<str:username>",
+          "view": "ProfileView.as_view("
+        },
+        {
+          "pattern": "side",
+          "view": "SideActionView.as_view("
+        }
+      ]
+    },
+    {
+      "prefix": "",
+      "module": "siddes_media.urls",
+      "urls_path": "siddes_media/urls.py",
+      "routes": [
+        {
+          "pattern": "media/sign-upload",
+          "view": "MediaSignUploadView.as_view("
+        },
+        {
+          "pattern": "media/commit",
+          "view": "MediaCommitView.as_view("
+        },
+        {
+          "pattern": "media/url",
+          "view": "MediaSignedUrlView.as_view("
+        }
+      ]
+    },
+    {
+      "prefix": "telemetry/",
+      "module": "siddes_telemetry.urls",
+      "urls_path": "siddes_telemetry/urls.py",
+      "routes": [
+        {
+          "pattern": "ingest",
+          "view": "TelemetryIngestView.as_view("
+        },
+        {
+          "pattern": "summary",
+          "view": "TelemetrySummaryView.as_view("
+        }
+      ]
+    }
+  ]
+}

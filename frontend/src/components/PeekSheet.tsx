@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { SIDES, SIDE_THEMES, type SideId } from "@/src/lib/sides";
-import { MOCK_POSTS } from "@/src/lib/mockFeed";
+import type { SideId } from "@/src/lib/sides";
+import { SIDES, SIDE_THEMES } from "@/src/lib/sides";
+import { toast } from "@/src/lib/toast";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -16,15 +17,72 @@ function excerpt(s: string, n = 90) {
   return t.slice(0, n - 1) + "…";
 }
 
+type PeekPost = {
+  id: string;
+  author?: string;
+  handle?: string;
+  time?: string;
+  content?: string;
+  text?: string;
+};
+
+type FeedResp = {
+  ok?: boolean;
+  restricted?: boolean;
+  side?: string;
+  count?: number;
+  items?: PeekPost[];
+  error?: string;
+};
+
 export function PeekSheet({ open, onClose, sideId }: { open: boolean; onClose: () => void; sideId: SideId }) {
   const router = useRouter();
   const theme = SIDE_THEMES[sideId];
   const meta = SIDES[sideId];
 
-  const items = useMemo(() => {
-    const posts = MOCK_POSTS[sideId] ?? [];
-    return posts.slice(0, 2);
-  }, [sideId]);
+  const [loading, setLoading] = useState(false);
+  const [restricted, setRestricted] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [items, setItems] = useState<PeekPost[]>([]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    let alive = true;
+    (async () => {
+      setLoading(true);
+      setErr(null);
+      setRestricted(false);
+
+      try {
+        const res = await fetch(`/api/feed?side=${encodeURIComponent(sideId)}`, { cache: "no-store" });
+        const j = (await res.json().catch(() => null)) as FeedResp | null;
+        if (!alive) return;
+
+        if (!res.ok) {
+          setErr(String((j as any)?.error || "failed"));
+          setItems([]);
+          return;
+        }
+
+        const r = Boolean(j?.restricted);
+        setRestricted(r);
+
+        const arr = Array.isArray(j?.items) ? (j?.items as PeekPost[]) : [];
+        setItems(arr.slice(0, 2));
+      } catch {
+        if (!alive) return;
+        setErr("network_error");
+        setItems([]);
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, [open, sideId]);
 
   useEffect(() => {
     if (!open) return;
@@ -34,6 +92,8 @@ export function PeekSheet({ open, onClose, sideId }: { open: boolean; onClose: (
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
+
+  const viewItems = useMemo(() => items ?? [], [items]);
 
   if (!open) return null;
 
@@ -49,19 +109,35 @@ export function PeekSheet({ open, onClose, sideId }: { open: boolean; onClose: (
         </div>
 
         <div className="space-y-3 mb-6">
-          {items.length ? (
-            items.map((p) => (
-              <div key={p.id} className="p-3 bg-gray-50 rounded-xl border border-gray-100">
-                <div className="flex justify-between text-xs text-gray-400 mb-1">
-                  <span className="font-bold text-gray-700">{p.author}</span>
-                  <span>{p.time}</span>
+          {loading ? (
+            <div className="p-6 text-center text-gray-400">Loading…</div>
+          ) : err ? (
+            <div className="p-6 text-center text-gray-400">Peek unavailable ({err}).</div>
+          ) : restricted ? (
+            <div className="p-6 text-center text-gray-400">Sign in to peek.</div>
+          ) : viewItems.length ? (
+            viewItems.map((p) => {
+              const content = String((p as any).content || (p as any).text || "");
+              return (
+                <div key={p.id} className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                  <div className="flex justify-between text-xs text-gray-400 mb-1">
+                    <span className="font-bold text-gray-700">{p.author || p.handle || "Someone"}</span>
+                    <span>{p.time || ""}</span>
+                  </div>
+                  <div className="text-sm text-gray-800">“{excerpt(content)}”</div>
+                  <button
+                    type="button"
+                    className={cn("mt-2 text-xs font-bold", theme.text, "hover:underline")}
+                    onClick={() => {
+                      if (!p.id) return toast("Missing post id");
+                      router.push(`/siddes-post/${encodeURIComponent(p.id)}?reply=1`);
+                    }}
+                  >
+                    Reply
+                  </button>
                 </div>
-                <div className="text-sm text-gray-800">“{excerpt(p.content)}”</div>
-                <button type="button" className={cn("mt-2 text-xs font-bold", theme.text, "hover:underline")} onClick={() => router.push(`/siddes-post/${p.id}?reply=1`)}>
-                  Reply
-                </button>
-              </div>
-            ))
+              );
+            })
           ) : (
             <div className="p-6 text-center text-gray-400">Nothing new here yet.</div>
           )}

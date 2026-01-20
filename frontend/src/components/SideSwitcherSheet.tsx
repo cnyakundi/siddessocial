@@ -2,8 +2,10 @@
 
 import React, { useEffect } from "react";
 import { Check, Lock } from "lucide-react";
-import { SIDE_ORDER, SIDES, SIDE_THEMES, type SideId } from "@/src/lib/sides";
-import { formatActivityPill, type SideActivityMap } from "@/src/lib/sideActivity";
+import type { SideId } from "@/src/lib/sides";
+import { SIDE_ORDER, SIDES, SIDE_THEMES } from "@/src/lib/sides";
+import type { SideActivityMap } from "@/src/lib/sideActivity";
+import { formatActivityPill } from "@/src/lib/sideActivity";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -30,6 +32,11 @@ export function SideSwitcherSheet({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
+
+
+  const handleSwitch = (nextSide: SideId) => {
+    onSwitch(nextSide);
+  };
 
   if (!open) return null;
 
@@ -59,7 +66,7 @@ export function SideSwitcherSheet({
               <button
                 key={sideId}
                 type="button"
-                onClick={() => onSwitch(sideId)}
+                onClick={() => handleSwitch(sideId)}
                 className={cn(
                   "w-full p-4 rounded-2xl flex items-center gap-4 transition-all border",
                   isActive ? cn(theme.border, theme.lightBg) : "border-transparent hover:bg-gray-50"
