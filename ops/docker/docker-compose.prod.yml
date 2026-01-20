@@ -1,0 +1,56 @@
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-siddes}
+      POSTGRES_USER: ${POSTGRES_USER:-siddes}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me}
+    volumes:
+      - siddes_pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - siddes_redis:/data
+
+  backend:
+    build:
+      context: ../..
+      dockerfile: ops/docker/backend.prod.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - .env.prod
+    environment:
+      # Expect DATABASE_URL / REDIS_URL / DJANGO_* etc in .env.prod
+      DATABASE_URL: ${DATABASE_URL:-postgres://siddes:change_me@db:5432/siddes}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-0}
+    expose:
+      - "8000"
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+      - "443:443"
+    env_file:
+      - .env.prod
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  siddes_pgdata:
+  siddes_redis:
+  caddy_data:
+  caddy_config:

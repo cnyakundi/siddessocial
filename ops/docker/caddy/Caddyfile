@@ -1,0 +1,9 @@
+# Caddy will automatically obtain HTTPS certificates for the hostname.
+# IMPORTANT: Point DNS A record api.siddes.com -> your droplet IP.
+# If you use Cloudflare proxy (orange cloud), Caddy still often works,
+# but for least headache start with DNS-only for api.siddes.com.
+
+{$API_HOST} {
+  encode gzip
+  reverse_proxy backend:8000
+}
