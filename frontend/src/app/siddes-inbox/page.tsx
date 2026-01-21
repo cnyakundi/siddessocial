@@ -157,6 +157,14 @@ function AvatarBubble({
       aria-label="Avatar"
       title={sideId ? `Locked Side: ${SIDES[sideId].label}` : "Avatar"}
     >
+        {/* sd_466d: Activity (All) header (dead simple) */}
+        <div className="px-4 pt-4 pb-2 border-b border-gray-100 bg-white">
+          <div className="flex items-center justify-between">
+            <h1 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Activity (All)</h1>
+            <div className="w-2 h-2 rounded-full bg-gray-200" aria-hidden="true" />
+          </div>
+        </div>
+
       {overlayStyle ? (
         <div aria-hidden className="absolute inset-0 opacity-50 pointer-events-none" style={overlayStyle} />
       ) : null}
