@@ -467,6 +467,14 @@ export function PostCard({
   };
   const openReply = () => {
     saveReturnScroll();
+
+  // sd_465a: prefetch post routes on intent (instant tap feel)
+  const prefetchPost = () => {
+    try {
+      router.prefetch("/siddes-post/" + post.id);
+      router.prefetch("/siddes-post/" + post.id + "?reply=1");
+    } catch {}
+  };
     router.push(`/siddes-post/${post.id}?reply=1`);
   };
 
@@ -553,6 +561,8 @@ export function PostCard({
         <div
           role="button"
           tabIndex={0}
+          onMouseEnter={() => { try { router.prefetch('/siddes-post/' + post.id); } catch {} }}
+          onTouchStart={() => { try { router.prefetch('/siddes-post/' + post.id); } catch {} }}
           onClick={(e) => {
             // Selection-safe: don't navigate when the user is highlighting text.
             try {

@@ -15,6 +15,7 @@ import { SIDE_THEMES, SIDES } from "@/src/lib/sides";
 import type { SetColor } from "@/src/lib/setThemes";
 import { getSetTheme } from "@/src/lib/setThemes";
 import { onSetsChanged } from "@/src/lib/setsSignals";
+import { useReturnScrollRestore } from "@/src/hooks/returnScroll";
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
 }
@@ -54,6 +55,8 @@ function parseMembers(raw: string): string[] {
 }
 
 function SiddesSetsPageInner() {
+  // sd_464c: restore scroll when returning to Sets list
+  useReturnScrollRestore();
   const sp = useSearchParams();
   const setsProvider = useMemo(() => getSetsProvider(), []);
 

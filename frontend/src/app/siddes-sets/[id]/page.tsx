@@ -26,6 +26,7 @@ import { InviteList } from "@/src/components/Invites/InviteList";
 import { fetchInviteSuggestionHandles } from "@/src/lib/inviteSuggestions";
 import { emitSetsChanged, onSetsChanged } from "@/src/lib/setsSignals";
 import { toast } from "@/src/lib/toast";
+import { useReturnScrollRestore } from "@/src/hooks/returnScroll";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -117,6 +118,9 @@ async function safeJson(res: Response): Promise<any> {
 
 export default function SiddesSetHubPage({ params }: { params: { id: string } }) {
   const router = useRouter();
+
+  // sd_464c: restore scroll when returning from post detail
+  useReturnScrollRestore();
   const setId = decodeURIComponent(params.id || "");
 
   const setsProvider = useMemo(() => getSetsProvider(), []);

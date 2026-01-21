@@ -7,6 +7,7 @@ import { Lock, Pin, Search, X, UserPlus } from "lucide-react";
 import { InboxBanner } from "@/src/components/InboxBanner";
 import { toast } from "@/src/lib/toastBus";
 import { useSide } from "@/src/components/SideProvider";
+import { saveReturnScroll, useReturnScrollRestore } from "@/src/hooks/returnScroll";
 import type { SideId } from "@/src/lib/sides";
 import { SIDE_THEMES, SIDES } from "@/src/lib/sides";
 import type { InboxThreadItem } from "@/src/lib/inboxProvider";
@@ -256,6 +257,9 @@ function SiddesInboxPageInner() {
   const theme = SIDE_THEMES[side];
   const router = useRouter();
   const params = useSearchParams();
+
+  // sd_464d1: restore scroll when returning from thread detail
+  useReturnScrollRestore();
 
   type InboxTab = "messages" | "alerts";
   const tabParam = params.get("tab");
@@ -508,6 +512,7 @@ function SiddesInboxPageInner() {
         e.preventDefault();
         const locked = (t.lockedSide as SideId) ?? side;
         if (locked !== side) setSide(locked);
+        saveReturnScroll();
         router.push(`/siddes-inbox/${t.id}`);
       }
     };
@@ -620,9 +625,11 @@ function SiddesInboxPageInner() {
                 role="option"
                 aria-selected={idx === activeIdx}
                 onClick={(e) => {
+                  saveReturnScroll();
                   if (t.mismatch) {
                     e.preventDefault();
                     setSide(lockedSide);
+                    saveReturnScroll();
                     router.push(`/siddes-inbox/${t.id}`);
                   }
                 }}
