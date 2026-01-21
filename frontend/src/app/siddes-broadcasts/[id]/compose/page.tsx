@@ -196,7 +196,9 @@ export default function BroadcastComposePage({ params }: { params: { id: string 
     saveDraft(id, { text: t, updatedAt: Date.now() });
   };
 
-  const close = (opts?: { skipSaveDraft?: boolean }) => {\n    if (!opts?.skipSaveDraft && (text || "").trim()) saveCurrentDraft();\n    try {
+  const close = (opts?: { skipSaveDraft?: boolean }) => {
+    if (!opts?.skipSaveDraft && (text || "").trim()) saveCurrentDraft();
+    try {
       if (typeof window !== "undefined" && window.history.length > 1) {
         router.back();
         return;
@@ -241,7 +243,8 @@ export default function BroadcastComposePage({ params }: { params: { id: string 
       reset();
       setPosting(false);
       toast.undo(`Queued: ${broadcast?.name || "Broadcast update"}`, () => removeQueuedItem(queued.id));
-      close({ skipSaveDraft: true });\n      return;
+      close({ skipSaveDraft: true });
+      return;
     }
 
     try {
