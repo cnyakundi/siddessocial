@@ -42,6 +42,10 @@ import {
 } from "@/src/lib/publicTrustDial";
 import { setStoredLastPublicTopic, setStoredLastSetForSide } from "@/src/lib/audienceStore";
 
+// sd_465c: reduce feed jank by memoizing PostCard (avoids rerenders on overlay/state toggles)
+const MemoPostCard = React.memo(PostCard);
+
+
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
 }
@@ -814,7 +818,7 @@ export function SideFeed() {
                     {row.kind === "divider" ? (
                       <Divider />
                     ) : row.kind === "post" ? (
-                      <PostCard post={row.post as any} side={side} calmHideCounts={calmHideCounts} />
+                      <MemoPostCard post={row.post as any} side={side} calmHideCounts={calmHideCounts} />
                     ) : (
                       <FeedModuleCard module={row.module} />
                     )}

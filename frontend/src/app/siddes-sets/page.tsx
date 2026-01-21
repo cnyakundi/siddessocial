@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import React, { Suspense, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { DownloadCloud, Plus, RefreshCcw, Search } from "lucide-react";
 
 import { ImportSetSheet } from "@/src/components/ImportSetSheet";
@@ -58,6 +58,16 @@ function SiddesSetsPageInner() {
   // sd_464c: restore scroll when returning to Sets list
   useReturnScrollRestore();
   const sp = useSearchParams();
+  const router = useRouter();
+
+  // sd_465d1: prefetch Set hub route on intent (hover/touch) for instant open feel
+  const prefetchSetHub = (id: string) => {
+    try {
+      router.prefetch(`/siddes-sets/${encodeURIComponent(id)}`);
+    } catch {
+      // ignore
+    }
+  };
   const setsProvider = useMemo(() => getSetsProvider(), []);
 
   // sd_256: Sets UI is session-auth only (no viewer cookie gating).
@@ -305,7 +315,7 @@ function SiddesSetsPageInner() {
               const extra = Math.max(0, membersCount - shown.length);
 
               return (
-                <Link key={s.id} href={`/siddes-sets/${encodeURIComponent(s.id)}`} className="block">
+                <Link key={s.id} href={`/siddes-sets/${encodeURIComponent(s.id)}`} onMouseEnter={() => prefetchSetHub(s.id)} onTouchStart={() => prefetchSetHub(s.id)} className="block">
                   <div
                     className={cn(
                       "p-3 rounded-2xl bg-white border border-gray-200 transition-colors",
