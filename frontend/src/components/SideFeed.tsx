@@ -14,6 +14,7 @@ import { PublicTuneSheet } from "@/src/components/PublicTuneSheet";
 import { SetPickerSheet } from "@/src/components/SetPickerSheet";
 import { ImportSetSheet } from "@/src/components/ImportSetSheet";
 import { RitualDock } from "@/src/components/RitualDock";
+import { FeedComposerRow } from "@/src/components/FeedComposerRow";
 
 import type { SetDef, SetId } from "@/src/lib/sets";
 import { DEFAULT_SETS } from "@/src/lib/sets";
@@ -679,76 +680,29 @@ export function SideFeed() {
       <RitualDock side={side} activeSet={activeSet} activeSetLabel={activeSetLabel} onOpenSetPicker={() => setSetPickerOpen(true)} />
 
 {/* Composer (in-feed) */}
-      <div className="p-4 border-b border-gray-100">
-        <button
-          type="button"
-          onClick={() => {
-            try {
-              window.sessionStorage.setItem("sd.compose.opened", "1");
-            } catch {}
-            const href = composeHref;
-            try {
-              // prefetch helps on slower devices
-              (router as any).prefetch?.(href);
-            } catch {}
-            router.push(href);
-          }}
-          className="block w-full text-left"
-          aria-label="Write a post"
-        >
-          <div
-            className={cn(
-              "bg-white p-4 rounded-2xl shadow-sm border border-gray-200 border-l-2 transition-shadow hover:shadow-md hover:bg-gray-50",
-              theme.accentBorder
-            )}
-          >
-            <div className="flex gap-3 items-start">
-              <div
-                className={cn(
-                  "w-10 h-10 rounded-full border flex items-center justify-center text-[11px] font-black shrink-0",
-                  theme.lightBg,
-                  theme.text,
-                  theme.border
-                )}
-                aria-hidden="true"
-              >
-                ME
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm text-gray-800 font-semibold">
-                  {side === "work"
-                    ? "Write a work update…"
-                    : side === "public"
-                    ? "Write something public…"
-                    : `Write in ${SIDES[side].label}…`}
-                </div>
-                {side === "public" ? <div className="text-xs text-gray-500 mt-1">{SIDES[side].privacyHint}</div> : null}
+      <FeedComposerRow
+        side={side}
+        prompt={
+          side === "public"
+            ? (FLAGS.publicChannels && publicChannel !== "all"
+                ? `Share in ${publicChannelLabel}…`
+                : "Share with everyone…")
+            : (activeSet ? `Post to ${activeSetLabel}…` : `Post to ${SIDES[side].label}…`)
+        }
+        subtitle={side === "public" ? SIDES[side].privacyHint : (activeSet ? `In ${activeSetLabel}` : undefined)}
+        onOpen={() => {
+          try {
+            window.sessionStorage.setItem("sd.compose.opened", "1");
+          } catch {}
+          const href = composeHref;
+          try {
+            (router).prefetch?.(href);
+          } catch {}
+          router.push(href);
+        }}
+      />
 
-                <div className="flex items-center justify-between mt-3 gap-3">
-                  <span
-                    className={cn(
-                      "text-[10px] px-2 py-1 rounded-full border font-black uppercase tracking-widest",
-                      theme.lightBg,
-                      theme.text,
-                      theme.border
-                    )}
-                    title={SIDES[side].privacyHint}
-                  >
-                    {side === "public"
-                      ? `Public: ${SIDES[side].privacyHint}`
-                      : `Audience locked: ${SIDES[side].label}`}
-                  </span>
-                  <span className={cn("px-4 py-1.5 rounded-full text-sm font-extrabold text-white", theme.primaryBg)}>
-                    Write
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </button>
-      </div>
-
-            {/* Feed content */}
+{/* Feed content */}
       <div className="p-4">
         {restricted ? (
           <div className="p-6 rounded-2xl border border-amber-200 bg-amber-50 text-amber-900 space-y-2" data-testid="feed-restricted">
