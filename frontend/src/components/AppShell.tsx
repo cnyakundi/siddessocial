@@ -3,6 +3,7 @@
 import React from "react";
 import { usePathname } from "next/navigation";
 import { AppTopBar } from "@/src/components/AppTopBar";
+import { MobileSideTabsRow } from "@/src/components/MobileSideTabsRow";
 import { BottomNav } from "@/src/components/BottomNav";
 import { DesktopSideRail } from "@/src/components/DesktopSideRail";
 import { DesktopTopBar } from "@/src/components/DesktopTopBar";
@@ -27,6 +28,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* Mobile */}
       <div className="lg:hidden">
         <AppTopBar />
+        <MobileSideTabsRow />
         {/* sd_390: exact BottomNav padding (64px) + safe-area */}
         <div className="pb-24 pb-[calc(64px+env(safe-area-inset-bottom))]">{children}</div>
         <BottomNav />
