@@ -378,9 +378,43 @@ function PostDetailInner() {
 
   if (loading && !found) {
     return (
-      <div className="py-10">
+      <div className="py-6">
         <ContentColumn>
-          <div className="text-center text-gray-400">Loading…</div>
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 animate-pulse" aria-label="Loading post">
+            <div className="flex gap-4">
+              <div className="w-12 h-12 rounded-full bg-gray-100" />
+              <div className="flex-1 min-w-0">
+                <div className="h-4 bg-gray-100 rounded w-40" />
+                <div className="mt-2 h-4 bg-gray-100 rounded w-56" />
+                <div className="mt-5 space-y-2">
+                  <div className="h-4 bg-gray-100 rounded w-full" />
+                  <div className="h-4 bg-gray-100 rounded w-11/12" />
+                  <div className="h-4 bg-gray-100 rounded w-8/12" />
+                </div>
+                <div className="mt-6 flex gap-6">
+                  <div className="h-9 bg-gray-100 rounded w-24" />
+                  <div className="h-9 bg-gray-100 rounded w-24" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 space-y-3">
+            {Array.from({ length: 3 }).map((_, idx) => (
+              <div key={idx} className="bg-white border border-gray-200 rounded-2xl p-4 animate-pulse" aria-label="Loading reply">
+                <div className="flex gap-3">
+                  <div className="w-9 h-9 rounded-full bg-gray-100" />
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <div className="h-3 bg-gray-100 rounded w-32" />
+                    <div className="h-3 bg-gray-100 rounded w-full" />
+                    <div className="h-3 bg-gray-100 rounded w-10/12" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="sr-only">Loading…</div>
         </ContentColumn>
       </div>
     );
