@@ -554,27 +554,48 @@ export default function SiddesSetHubPage({ params }: { params: { id: string } })
           {/* FEED */}
           {tab === "feed" ? (
             <div className="space-y-3">
-              <div className="p-4 rounded-2xl bg-white border border-gray-200 flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="font-black text-gray-900">Feed</div>
-                  <div className="text-xs text-gray-500 flex items-center gap-2 mt-1">
-                    <Shield size={14} className="text-gray-300" />
-                    <span>
-                      Posting to: <span className={cn(themeSide.text, "font-black")}>{SIDES[item ? item.side : side].label}</span>
-                      {item ? <> • <span className="font-black text-gray-900">{item.label}</span></> : null}
-                    </span>
-                  </div>
-                </div>
-
-                <Link
-                  href={composeHref}
-                  className={cn("px-3 py-2 rounded-full text-sm font-extrabold text-white shadow-sm hover:opacity-95 transition", themeSide.primaryBg)}
+              {/* sd_466c: Set hub "Write" row (dead simple, set-specific) */}
+              <div className="p-4 rounded-2xl bg-white border border-gray-200">
+                <button
+                  type="button"
+                  onMouseEnter={() => {
+                    try {
+                      router.prefetch(composeHref);
+                    } catch {}
+                  }}
+                  onTouchStart={() => {
+                    try {
+                      router.prefetch(composeHref);
+                    } catch {}
+                  }}
+                  onClick={() => router.push(composeHref)}
+                  className="w-full flex items-center gap-4 p-3 bg-gray-50 border border-gray-100 rounded-2xl text-left active:bg-gray-100 transition-colors"
                 >
-                  New Post
-                </Link>
+                  <div
+                    className={cn(
+                      "w-10 h-10 rounded-full border flex items-center justify-center text-[11px] font-black shrink-0",
+                      themeSide.lightBg,
+                      themeSide.text,
+                      themeSide.border
+                    )}
+                    aria-hidden="true"
+                  >
+                    ME
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm text-gray-700 font-medium truncate">{item ? ("Post to " + item.label + "…") : "Write…"}</div>
+                    <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1 truncate">
+                      {SIDES[item ? item.side : side].label}{item ? (" • " + item.label) : ""}</div>
+                  </div>
+
+                  <div className={cn("px-4 py-2 rounded-xl text-xs font-black text-white shadow-sm", themeSide.primaryBg)}>
+                    Write
+                  </div>
+                </button>
               </div>
 
-              {feedErr ? (
+{feedErr ? (
                 <div className="p-3 rounded-2xl border border-red-200 bg-red-50 text-red-700 text-sm">
                   <div className="font-bold">Error</div>
                   <div className="text-xs mt-1">{feedErr}</div>
