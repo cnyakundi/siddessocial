@@ -26,6 +26,7 @@ import { QuoteEchoComposer } from "@/src/components/QuoteEchoComposer";
 import { PostActionsSheet } from "@/src/components/PostActionsSheet";
 import { EditPostSheet } from "@/src/components/EditPostSheet";
 import { toast } from "@/src/lib/toast";
+import { saveReturnScroll } from "@/src/hooks/returnScroll";
 
 // Tailwind-safe hover text tokens (static strings)
 const HOVER_TEXT: Record<SideId, string> = {
@@ -460,8 +461,14 @@ export function PostCard({
     }
   };
 
-  const openPost = () => router.push(`/siddes-post/${post.id}`);
-  const openReply = () => router.push(`/siddes-post/${post.id}?reply=1`);
+  const openPost = () => {
+    saveReturnScroll();
+    router.push(`/siddes-post/${post.id}`);
+  };
+  const openReply = () => {
+    saveReturnScroll();
+    router.push(`/siddes-post/${post.id}?reply=1`);
+  };
 
   const doEcho = async () => {
     setOpenEcho(false);

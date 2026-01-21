@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronDown, Sparkles } from "lucide-react";
 import { useSide } from "@/src/components/SideProvider";
+import { useReturnScrollRestore } from "@/src/hooks/returnScroll";
 import type { SideId } from "@/src/lib/sides";
 import { SIDES, SIDE_THEMES } from "@/src/lib/sides";
 import { PostCard } from "@/src/components/PostCard";
@@ -49,6 +50,9 @@ function EmptyState({ side, onCreateSet, composeHref }: { side: SideId; onCreate
   // sd_201: actionable empty state (build the graph, ethically)
   const meta = SIDES[side];
   const theme = SIDE_THEMES[side];
+
+  // sd_464a: restore scroll when returning from post detail
+  useReturnScrollRestore();
 
   // sd_210_desktop_breathing
   return (
