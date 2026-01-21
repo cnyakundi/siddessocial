@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
+import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { Globe } from "lucide-react";
 import type { SideId } from "@/src/lib/sides";
 import { SIDES, SIDE_THEMES } from "@/src/lib/sides";
@@ -29,6 +30,8 @@ export function PublicEnterConfirmSheet({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onCancel]);
 
+
+  useLockBodyScroll(open);
   if (!open) return null;
 
   const pub = SIDE_THEMES.public;

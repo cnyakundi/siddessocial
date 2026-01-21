@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect } from "react";
+import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
+
 import { Ban, ExternalLink, EyeOff, Flag, Link2, Share2, X, Pencil, Trash2, Copy, VolumeX } from "lucide-react";
 import type { FeedPost } from "@/src/lib/feedTypes";
 import type { SideId } from "@/src/lib/sides";
@@ -47,6 +49,8 @@ export function PostActionsSheet({
   onEdit?: () => void;
   onDelete?: () => void;
 }) {
+  useLockBodyScroll(open && Boolean(post));
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {

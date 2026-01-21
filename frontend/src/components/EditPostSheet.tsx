@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { X } from "lucide-react";
 import { toast } from "@/src/lib/toast";
 
@@ -26,6 +27,8 @@ export function EditPostSheet({
   const [text, setText] = useState(initialText || "");
   const [busy, setBusy] = useState(false);
   const taRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useLockBodyScroll(open);
 
   const limit = useMemo(() => {
     const n = Number(maxLen || 0);

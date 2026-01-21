@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
+import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { Ban, Flag, Link2, VolumeX, X, Copy } from "lucide-react";
 import { toast } from "@/src/lib/toast";
 
@@ -38,6 +39,8 @@ export function ProfileActionsSheet(props: {
   href?: string;
 }) {
   const { open, onClose, handle, displayName, href } = props;
+
+  useLockBodyScroll(open);
 
   useEffect(() => {
     if (!open) return;

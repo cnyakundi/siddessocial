@@ -3,6 +3,7 @@
 // sd_338: Ritual detail + respond sheet
 
 import React, { useEffect, useMemo, useState } from "react";
+import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { BookOpen, HelpCircle, MessageCircle, Smile, Sparkles, X } from "lucide-react";
 import type { SideId } from "@/src/lib/sides";
 import { SIDE_THEMES, SIDES } from "@/src/lib/sides";
@@ -96,6 +97,8 @@ export function RitualSheet({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
+
+  useLockBodyScroll(open);
   useEffect(() => {
     if (!open || !ritualId) return;
     setLoadBusy(true);

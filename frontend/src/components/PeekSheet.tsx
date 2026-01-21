@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { SideId } from "@/src/lib/sides";
@@ -44,6 +45,8 @@ export function PeekSheet({ open, onClose, sideId }: { open: boolean; onClose: (
   const [restricted, setRestricted] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [items, setItems] = useState<PeekPost[]>([]);
+
+  useLockBodyScroll(open);
 
   useEffect(() => {
     if (!open) return;

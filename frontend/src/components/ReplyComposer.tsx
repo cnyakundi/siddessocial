@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { AlertTriangle, Globe, Loader2, Send, X } from "lucide-react";
 import type { FeedPost } from "@/src/lib/feedTypes";
 import type { SideId } from "@/src/lib/sides";
@@ -62,6 +63,8 @@ export function ReplyComposer({
   maxLen?: number;
 }) {
   const [text, setText] = useState("");
+
+  useLockBodyScroll(open && Boolean(post));
 
   useEffect(() => {
     if (!open) return;

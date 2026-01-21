@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { X } from "lucide-react";
 import type { PublicChannelId } from "@/src/lib/publicChannels";
 import { PUBLIC_CHANNELS } from "@/src/lib/publicChannels";
@@ -38,6 +39,8 @@ export function PublicChannelPrefsSheet({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
+
+  useLockBodyScroll(open);
   // Load current prefs on open (after mount)
   useEffect(() => {
     if (!open) return;

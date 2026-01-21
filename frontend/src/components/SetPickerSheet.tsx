@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect } from "react";
+import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
+
 import { Check, Plus, X } from "lucide-react";
 import type { SetDef, SetId } from "@/src/lib/sets";
 import { getSetTheme } from "@/src/lib/setThemes";
@@ -28,6 +30,8 @@ export function SetPickerSheet({
   title?: string;
   allLabel?: string;
 }) {
+  useLockBodyScroll(open);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {

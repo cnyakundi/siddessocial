@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { ArrowLeft, Check, ChevronRight, Palette, Users, X } from "lucide-react";
 
 import type { SideId } from "@/src/lib/sides";
@@ -57,6 +58,8 @@ export function CreateSetSheet(props: {
 
   const [step, setStep] = useState<Step>("name");
   const [localErr, setLocalErr] = useState<string | null>(null);
+
+  useLockBodyScroll(open);
 
   const steps: Step[] = useMemo(() => ["name", "side", "theme", "members", "review"], []);
   const stepIdx = steps.indexOf(step);

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
+import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { Check, X } from "lucide-react";
 import type { PublicChannelId } from "@/src/lib/publicChannels";
 import { PUBLIC_CHANNELS } from "@/src/lib/publicChannels";
@@ -50,6 +51,8 @@ export function PublicTuneSheet({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
+
+  useLockBodyScroll(open);
   if (!open) return null;
 
   const hasAnything = showTopics || showTrust || showCounts || !!showMode;

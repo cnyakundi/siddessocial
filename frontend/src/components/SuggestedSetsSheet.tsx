@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { Check, Pencil, X } from "lucide-react";
 import type { SuggestedSet } from "@/src/lib/setSuggestions";
 import type { SetColor } from "@/src/lib/setThemes";
@@ -73,6 +74,8 @@ export function SuggestedSetsSheet({
   const [overrides, setOverrides] = useState<Record<string, Override>>({});
   const [batchBusy, setBatchBusy] = useState(false);
   const [batchNote, setBatchNote] = useState<string | null>(null);
+
+  useLockBodyScroll(open);
 
   const validCount = useMemo(() => {
     return suggestions
