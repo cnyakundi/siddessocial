@@ -433,11 +433,17 @@ export default function SiddesComposePage() {
     }
   };
 
-  const close = (opts?: { skipSaveDraft?: boolean }) => {
+  const close = (opts?: { skipSaveDraft?: boolean; forceFeed?: boolean }) => {
     // Never drop text silently (unless we just successfully posted/queued).
     if (!opts?.skipSaveDraft && (text || "").trim()) saveCurrentDraft();
 
-// Prefer history back (feels like dismissing a sheet). Fall back to feed.
+    // After a successful post/queue, force a fresh feed mount (avoids stale feed illusions).
+    if (opts?.forceFeed) {
+      router.push(`/siddes-feed?r=${Date.now()}`);
+      return;
+    }
+
+    // Prefer history back (feels like dismissing a sheet). Fall back to feed.
     try {
       if (typeof window !== "undefined" && window.history.length > 1) {
         router.back();
@@ -803,7 +809,7 @@ const quickTools = useMemo<QuickTool[]>(() => {
       reset();
       setPosting(false);
       toast.undo(`Queued: ${SIDES[side].label}`, () => removeQueuedItem(queued.id));
-      close({ skipSaveDraft: true });
+      close({ skipSaveDraft: true, forceFeed: true });
       return;
     }
 
@@ -832,7 +838,7 @@ const quickTools = useMemo<QuickTool[]>(() => {
         reset();
         setPosting(false);
         toast.success(msg);
-        close({ skipSaveDraft: true });
+        close({ skipSaveDraft: true, forceFeed: true });
         return;
       }
 
