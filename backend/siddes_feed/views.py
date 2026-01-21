@@ -155,7 +155,12 @@ class FeedView(APIView):
                 limit=limit,
                 cursor=cursor_raw,
             )
-            cached = cache.get(cache_key)
+            try:
+                cached = cache.get(cache_key)
+            except Exception:
+                cached = None
+                cache_key = None
+                cache_status = "bypass"
             if cached is not None:
                 payload: Dict[str, Any] = {"ok": True, "restricted": False, "viewer": viewer, "role": role}
                 payload.update(cached)
@@ -163,8 +168,8 @@ class FeedView(APIView):
                 resp["X-Siddes-Cache"] = "hit"
                 resp["X-Siddes-Cache-Ttl"] = str(cache_ttl)
                 return resp
-            cache_status = "miss"
-
+            if cache_key is not None:
+                cache_status = "miss"
         data = list_feed(viewer_id=viewer, side=side, topic=topic, limit=limit, cursor=cursor_raw)
 
         if cache_key is not None and cache_status == "miss":
