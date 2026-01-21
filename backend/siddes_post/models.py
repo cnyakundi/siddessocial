@@ -5,8 +5,12 @@ Important:
 - Keep created_at as float seconds (matches stubs).
 - Visibility / viewer gating stays ABOVE the store layer.
 
-
 Step 2.2: Echo + Quote Echo are DB-backed via Post.echo_of_post_id.
+
+NOTE (sd_435):
+- Post.depth was accidentally added to the model without a migration; DB never had the column.
+  It caused /api/feed 500s (UndefinedColumn siddes_post_post.depth). Removed.
+- Reply.depth exists in DB via migration 0009_reply_threading; add it to the model.
 """
 
 from __future__ import annotations
@@ -33,7 +37,6 @@ class Post(models.Model):
     is_hidden = models.BooleanField(default=False, db_index=True)
     edited_at = models.FloatField(null=True, blank=True, db_index=True)
     created_at = models.FloatField(db_index=True)
-    depth = models.PositiveSmallIntegerField(default=0, db_index=True)
     client_key = models.CharField(max_length=128, null=True, blank=True)
     echo_of_post_id = models.CharField(max_length=64, null=True, blank=True, db_index=True)
 
@@ -59,6 +62,7 @@ class Reply(models.Model):
     author_id = models.CharField(max_length=64, db_index=True)
     text = models.TextField()
     created_at = models.FloatField(db_index=True)
+    depth = models.PositiveSmallIntegerField(default=0, db_index=True)
     status = models.CharField(max_length=16, default="created")
     client_key = models.CharField(max_length=128, null=True, blank=True)
 
@@ -72,6 +76,8 @@ class Reply(models.Model):
 
     def __str__(self) -> str:
         return f"Reply({self.id}, post={self.post_id}, author={self.author_id})"
+
+
 # --- Post Likes (sd_179m) ---
 class PostLike(models.Model):
     """Per-viewer likes for posts.

@@ -36,3 +36,13 @@ This folder contains the **Structural Mapping (Phase 1)** and the **Phase 2 Spid
 -  - Slate (Public profile guestbook entries; DB-backed read endpoint).
 
 - `PHASE2_MEDIA_SPIDERPACK.md` - Media (R2 attachments + /m serving).
+
+-  - Rituals (Pulse): Dock + create/view/respond + contracts.
+
+-  - Invites (Set invites) + Contacts (match/suggestions) subsystem map.
+
+- `PHASE2_ML_SPIDERPACK.md` - ML (Local intelligence + server-side suggestions).
+
+- `PHASE2_TELEMETRY_SPIDERPACK.md` - Telemetry (counts-only suggestion-quality events + dev dashboard + retention).
+
+- `PHASE2_APP_SHELL_NAV_SPIDERPACK.md` - App shell + navigation + route guardrails.

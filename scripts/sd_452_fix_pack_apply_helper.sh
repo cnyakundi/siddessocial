@@ -1,3 +1,37 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# sd_452: Fix media upload proxy + CSP for R2, and stop composer from re-saving drafts after successful post/queue.
+
+find_repo_root() {
+  local d="$PWD"
+  while [ "$d" != "/" ]; do
+    if [ -d "$d/frontend" ] && [ -d "$d/backend" ] && [ -d "$d/ops" ]; then
+      echo "$d"
+      return 0
+    fi
+    d="$(cd "$d/.." && pwd)"
+  done
+  return 1
+}
+
+ROOT="$(find_repo_root || true)"
+if [ -z "${ROOT:-}" ]; then
+  echo "ERROR: run this from inside the repo (must contain frontend/, backend/, ops/)." >&2
+  exit 1
+fi
+
+TS="$(date +%Y%m%d_%H%M%S)"
+BK="$ROOT/.backup_sd_452_media_upload_csp_and_compose_draft_fix_$TS"
+mkdir -p "$BK"
+
+echo "Backup dir: $BK"
+cp "$ROOT/frontend/next.config.js" "$BK/next.config.js"
+cp "$ROOT/frontend/src/app/siddes-compose/client.tsx" "$BK/siddes-compose_client.tsx"
+
+echo "== Patch: frontend CSP to allow R2 for img/media =="
+
+cat > "$ROOT/frontend/next.config.js" <<'EOF'
 /** @type {import('next').NextConfig} */
 const isProd = process.env.NODE_ENV === "production";
 
@@ -84,3 +118,67 @@ const nextConfig = {
 };
 
 module.exports = nextConfig;
+EOF
+
+echo "== Add: Next proxy route for /api/media/sign-upload =="
+
+mkdir -p "$ROOT/frontend/src/app/api/media/sign-upload"
+
+cat > "$ROOT/frontend/src/app/api/media/sign-upload/route.ts" <<'EOF'
+import { NextResponse } from "next/server";
+import { proxyJson } from "@/src/app/api/auth/_proxy";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+// POST /api/media/sign-upload -> Django POST /api/media/sign-upload
+// Same-origin proxy so the browser never calls Django cross-origin.
+export async function POST(req: Request) {
+  const body = await req.json().catch(() => ({}));
+  const out = await proxyJson(req, "/api/media/sign-upload", "POST", body);
+  if (out instanceof NextResponse) return out;
+
+  const { res, data, setCookies } = out;
+  const r = NextResponse.json(data, { status: res.status, headers: { "cache-control": "no-store" } });
+  for (const c of setCookies || []) {
+    if (!c) continue;
+    r.headers.append("set-cookie", c);
+  }
+  return r;
+}
+EOF
+
+echo "== Patch: Compose close() should not re-save drafts after successful post/queue =="
+
+COMPOSE="$ROOT/frontend/src/app/siddes-compose/client.tsx"
+node <<'NODE'
+const fs = require("fs");
+
+const file = process.env.COMPOSE;
+let s = fs.readFileSync(file, "utf8");
+
+// 1) close() signature + skip-save behavior
+if (!s.includes("skipSaveDraft")) {
+  s = s.replace(
+    /const close = \(\) => \{\s*\/\/ Never drop text silently\.\s*if \(\(text \|\| \"\"\)\.trim\(\)\) saveCurrentDraft\(\);\s*/m,
+    "const close = (opts?: { skipSaveDraft?: boolean }) => {\\n    // Never drop text silently (unless we just successfully posted/queued).\\n    if (!opts?.skipSaveDraft && (text || \"\").trim()) saveCurrentDraft();\\n\\n"
+  );
+
+  // 2) After success/queue, use close({skipSaveDraft:true})
+  s = s.replaceAll("close();", "close({ skipSaveDraft: true });");
+}
+
+if (!s.includes("skipSaveDraft")) {
+  throw new Error("Patch did not apply cleanly (skipSaveDraft not found).");
+}
+
+fs.writeFileSync(file, s);
+NODE
+
+echo
+echo "OK: sd_452 applied."
+echo "Backup saved to: $BK"
+echo
+echo "Next steps:"
+echo "  1) cd frontend && npm install && npm run build (or deploy)"
+echo "  2) In Cloudflare R2, ensure CORS allows PUT from https://app.siddes.com"

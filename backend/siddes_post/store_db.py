@@ -3,6 +3,10 @@
 Notes:
 - Visibility enforcement remains above the store layer (in views).
 - Reply creation requires the Post to exist in DB (FK integrity).
+
+sd_435:
+- Fix DbPostStore.create corruption (undefined vars + invalid fields).
+- Ensure Reply threading fields (parent/depth) are persisted.
 """
 
 from __future__ import annotations
@@ -20,6 +24,7 @@ def _new_post_id() -> str:
 
 def _new_reply_id() -> str:
     return f"r_{int(time.time()*1000)}_{uuid.uuid4().hex[:8]}"
+
 
 def _clean_echo_of_post_id(v: Optional[str]) -> Optional[str]:
     """Normalize echo_of_post_id inputs.
@@ -60,27 +65,15 @@ class DbPostStore:
             if existing:
                 return existing
 
-        eop = (echo_of_post_id or "").strip()
-
-
-        if not eop or eop.lower() in ("none", "null", "0"):
-
-
-            eop = None
-
-
-
         rec = Post(
             id=_new_post_id(),
             author_id=author_id,
             side=side,
             text=text,
-            parent=parent,
             set_id=set_id,
             public_channel=public_channel,
             urgent=urgent,
             created_at=time.time(),
-            depth=depth,
             client_key=ck,
             echo_of_post_id=_clean_echo_of_post_id(echo_of_post_id),
         )
@@ -112,7 +105,15 @@ class DbPostStore:
 
 
 class DbReplyStore:
-    def create(self, post_id: str, author_id: str, text: str, *, client_key: Optional[str] = None, parent_id: Optional[str] = None) -> Reply:
+    def create(
+        self,
+        post_id: str,
+        author_id: str,
+        text: str,
+        *,
+        client_key: Optional[str] = None,
+        parent_id: Optional[str] = None,
+    ) -> Reply:
         ck = (client_key or "").strip() or None
         if ck:
             existing = Reply.objects.filter(post_id=post_id, author_id=author_id, client_key=ck).first()
@@ -140,9 +141,11 @@ class DbReplyStore:
         rec = Reply(
             id=_new_reply_id(),
             post=post,
+            parent=parent,
             author_id=author_id,
             text=text,
             created_at=time.time(),
+            depth=depth,
             client_key=ck,
             status="created",
         )

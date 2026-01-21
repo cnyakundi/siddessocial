@@ -24,7 +24,7 @@ services:
   - name: api
     environment_slug: python
     github:
-      repo: __GITHUB_REPO__
+      repo: cnyakundi/siddessocial.git
       branch: main
       deploy_on_push: true
     source_dir: /backend
@@ -41,7 +41,7 @@ services:
       - key: DJANGO_SECRET_KEY
         scope: RUN_TIME
         type: SECRET
-        value: "__DJANGO_SECRET_KEY__"
+        value: "ed4a7fc495e8515da71da9261fb3251fda878b7e09d84b66c4c227b9d710530b"
 
       # Bindable database URLs
       - key: DATABASE_URL
@@ -63,7 +63,7 @@ services:
       - key: SIDDES_CONTACTS_PEPPER
         scope: RUN_TIME
         type: SECRET
-        value: "__SIDDES_CONTACTS_PEPPER__"
+        value: "c33481b68842bb7f2959f0a8c968e3fa80b9d8740e386484ae26b4f13afa8219"
 
       # Email (set to console for first deploy; switch to smtp/sendgrid later)
       - key: SD_EMAIL_PROVIDER
@@ -88,17 +88,17 @@ services:
       - key: SIDDES_R2_ACCESS_KEY_ID
         scope: RUN_TIME
         type: SECRET
-        value: "__SIDDES_R2_ACCESS_KEY_ID__"
+        value: "PASTE_FROM_CLOUDFLARE_R2"
       - key: SIDDES_R2_SECRET_ACCESS_KEY
         scope: RUN_TIME
         type: SECRET
-        value: "__SIDDES_R2_SECRET_ACCESS_KEY__"
+        value: "PASTE_FROM_CLOUDFLARE_R2"
 
       # Cloudflare Worker token gate (/m/*)
       - key: SIDDES_MEDIA_TOKEN_SECRET
         scope: RUN_TIME
         type: SECRET
-        value: "__SIDDES_MEDIA_TOKEN_SECRET__"
+        value: "PASTE_THE_SAME_VALUE_AS_WORKER_SECRET"
 
 ingress:
   rules:

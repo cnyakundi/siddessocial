@@ -433,11 +433,11 @@ export default function SiddesComposePage() {
     }
   };
 
-  const close = () => {
-    // Never drop text silently.
-    if ((text || "").trim()) saveCurrentDraft();
+  const close = (opts?: { skipSaveDraft?: boolean }) => {
+    // Never drop text silently (unless we just successfully posted/queued).
+    if (!opts?.skipSaveDraft && (text || "").trim()) saveCurrentDraft();
 
-    // Prefer history back (feels like dismissing a sheet). Fall back to feed.
+// Prefer history back (feels like dismissing a sheet). Fall back to feed.
     try {
       if (typeof window !== "undefined" && window.history.length > 1) {
         router.back();
@@ -803,7 +803,7 @@ const quickTools = useMemo<QuickTool[]>(() => {
       reset();
       setPosting(false);
       toast.undo(`Queued: ${SIDES[side].label}`, () => removeQueuedItem(queued.id));
-      close();
+      close({ skipSaveDraft: true });
       return;
     }
 
@@ -832,7 +832,7 @@ const quickTools = useMemo<QuickTool[]>(() => {
         reset();
         setPosting(false);
         toast.success(msg);
-        close();
+        close({ skipSaveDraft: true });
         return;
       }
 
@@ -968,7 +968,7 @@ const quickTools = useMemo<QuickTool[]>(() => {
           type="button"
           aria-label="Close compose"
           className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-          onClick={close}
+          onClick={() => close()}
         />
 
         <div
@@ -1032,7 +1032,7 @@ const quickTools = useMemo<QuickTool[]>(() => {
 
             <button
               type="button"
-              onClick={close}
+              onClick={() => close()}
               className="p-2 rounded-full hover:bg-white/60"
               aria-label="Close"
               title="Close"
