@@ -100,6 +100,7 @@ class InMemoryApiSetsStore:
                 "color": clean_color(s.get("color")),
                 "members": list(s.get("members") or []),
                 "count": int(s.get("count") or 0),
+                "isOwner": True,
             }
             for s in items
         ]
@@ -116,6 +117,7 @@ class InMemoryApiSetsStore:
             "color": clean_color(s.get("color")),
             "members": list(s.get("members") or []),
             "count": int(s.get("count") or 0),
+            "isOwner": True,
         }
 
     def create(self, *, owner_id: str, side: str, label: str, members: List[str], color: Optional[str] = None) -> Dict[str, Any]:
@@ -158,6 +160,7 @@ class InMemoryApiSetsStore:
             "color": color_v,
             "members": members_v,
             "count": 0,
+            "isOwner": True,
         }
 
     def bulk_create(self, *, owner_id: str, inputs: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -221,7 +224,16 @@ class InMemoryApiSetsStore:
             "color": clean_color(s.get("color")),
             "members": list(s.get("members") or []),
             "count": int(s.get("count") or 0),
+            "isOwner": True,
         }
+
+
+    def leave(self, *, owner_id: str, set_id: str) -> Optional[Dict[str, Any]]:
+        """In-memory store is per-owner; membership-leave is not supported here.
+
+        This is only used as a dev fallback when DB migrations are not applied yet.
+        """
+        return None
 
 
     def delete(self, *, owner_id: str, set_id: str) -> bool:

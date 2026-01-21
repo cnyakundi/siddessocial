@@ -7,16 +7,18 @@ Routes:
 - /api/sets
 - /api/sets/<id>
 - /api/sets/<id>/events
+- /api/sets/<id>/leave
 """
 
 from __future__ import annotations
 
 from django.urls import path
 
-from .views import SetDetailView, SetEventsView, SetsView
+from .views import SetDetailView, SetEventsView, SetLeaveView, SetsView
 
 urlpatterns = [
     path("sets", SetsView.as_view(), name="sets"),
     path("sets/<str:set_id>", SetDetailView.as_view(), name="set_detail"),
     path("sets/<str:set_id>/events", SetEventsView.as_view(), name="set_events"),
+    path("sets/<str:set_id>/leave", SetLeaveView.as_view(), name="set_leave"),
 ]

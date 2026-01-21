@@ -20,11 +20,11 @@ export type FeedProvider = {
   // - limit: number of items per page; provider clamps for safety.
   listPage: (
     side: SideId,
-    opts?: { topic?: string | null; limit?: number; cursor?: string | null }
+    opts?: { topic?: string | null; set?: string | null; limit?: number; cursor?: string | null }
   ) => Promise<FeedPage>;
 
   // Convenience: returns the first page items (legacy call sites).
-  list: (side: SideId, opts?: { topic?: string | null }) => Promise<FeedItem[]>;
+  list: (side: SideId, opts?: { topic?: string | null; set?: string | null }) => Promise<FeedItem[]>;
 };
 
 export function getFeedProvider(): FeedProvider {

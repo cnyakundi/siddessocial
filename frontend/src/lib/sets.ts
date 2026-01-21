@@ -14,6 +14,8 @@ export type SetDef = {
   color: SetColor;
   members: string[];
   count: number;
+  // Optional: server-provided (true when viewer owns the Set).
+  isOwner?: boolean;
 };
 
 const STORAGE_KEY = "sd.sets.v0";

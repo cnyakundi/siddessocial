@@ -52,7 +52,7 @@ export function AppTopBar() {
   const unreadHere = activity?.[side]?.unread || 0;
 
   return (
-    <div className="sticky top-0 z-[90] bg-white/95 backdrop-blur border-b border-gray-100">
+    <div className="sticky top-0 z-[90] bg-white/95 backdrop-blur border-b border-gray-100 pt-[env(safe-area-inset-top)]">
       <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
         <Link
           href="/siddes-feed"

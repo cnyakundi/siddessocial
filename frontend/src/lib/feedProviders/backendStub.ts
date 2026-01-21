@@ -8,12 +8,13 @@ import { RestrictedError, isRestrictedPayload } from "@/src/lib/restricted";
 // Always call SAME-ORIGIN Next API routes so session cookies are truth.
 function buildUrl(
   side: SideId,
-  opts?: { topic?: string | null; limit?: number; cursor?: string | null }
+  opts?: { topic?: string | null; set?: string | null; limit?: number; cursor?: string | null }
 ): string {
   const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost";
   const u = new URL("/api/feed", origin);
   u.searchParams.set("side", side);
   if (opts?.topic) u.searchParams.set("topic", String(opts.topic));
+  if (opts?.set) u.searchParams.set("set", String(opts.set));
   if (typeof opts?.limit === "number") u.searchParams.set("limit", String(opts.limit));
   if (opts?.cursor) u.searchParams.set("cursor", String(opts.cursor));
   return u.toString();
@@ -40,7 +41,7 @@ function clampLimit(n?: number): number {
 // - No mock fallback (fail closed)
 async function fetchWithFallback(
   side: SideId,
-  opts?: { topic?: string | null; limit?: number; cursor?: string | null }
+  opts: { topic?: string | null; set?: string | null; limit?: number; cursor?: string | null }
 ): Promise<Response> {
   const url = buildUrl(side, opts);
   try {
@@ -63,11 +64,11 @@ async function fetchWithFallback(
 export const backendStubProvider: FeedProvider = {
   name: "backend_stub",
 
-  async listPage(side: SideId, opts?: { topic?: string | null; limit?: number; cursor?: string | null }): Promise<FeedPage> {
+  async listPage(side: SideId, opts?: { topic?: string | null; set?: string | null; limit?: number; cursor?: string | null }): Promise<FeedPage> {
     const limit = clampLimit(opts?.limit);
     const cursor = (opts?.cursor || null) as string | null;
 
-    const res = await fetchWithFallback(side, { topic: opts?.topic ?? null, limit, cursor });
+    const res = await fetchWithFallback(side, { topic: opts?.topic ?? null, set: (opts as any)?.set ?? null, limit, cursor });
     const data = (await res.json().catch(() => null)) as FeedResp | null;
 
     if (isRestrictedPayload(res, data)) {
@@ -86,8 +87,8 @@ export const backendStubProvider: FeedProvider = {
     return { items, nextCursor, hasMore };
   },
 
-  async list(side: SideId, opts?: { topic?: string | null }): Promise<FeedItem[]> {
-    const page = await backendStubProvider.listPage(side, { topic: opts?.topic ?? null, limit: 50, cursor: null });
+  async list(side: SideId, opts?: { topic?: string | null; set?: string | null }): Promise<FeedItem[]> {
+    const page = await backendStubProvider.listPage(side, { topic: opts?.topic ?? null, set: (opts as any)?.set ?? null, limit: 50, cursor: null });
     return page.items;
   },
 };

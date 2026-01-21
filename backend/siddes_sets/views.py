@@ -4,6 +4,7 @@ Endpoints mirror the Next.js API stubs:
 - GET/POST   /api/sets
 - GET/PATCH  /api/sets/<id>
 - GET        /api/sets/<id>/events
+- POST       /api/sets/<id>/leave
 
 Viewer gating:
 - Viewer identity comes from DRF auth.
@@ -228,6 +229,42 @@ class SetDetailView(APIView):
             return Response({"ok": False, "restricted": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
 
         return Response({"ok": True, "restricted": False, "viewer": viewer, "role": role, "deleted": True, "id": set_id}, status=status.HTTP_200_OK)
+
+
+@method_decorator(dev_csrf_exempt, name="dispatch")
+class SetLeaveView(APIView):
+    """POST /api/sets/<id>/leave
+
+    Allows a non-owner member to leave a Set (server-truth).
+    - Default-safe: does not leak Set existence (404 if not readable).
+    - Owner cannot leave (must delete).
+    """
+
+    def post(self, request, set_id: str):
+        has_viewer, viewer, role = _viewer_ctx(request)
+
+        if not has_viewer:
+            return Response({"ok": False, "restricted": True, "error": "restricted"}, status=status.HTTP_401_UNAUTHORIZED)
+        if role != "me":
+            return Response({"ok": False, "restricted": True, "error": "restricted"}, status=status.HTTP_403_FORBIDDEN)
+
+        # Avoid existence leaks: only allow leave for readable Sets.
+        cur = _store.get(owner_id=viewer, set_id=set_id)
+        if not cur:
+            return Response({"ok": False, "restricted": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if bool((cur or {}).get("isOwner")):
+            return Response({"ok": False, "restricted": False, "error": "owner_cannot_leave"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            updated = _store.leave(owner_id=viewer, set_id=set_id)  # type: ignore[attr-defined]
+        except Exception:
+            updated = None
+
+        if not updated:
+            return Response({"ok": False, "restricted": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response({"ok": True, "restricted": False, "viewer": viewer, "role": role, "item": updated}, status=status.HTTP_200_OK)
 
 
 @method_decorator(dev_csrf_exempt, name="dispatch")

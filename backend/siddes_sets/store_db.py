@@ -271,7 +271,12 @@ class DbSetsStore:
             if side and side in VALID_SIDES:
                 qs = qs.filter(side=side)
             qs = qs.order_by("-updated_at")
-            return [set_to_item(s) for s in qs]
+            out: List[Dict[str, Any]] = []
+            for s in qs:
+                it = set_to_item(s)
+                it["isOwner"] = bool(s.owner_id in aliases)
+                out.append(it)
+            return out
         except Exception:
             # Backend compatibility fallback (dev only): do a python filter.
             aliases_list = list(aliases) if isinstance(aliases, (set, list, tuple)) else [viewer_id]
@@ -289,7 +294,12 @@ class DbSetsStore:
             if side and side in VALID_SIDES:
                 all_visible = [s for s in all_visible if str(s.side) == side]
             all_visible.sort(key=lambda s: s.updated_at, reverse=True)
-            return [set_to_item(s) for s in all_visible]
+            out: List[Dict[str, Any]] = []
+            for s in all_visible:
+                it = set_to_item(s)
+                it["isOwner"] = bool(s.owner_id in aliases)
+                out.append(it)
+            return out
 
     def get(self, *, owner_id: str, set_id: str) -> Optional[Dict[str, Any]]:
         viewer_id = str(owner_id or "").strip()
@@ -306,17 +316,23 @@ class DbSetsStore:
             return None
 
         if s.owner_id in aliases:
-            return set_to_item(s)
+            it = set_to_item(s)
+            it["isOwner"] = True
+            return it
 
         # sd_366: membership table check (fast) + JSON fallback
         try:
             if SiddesSetMember.objects.filter(set_id=set_id, member_id__in=list(aliases)).exists():
-                return set_to_item(s)
+                it = set_to_item(s)
+                it["isOwner"] = False
+                return it
         except Exception:
             members = s.members if isinstance(s.members, list) else []
             mem = {str(m).strip() for m in members if isinstance(m, (str, int, float))}
             if mem.intersection(aliases):
-                return set_to_item(s)
+                it = set_to_item(s)
+                it["isOwner"] = False
+                return it
 
         return None
 
@@ -360,7 +376,9 @@ class DbSetsStore:
                 data={"label": label, "side": side},
             )
 
-        return set_to_item(s)
+        it = set_to_item(s)
+        it["isOwner"] = True
+        return it
 
     def bulk_create(self, *, owner_id: str, inputs: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
         out: List[Dict[str, Any]] = []
@@ -492,7 +510,72 @@ class DbSetsStore:
             if events:
                 SiddesSetEvent.objects.bulk_create(events)
 
-        return set_to_item(s)
+        it = set_to_item(s)
+        it["isOwner"] = True
+        return it
+
+
+    def leave(self, *, owner_id: str, set_id: str) -> Optional[Dict[str, Any]]:
+        """Remove the viewer from Set membership (non-owner only).
+
+        - Default-safe: returns None if the Set is not readable or viewer isn't a member.
+        - Owner cannot leave (must delete).
+        - Writes a MEMBERS_UPDATED event with data.via='leave'.
+        """
+
+        viewer_id = str(owner_id or '').strip()
+        sid = str(set_id or '').strip()
+        if not viewer_id or not sid:
+            return None
+
+        aliases = viewer_aliases(viewer_id)
+
+        try:
+            s = SiddesSet.objects.get(id=sid)
+        except SiddesSet.DoesNotExist:
+            return None
+
+        # Owner cannot leave their own Set.
+        if s.owner_id in aliases:
+            return None
+
+        # Must be a member (table fast path, JSON fallback).
+        is_member = False
+        try:
+            is_member = SiddesSetMember.objects.filter(set_id=sid, member_id__in=list(aliases)).exists()
+        except Exception:
+            members = s.members if isinstance(s.members, list) else []
+            mem = {str(m).strip() for m in members if isinstance(m, (str, int, float))}
+            is_member = bool(mem.intersection(aliases))
+
+        if not is_member:
+            return None
+
+        prev = s.members if isinstance(s.members, list) else []
+        prev_v = [str(m) for m in prev if isinstance(m, (str, int, float))]
+        nxt = [m for m in prev_v if m not in aliases]
+
+        # If nothing changed, treat as not-found to avoid leaking details.
+        if prev_v == nxt:
+            return None
+
+        t = now_ms()
+        with transaction.atomic():
+            s.members = nxt
+            s.save()
+            sync_memberships(set_id=s.id, members=nxt)
+            SiddesSetEvent.objects.create(
+                id=new_id('se'),
+                set=s,
+                ts_ms=t,
+                kind=SetEventKind.MEMBERS_UPDATED,
+                by=viewer_id,
+                data={'from': prev_v, 'to': nxt, 'via': 'leave'},
+            )
+
+        it = set_to_item(s)
+        it['isOwner'] = False
+        return it
 
     def events(self, *, owner_id: str, set_id: str) -> List[Dict[str, Any]]:
         viewer_id = str(owner_id or "").strip()

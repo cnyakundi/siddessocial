@@ -49,6 +49,7 @@ function coerceSet(x: any): SetDef | null {
   if (typeof x.id !== "string" || typeof x.label !== "string") return null;
   const members = Array.isArray(x.members) ? x.members.filter((m: any) => typeof m === "string") : [];
   const count = typeof x.count === "number" && Number.isFinite(x.count) ? x.count : 0;
+  const isOwner = typeof (x as any).isOwner === "boolean" ? (x as any).isOwner : undefined;
   return {
     id: x.id,
     side: coerceSide((x as any).side),
@@ -56,6 +57,7 @@ function coerceSet(x: any): SetDef | null {
     color: coerceColor((x as any).color),
     members,
     count,
+    isOwner,
   };
 }
 
@@ -156,6 +158,18 @@ export const backendStubProvider: SetsProvider = {
     if (data.restricted) throw new Error("sets:bulkCreate restricted (not authenticated)");
     const items = Array.isArray(data.items) ? data.items : [];
     return items.map(coerceSet).filter(Boolean) as SetDef[];
+  },
+
+
+  async leave(id: string): Promise<SetDef | null> {
+    const safeId = encodeURIComponent(id);
+    const res = await fetchSameOrigin("/api/sets/" + safeId + "/leave", undefined, { method: "POST" });
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error("sets:leave failed (" + res.status + ")");
+    const data = await j<ItemResp>(res);
+    if ((data as any).restricted) throw new Error("sets:leave restricted (not authenticated)");
+    const item = coerceSet((data as any).item);
+    return item || null;
   },
 
   async update(id: string, patch: UpdateSetPatch): Promise<SetDef | null> {

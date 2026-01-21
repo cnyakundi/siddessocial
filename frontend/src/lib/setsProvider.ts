@@ -29,6 +29,8 @@ export type SetsProvider = {
   bulkCreate: (inputs: CreateSetInput[]) => Promise<SetDef[]>;
 
   update: (id: string, patch: UpdateSetPatch) => Promise<SetDef | null>;
+  // Leave a Set as a non-owner member. Returns updated Set (best-effort).
+  leave: (id: string) => Promise<SetDef | null>;
   events: (id: string) => Promise<SetEvent[]>;
 };
 

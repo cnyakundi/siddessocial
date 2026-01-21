@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Check, Lock } from "lucide-react";
 import type { SideId } from "@/src/lib/sides";
 import { SIDE_ORDER, SIDES, SIDE_THEMES } from "@/src/lib/sides";
@@ -24,6 +25,12 @@ export function SideSwitcherSheet({
   activity: SideActivityMap;
   onSwitch: (side: SideId) => void;
 }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
@@ -33,15 +40,34 @@ export function SideSwitcherSheet({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
+  // Prevent background scroll + avoid scrollbar layout shift on desktop.
+  useEffect(() => {
+    if (!open) return;
+    if (!mounted) return;
+    if (typeof document === "undefined") return;
+
+    const prevOverflow = document.body.style.overflow;
+    const prevPaddingRight = document.body.style.paddingRight;
+
+    const sbw = typeof window !== "undefined" ? (window.innerWidth - document.documentElement.clientWidth) : 0;
+
+    document.body.style.overflow = "hidden";
+    if (sbw > 0) document.body.style.paddingRight = sbw + "px";
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.body.style.paddingRight = prevPaddingRight;
+    };
+  }, [open, mounted]);
 
   const handleSwitch = (nextSide: SideId) => {
     onSwitch(nextSide);
   };
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center md:items-center">
+  return createPortal(
+    <div className="fixed inset-0 z-[120] flex items-end justify-center md:items-center">
       <button
         type="button"
         aria-label="Close side switcher"
@@ -86,9 +112,7 @@ export function SideSwitcherSheet({
 
                 <div className="text-left flex-1">
                   <div className="flex items-center gap-2">
-                    <span className={cn("font-bold text-base", isActive ? theme.text : "text-gray-900")}>
-                      {meta.label}
-                    </span>
+                    <span className={cn("font-bold text-base", isActive ? theme.text : "text-gray-900")}>{meta.label}</span>
                     {meta.isPrivate ? <Lock size={14} className="text-gray-400" /> : null}
                   </div>
 
@@ -116,7 +140,7 @@ export function SideSwitcherSheet({
                       "px-2.5 py-1 rounded-full text-xs font-bold",
                       isHot ? "bg-red-100 text-red-600" : "bg-gray-100 text-gray-600"
                     )}
-                    aria-label={`${a.unread} new items`}
+                    aria-label={a.unread + " new items"}
                   >
                     {formatActivityPill(a.unread)}
                   </div>
@@ -128,14 +152,11 @@ export function SideSwitcherSheet({
           })}
         </div>
 
-        <button
-          type="button"
-          onClick={onClose}
-          className="w-full mt-6 py-3 font-semibold text-gray-500 hover:bg-gray-50 rounded-xl"
-        >
+        <button type="button" onClick={onClose} className="w-full mt-6 py-3 font-semibold text-gray-500 hover:bg-gray-50 rounded-xl">
           Cancel
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

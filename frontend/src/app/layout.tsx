@@ -13,6 +13,11 @@ export const metadata: Metadata = {
   },
   description: APP_DESC,
   applicationName: "Siddes",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Siddes",
+  },
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
@@ -44,6 +49,9 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#0B1020",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -51,7 +59,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         {/* sd_391_rootlayout_suspense_guard */}
-        <Suspense fallback={<div className="min-h-screen bg-gray-50" />}>
+        <Suspense fallback={<div className="min-h-dvh bg-gray-50" />}>
           <AppProviders>{children}</AppProviders>
         </Suspense>
       </body>
