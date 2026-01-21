@@ -16,6 +16,8 @@ import type { SetColor } from "@/src/lib/setThemes";
 import { getSetTheme } from "@/src/lib/setThemes";
 import { onSetsChanged } from "@/src/lib/setsSignals";
 import { useReturnScrollRestore } from "@/src/hooks/returnScroll";
+import { useSide } from "@/src/components/SideProvider";
+
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
 }
@@ -58,6 +60,7 @@ function SiddesSetsPageInner() {
   // sd_464c: restore scroll when returning to Sets list
   useReturnScrollRestore();
   const sp = useSearchParams();
+  const { side: ctxSide } = useSide();
   const router = useRouter();
 
   // sd_465d1: prefetch Set hub route on intent (hover/touch) for instant open feel
@@ -73,7 +76,13 @@ function SiddesSetsPageInner() {
   // sd_256: Sets UI is session-auth only (no viewer cookie gating).
   const canWrite = true;
 
-  const [sideFilter, setSideFilter] = useState<SideId | "all">("all");
+  const [sideFilter, setSideFilter] = useState<SideId | "all">(ctxSide);
+
+  // sd_468a1: keep sets list scoped to the current Side (Side tabs control context)
+  useEffect(() => {
+    setSideFilter(ctxSide);
+  }, [ctxSide]);
+
   const [q, setQ] = useState("");
 
   const [items, setItems] = useState<SetDef[]>([]);
@@ -172,7 +181,7 @@ function SiddesSetsPageInner() {
       <div className="min-h-screen bg-gray-50">
       <div className="px-4 py-4">
 <div className="flex items-center justify-between md:justify-end gap-3 mb-3">
-          <div className="md:hidden">
+          <div className="md:hidden hidden">
             <div className="text-sm font-extrabold text-gray-900">Sets</div>
             <div className="text-xs text-gray-500">
               Sets inside a Side.
@@ -258,7 +267,7 @@ function SiddesSetsPageInner() {
             />
           </div>
 
-          <div className="mt-2 flex items-center gap-2 overflow-x-auto">
+          <div className="mt-2 flex items-center gap-2 overflow-x-auto hidden">
             {SIDE_FILTERS.map((f) => {
               const selected = sideFilter === f.id;
               const theme = f.id !== "all" ? SIDE_THEMES[f.id] : null;
@@ -353,9 +362,7 @@ function SiddesSetsPageInner() {
                           <div className="mt-2 text-xs text-gray-500">No members yet.</div>
                         )}
                       </div>
-
-                      <div className="text-[10px] font-mono text-gray-400 shrink-0">{s.id}</div>
-                    </div>
+</div>
                   </div>
                 </Link>
               );
