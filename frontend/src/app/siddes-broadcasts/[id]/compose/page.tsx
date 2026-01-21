@@ -196,9 +196,7 @@ export default function BroadcastComposePage({ params }: { params: { id: string 
     saveDraft(id, { text: t, updatedAt: Date.now() });
   };
 
-  const close = () => {
-    if ((text || "").trim()) saveCurrentDraft();
-    try {
+  const close = (opts?: { skipSaveDraft?: boolean }) => {\n    if (!opts?.skipSaveDraft && (text || "").trim()) saveCurrentDraft();\n    try {
       if (typeof window !== "undefined" && window.history.length > 1) {
         router.back();
         return;
@@ -243,8 +241,7 @@ export default function BroadcastComposePage({ params }: { params: { id: string 
       reset();
       setPosting(false);
       toast.undo(`Queued: ${broadcast?.name || "Broadcast update"}`, () => removeQueuedItem(queued.id));
-      close();
-      return;
+      close({ skipSaveDraft: true });\n      return;
     }
 
     try {
@@ -364,7 +361,7 @@ export default function BroadcastComposePage({ params }: { params: { id: string 
 
   return (
     <div className="fixed inset-0 z-[99] flex items-end justify-center md:items-center">
-      <button type="button" aria-label="Close compose" className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={close} />
+      <button type="button" aria-label="Close compose" className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => close()} />
 
       <div
         className={cn(
@@ -398,7 +395,7 @@ export default function BroadcastComposePage({ params }: { params: { id: string 
             </span>
           </div>
 
-          <button type="button" onClick={close} className="p-2 rounded-full hover:bg-white/60" aria-label="Close" title="Close">
+          <button type="button" onClick={() => close()} className="p-2 rounded-full hover:bg-white/60" aria-label="Close" title="Close">
             <X size={18} className="text-gray-600" />
           </button>
         </div>
