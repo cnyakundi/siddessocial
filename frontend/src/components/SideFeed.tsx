@@ -13,7 +13,6 @@ import { PostCard } from "@/src/components/PostCard";
 import { PublicTuneSheet } from "@/src/components/PublicTuneSheet";
 import { SetPickerSheet } from "@/src/components/SetPickerSheet";
 import { ImportSetSheet } from "@/src/components/ImportSetSheet";
-import { RitualDock } from "@/src/components/RitualDock";
 import { FeedComposerRow } from "@/src/components/FeedComposerRow";
 
 import type { SetDef, SetId } from "@/src/lib/sets";
@@ -676,8 +675,6 @@ export function SideFeed() {
         onPublicMode={setPublicMode}
       />
 
-            {/* Ritual Dock (Pulse) */}
-      <RitualDock side={side} activeSet={activeSet} activeSetLabel={activeSetLabel} onOpenSetPicker={() => setSetPickerOpen(true)} />
 
 {/* Composer (in-feed) */}
       <FeedComposerRow

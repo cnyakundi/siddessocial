@@ -1083,7 +1083,7 @@ const quickTools = useMemo<QuickTool[]>(() => {
                 />
 
                 {/* Suggestions (confidence gated, reversible) */}
-                <div className="mt-4">
+                <div className="mt-4 hidden">
                   <ComposeSuggestionBar
                     text={text}
                     currentSide={side}
@@ -1097,7 +1097,7 @@ const quickTools = useMemo<QuickTool[]>(() => {
                 </div>
 
                 {/* sd_398: Quick tools (templates + toggles) */}
-                <div className="mt-5">
+                <div className="mt-5 hidden">
                   <div className="flex gap-2 flex-wrap">
                     {quickTools.map((t) => {
                       const isUrgent = t.tone === "urgent";
