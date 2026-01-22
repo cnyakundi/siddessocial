@@ -149,7 +149,7 @@ function AvatarBubble({
   return (
     <div
       className={cn(
-        "relative w-7 h-7 rounded-full border flex items-center justify-center text-[11px] font-bold select-none overflow-hidden",
+        "relative w-11 h-11 rounded-full border flex items-center justify-center text-[11px] font-black select-none overflow-hidden shrink-0",
         theme ? theme.lightBg : "bg-gray-200",
         theme ? theme.border : "border-gray-200",
         theme ? theme.text : "text-gray-800"
@@ -157,37 +157,6 @@ function AvatarBubble({
       aria-label="Avatar"
       title={sideId ? `Locked Side: ${SIDES[sideId].label}` : "Avatar"}
     >
-        {/* sd_466d: Activity (All) header (dead simple) */}
-        <div className="px-4 pt-4 pb-2 border-b border-gray-100 bg-white">
-          <div className="flex items-center justify-between">
-            <h1 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Activity (All)</h1>
-            <div className="w-2 h-2 rounded-full bg-gray-200" aria-hidden="true" />
-          </div>
-
-        {/* sd_470b: Pulse card (moved out of composer; Inbox is the calm home) */}
-        <div className="px-4 pt-4">
-          <button
-            type="button"
-            onClick={() => {
-              // Placeholder: route to Pulse (wire later)
-              try { window.location.href = "/siddes-compose?side=friends&mode=pulse"; } catch {}
-            }}
-            className="w-full bg-white border border-gray-200 rounded-2xl p-4 text-left hover:bg-gray-50 active:bg-gray-50 transition-colors"
-            aria-label="Open Pulse"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm font-black text-gray-900">Pulse</div>
-                <div className="text-xs text-gray-500 mt-1">Quick check-in with Friends.</div>
-              </div>
-              <div className="px-3 py-2 rounded-xl bg-gray-900 text-white text-xs font-black">Start</div>
-            </div>
-            <div className="mt-3 text-[10px] text-gray-400 font-bold uppercase tracking-widest">Friends only</div>
-          </button>
-        </div>
-
-        </div>
-
       {overlayStyle ? (
         <div aria-hidden className="absolute inset-0 opacity-50 pointer-events-none" style={overlayStyle} />
       ) : null}
@@ -195,8 +164,6 @@ function AvatarBubble({
     </div>
   );
 }
-
-
 function SidePill({ sideId }: { sideId: SideId }) {
   const meta = SIDES[sideId];
   const theme = SIDE_THEMES[sideId];
@@ -267,9 +234,9 @@ function FilterChipsRow({
 
   return (
     <div data-testid="inbox-filter-chips" className="flex gap-2 overflow-x-auto no-scrollbar pb-2 -mx-4 px-4 md:mx-0 md:px-0">
-      <Chip id="all" label="All" count={counts.all} />
+      <span className="hidden md:inline-flex"><Chip id="all" label="All" count={counts.all} /></span>
       <Chip id="this" label="This Side" count={counts.this} />
-      <Chip id="mismatch" label="Mismatched" count={counts.mismatch} />
+      <span className="hidden md:inline-flex"><Chip id="mismatch" label="Mismatched" count={counts.mismatch} /></span>
       <Chip id="unread" label="Unread" count={counts.unread} />
     </div>
   );
@@ -326,7 +293,7 @@ function SiddesInboxPageInner() {
   const [unreadById, setUnreadById] = useState<Record<string, number> | null>(null);
   const [pinnedById, setPinnedById] = useState<Record<string, boolean> | null>(null);
 
-  const [filter, setFilter] = useState<FilterId>("all");
+  const [filter, setFilter] = useState<FilterId>("this");
   const [query, setQuery] = useState("");
   const [activeIdx, setActiveIdx] = useState(0);
 
@@ -554,7 +521,7 @@ function SiddesInboxPageInner() {
 
   return (
     <div className="p-4">
-        <div className="mb-3" data-testid="inbox-tabs">
+        <div className="mb-3 hidden md:block" data-testid="inbox-tabs">
           <div className="inline-flex rounded-full border border-gray-200 bg-white p-1 shadow-sm">
             <button
               type="button"
@@ -562,7 +529,7 @@ function SiddesInboxPageInner() {
               onClick={() => setTab("messages")}
               className={cn(
                 "px-4 py-2 rounded-full text-xs font-bold",
-                tab === "messages" ? cn(theme.primaryBg, "text-white") : "text-gray-600 hover:bg-gray-50"
+                tab === "messages" ? "bg-gray-900 text-white" : "text-gray-600 hover:bg-gray-50"
               )}
             >
               Messages
@@ -573,7 +540,7 @@ function SiddesInboxPageInner() {
               onClick={() => setTab("alerts")}
               className={cn(
                 "px-4 py-2 rounded-full text-xs font-bold",
-                tab === "alerts" ? cn(theme.primaryBg, "text-white") : "text-gray-600 hover:bg-gray-50"
+                tab === "alerts" ? "bg-gray-900 text-white" : "text-gray-600 hover:bg-gray-50"
               )}
             >
               Alerts
@@ -643,7 +610,7 @@ function SiddesInboxPageInner() {
 
         {loading ? <div className="text-xs text-gray-500 mb-2">Loading inbox…</div> : null}
 
-        <div role="listbox" aria-label="Inbox threads" className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+        <div role="listbox" aria-label="Inbox threads" className="bg-white border border-gray-100 rounded-[2.5rem] overflow-hidden shadow-sm">
           {filteredRows.map((t, idx) => {
             const lockedSide = t.lockedSide as SideId;
 
@@ -665,7 +632,7 @@ function SiddesInboxPageInner() {
                 }}
                 onMouseEnter={() => setActiveIdx(idx)}
                 className={cn(
-                  "block px-4 py-4 border-b border-gray-100 hover:bg-gray-50 outline-none",
+                  "block px-4 py-3 min-h-[80px] border-b border-gray-100 hover:bg-gray-50 active:bg-gray-50/60 outline-none transition-colors",
                   idx === activeIdx ? "bg-gray-50 ring-2 ring-gray-900/5" : ""
                 )}
               >
@@ -673,7 +640,7 @@ function SiddesInboxPageInner() {
                   <div className="font-bold text-gray-900 flex items-center gap-2 min-w-0">
                     <AvatarBubble initials={String((t as any).participant?.initials || (t.title ?? "").slice(0, 2))} sideId={lockedSide} seed={String((t as any).participant?.avatarSeed || t.id || "")} />
                     {t.unread > 0 ? <span className="w-2 h-2 rounded-full bg-red-500" aria-label="Unread" /> : null}
-                    <span className="truncate">{t.title}</span>
+                    <span className="truncate text-[15px] font-black">{t.title}</span>
                   </div>
 
                   <div className="flex items-center gap-2 flex-shrink-0">
@@ -686,17 +653,17 @@ function SiddesInboxPageInner() {
                         const next = togglePinned(t.id);
                         setPinnedById((prev) => ({ ...(prev ?? {}), [t.id]: next }));
                       }}
-                      className={cn("p-1 rounded hover:bg-gray-100 transition", t.pinned ? "bg-gray-100" : "")}
+                      className={cn("p-2 rounded-xl hover:bg-gray-100 transition", t.pinned ? "bg-gray-100" : "")}
                       aria-label={t.pinned ? "Unpin thread" : "Pin thread"}
                       title={t.pinned ? "Unpin" : "Pin"}
                     >
                       <Pin size={16} className={cn(t.pinned ? "text-gray-900" : "text-gray-400")} />
                     </button>
 
-                    <SidePill sideId={lockedSide} />
+                    <span className="hidden md:inline-flex"><SidePill sideId={lockedSide} /></span>
                     <span className="hidden md:inline-flex"><ContextRiskBadge sideId={lockedSide} /></span>
                     <div
-                      className="text-xs text-gray-400"
+                      className="text-[10px] font-bold text-gray-400"
                       title={formatAbsTime(Number((t as any).updatedAt || 0))}
                     >
                       {t.timeLabel}
@@ -710,7 +677,7 @@ function SiddesInboxPageInner() {
                       Message hidden — enter {SIDES[lockedSide].label} to view
                     </div>
                   ) : (
-                    <div className="text-sm text-gray-600 truncate pr-4">{t.lastText}</div>
+                    <div className="text-[13px] font-medium text-gray-600 truncate pr-4">{t.lastText}</div>
                   )}
                   {t.unread > 0 ? (
                     <div className="text-[10px] font-bold bg-red-100 text-red-700 px-2 py-0.5 rounded-full">{t.unread}</div>
