@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Plus } from "lucide-react";
+import { ChevronRight, Plus } from "lucide-react";
 import type { SideId } from "@/src/lib/sides";
 import { SIDE_THEMES } from "@/src/lib/sides";
 
@@ -10,15 +10,15 @@ function cn(...parts: Array<string | undefined | false | null>) {
 }
 
 /**
- * sd_490: Desktop Endgame skin.
- * - Mobile: stays light + compact.
- * - Desktop: becomes a real "Composer Card" visually (but still just opens /siddes-compose — no fake posting).
+ * sd_496: Mobile composer neutrality (v1.3)
+ * - Mobile: signature card (rounded-[2.5rem], p-5) but neutral CTA (no Side color)
+ * - Desktop: keeps Side-colored "New Post" pill (desktop polish later if needed)
+ * - Always a button that opens the real composer (server truth)
  */
 export function FeedComposerRow(props: { side: SideId; prompt: string; subtitle?: string; onOpen: () => void }) {
   const { side, prompt, subtitle, onOpen } = props;
   const theme = SIDE_THEMES[side];
   const isWork = side === "work";
-
   const desktopPad = isWork ? "lg:p-6" : "lg:p-8";
 
   return (
@@ -29,8 +29,7 @@ export function FeedComposerRow(props: { side: SideId; prompt: string; subtitle?
           onClick={onOpen}
           className={cn(
             "w-full text-left flex items-center gap-4 lg:gap-6 rounded-[2.5rem] border border-gray-100 shadow-sm transition-all active:scale-[0.99]",
-            "bg-gray-50/40 hover:bg-gray-50",
-            "lg:bg-white lg:hover:bg-white",
+            "bg-white hover:bg-white",
             "hover:shadow-[0_40px_80px_rgba(0,0,0,0.08)]",
             "p-5",
             desktopPad
@@ -38,9 +37,13 @@ export function FeedComposerRow(props: { side: SideId; prompt: string; subtitle?
           aria-label="Write a post"
         >
           {/* Avatar (ME) */}
+          <div className="w-11 h-11 rounded-full border border-gray-200 bg-gray-100 text-gray-700 flex items-center justify-center text-[11px] font-black shrink-0 lg:hidden" aria-hidden="true" title="You">
+            ME
+          </div>
+
           <div
             className={cn(
-              "w-11 h-11 lg:w-14 lg:h-14 rounded-2xl lg:rounded-full border flex items-center justify-center text-[11px] lg:text-sm font-black shrink-0",
+              "hidden lg:flex w-14 h-14 rounded-full border items-center justify-center text-sm font-black shrink-0",
               theme.lightBg,
               theme.text,
               theme.border
@@ -75,15 +78,9 @@ export function FeedComposerRow(props: { side: SideId; prompt: string; subtitle?
               New Post
             </div>
 
-            {/* Mobile square */}
-            <div
-              className={cn(
-                "lg:hidden w-11 h-11 rounded-2xl flex items-center justify-center text-white shadow-lg",
-                theme.primaryBg
-              )}
-              aria-hidden="true"
-            >
-              <Plus size={22} strokeWidth={3} />
+            {/* Mobile neutral chevron (no Side color) */}
+            <div className="lg:hidden w-11 h-11 rounded-2xl border border-gray-200 bg-white flex items-center justify-center text-gray-400" aria-hidden="true">
+              <ChevronRight size={22} strokeWidth={2} />
             </div>
           </div>
         </button>

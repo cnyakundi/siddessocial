@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 
 import { AppTopBar } from "@/src/components/AppTopBar";
 import { BottomNav } from "@/src/components/BottomNav";
-
+import { MobileAirlockOverlay } from "@/src/components/MobileAirlockOverlay";
 import { DesktopSideDock } from "@/src/components/DesktopSideDock";
 import { DesktopWorkspaceNav } from "@/src/components/DesktopWorkspaceNav";
 import { DesktopTopBar } from "@/src/components/DesktopTopBar";
@@ -46,6 +46,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* Mobile */}
       <div className="lg:hidden">
         <AppTopBar />
+        <MobileAirlockOverlay />
         {/* sd_485: Side switching stays in the Airlock (SideBadge → SideSwitcherSheet). Keep mobile chrome minimal. */}
         {/* sd_494: BottomNav baseline padding (88px) + safe-area */}
         <div className="pb-[calc(88px+env(safe-area-inset-bottom))]">{children}</div>
