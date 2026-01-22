@@ -47,8 +47,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="lg:hidden">
         <AppTopBar />
         {/* sd_485: Side switching stays in the Airlock (SideBadge → SideSwitcherSheet). Keep mobile chrome minimal. */}
-        {/* sd_390: exact BottomNav padding (64px) + safe-area */}
-        <div className="pb-24 pb-[calc(64px+env(safe-area-inset-bottom))]">{children}</div>
+        {/* sd_494: BottomNav baseline padding (88px) + safe-area */}
+        <div className="pb-[calc(88px+env(safe-area-inset-bottom))]">{children}</div>
         <BottomNav />
       </div>
 

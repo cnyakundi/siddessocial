@@ -65,12 +65,12 @@ export function AppTopBar() {
 
   return (
     <div className="sticky top-0 z-[90] bg-white/90 backdrop-blur border-b border-gray-50 pt-[env(safe-area-inset-top)]">
-      <div className="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
+      <div className="max-w-[430px] mx-auto px-4 h-16 flex items-center justify-between gap-3">
         {/* Brand */}
         <Link
           href="/siddes-feed"
           className={cn(
-            "w-9 h-9 rounded-xl text-white font-black text-lg flex items-center justify-center shrink-0 shadow-sm",
+            "w-10 h-10 rounded-xl text-white font-black text-lg flex items-center justify-center shrink-0 shadow-sm",
             "bg-gray-900"
           )}
           aria-label="Siddes Home"
@@ -104,21 +104,21 @@ export function AppTopBar() {
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
-              className="p-2 rounded-xl text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+              className="w-11 h-11 rounded-xl inline-flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-gray-900"
               aria-label="Search"
               title="Search"
             >
-              <Search size={20} />
+              <Search size={22} strokeWidth={2} />
             </button>
           ) : null}
 
           <Link
             href="/siddes-notifications"
-            className="relative p-2 rounded-xl text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+            className="relative w-11 h-11 rounded-xl inline-flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-gray-900"
             aria-label="Alerts"
             title="Alerts"
           >
-            <Bell size={20} />
+            <Bell size={22} strokeWidth={2} />
             {unreadHere > 0 ? (
               <span className={cn("absolute top-2 right-2 w-2.5 h-2.5 rounded-full border-2 border-white", theme.primaryBg)} />
             ) : null}
@@ -128,7 +128,7 @@ export function AppTopBar() {
             type="button"
             onClick={() => setMenuOpen((v) => !v)}
             className={cn(
-              "w-9 h-9 rounded-xl border flex items-center justify-center font-black text-sm shadow-sm transition-all",
+              "w-10 h-10 rounded-xl border flex items-center justify-center font-black text-sm shadow-sm transition-all",
               "bg-gray-100 text-gray-700 border-gray-200",
               menuOpen ? "ring-2 ring-gray-200" : "hover:border-gray-300"
             )}

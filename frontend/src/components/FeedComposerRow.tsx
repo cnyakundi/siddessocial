@@ -32,7 +32,7 @@ export function FeedComposerRow(props: { side: SideId; prompt: string; subtitle?
             "bg-gray-50/40 hover:bg-gray-50",
             "lg:bg-white lg:hover:bg-white",
             "hover:shadow-[0_40px_80px_rgba(0,0,0,0.08)]",
-            "p-4",
+            "p-5",
             desktopPad
           )}
           aria-label="Write a post"

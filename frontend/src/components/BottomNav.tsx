@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Inbox, Plus, Layers, User } from "lucide-react";
+import { Home, Inbox, Plus, Layers, User , type LucideIcon} from "lucide-react";
 import { useSide } from "@/src/components/SideProvider";
 import { SIDE_THEMES } from "@/src/lib/sides";
 
@@ -11,41 +11,40 @@ function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
 }
 
-function NavLink({
+function TabLink({
   href,
   label,
   Icon,
   active,
-  activeClassName,
-  onClick,
 }: {
   href: string;
   label: string;
-  Icon: React.ComponentType<{ size?: string | number; className?: string }>;
+  Icon: LucideIcon;
   active: boolean;
-  activeClassName: string;
-  onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
 }) {
+  const sw = active ? 2.5 : 2;
   return (
     <Link
       href={href}
-      onClick={onClick}
       aria-label={label}
       className={cn(
-        "flex flex-col items-center justify-center gap-0.5 select-none",
-        active ? cn("text-gray-900", activeClassName) : "text-gray-500 hover:text-gray-700"
+        "flex flex-col items-center justify-center gap-1 select-none active:scale-95 transition-transform",
+        active ? "text-gray-900" : "text-gray-400"
       )}
     >
-      <Icon size={20} />
-      <span className={cn("text-[10px] font-bold", active ? "text-gray-900" : "text-gray-500")}>{label}</span>
+      <Icon size={24} strokeWidth={sw} />
+      <span className={cn("text-[9px] font-black uppercase tracking-tighter", active ? "opacity-100" : "opacity-60")}>
+        {label}
+      </span>
     </Link>
   );
 }
 
 /**
- * sd_485: Mobile thumb-truth nav.
- * - Bottom = high-frequency utilities (Home, Sets, Create, Inbox, Me)
- * - Side switching stays in the Airlock (SideBadge → SideSwitcherSheet)
+ * sd_494: Mobile Measurement Protocol v1.3 Toolbelt
+ * Order: [Home] [Circles] [MAGIC PLUS] [Inbox] [Me]
+ * - Tabs are neutral (black/gray). Only MAGIC PLUS uses Side color.
+ * - Baseline height: 88px + safe-area padding.
  */
 export function BottomNav() {
   const pathname = usePathname() || "";
@@ -60,44 +59,50 @@ export function BottomNav() {
 
   return (
     <nav
-      aria-label="Primary navigation"
-      className="fixed bottom-0 left-0 right-0 z-[90] border-t border-gray-200 bg-white/90 backdrop-blur"
+      aria-label="Daily tools"
+      className="fixed bottom-0 left-0 right-0 z-[90] border-t border-gray-100 bg-white shadow-[0_-10px_40px_rgba(0,0,0,0.03)]"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      <div className="max-w-2xl mx-auto px-4">
-        <div className="h-16 grid grid-cols-5 items-center">
-          <NavLink href="/siddes-feed" label="Home" Icon={Home} active={isHome} activeClassName={theme.text} />
+      <div className="max-w-[430px] mx-auto px-4">
+        <div className="h-[88px] grid grid-cols-5 items-start pt-2">
+          <TabLink href="/siddes-feed" label="Home" Icon={Home} active={isHome} />
 
-          <NavLink href="/siddes-sets" label="Sets" Icon={Layers} active={isSets} activeClassName={theme.text} />
+          {/* Sets are "Circles" in mobile UX language */}
+          <TabLink href="/siddes-sets" label="Circles" Icon={Layers} active={isSets} />
 
-          {/* Create (context-aware) */}
+          {/* MAGIC PLUS */}
           <Link
             href={`/siddes-compose?side=${side}`}
             aria-label="Create"
-            className={cn(
-              "group flex flex-col items-center justify-center gap-0.5 select-none",
-              isCompose ? cn("text-gray-900", theme.text) : "text-gray-500 hover:text-gray-700"
-            )}
+            className="flex flex-col items-center justify-center gap-1 select-none"
             title="Create"
           >
             <span
               className={cn(
-                "w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-xl ring-4 ring-white transform-gpu -translate-y-2 active:scale-95 transition-transform hover:opacity-95",
-                "group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-offset-2 group-focus-visible:outline-gray-900/20",
+                "w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-xl",
+                "border-4 border-white ring-1 ring-gray-100",
+                "transform-gpu -translate-y-6 active:scale-90 transition-transform",
                 theme.primaryBg
               )}
             >
-              <Plus size={26} strokeWidth={3} />
+              <Plus size={32} strokeWidth={4} />
             </span>
-            <span className={cn("text-[10px] font-bold", isCompose ? "text-gray-900" : "text-gray-500")}>Create</span>
+            <span
+              className={cn(
+                "text-[9px] font-black uppercase tracking-tighter",
+                isCompose ? "text-gray-900" : "text-gray-400",
+                "opacity-70"
+              )}
+            >
+              Create
+            </span>
           </Link>
 
-          <NavLink href="/siddes-inbox" label="Inbox" Icon={Inbox} active={isInbox} activeClassName={theme.text} />
+          <TabLink href="/siddes-inbox" label="Inbox" Icon={Inbox} active={isInbox} />
 
-          <NavLink href="/siddes-profile" label="Me" Icon={User} active={isMe} activeClassName={theme.text} />
+          <TabLink href="/siddes-profile" label="Me" Icon={User} active={isMe} />
         </div>
       </div>
     </nav>
   );
 }
-

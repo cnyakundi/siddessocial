@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef } from "react";
-import { Lock } from "lucide-react";
+import { Lock, ChevronDown } from "lucide-react";
 import type { SideId } from "@/src/lib/sides";
 import { SIDES, SIDE_THEMES } from "@/src/lib/sides";
 import { useSide } from "@/src/components/SideProvider";
@@ -10,6 +10,13 @@ function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
 }
 
+/**
+ * sd_494: Mobile v1.3 SideBadge (Threshold Pill)
+ * - Height: 44px (h-11)
+ * - Dot: 8px (w-2 h-2)
+ * - Typography: 10px BLACK, caps, tracking-[0.15em]
+ * - Deterministic: shows lock for private sides only (no fake signals)
+ */
 export function SideBadge({
   sideId,
   onClick,
@@ -17,6 +24,7 @@ export function SideBadge({
   longPressMs = 500,
   className,
   showLock = true,
+  showChevron = true,
 }: {
   sideId?: SideId;
   onClick?: () => void;
@@ -24,6 +32,7 @@ export function SideBadge({
   longPressMs?: number;
   className?: string;
   showLock?: boolean;
+  showChevron?: boolean;
 }) {
   const { side } = useSide();
   const s = sideId ?? side;
@@ -69,18 +78,18 @@ export function SideBadge({
       onTouchStart={start}
       onTouchEnd={end}
       className={cn(
-        "flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all duration-150 active:scale-95 select-none",
+        "flex items-center gap-2 h-11 px-5 rounded-full border shadow-sm transition-colors duration-150 active:scale-95 select-none",
         theme.border,
         theme.lightBg,
         className
       )}
       aria-label={`Current Side: ${meta.label}`}
+      title="Switch room"
     >
-      <span className={cn("w-2 h-2 rounded-full", theme.primaryBg)} />
-      <span className={cn("text-sm font-bold", theme.text)}>{meta.label}</span>
-      {showLock && meta.isPrivate ? (
-        <Lock size={12} className={cn("opacity-60", theme.text)} />
-      ) : null}
+      <span className={cn("w-2 h-2 rounded-full", theme.primaryBg)} aria-hidden="true" />
+      <span className={cn("text-[10px] font-black uppercase tracking-[0.15em]", theme.text)}>{meta.label} Side</span>
+      {showLock && meta.isPrivate ? <Lock size={14} strokeWidth={2.5} className={cn("opacity-60", theme.text)} /> : null}
+      {showChevron ? <ChevronDown size={14} strokeWidth={2.5} className={cn("opacity-60", theme.text)} /> : null}
     </button>
   );
 }

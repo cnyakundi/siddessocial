@@ -82,9 +82,9 @@ export function SideSwitcherSheet({
         onClose();
       }}
       />
-      <div className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
-        <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6" />
-        <h3 className="text-lg font-bold text-gray-900 mb-4 px-1">Switch Side</h3>
+      <div className="relative w-full max-w-[430px] bg-white rounded-t-[3rem] md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-10 fade-in duration-200">
+        <div className="w-10 h-1.5 bg-gray-100 rounded-full mx-auto mb-6" />
+        <h3 className="text-xl font-black tracking-tight text-gray-900 mb-4 px-1">Open Airlock</h3>
 
         <div className="space-y-3">
           {SIDE_ORDER.map((sideId) => {
@@ -102,12 +102,12 @@ export function SideSwitcherSheet({
                 type="button"
                 onClick={() => handleSwitch(sideId)}
                 className={cn(
-                  "w-full p-4 rounded-2xl flex items-center gap-4 transition-all border",
+                  "w-full h-20 px-5 rounded-[2rem] flex items-center gap-4 transition-all border",
                   isActive ? cn(theme.border, theme.lightBg) : "border-transparent hover:bg-gray-50"
                 )}
               >
-                <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center relative", theme.lightBg)}>
-                  <div className={cn("w-2 h-8 rounded-full", theme.primaryBg)} />
+                <div className={cn("w-14 h-14 rounded-3xl flex items-center justify-center relative", theme.lightBg)}>
+                  <div className={cn("w-2 h-10 rounded-full", theme.primaryBg)} />
                   {!isActive && hasActivity ? (
                     <div
                       className={cn(
@@ -160,7 +160,7 @@ export function SideSwitcherSheet({
           })}
         </div>
 
-        <button type="button" onClick={onClose} className="w-full mt-6 py-3 font-semibold text-gray-500 hover:bg-gray-50 rounded-xl">
+        <button type="button" onClick={onClose} className="w-full mt-6 py-3 font-semibold text-gray-500 hover:bg-gray-50 rounded-2xl">
           Cancel
         </button>
       </div>

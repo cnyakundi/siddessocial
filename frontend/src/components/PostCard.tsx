@@ -174,7 +174,7 @@ function Avatar({ name, handle }: { name?: string; handle?: string }) {
   return (
     <div
       className={cn(
-        "w-10 h-10 lg:w-14 lg:h-14 rounded-full border flex items-center justify-center font-extrabold text-sm flex-shrink-0 select-none",
+        "w-11 h-11 lg:w-14 lg:h-14 rounded-full border flex items-center justify-center font-extrabold text-sm flex-shrink-0 select-none",
         AVATAR_STYLES[idx]
       )}
       aria-hidden="true"
@@ -687,7 +687,7 @@ export function PostCard({
       </div>
 
       {/* Body + Footer (indented under avatar) */}
-      <div className="pl-[56px] lg:pl-[72px]">
+      <div className="pl-[60px] lg:pl-[72px]">
         <div
           role="button"
           tabIndex={0}
