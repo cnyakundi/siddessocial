@@ -40,7 +40,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         - md..lg: slim left rail (96px) + fluid center
         - xl+:    wide left rail (360px) + fixed center (760px) + right rail (360px)
       */}
-      <div className="hidden lg:grid w-full max-w-[1480px] mx-auto px-4 lg:px-6 md:grid-rows-[56px,1fr] md:grid-cols-[96px,minmax(0,1fr)] lg:grid-cols-[320px,minmax(0,760px)] xl:grid-cols-[360px,minmax(0,760px),360px]">
+      <div className="hidden lg:grid w-full max-w-[1480px] mx-auto px-4 lg:px-6 lg:grid-rows-[56px,1fr] lg:grid-cols-[96px,minmax(0,1fr)] lg:grid-cols-[320px,minmax(0,760px)] xl:grid-cols-[360px,minmax(0,760px),360px]">
         {/* Left rail spans topbar row + content row */}
         <div className="row-span-2">
           <DesktopSideRail />

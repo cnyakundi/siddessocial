@@ -163,6 +163,29 @@ function AvatarBubble({
             <h1 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Activity (All)</h1>
             <div className="w-2 h-2 rounded-full bg-gray-200" aria-hidden="true" />
           </div>
+
+        {/* sd_470b: Pulse card (moved out of composer; Inbox is the calm home) */}
+        <div className="px-4 pt-4">
+          <button
+            type="button"
+            onClick={() => {
+              // Placeholder: route to Pulse (wire later)
+              try { window.location.href = "/siddes-compose?side=friends&mode=pulse"; } catch {}
+            }}
+            className="w-full bg-white border border-gray-200 rounded-2xl p-4 text-left hover:bg-gray-50 active:bg-gray-50 transition-colors"
+            aria-label="Open Pulse"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-black text-gray-900">Pulse</div>
+                <div className="text-xs text-gray-500 mt-1">Quick check-in with Friends.</div>
+              </div>
+              <div className="px-3 py-2 rounded-xl bg-gray-900 text-white text-xs font-black">Start</div>
+            </div>
+            <div className="mt-3 text-[10px] text-gray-400 font-bold uppercase tracking-widest">Friends only</div>
+          </button>
+        </div>
+
         </div>
 
       {overlayStyle ? (

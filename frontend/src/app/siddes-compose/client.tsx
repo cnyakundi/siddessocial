@@ -313,6 +313,14 @@ export default function SiddesComposePage() {
     return raw ? (raw as PublicChannelId) : null;
   }, [searchParams]);
 
+  // sd_470c: pulse mode (from query param: ?mode=pulse)
+  const requestedMode: string = useMemo(() => {
+    const raw = String(searchParams?.get("mode") || "").trim().toLowerCase();
+    return raw;
+  }, [searchParams]);
+  const isPulse = requestedMode === "pulse";
+
+
 
   // Best-effort focus: some mobile browsers ignore autoFocus; try again after mount.
   useEffect(() => {
@@ -1066,6 +1074,33 @@ const quickTools = useMemo<QuickTool[]>(() => {
                 Got it
               </button>
             </div>
+           ) : null}
+
+          {/* sd_470c: pulse mode hint (Inbox → Pulse opens compose with ?mode=pulse) */}
+          {isPulse ? (
+            <div className="px-6 md:px-8 pt-4">
+              <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200 flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Pulse</div>
+                  <div className="text-sm font-bold text-gray-900 mt-1 truncate">
+                    Quick check‑in
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1 truncate">
+                    Short, simple, and context-safe.
+                  </div>
+                </div>
+                <div
+                  className={cn(
+                    "px-3 py-1.5 rounded-full border text-[10px] font-extrabold uppercase tracking-widest",
+                    theme.lightBg,
+                    theme.text,
+                    theme.border
+                  )}
+                >
+                  {SIDES[side].label}
+                </div>
+              </div>
+            </div>
           ) : null}
 
           {/* 2) Main editor */}
@@ -1083,7 +1118,7 @@ const quickTools = useMemo<QuickTool[]>(() => {
                     setText(e.target.value);
                     if (error?.kind === "validation") setError(null);
                   }}
-                  placeholder={side === "work" ? "Log update, blocker, or task…" : "What’s happening?"}
+                  placeholder={isPulse ? ("Quick check‑in to " + SIDES[side].label + "…") : (side === "work" ? "Log update, blocker, or task…" : "What’s happening?")}
                   className="w-full h-40 resize-none outline-none text-xl text-gray-900 placeholder:text-gray-300 bg-transparent leading-relaxed"
                   autoFocus
                 />
