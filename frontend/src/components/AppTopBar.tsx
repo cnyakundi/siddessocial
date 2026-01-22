@@ -23,45 +23,55 @@ function cn(...parts: Array<string | undefined | false | null>) {
 }
 
 function avatarLetter(viewer: string | null): string {
-  const v = String(viewer || "").trim();
-  if (!v) return "S";
-  const clean = v.replace(/^@/, "");
-  return (clean[0] || "S").toUpperCase();
+  const v = String(viewer || "");
+  if (!v) return "ME";
+  return v[0].toUpperCase();
 }
 
+type MeResp = { viewerId?: string | null };
+
 /**
- * sd_486: Mobile top bar polish.
- * - Side switching stays in the Airlock (SideBadge → SideSwitcherSheet)
- * - Show deterministic context framing (room metaphor), no fake meters
+ * AppTopBar (Mobile) — Measurement Protocol v1.3
+ * - Header: h-16 + safe-area top
+ * - SideBadge pill: h-11
+ * - Utilities: 44x44 targets, icons 22px stroke 2
+ * - Bell dot: deterministic unread notifications (neutral red)
+ * - No fake meters
  */
-export function AppTopBar() {
+export function AppTopBar(props: { onOpenNotificationsDrawer?: () => void } = {}) {
+  const { onOpenNotificationsDrawer } = props;
+
   const { side, setSide } = useSide();
+
   const [open, setOpen] = useState(false);
   const [peekOpen, setPeekOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
-  const peekEnabled = true; // Peek is DB-backed (safe in prod)
-  const searchEnabled = true; // Search is real (/search)
+  // Peek is DB-backed and safe in prod (sheet is optional affordance)
+  const peekEnabled = true;
+  const searchEnabled = true;
 
   const activity = useSideActivity(side);
   const notifs = useNotificationsActivity();
+  const unreadAlerts = notifs?.unread || 0;
+
   const [viewer, setViewer] = useState<string | null>(null);
 
   useEffect(() => {
     try {
       fetchMe()
-        .then((d) =>
-          setViewer((d && (d as any).viewerId) ? String((d as any).viewerId) : (getStubViewerCookie() || null))
-        )
+        .then((d: MeResp | null) => {
+          const vid = d?.viewerId ? String(d.viewerId) : (getStubViewerCookie() || null);
+          setViewer(vid);
+        })
         .catch(() => setViewer(getStubViewerCookie() || null));
     } catch {
       setViewer(null);
     }
   }, []);
 
-  const unreadAlerts = notifs?.unread || 0;
-  const meaning = (SIDE_UX as any)?.[side]?.meaning || SIDES[side].desc;
+  const meaning = (SIDE_UX as any)?.[side]?.meaning || (SIDE_UX as any)?.[side]?.meaningShort || SIDES[side].desc;
 
   return (
     <div className="sticky top-0 z-[90] bg-white/90 backdrop-blur border-b border-gray-50 pt-[env(safe-area-inset-top)]">
@@ -70,7 +80,7 @@ export function AppTopBar() {
         <Link
           href="/siddes-feed"
           className={cn(
-            "w-10 h-10 rounded-xl text-white font-black text-lg flex items-center justify-center shrink-0 shadow-sm",
+            "w-9 h-9 rounded-xl text-white font-black text-lg flex items-center justify-center shrink-0 shadow-sm",
             "bg-gray-900"
           )}
           aria-label="Siddes Home"
@@ -112,18 +122,35 @@ export function AppTopBar() {
             </button>
           ) : null}
 
-          <Link
-            href="/siddes-notifications"
-            className="relative w-11 h-11 rounded-xl inline-flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-gray-900"
-            aria-label="Alerts"
-            title="Alerts"
-          >
-            <Bell size={22} strokeWidth={2} />
-            {unreadAlerts > 0 ? (
-              <span className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full border-2 border-white bg-red-500" />
-            ) : null}
-          </Link>
+          {/* Notifications (Bell) — opens drawer when available, otherwise links */}
+          {onOpenNotificationsDrawer ? (
+            <button
+              type="button"
+              onClick={onOpenNotificationsDrawer}
+              className="relative w-11 h-11 rounded-xl inline-flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+              aria-label="Notifications"
+              title="Notifications"
+            >
+              <Bell size={22} strokeWidth={2} />
+              {unreadAlerts > 0 ? (
+                <span className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full border-2 border-white bg-red-500" />
+              ) : null}
+            </button>
+          ) : (
+            <Link
+              href="/siddes-notifications"
+              className="relative w-11 h-11 rounded-xl inline-flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+              aria-label="Notifications"
+              title="Notifications"
+            >
+              <Bell size={22} strokeWidth={2} />
+              {unreadAlerts > 0 ? (
+                <span className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full border-2 border-white bg-red-500" />
+              ) : null}
+            </Link>
+          )}
 
+          {/* Identity Mirror */}
           <button
             type="button"
             onClick={() => setMenuOpen((v) => !v)}
