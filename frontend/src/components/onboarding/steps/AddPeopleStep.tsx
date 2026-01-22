@@ -209,7 +209,7 @@ export default function AddPeopleStep({
         <h2 className="text-4xl font-black text-gray-900 tracking-tight mb-3">Find your people.</h2>
         <p className="text-gray-400 mb-8 font-medium leading-relaxed">
           Paste emails or phone numbers to check who’s already on Siddes.
-          <span className="block text-[11px] font-bold uppercase tracking-widest text-gray-300 mt-3">We don’t store your address book.</span>
+          <span className="block text-[11px] font-bold uppercase tracking-widest text-gray-300 mt-3">We don’t import your full address book.</span>
         </p>
 
         <div className="w-full max-w-md mx-auto space-y-3">

@@ -12,11 +12,11 @@ export default function PrivacyModal({ onClose }: { onClose: () => void }) {
         <ul className="space-y-4 text-gray-500 font-medium text-sm leading-relaxed">
           <li className="flex gap-3">
             <CheckCircle2 size={18} className="text-emerald-500 shrink-0 mt-0.5" />
-            <span>We don’t store your address book. Identifiers are hashed for matching and then discarded.</span>
+            <span>We don’t import your full address book. You choose what to share (e.g., paste a few emails/phones) and we use it only to look for matches.</span>
           </li>
           <li className="flex gap-3">
             <CheckCircle2 size={18} className="text-emerald-500 shrink-0 mt-0.5" />
-            <span>Only hashed tokens are used to check who’s already on Siddes.</span>
+            <span>We only use the identifiers you provide to check who’s already on Siddes. No vibe meters, no guessing.</span>
           </li>
           <li className="flex gap-3">
             <CheckCircle2 size={18} className="text-emerald-500 shrink-0 mt-0.5" />

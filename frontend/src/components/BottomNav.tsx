@@ -42,7 +42,7 @@ function TabLink({
 
 /**
  * sd_494: Mobile Measurement Protocol v1.3 Toolbelt
- * Order: [Home] [Circles] [MAGIC PLUS] [Inbox] [Me]
+ * Order: [Home] [Sets] [MAGIC PLUS] [Inbox] [Me]
  * - Tabs are neutral (black/gray). Only MAGIC PLUS uses Side color.
  * - Baseline height: 88px + safe-area padding.
  */
@@ -67,8 +67,8 @@ export function BottomNav() {
         <div className="h-[88px] grid grid-cols-5 items-start pt-2">
           <TabLink href="/siddes-feed" label="Home" Icon={Home} active={isHome} />
 
-          {/* Sets are "Circles" in mobile UX language */}
-          <TabLink href="/siddes-sets" label="Circles" Icon={Layers} active={isSets} />
+          {/* Sets are "Sets" in mobile UX language */}
+          <TabLink href="/siddes-sets" label="Sets" Icon={Layers} active={isSets} />
 
           {/* MAGIC PLUS */}
           <Link
