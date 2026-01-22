@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useSide } from "@/src/components/SideProvider";
 import { SIDES, SIDE_THEMES } from "@/src/lib/sides";
 import { toast } from "@/src/lib/toast";
+import { setNotificationsUnread } from "@/src/lib/notificationsActivity";
 
 type NotifType = "reply" | "like" | "mention" | "echo";
 
@@ -137,6 +138,7 @@ export function NotificationsView({ embedded = false }: { embedded?: boolean }) 
         return;
       }
       setItemsRaw((prev) => prev.map((n) => ({ ...n, read: true })));
+      setNotificationsUnread(0);
       toast("Marked all read.");
     } catch {
       toast("Unable to mark read (network error).");
@@ -173,6 +175,13 @@ export function NotificationsView({ embedded = false }: { embedded?: boolean }) 
         } else {
           setRestricted(false);
           setItemsRaw(Array.isArray(j?.items) ? j.items : []);
+          try {
+            const rows = Array.isArray(j?.items) ? j.items : [];
+            const unread = rows.filter((n) => !n?.read).length;
+            setNotificationsUnread(unread);
+          } catch {
+            // ignore
+          }
           setError(null);
         }
       } catch {

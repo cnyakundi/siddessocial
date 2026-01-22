@@ -12,7 +12,8 @@ import { DesktopSearchOverlay } from "@/src/components/DesktopSearchOverlay";
 
 import { useSide } from "@/src/components/SideProvider";
 import { useSideActivity } from "@/src/hooks/useSideActivity";
-import { SIDES, SIDE_THEMES } from "@/src/lib/sides";
+import { useNotificationsActivity } from "@/src/hooks/useNotificationsActivity";
+import { SIDES } from "@/src/lib/sides";
 import { SIDE_UX } from "@/src/lib/sideUx";
 import { getStubViewerCookie } from "@/src/lib/stubViewerClient";
 import { fetchMe } from "@/src/lib/authMe";
@@ -35,8 +36,6 @@ function avatarLetter(viewer: string | null): string {
  */
 export function AppTopBar() {
   const { side, setSide } = useSide();
-  const theme = SIDE_THEMES[side];
-
   const [open, setOpen] = useState(false);
   const [peekOpen, setPeekOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -46,6 +45,7 @@ export function AppTopBar() {
   const searchEnabled = true; // Search is real (/search)
 
   const activity = useSideActivity(side);
+  const notifs = useNotificationsActivity();
   const [viewer, setViewer] = useState<string | null>(null);
 
   useEffect(() => {
@@ -60,7 +60,7 @@ export function AppTopBar() {
     }
   }, []);
 
-  const unreadHere = activity?.[side]?.unread || 0;
+  const unreadAlerts = notifs?.unread || 0;
   const meaning = (SIDE_UX as any)?.[side]?.meaning || SIDES[side].desc;
 
   return (
@@ -119,8 +119,8 @@ export function AppTopBar() {
             title="Alerts"
           >
             <Bell size={22} strokeWidth={2} />
-            {unreadHere > 0 ? (
-              <span className={cn("absolute top-2 right-2 w-2.5 h-2.5 rounded-full border-2 border-white", theme.primaryBg)} />
+            {unreadAlerts > 0 ? (
+              <span className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full border-2 border-white bg-red-500" />
             ) : null}
           </Link>
 
