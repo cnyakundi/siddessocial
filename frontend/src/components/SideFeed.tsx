@@ -618,7 +618,7 @@ export function SideFeed() {
             <button
               type="button"
               onClick={() => setPublicTuneOpen(true)}
-              className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-extrabold text-gray-700 transition-colors min-w-0"
+              className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 rounded-xl text-sm font-extrabold text-gray-700 transition-colors min-w-0"
               aria-label="Tune public feed"
             >
               <span className="truncate">{publicChannelLabel}</span>
@@ -630,7 +630,7 @@ export function SideFeed() {
             <button
               type="button"
               onClick={() => setSetPickerOpen(true)}
-              className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-extrabold text-gray-700 transition-colors min-w-0"
+              className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 rounded-xl text-sm font-extrabold text-gray-700 transition-colors min-w-0"
               aria-label="Select set"
             >
               <span className="truncate">{activeSetLabel}</span>

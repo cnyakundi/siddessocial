@@ -809,7 +809,7 @@ export function PostCard({
                   aria-label={"Open link " + linkInfo.domain}
                   title={linkInfo.href}
                 >
-                  <div className="w-10 h-10 rounded-lg bg-white border border-gray-100 flex items-center justify-center text-gray-500 flex-shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-white border border-gray-100 flex items-center justify-center text-gray-500 flex-shrink-0">
                     <LinkIcon size={18} />
                   </div>
                   <div className="flex-1 min-w-0">

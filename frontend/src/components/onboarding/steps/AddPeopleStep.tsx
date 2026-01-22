@@ -119,11 +119,10 @@ export default function AddPeopleStep({
   }
 
   async function handleShare() {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const navAny: any = navigator as any;
-    if (navAny?.share) {
+    const navShare = navigator as unknown as { share?: (data: ShareData) => Promise<void> };
+    if (typeof navShare.share === "function") {
       try {
-        await navAny.share({ title: "Join Siddes", text: `Join my \"${setName}\" Set on Siddes`, url: INVITE_URL });
+        await navShare.share({ title: "Join Siddes", text: `Join my \"${setName}\" Set on Siddes`, url: INVITE_URL });
         return;
       } catch {
         // fall through

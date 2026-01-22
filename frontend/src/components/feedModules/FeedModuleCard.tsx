@@ -75,7 +75,7 @@ export function FeedModuleCard({ module }: { module: FeedModule }) {
             <div
               key={t.tag}
               role="listitem"
-              className="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-bold text-gray-700"
+              className="px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-700"
               title={`${t.tag} (${t.count})`}
             >
               {t.tag} <span className="ml-2 text-[10px] text-gray-400">{t.count}</span>
@@ -119,7 +119,7 @@ export function FeedModuleCard({ module }: { module: FeedModule }) {
     const href = `/siddes-compose?prompt=${encodeURIComponent(prompt)}&side=${encodeURIComponent(side)}`;
 
     return (
-      <div className="relative group rounded-2xl p-5 bg-gray-900 text-white shadow-xl overflow-hidden">
+      <div className="relative group rounded-[2.5rem] p-5 bg-gray-900 text-white shadow-xl overflow-hidden">
         <DismissButton id={module.id} />
         <div className="absolute top-0 right-0 p-4 opacity-20">
           <Sparkles size={64} />
