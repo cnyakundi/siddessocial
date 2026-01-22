@@ -128,7 +128,7 @@ export function AppTopBar() {
             type="button"
             onClick={() => setMenuOpen((v) => !v)}
             className={cn(
-              "w-10 h-10 rounded-xl border flex items-center justify-center font-black text-sm shadow-sm transition-all",
+              "w-10 h-10 rounded-full border flex items-center justify-center font-black text-sm shadow-sm transition-all",
               "bg-gray-100 text-gray-700 border-gray-200",
               menuOpen ? "ring-2 ring-gray-200" : "hover:border-gray-300"
             )}

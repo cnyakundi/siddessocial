@@ -49,7 +49,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <MobileAirlockOverlay />
         {/* sd_485: Side switching stays in the Airlock (SideBadge → SideSwitcherSheet). Keep mobile chrome minimal. */}
         {/* sd_494: BottomNav baseline padding (88px) + safe-area */}
-        <div className="pb-[calc(88px+env(safe-area-inset-bottom))]">{children}</div>
+        <div className="pb-[calc(88px+env(safe-area-inset-bottom))]">
+          <div className="max-w-[430px] mx-auto">{children}</div>
+        </div>
         <BottomNav />
       </div>
 
