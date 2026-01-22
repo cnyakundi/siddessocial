@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Mail, Search } from "lucide-react";
+import { Mail } from "lucide-react";
 import { useSide } from "@/src/components/SideProvider";
 import { SIDES, SIDE_THEMES } from "@/src/lib/sides";
 import { DesktopButlerTray } from "@/src/components/DesktopButlerTray";
@@ -12,6 +12,15 @@ import { DesktopSearchOverlay } from "@/src/components/DesktopSearchOverlay";
 import { useSideActivity } from "@/src/hooks/useSideActivity";
 import { getStubViewerCookie } from "@/src/lib/stubViewerClient";
 import { fetchMe } from "@/src/lib/authMe";
+
+// sd_469b: DesktopTopBar consistency — predictable titles + no dead icons
+const TITLE_MAP: Record<string, string> = {
+  "/siddes-feed": "Home",
+  "/siddes-sets": "Sets",
+  "/siddes-inbox": "Inbox",
+  "/siddes-profile": "Profile",
+};
+
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -56,9 +65,10 @@ function AvatarButton({ onClick, active, label }: { onClick: () => void; active:
   );
 }
 
-export function DesktopTopBar() {
+export /* sd_469b: DesktopTopBar consistency */
+function DesktopTopBar() {
   const pathname = usePathname() || "/";
-  const title = useMemo(() => titleFor(pathname), [pathname]);
+  const title = TITLE_MAP[pathname] || "Siddes";
   const { side } = useSide();
 
   const meta = SIDES[side];
@@ -100,7 +110,6 @@ export function DesktopTopBar() {
             <>
               {/* Scoped search field (desktop) */}
               <div className="relative hidden lg:block">
-                <Search size={16} className="absolute left-3 top-2.5 text-gray-400" />
                 <input
                   readOnly
                   value=""
@@ -117,10 +126,8 @@ export function DesktopTopBar() {
                 type="button"
                 onClick={() => setSearchOpen(true)}
                 className="lg:hidden p-2 rounded-full text-gray-600 hover:bg-gray-100"
-                aria-label="Search"
                 title="Search"
               >
-                <Search size={18} />
               </button>
             </>
           ) : null}
@@ -136,7 +143,6 @@ export function DesktopTopBar() {
             aria-label="Alerts"
             title="Alerts"
           >
-            <Bell size={18} />
             {unreadHere > 0 ? (
               <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full" />
             ) : null}

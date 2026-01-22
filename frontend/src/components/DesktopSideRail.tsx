@@ -11,7 +11,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation"; import { Globe, Users, Lock, Briefcase, Plus, Settings, Home, Mail, Bell, User, Layers } from "lucide-react";
+import { usePathname } from "next/navigation"; import { Globe, Users, Lock, Briefcase, Plus, Settings, Home, Mail, User, Layers } from "lucide-react";
 import { useSide } from "@/src/components/SideProvider";
 import type { SideId } from "@/src/lib/sides";
 import { SIDES, SIDE_THEMES } from "@/src/lib/sides";
@@ -34,11 +34,11 @@ const SIDE_ITEMS: Array<{ id: SideId; icon: IconType }> = [
   { id: "work", icon: Briefcase },
 ];
 
+// sd_469a: Desktop nav declutter — unify alerts into Inbox (keep UI simple)
 const PRIMARY_NAV: Array<{ href: string; label: string; icon: IconType }> = [
-  { href: "/siddes-feed", label: "Feed", icon: Home },
+  { href: "/siddes-feed", label: "Home", icon: Home },
   { href: "/siddes-sets", label: "Sets", icon: Layers },
   { href: "/siddes-inbox", label: "Inbox", icon: Mail },
-  { href: "/siddes-notifications", label: "Alerts", icon: Bell },
 ];
 
 export function DesktopSideRail() {

@@ -1,5 +1,8 @@
 "use client";
 
+// sd_469c: compose audience guard (web + mobile)
+
+
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -273,6 +276,9 @@ export default function SiddesComposePage() {
 
   const theme = SIDE_THEMES[side];
   const title = side === "work" ? "New Update" : "New Post";
+
+  // sd_469c: compose audience guard (only confirm when draft exists)
+  const hasDraft = (v: string) => v.trim().length > 0;
 
   const [text, setText] = useState("");
   const textRef = useRef<HTMLTextAreaElement | null>(null);
@@ -681,7 +687,7 @@ export default function SiddesComposePage() {
   const overLimit = charCount > maxChars;
 
   
-const canPost = text.trim().length > 0 && !posting && !overLimit;
+const canPost = hasDraft(text) && !posting && !overLimit;
 
   // sd_398: Quick tools dock (templates + toggles). No mock post types.
   type QuickTool = {
