@@ -49,7 +49,15 @@ export function SetPickerSheet({
         type="button"
         aria-label="Close set picker"
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-        onClick={onClose}
+        onPointerDown={(e) => {
+        // sd_481_sheet_close_reliability: pointerdown closes reliably on mobile
+        e.preventDefault();
+        onClose();
+      }}
+      onClick={(e) => {
+        e.preventDefault();
+        onClose();
+      }}
       />
 
       <div className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">

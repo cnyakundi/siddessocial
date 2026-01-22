@@ -17,8 +17,22 @@ fi
 if [[ -d "scripts/checks" ]]; then
   echo ""
   echo "== Overlay checks =="
+  SD_SKIP_CHECKS="${SD_SKIP_CHECKS:-}"
   for chk in scripts/checks/*.sh; do
     [[ -e "$chk" ]] || continue
+
+    base="$(basename "$chk" .sh)"
+    if [[ -n "$SD_SKIP_CHECKS" ]]; then
+      IFS="," read -r -a __skips <<< "$SD_SKIP_CHECKS"
+      for s in "${__skips[@]}"; do
+        s="${s//[[:space:]]/}"
+        [[ -z "$s" ]] && continue
+        if [[ "$base" == "$s" || "${base}.sh" == "$s" ]]; then
+          echo "• Skipping check (SD_SKIP_CHECKS): $base"
+          continue 2
+        fi
+      done
+    fi
     echo ""
     echo "-> $chk"
     bash "$chk"

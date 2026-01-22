@@ -6,11 +6,43 @@ import { RestrictedError, isRestrictedPayload } from "@/src/lib/restricted";
 
 // sd_231: Client code must NEVER call Django cross-origin or forward viewer identity.
 // Always call SAME-ORIGIN Next API routes so session cookies are truth.
+// sd_142: In some environments (tests / SSR), window may be unavailable.
+// Reference NEXT_PUBLIC_API_BASE as a fallback origin resolver (proxy layer uses it too).
+function resolveOrigin(): string {
+  if (typeof window !== "undefined" && window.location && window.location.origin) return window.location.origin;
+
+  const raw = process.env.NEXT_PUBLIC_API_BASE;
+  const s = String(raw || "").trim();
+  if (s) {
+    try {
+      return new URL(s).origin;
+    } catch {
+      try {
+        return new URL("http://" + s).origin;
+      } catch {
+        // ignore
+      }
+    }
+  }
+
+  return "http://localhost";
+}
+
+function getCookie(name: string): string | null {
+  if (typeof document === "undefined") return null;
+  const parts = document.cookie ? document.cookie.split(";") : [];
+  for (const p of parts) {
+    const [k, ...rest] = p.trim().split("=");
+    if (k === name) return decodeURIComponent(rest.join("=") || "");
+  }
+  return null;
+}
+
 function buildUrl(
   side: SideId,
   opts?: { topic?: string | null; set?: string | null; limit?: number; cursor?: string | null }
 ): string {
-  const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost";
+  const origin = resolveOrigin();
   const u = new URL("/api/feed", origin);
   u.searchParams.set("side", side);
   if (opts?.topic) u.searchParams.set("topic", String(opts.topic));
@@ -45,10 +77,18 @@ async function fetchWithFallback(
 ): Promise<Response> {
   const url = buildUrl(side, opts);
   try {
+    const headers: Record<string, string> = { accept: "application/json" };
+
+    // Dev-only: forward stub viewer id if present (Next proxy ignores in production).
+    if (process.env.NODE_ENV !== "production") {
+      const v = getCookie("sd_viewer");
+      if (v) headers["x-sd-viewer"] = v;
+    }
+
     return await fetch(url, {
       method: "GET",
       credentials: "include",
-      headers: { accept: "application/json" },
+      headers,
       cache: "no-store",
     });
   } catch (e: any) {

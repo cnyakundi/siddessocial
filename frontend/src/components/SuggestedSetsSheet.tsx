@@ -32,7 +32,6 @@ function isPersonalSuggestion(s: SuggestedSet): boolean {
   const id = String((s as any).id || "");
   if (id.startsWith("local_")) return true;
   const r = String((s as any).reason || "").toLowerCase();
-  if (r.startsWith("on-device:")) return true;
   if (r.includes("contacts")) return true;
   if (r.includes("match")) return true;
   return false;
@@ -139,7 +138,15 @@ export function SuggestedSetsSheet({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end justify-center md:items-center">
-      <button className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} aria-label="Close" />
+      <button className="absolute inset-0 bg-black/40 backdrop-blur-sm" onPointerDown={(e) => {
+        // sd_481_sheet_close_reliability: pointerdown closes reliably on mobile
+        e.preventDefault();
+        onClose();
+      }}
+      onClick={(e) => {
+        e.preventDefault();
+        onClose();
+      }} aria-label="Close" />
       <div className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
         <div className="flex items-center justify-between mb-4">
           <div className="text-lg font-bold text-gray-900">Suggested Sets</div>

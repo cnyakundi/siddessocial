@@ -244,7 +244,7 @@ function seedOnce() {
       time: "30m",
       messages: [
         { from: "them", text: "Welcome to Siddes — Public lane.", dt: "30m" },
-        { from: "me", text: "Testing inbox provider via backend stubs.", dt: "20m" },
+        { from: "me", text: "Quick test message.", dt: "20m" },
       ],
     },
     {

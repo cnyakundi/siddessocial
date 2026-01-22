@@ -108,7 +108,15 @@ export function ImportSetSheet({
 
   return (
     <div className="fixed inset-0 z-[99] flex items-end justify-center md:items-center">
-      <button type="button" className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={close} aria-label="Close" />
+      <button type="button" className="absolute inset-0 bg-black/40 backdrop-blur-sm" onPointerDown={(e) => {
+        // sd_481_sheet_close_reliability: pointerdown closes reliably on mobile
+        e.preventDefault();
+        close();
+      }}
+      onClick={(e) => {
+        e.preventDefault();
+        close();
+      }} aria-label="Close" />
       <div className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-full duration-200">
         <div className="p-4 border-b border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -176,7 +184,7 @@ export function ImportSetSheet({
             <div className="p-2 max-h-[60vh] overflow-y-auto">
               {contacts.length === 0 ? (
                 <div className="p-6 text-center text-sm text-gray-500">
-                  No suggestions yet. Tap “Sync Contacts” again after you’ve created a couple of demo users.
+                  No matches yet. Finish onboarding → Find your people to match contacts, then come back here.
                 </div>
               ) : null}
 

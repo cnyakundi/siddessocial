@@ -17,6 +17,10 @@ from rest_framework.views import APIView
 from siddes_backend.csrf import dev_csrf_exempt
 from siddes_backend.emailing import send_email
 
+from siddes_contacts.normalize import normalize_email
+from siddes_contacts.tokens import hmac_token
+from siddes_contacts.models import ContactIdentityToken
+
 from .models import EmailVerificationToken, SiddesProfile
 
 
@@ -168,6 +172,22 @@ class VerifyConfirmView(APIView):
             prof.email_verified = True
             prof.email_verified_at = now
             prof.save(update_fields=["email_verified", "email_verified_at", "updated_at"])
+
+        # sd_472: create contact identity token on verify (enables contacts match discoverability)
+        try:
+            email_n = normalize_email(str(getattr(user, "email", "") or ""))
+            if email_n:
+                tok = hmac_token(email_n)
+                # sd_473: revoke any stale email tokens (legacy safety)
+                ContactIdentityToken.objects.filter(user=user, kind="email").exclude(token=tok).delete()
+                ContactIdentityToken.objects.get_or_create(
+                    user=user,
+                    token=tok,
+                    kind="email",
+                    defaults={"value_hint": email_n[:3] + "***"},
+                )
+        except Exception:
+            pass
 
         rec.used_at = now
         rec.save(update_fields=["used_at"])

@@ -553,8 +553,7 @@ function SiddesInboxPageInner() {
   }, [filteredRows, activeIdx, router, side, setSide]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="px-4 py-4">
+    <div className="p-4">
         <div className="mb-3" data-testid="inbox-tabs">
           <div className="inline-flex rounded-full border border-gray-200 bg-white p-1 shadow-sm">
             <button
@@ -757,7 +756,6 @@ function SiddesInboxPageInner() {
         </p>
           </>
         )}
-      </div>
     </div>
   );
 }

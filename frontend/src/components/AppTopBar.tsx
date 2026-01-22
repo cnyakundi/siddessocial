@@ -3,14 +3,17 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { Bell, Search } from "lucide-react";
+
 import { SideBadge } from "@/src/components/SideBadge";
 import { SideSwitcherSheet } from "@/src/components/SideSwitcherSheet";
 import { PeekSheet } from "@/src/components/PeekSheet";
 import { DesktopUserMenu } from "@/src/components/DesktopUserMenu";
 import { DesktopSearchOverlay } from "@/src/components/DesktopSearchOverlay";
+
 import { useSide } from "@/src/components/SideProvider";
 import { useSideActivity } from "@/src/hooks/useSideActivity";
 import { SIDES, SIDE_THEMES } from "@/src/lib/sides";
+import { SIDE_UX } from "@/src/lib/sideUx";
 import { getStubViewerCookie } from "@/src/lib/stubViewerClient";
 import { fetchMe } from "@/src/lib/authMe";
 
@@ -25,6 +28,11 @@ function avatarLetter(viewer: string | null): string {
   return (clean[0] || "S").toUpperCase();
 }
 
+/**
+ * sd_486: Mobile top bar polish.
+ * - Side switching stays in the Airlock (SideBadge → SideSwitcherSheet)
+ * - Show deterministic context framing (room metaphor), no fake meters
+ */
 export function AppTopBar() {
   const { side, setSide } = useSide();
   const theme = SIDE_THEMES[side];
@@ -43,22 +51,27 @@ export function AppTopBar() {
   useEffect(() => {
     try {
       fetchMe()
-        .then((d) => setViewer((d && (d as any).viewerId) ? String((d as any).viewerId) : (getStubViewerCookie() || null)))
+        .then((d) =>
+          setViewer((d && (d as any).viewerId) ? String((d as any).viewerId) : (getStubViewerCookie() || null))
+        )
         .catch(() => setViewer(getStubViewerCookie() || null));
     } catch {
       setViewer(null);
     }
   }, []);
+
   const unreadHere = activity?.[side]?.unread || 0;
+  const meaning = (SIDE_UX as any)?.[side]?.meaning || SIDES[side].desc;
 
   return (
-    <div className="sticky top-0 z-[90] bg-white/95 backdrop-blur border-b border-gray-100 pt-[env(safe-area-inset-top)]">
-      <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
+    <div className="sticky top-0 z-[90] bg-white/90 backdrop-blur border-b border-gray-50 pt-[env(safe-area-inset-top)]">
+      <div className="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
+        {/* Brand */}
         <Link
           href="/siddes-feed"
           className={cn(
-            "w-8 h-8 rounded-lg text-white font-black text-lg flex items-center justify-center shrink-0",
-            theme.primaryBg
+            "w-9 h-9 rounded-xl text-white font-black text-lg flex items-center justify-center shrink-0 shadow-sm",
+            "bg-gray-900"
           )}
           aria-label="Siddes Home"
           title="Siddes"
@@ -66,7 +79,8 @@ export function AppTopBar() {
           S
         </Link>
 
-        <div className="flex-1 min-w-0 flex justify-center">
+        {/* Airlock (Side) */}
+        <div className="flex-1 min-w-0 flex flex-col items-center justify-center leading-none">
           <SideBadge
             onClick={() => setOpen(true)}
             onLongPress={
@@ -79,14 +93,18 @@ export function AppTopBar() {
             }
             className="shadow-sm"
           />
+          <div className="mt-0.5 text-[9px] font-black uppercase tracking-[0.25em] text-gray-300 truncate max-w-[220px]">
+            {meaning}
+          </div>
         </div>
 
+        {/* Actions */}
         <div className="relative flex items-center gap-1 shrink-0">
           {searchEnabled ? (
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
-              className="p-2 rounded-full text-gray-600 hover:bg-gray-100"
+              className="p-2 rounded-xl text-gray-500 hover:bg-gray-50 hover:text-gray-900"
               aria-label="Search"
               title="Search"
             >
@@ -96,13 +114,13 @@ export function AppTopBar() {
 
           <Link
             href="/siddes-notifications"
-            className="relative p-2 rounded-full text-gray-600 hover:bg-gray-100"
+            className="relative p-2 rounded-xl text-gray-500 hover:bg-gray-50 hover:text-gray-900"
             aria-label="Alerts"
             title="Alerts"
           >
             <Bell size={20} />
             {unreadHere > 0 ? (
-              <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full" />
+              <span className={cn("absolute top-2 right-2 w-2.5 h-2.5 rounded-full border-2 border-white", theme.primaryBg)} />
             ) : null}
           </Link>
 
@@ -110,7 +128,7 @@ export function AppTopBar() {
             type="button"
             onClick={() => setMenuOpen((v) => !v)}
             className={cn(
-              "w-9 h-9 rounded-full border flex items-center justify-center font-black text-sm shadow-sm transition-all",
+              "w-9 h-9 rounded-xl border flex items-center justify-center font-black text-sm shadow-sm transition-all",
               "bg-gray-100 text-gray-700 border-gray-200",
               menuOpen ? "ring-2 ring-gray-200" : "hover:border-gray-300"
             )}

@@ -13,7 +13,7 @@ export type StubTrustResolution = {
  * resolveStubTrust
  *
  * Next.js API routes in this repo are fallback stubs.
- * This helper provides a *dev-only* trust band so we can model Public capabilities
+ * This helper provides a *internal* trust band so we can model Public capabilities
  * (rate limits, link gating) without pretending we have real auth.
  *
  * Rules:

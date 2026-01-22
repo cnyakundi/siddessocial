@@ -34,11 +34,13 @@ export async function GET(req: Request) {
   const base = await resolveBestInternalBase();
   if (!base) {
     return NextResponse.json(
-      {
-        ok: false,
-        error: "backend_not_configured",
-        hint: "Set SD_INTERNAL_API_BASE (or NEXT_PUBLIC_API_BASE) to your Django origin, e.g. http://127.0.0.1:8001",
-      },
+      isProd
+        ? { ok: false, error: "backend_not_configured" }
+        : {
+            ok: false,
+            error: "backend_not_configured",
+            hint: "Set SD_INTERNAL_API_BASE (or NEXT_PUBLIC_API_BASE) to your Django origin, e.g. http://127.0.0.1:8001",
+          },
       { status: 500 }
     );
   }
@@ -70,7 +72,9 @@ export async function GET(req: Request) {
 
   if (!prox) {
     return NextResponse.json(
-      { ok: false, error: "bad_gateway", hint: "Django /api/feed is unreachable (check docker backend port)" },
+      isProd
+        ? { ok: false, error: "bad_gateway" }
+        : { ok: false, error: "bad_gateway", hint: "Django /api/feed is unreachable (check docker backend port)" },
       { status: 502 }
     );
   }

@@ -69,7 +69,7 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 - **sd_141c:** Invites snapshot Set label at create-time (pending recipients see Set name pre-acceptance)
 
 ## Feed ladder (DRF cutover series)
-- **sd_142:** Feed DRF endpoint + API base-aware provider (backend_stub uses Django API base with fallback)
+- **sd_142:** Feed DRF endpoint + API-base-aware Next proxy (client calls same-origin /api/feed; Next proxies to Django via SD_INTERNAL_API_BASE / NEXT_PUBLIC_API_BASE)
 
 ## NEXT overlay
 - Next: TBD

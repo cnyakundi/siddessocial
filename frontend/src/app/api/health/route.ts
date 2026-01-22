@@ -9,11 +9,13 @@ export async function GET(req: Request) {
 
   if (!base) {
     return NextResponse.json(
-      {
-        ok: false,
-        error: "backend_not_configured",
-        hint: "Set SD_INTERNAL_API_BASE (or NEXT_PUBLIC_API_BASE) to your Django origin, e.g. http://127.0.0.1:8000",
-      },
+      isProd
+        ? { ok: false, error: "backend_not_configured" }
+        : {
+            ok: false,
+            error: "backend_not_configured",
+            hint: "Set SD_INTERNAL_API_BASE (or NEXT_PUBLIC_API_BASE) to your Django origin, e.g. http://127.0.0.1:8000",
+          },
       { status: 500 }
     );
   }
@@ -30,7 +32,9 @@ export async function GET(req: Request) {
     });
   } catch (e: any) {
     return NextResponse.json(
-      { ok: false, error: "bad_gateway", hint: "Django /api/health is unreachable", detail: String(e?.message || e) },
+      isProd
+        ? { ok: false, error: "bad_gateway" }
+        : { ok: false, error: "bad_gateway", hint: "Django /api/health is unreachable", detail: String(e?.message || e) },
       { status: 502 }
     );
   }

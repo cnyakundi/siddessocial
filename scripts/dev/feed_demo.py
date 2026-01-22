@@ -9,6 +9,11 @@ BACKEND_DIR = os.path.join(REPO_ROOT, "backend")
 if BACKEND_DIR not in sys.path:
     sys.path.insert(0, BACKEND_DIR)
 
+os.environ.setdefault("SIDDES_ALLOW_MEMORY_STORES", "1")
+os.environ.setdefault("SIDDES_DEMO_UNIVERSE", "1")
+from siddes_feed import mock_db  # noqa: E402
+mock_db.ensure_seeded(force=True)
+
 from siddes_feed.feed_stub import list_feed  # noqa: E402
 
 def main():

@@ -29,9 +29,25 @@ export function AuthBootstrap() {
   useEffect(() => {
     const p = pathname || "/";
     const searchStr = window.location.search.replace(/^\?/, "");
-    const isAuthPage = p.startsWith("/login") || p.startsWith("/signup") || p.startsWith("/onboarding");
-    if (isAuthPage) return;
+    const authShellPrefixes = [
+      "/login",
+      "/signup",
+      "/onboarding",
+      "/forgot-password",
+      "/reset-password",
+      "/verify-email",
+      "/confirm-email-change",
+      "/confirm-delete",
+      "/account-deletion",
+      "/terms",
+      "/privacy",
+      "/legal",
+      "/community-guidelines",
+      "/about",
+    ];
 
+    const isAuthPage = authShellPrefixes.some((pre) => p.startsWith(pre));
+    if (isAuthPage) return;
     // IMPORTANT: /invite/* must be protected (invite acceptance is session-scoped).
     const protectedPrefixes = [
       "/siddes-feed",

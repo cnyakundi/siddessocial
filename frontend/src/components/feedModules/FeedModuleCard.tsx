@@ -43,7 +43,7 @@ function CardShell({
 }) {
   const theme = SIDE_THEMES[side];
   return (
-    <div className={cn("relative group bg-white p-4 rounded-2xl shadow-sm border border-gray-200 border-l-2 transition-shadow hover:shadow-md", theme.accentBorder, className)}>
+    <div className={cn("relative group bg-white p-4 lg:p-8 rounded-[2.5rem] shadow-sm border border-gray-100 border-l-2 transition-shadow hover:shadow-[0_40px_80px_rgba(0,0,0,0.08)]", theme.accentBorder, className)}>
       {children}
     </div>
   );

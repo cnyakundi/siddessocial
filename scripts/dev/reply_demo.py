@@ -9,6 +9,10 @@ BACKEND_DIR = os.path.join(REPO_ROOT, "backend")
 if BACKEND_DIR not in sys.path:
     sys.path.insert(0, BACKEND_DIR)
 
+os.environ.setdefault("SIDDES_DEMO_UNIVERSE", "1")
+from siddes_feed import mock_db  # noqa: E402
+mock_db.ensure_seeded(force=True)
+
 from siddes_reply.store import ReplyStore  # noqa: E402
 from siddes_reply.endpoint_stub import create_reply  # noqa: E402
 

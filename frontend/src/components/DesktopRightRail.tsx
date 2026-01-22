@@ -56,7 +56,7 @@ export function DesktopRightRail() {
   }, [side, setsProvider]);
 
   return (
-    <aside className="hidden xl:flex w-[360px] border-l border-gray-100 bg-white/80 backdrop-blur sticky top-14 h-[calc(100vh-56px)] overflow-y-auto" /* sd_212_right_rail_offset */>
+    <aside className="hidden xl:flex w-[360px] border-l border-gray-100 bg-white/80 backdrop-blur sticky top-20 h-[calc(100vh-80px)] overflow-y-auto" /* sd_212_right_rail_offset */>
       <div className="p-6 flex flex-col gap-6 w-full">
         {/* Sets (side-aware) */}
         <div>

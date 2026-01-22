@@ -612,7 +612,7 @@ export function SideFeed() {
   return (
     <div className="w-full min-h-full bg-white">
             {/* Feed header: audience pill */}
-      <div className="p-4 border-b border-gray-100 flex items-center justify-between sticky top-14 bg-white/95 backdrop-blur z-10">
+      <div className="p-4 border-b border-gray-100 flex items-center justify-between sticky top-14 lg:top-20 bg-white/95 backdrop-blur z-10">
         <div className="flex items-center gap-3 min-w-0">
           {showPublicTune ? (
             <button
@@ -757,7 +757,7 @@ export function SideFeed() {
                     key={row.key}
                     data-index={vr.index}
                     ref={rowVirtualizer.measureElement}
-                    className={row.kind === "divider" ? "" : "pb-4"}
+                    className={row.kind === "divider" ? "" : "pb-4 lg:pb-8"}
                     style={{
                       position: "absolute",
                       top: 0,

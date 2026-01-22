@@ -160,7 +160,7 @@ function WebComposerStudio({
                   );
                 })}
                 <span className="ml-auto text-[10px] font-bold text-gray-300 self-center">
-                  Studio tools (dev-only)
+                  Studio tools
                 </span>
               </div>
             </div>
@@ -223,8 +223,7 @@ export default function ComposerStudioClient() {
           <div>
             <div className="text-2xl font-black text-gray-900">Composer Studio</div>
             <div className="mt-1 text-sm text-gray-600 max-w-2xl">
-              Dev-only playground to iterate on the Web Composer look & feel without shipping mock tools into production routes.
-              In production, only real tools should appear.
+              Playground to iterate on the composer look & feel without affecting the main app.
             </div>
 
             <div className="mt-3 text-xs text-gray-500">

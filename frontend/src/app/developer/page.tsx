@@ -8,7 +8,7 @@ export default function DeveloperHome() {
     <div className="min-h-[80vh] px-4 py-10 flex justify-center">
       <div className="w-full max-w-2xl">
         <div className="text-2xl font-black text-gray-900">Developer</div>
-        <div className="text-sm text-gray-500 mt-1">Dev-only utilities. Hidden in production builds.</div>
+        <div className="text-sm text-gray-500 mt-1">Internal utilities.</div>
 
         <div className="mt-6 grid gap-3">
           <Link href="/developer/telemetry" className="p-4 rounded-2xl bg-white border border-gray-200 hover:bg-gray-50">
@@ -17,7 +17,7 @@ export default function DeveloperHome() {
           </Link>
         </div>
 
-        <div className="mt-6 text-xs text-gray-500">Tip: keep developer pages behind auth and never expose private identifiers.</div>
+        <div className="mt-6 text-xs text-gray-500">Tip: keep internal pages behind auth.</div>
       </div>
     </div>
   );

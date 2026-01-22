@@ -115,7 +115,15 @@ export function CreateSetSheet(props: {
   return (
     <div className="fixed inset-0 z-[99] flex items-end justify-center md:items-center">
       {/* Backdrop */}
-      <button type="button" className="absolute inset-0 bg-black/40" onClick={close} aria-label="Close" />
+      <button type="button" className="absolute inset-0 bg-black/40" onPointerDown={(e) => {
+        // sd_481_sheet_close_reliability: pointerdown closes reliably on mobile
+        e.preventDefault();
+        close();
+      }}
+      onClick={(e) => {
+        e.preventDefault();
+        close();
+      }} aria-label="Close" />
 
       <div className="relative w-full md:max-w-lg bg-white rounded-t-3xl md:rounded-3xl shadow-2xl border border-gray-200 max-h-[92vh] overflow-y-auto">
         {/* Header */}

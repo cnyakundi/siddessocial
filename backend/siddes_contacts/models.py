@@ -29,3 +29,41 @@ class ContactIdentityToken(models.Model):
 
     class Meta:
         unique_together = (("token", "kind"),)
+
+class ContactMatchEdge(models.Model):
+    """A viewer matched another Siddes user via contact tokens.
+
+    Stores ONLY derived graph edges (viewer -> matched_user). Never stores the raw identifier.
+    Used for: invite suggestions, mention candidates, import-set flows.
+
+    Note: this is *not* a full contacts directory — it only reflects explicit user-initiated matching.
+    """
+
+    KIND_CHOICES = ContactIdentityToken.KIND_CHOICES
+
+    viewer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="contact_match_edges_out",
+    )
+    matched_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="contact_match_edges_in",
+    )
+
+    kind = models.CharField(max_length=8, choices=KIND_CHOICES, default="email")
+    domain = models.CharField(max_length=128, blank=True, default="")
+    workish = models.BooleanField(default=False)
+
+    first_seen_at = models.DateTimeField(auto_now_add=True)
+    last_seen_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["viewer", "matched_user"], name="sd_ct_edge_uniq_vm"),
+        ]
+        indexes = [
+            models.Index(fields=["viewer", "-last_seen_at"], name="sd_ct_edge_v_ls_idx"),
+            models.Index(fields=["matched_user", "-last_seen_at"], name="sd_ct_edge_m_ls_idx"),
+        ]

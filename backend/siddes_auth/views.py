@@ -147,6 +147,14 @@ def _ensure_email_token(user, email: str) -> None:
     email_n = normalize_email(email)
     if not email_n:
         return
+    # sd_472: only create discoverability token once email is verified
+    try:
+        prof = getattr(user, "siddes_profile", None) or _ensure_profile(user)
+        if not bool(getattr(prof, "email_verified", False)):
+            return
+    except Exception:
+        return
+
     token = hmac_token(email_n)
     ContactIdentityToken.objects.get_or_create(
         user=user,
@@ -217,7 +225,6 @@ class SignupView(APIView):
             if age_confirmed:
                 _ensure_age_gate(prof)
             _maybe_record_detected_region(prof, request)
-            _ensure_email_token(user, email)
             _bootstrap_default_sets(user)
 
         # sd_399: google locality record
@@ -335,6 +342,54 @@ class MeView(APIView):
         )
 
 
+
+# ---------------------------------------------------------------------------
+# Username / handle set (sd_475power_onboarding_v1)
+# ---------------------------------------------------------------------------
+
+class UsernameSetView(APIView):
+    # Used by onboarding (/api/auth/username/set) to allow Google-auth or legacy
+    # accounts to choose a handle.
+    # Body: { "username": "desired_handle" }
+
+    throttle_scope = "auth_username_set"
+
+    def post(self, request):
+        user = getattr(request, "user", None)
+        if not user or not getattr(user, "is_authenticated", False):
+            return Response({"ok": False, "error": "restricted"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        body: Dict[str, Any] = request.data or {}
+        raw = body.get("username") or body.get("handle") or ""
+        username, uerr = validate_username_or_error(str(raw))
+        if uerr:
+            # Frontend displays this string; keep it stable.
+            return Response({"ok": False, "error": uerr}, status=status.HTTP_400_BAD_REQUEST)
+
+        cur = str(getattr(user, "username", "") or "").strip()
+        if cur and cur.lower() == username.lower():
+            return Response({"ok": True, "user": {"username": user.username}}, status=status.HTTP_200_OK)
+
+        User = get_user_model()
+        if User.objects.filter(username__iexact=username).exclude(id=user.id).exists():
+            return Response({"ok": False, "error": "username_taken"}, status=status.HTTP_409_CONFLICT)
+
+        # Commit
+        user.username = username
+        user.save(update_fields=["username"])
+
+        # Best-effort: advance onboarding step if applicable
+        try:
+            prof = _ensure_profile(user)
+            if not bool(getattr(prof, "onboarding_completed", False)):
+                if str(getattr(prof, "onboarding_step", "") or "").strip() in ("welcome", "", "handle"):
+                    prof.onboarding_step = "handle"
+                    prof.save(update_fields=["onboarding_step", "updated_at"])
+        except Exception:
+            pass
+
+        return Response({"ok": True, "user": {"username": user.username}}, status=status.HTTP_200_OK)
+
 @method_decorator(dev_csrf_exempt, name="dispatch")
 class GoogleAuthView(APIView):
     """Sign in with Google using an ID token (Google Identity Services)."""
@@ -396,12 +451,10 @@ class GoogleAuthView(APIView):
             with transaction.atomic():
                 user = User.objects.create_user(username=cand, email=email, password=None)
                 _ensure_profile(user)
-                _ensure_email_token(user, email)
                 _bootstrap_default_sets(user)
                 created = True
         else:
             _ensure_profile(user)
-            _ensure_email_token(user, email)
 
         # Google email is already verified by Google; mark local email verified.
         try:
@@ -412,6 +465,24 @@ class GoogleAuthView(APIView):
                 prof.save(update_fields=["email_verified", "email_verified_at", "updated_at"])
         except Exception:
             pass
+
+        # sd_472: create email discoverability token after verified (google)
+
+        try:
+            email_n = normalize_email(email)
+            if email_n:
+                tok = hmac_token(email_n)
+                # Revoke any stale email tokens for this user (safety)
+                ContactIdentityToken.objects.filter(user=user, kind="email").exclude(token=tok).delete()
+                ContactIdentityToken.objects.get_or_create(
+                    user=user,
+                    token=tok,
+                    kind="email",
+                    defaults={"value_hint": email_n[:3] + "***"},
+                )
+        except Exception:
+            pass
+
 
         login(request, user)
         # Ensure session key exists (cookie set by SessionMiddleware)

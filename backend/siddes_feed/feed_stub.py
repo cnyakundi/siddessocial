@@ -107,7 +107,12 @@ def _set_allows(viewer_id: str, set_id: Optional[str]) -> bool:
     try:
         from siddes_sets.models import SiddesSet, SiddesSetMember  # type: ignore
     except Exception:
-        return False
+        # Standalone tooling/selftests: fall back to demo membership helpers.
+        try:
+            from siddes_feed import mock_db  # type: ignore
+            return bool(mock_db.set_allows(viewer_id, sid))
+        except Exception:
+            return False
 
     # Owner can always view
     try:

@@ -53,9 +53,9 @@ function scoreSide(text: string) {
   const max = Math.max(w, c, f);
   if (max === 0) return null;
 
-  if (w === max) return { side: "work" as SideId, hits: w, reason: "Work keywords" };
-  if (c === max) return { side: "close" as SideId, hits: c, reason: "Close keywords" };
-  return { side: "friends" as SideId, hits: f, reason: "Friends keywords" };
+  if (w === max) return { side: "work" as SideId, hits: w, reason: "Mentions work" };
+  if (c === max) return { side: "close" as SideId, hits: c, reason: "Mentions close people" };
+  return { side: "friends" as SideId, hits: f, reason: "Mentions friends" };
 }
 
 function scoreUrgent(text: string) {
@@ -64,7 +64,7 @@ function scoreUrgent(text: string) {
   const hits = countHits(t, urgent);
   if (!hits) return null;
   const confidence = Math.min(0.9, 0.6 + hits * 0.1);
-  return { confidence, reason: "Urgency cue" };
+  return { confidence, reason: "Mentions urgency" };
 }
 
 function scoreSet(text: string, sets: SetDef[]) {
@@ -76,11 +76,11 @@ function scoreSet(text: string, sets: SetDef[]) {
 
   if (gymCue) {
     const s = sets.find((x) => x.id === "gym" || x.label.toLowerCase().includes("gym"));
-    if (s) return { setId: s.id, label: s.label, confidence: Math.min(0.95, 0.7 + gymCue * 0.1), reason: "Gym cue" };
+    if (s) return { setId: s.id, label: s.label, confidence: Math.min(0.95, 0.7 + gymCue * 0.1), reason: "Mentions gym" };
   }
   if (weekendCue) {
     const s = sets.find((x) => x.id === "weekend" || x.label.toLowerCase().includes("weekend"));
-    if (s) return { setId: s.id, label: s.label, confidence: Math.min(0.9, 0.65 + weekendCue * 0.1), reason: "Weekend cue" };
+    if (s) return { setId: s.id, label: s.label, confidence: Math.min(0.9, 0.65 + weekendCue * 0.1), reason: "Mentions weekend" };
   }
 
   // label token match
@@ -96,7 +96,7 @@ function scoreSet(text: string, sets: SetDef[]) {
   }
   if (best) {
     const confidence = Math.min(0.8, 0.6 + best.score * 0.08);
-    return { setId: best.s.id, label: best.s.label, confidence, reason: "Set label match" };
+    return { setId: best.s.id, label: best.s.label, confidence, reason: "Mentions a Set" };
   }
 
   return null;

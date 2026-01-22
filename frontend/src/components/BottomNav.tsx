@@ -2,11 +2,10 @@
 
 import React from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { Globe, Home, Inbox, Plus, Layers } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Home, Inbox, Plus, Layers, User } from "lucide-react";
 import { useSide } from "@/src/components/SideProvider";
 import { SIDE_THEMES } from "@/src/lib/sides";
-import { getStoredLastNonPublicSide } from "@/src/lib/sideStore";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -43,34 +42,21 @@ function NavLink({
   );
 }
 
+/**
+ * sd_485: Mobile thumb-truth nav.
+ * - Bottom = high-frequency utilities (Home, Sets, Create, Inbox, Me)
+ * - Side switching stays in the Airlock (SideBadge → SideSwitcherSheet)
+ */
 export function BottomNav() {
   const pathname = usePathname() || "";
-  const { side, setSide } = useSide();
+  const { side } = useSide();
   const theme = SIDE_THEMES[side];
 
-  const router = useRouter();
-
-  const isFeed = pathname === "/siddes-feed";
-  const isBroadcasts = pathname.startsWith("/siddes-broadcasts");
+  const isHome = pathname === "/siddes-feed" || pathname.startsWith("/siddes-broadcasts");
   const isCompose = pathname.startsWith("/siddes-compose");
   const isSets = pathname.startsWith("/siddes-sets");
   const isInbox = pathname.startsWith("/siddes-inbox") || pathname.startsWith("/siddes-notifications");
-
-  const homeActive = isFeed && side !== "public";
-  const publicActive = side === "public" && (isFeed || isBroadcasts);
-
-  const goHome = (e?: React.MouseEvent<HTMLAnchorElement>) => {
-    // If you're in Public, Home returns you to your last non-public Side.
-    if (side !== "public") return;
-    const last = getStoredLastNonPublicSide() || "friends";
-    setSide(last);
-  };
-
-  const goPublic = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    if (side === "public") return;
-    e.preventDefault();
-    setSide("public", { afterConfirm: () => router.push("/siddes-feed") });
-  };
+  const isMe = pathname.startsWith("/siddes-profile") || pathname.startsWith("/siddes-settings");
 
   return (
     <nav
@@ -80,23 +66,9 @@ export function BottomNav() {
     >
       <div className="max-w-2xl mx-auto px-4">
         <div className="h-16 grid grid-cols-5 items-center">
-          <NavLink
-            href="/siddes-feed"
-            label="Home"
-            Icon={Home}
-            active={homeActive}
-            activeClassName={theme.text}
-            onClick={goHome}
-          />
+          <NavLink href="/siddes-feed" label="Home" Icon={Home} active={isHome} activeClassName={theme.text} />
 
-          <NavLink
-            href="/siddes-feed"
-            label="Public"
-            Icon={Globe}
-            active={publicActive}
-            activeClassName={theme.text}
-            onClick={goPublic}
-          />
+          <NavLink href="/siddes-sets" label="Sets" Icon={Layers} active={isSets} activeClassName={theme.text} />
 
           {/* Create (context-aware) */}
           <Link
@@ -112,8 +84,7 @@ export function BottomNav() {
               className={cn(
                 "w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-xl ring-4 ring-white transform-gpu -translate-y-2 active:scale-95 transition-transform hover:opacity-95",
                 "group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-offset-2 group-focus-visible:outline-gray-900/20",
-                theme.primaryBg,
-                isCompose ? "opacity-100" : ""
+                theme.primaryBg
               )}
             >
               <Plus size={26} strokeWidth={3} />
@@ -121,23 +92,12 @@ export function BottomNav() {
             <span className={cn("text-[10px] font-bold", isCompose ? "text-gray-900" : "text-gray-500")}>Create</span>
           </Link>
 
-          <NavLink
-            href="/siddes-sets"
-            label="Sets"
-            Icon={Layers}
-            active={isSets}
-            activeClassName={theme.text}
-          />
+          <NavLink href="/siddes-inbox" label="Inbox" Icon={Inbox} active={isInbox} activeClassName={theme.text} />
 
-          <NavLink
-            href="/siddes-inbox"
-            label="Inbox"
-            Icon={Inbox}
-            active={isInbox}
-            activeClassName={theme.text}
-          />
+          <NavLink href="/siddes-profile" label="Me" Icon={User} active={isMe} activeClassName={theme.text} />
         </div>
       </div>
     </nav>
   );
 }
+

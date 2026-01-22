@@ -55,7 +55,7 @@ function MediaGrid({ items }: { items: MediaItem[] }) {
   const isSingle = it.length === 1;
 
   return (
-    <div className={cn("w-full mb-3 overflow-hidden", isSingle ? "rounded-2xl border border-gray-200 bg-gray-50" : "")}>
+    <div className={cn("w-full mb-3 lg:mb-4 overflow-hidden", isSingle ? "rounded-3xl border-2 border-gray-100 bg-gray-50" : "")}>
       {isSingle ? (
         it[0].kind === "video" ? (
           <video className="w-full max-h-[420px] object-cover" controls preload="metadata" src={it[0].url} />
@@ -65,7 +65,7 @@ function MediaGrid({ items }: { items: MediaItem[] }) {
       ) : (
         <div className="grid grid-cols-2 gap-2">
           {it.map((m) => (
-            <div key={m.id || m.url} className="rounded-2xl border border-gray-200 bg-gray-50 overflow-hidden">
+            <div key={m.id || m.url} className="rounded-3xl border-2 border-gray-100 bg-gray-50 overflow-hidden">
               {m.kind === "video" ? (
                 <video className="w-full h-44 object-cover" controls preload="metadata" src={m.url} />
               ) : (
@@ -174,7 +174,7 @@ function Avatar({ name, handle }: { name?: string; handle?: string }) {
   return (
     <div
       className={cn(
-        "w-10 h-10 rounded-full border flex items-center justify-center font-extrabold text-sm flex-shrink-0 select-none",
+        "w-10 h-10 lg:w-14 lg:h-14 rounded-full border flex items-center justify-center font-extrabold text-sm flex-shrink-0 select-none",
         AVATAR_STYLES[idx]
       )}
       aria-hidden="true"
@@ -465,6 +465,18 @@ export function PostCard({
     saveReturnScroll();
     router.push(`/siddes-post/${post.id}`);
   };
+
+  // sd_480_profile_links: make profiles reachable from posts (avatar/name/handle)
+  const openProfile = (handleOrName?: string) => {
+    const raw = String(handleOrName || post.handle || post.author || "").trim();
+    const u = raw.replace(/^@/, "").split(/\s+/)[0];
+    if (!u) {
+      toast.error("Profile not available.");
+      return;
+    }
+    saveReturnScroll();
+    router.push(`/u/${encodeURIComponent(u)}`);
+  };
   const openReply = () => {
     saveReturnScroll();
 
@@ -551,19 +563,22 @@ export function PostCard({
   return (
     <div
       className={cn(
-        "bg-white p-4 rounded-2xl shadow-sm border border-gray-200 border-l-2 transition-shadow hover:shadow-md",
+        "bg-white p-6 sm:p-8 lg:p-10 rounded-[2.5rem] shadow-sm border border-gray-100 border-l-4 transition-all hover:shadow-[0_40px_80px_rgba(0,0,0,0.08)]",
         theme.accentBorder
       )}
       data-post-id={post.id}
     >
       {/* Header */}
-      <div className="flex justify-between items-start mb-3">
+      <div className="flex justify-between items-start mb-6">
         <div
           role="button"
           tabIndex={0}
           onMouseEnter={() => { try { router.prefetch('/siddes-post/' + post.id); } catch {} }}
           onTouchStart={() => { try { router.prefetch('/siddes-post/' + post.id); } catch {} }}
-          onClick={(e) => {
+          onClick={
+          (e) => {
+            // sd_483_action_event_bleed: child actions may call preventDefault/stopPropagation
+            if (e.defaultPrevented) return;
             // Selection-safe: don't navigate when the user is highlighting text.
             try {
               const sel = typeof window !== "undefined" ? window.getSelection() : null;
@@ -578,15 +593,37 @@ export function PostCard({
               openPost();
             }
           }}
-          className="flex gap-3 text-left cursor-pointer"
+          className="flex gap-4 lg:gap-6 text-left cursor-pointer"
           aria-label="Open post"
         >
-          <Avatar name={post.author} handle={post.handle} />
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              openProfile(post.handle || post.author);
+            }}
+            className="rounded-full focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-900/20"
+            aria-label={"Open profile " + String(post.handle || post.author || "user")}
+            title="View profile"
+          >
+            <Avatar name={post.author} handle={post.handle} />
+          </button>
           <div className="min-w-0">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="font-bold text-gray-900 truncate">{post.author}</span>
-              <span className="text-gray-400 text-sm truncate">{post.handle}</span>
-            </div>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                openProfile(post.handle || post.author);
+              }}
+              className="flex items-center gap-2 min-w-0 text-left"
+              aria-label={"Open profile " + String(post.handle || post.author || "user")}
+              title="View profile"
+            >
+              <span className="font-black text-gray-900 truncate hover:underline text-[15px] lg:text-[20px]">{post.author}</span>
+              <span className="text-gray-400 truncate hover:underline text-[12px] font-bold">{post.handle}</span>
+            </button>
 
             {/* Metadata row (time + stamp + chips) */}
             <div className="flex items-center gap-2 mt-1 flex-wrap min-w-0">
@@ -636,7 +673,12 @@ export function PostCard({
 
         <button
           type="button"
-          onClick={() => (onMore ? onMore(post) : setOpenActions(true))}
+          onClick={(e) => {
+            // sd_479_stopPropagation_more: prevent card click handlers / event bleed
+            e.stopPropagation();
+            e.preventDefault();
+            onMore ? onMore(post) : setOpenActions(true);
+          }}
           className="text-gray-400 hover:text-gray-600 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-900/20 -mr-2"
           aria-label="Post options"
         >
@@ -645,11 +687,14 @@ export function PostCard({
       </div>
 
       {/* Body + Footer (indented under avatar) */}
-      <div className="pl-[52px]">
+      <div className="pl-[56px] lg:pl-[72px]">
         <div
           role="button"
           tabIndex={0}
-          onClick={(e) => {
+          onClick={
+          (e) => {
+            // sd_483_action_event_bleed: child actions may call preventDefault/stopPropagation
+            if (e.defaultPrevented) return;
             // Selection-safe: don't navigate when the user is highlighting text.
             try {
               const sel = typeof window !== "undefined" ? window.getSelection() : null;
@@ -695,7 +740,7 @@ export function PostCard({
           ) : null}
 
           {!isEchoPost || isQuoteEcho || hasText ? (
-            <p className="text-gray-800 text-[15px] leading-relaxed mb-3 whitespace-pre-wrap">
+            <p className="text-gray-800 text-[15px] lg:text-[20px] leading-relaxed mb-4 whitespace-pre-wrap">
               {shownText}
               {isLongText ? (
                 <button
@@ -720,8 +765,20 @@ export function PostCard({
           {isEchoPost && echoOf ? (
             <div className="w-full mb-3 p-3 rounded-2xl border border-gray-200 bg-gray-50">
               <div className="text-xs text-gray-500 mb-1">Echoing</div>
-              <div className="text-sm font-semibold text-gray-900">{echoOf.author}</div>
-              <div className="text-xs text-gray-400">{echoOf.handle}</div>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  openProfile(echoOf.handle || echoOf.author);
+                }}
+                className="text-left w-full"
+                aria-label={"Open profile " + String(echoOf.handle || echoOf.author || "user")}
+                title="View profile"
+              >
+                <div className="text-sm font-semibold text-gray-900 hover:underline">{echoOf.author}</div>
+                <div className="text-xs text-gray-400 hover:underline">{echoOf.handle}</div>
+              </button>
               <div className="text-sm text-gray-700 mt-1">{echoOf.content || "(unavailable)"}</div>
             </div>
           ) : null}
@@ -733,7 +790,7 @@ export function PostCard({
 
           {linkInfo ? (
             <div
-              className="w-full rounded-xl border border-gray-100 bg-gray-50 mb-3 overflow-hidden"
+              className="w-full rounded-3xl border-2 border-gray-100 bg-gray-50 mb-4 overflow-hidden"
               data-testid="post-link-preview"
             >
               <div className="flex items-stretch">
@@ -792,16 +849,20 @@ export function PostCard({
         ) : null}
 
         {/* Footer: actions (counts inline) */}
-        <div className="flex items-center justify-between pt-2 border-t border-gray-50">
+        <div className="flex items-center justify-between pt-6 border-t border-gray-100">
           <div className="flex items-center gap-5">
             <button
               className={cn(ACTION_BASE, "text-gray-500", HOVER_TEXT[side])}
               aria-label="Reply"
-              onClick={openReply}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                openReply();
+              }}
               title={replyCount ? `${replyCount} repl${replyCount === 1 ? "y" : "ies"}` : "Reply"}
             >
               <span className="inline-flex items-center gap-1">
-                <MessageCircle size={22} strokeWidth={1.5} />
+                <MessageCircle size={22} strokeWidth={2} />
                 {!hideCounts && replyCount ? (
                   <span className="text-xs font-extrabold tabular-nums text-gray-500">{replyCount}</span>
                 ) : null}
@@ -816,12 +877,16 @@ export function PostCard({
                   echoed ? theme.text : cn("text-gray-500", HOVER_TEXT[side])
                 )}
                 aria-label={echoed ? "Echoed" : "Echo"}
-                onClick={() => setOpenEcho(true)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setOpenEcho(true);
+                }}
                 disabled={echoBusy}
                 title={echoCount ? `${echoCount} echo${echoCount === 1 ? "" : "es"}` : echoed ? "Echoed" : "Echo"}
               >
                 <span className="inline-flex items-center gap-1">
-                  <Repeat size={22} strokeWidth={1.5} />
+                  <Repeat size={22} strokeWidth={2} />
                   {!hideCounts && echoCount ? (
                     <span className={cn("text-xs font-extrabold tabular-nums", echoed ? theme.text : "text-gray-500")}>{echoCount}</span>
                   ) : null}
@@ -836,12 +901,16 @@ export function PostCard({
                 liked ? theme.text : cn("text-gray-400", side === "work" ? HOVER_TEXT[side] : "hover:text-red-500")
               )}
               aria-label={side === "work" ? (liked ? "Unack" : "Ack") : (liked ? "Unlike" : "Like")}
-              onClick={toggleLike}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleLike();
+              }}
               disabled={likeBusy}
               title={likeCount ? (String(likeCount) + " " + (side === "work" ? "ack" : "like") + (likeCount === 1 ? "" : "s")) : side === "work" ? (liked ? "Acked" : "Ack") : (liked ? "Liked" : "Like")}
             >
               <span className="inline-flex items-center gap-1">
-                {side === "work" ? <CheckCircle2 size={22} strokeWidth={1.5} /> : <Heart size={22} strokeWidth={1.5} fill={liked ? "currentColor" : "none"} />}
+                {side === "work" ? <CheckCircle2 size={22} strokeWidth={2} /> : <Heart size={22} strokeWidth={2} fill={liked ? "currentColor" : "none"} />}
                 {!hideCounts && likeCount ? (
                   <span className="text-xs font-extrabold tabular-nums text-gray-500">{likeCount}</span>
                 ) : null}
@@ -859,20 +928,20 @@ export function PostCard({
                 }}
                 title="Share externally"
               >
-                <Share2 size={22} strokeWidth={1.5} />
+                <Share2 size={22} strokeWidth={2} />
               </button>
             ) : (
               <button
                 className={cn(ACTION_BASE, "text-gray-500 hover:text-gray-900")}
-                aria-label="Copy internal link"
+                aria-label="Copy link"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   doShare();
                 }}
-                title="Copy internal link (requires access)"
+                title="Copy link (access required)"
               >
-                <LinkIcon size={22} strokeWidth={1.5} />
+                <LinkIcon size={22} strokeWidth={2} />
               </button>
             )}
           </div>

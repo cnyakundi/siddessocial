@@ -5,7 +5,6 @@ echo "== Check: Feed provider abstraction =="
 
 REQ=(
   "frontend/src/lib/feedProvider.ts"
-  "frontend/src/lib/feedProviders/mock.ts"
   "frontend/src/lib/feedProviders/backendStub.ts"
   "frontend/src/app/api/feed/route.ts"
   "frontend/src/components/SideFeed.tsx"

@@ -686,10 +686,15 @@ export default function SiddesSetHubPage({ params }: { params: { id: string } })
                   <div className="divide-y divide-gray-100">
                     {item.members.map((m) => (
                       <div key={m} className="py-3 flex items-center justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="font-bold text-gray-900">{m}</div>
+                        {/* sd_480_members_link: make member handles open profiles */}
+                        <Link
+                          href={`/u/${encodeURIComponent(String(m || "").replace(/^@/, ""))}`}
+                          className="min-w-0 block"
+                          title="View profile"
+                        >
+                          <div className="font-bold text-gray-900 hover:underline">{m}</div>
                           <div className="text-[11px] text-gray-400 font-mono truncate">member</div>
-                        </div>
+                        </Link>
 
                         {isOwner ? (
                           <button

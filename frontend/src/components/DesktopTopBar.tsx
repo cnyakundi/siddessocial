@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Mail } from "lucide-react";
+import { Mail, Search, Bell } from "lucide-react";
 import { useSide } from "@/src/components/SideProvider";
 import { SIDES, SIDE_THEMES } from "@/src/lib/sides";
 import { DesktopButlerTray } from "@/src/components/DesktopButlerTray";
@@ -96,8 +96,11 @@ function DesktopTopBar() {
   const unreadHere = activity?.[side]?.unread || 0;
 
   return (
-    <div className="sticky top-0 z-[90] bg-white/80 backdrop-blur border-b border-gray-100">
-      <div className="h-14 px-4 flex items-center justify-between gap-3">
+    <>
+      {/* Ambient glow line (Measurement Protocol v1.2) */}
+      <div className={cn("hidden lg:block fixed top-0 left-0 right-0 h-0.5 z-[120] transition-colors duration-300", theme.primaryBg)} />
+      <div className="sticky top-0 z-[90] bg-white/80 backdrop-blur border-b border-gray-100">
+      <div className="h-20 px-8 flex items-center justify-between gap-3">
         <div className="flex items-baseline gap-3 min-w-0">
           <span className={cn("text-[11px] font-extrabold uppercase tracking-widest", theme.text)}>{meta.label}</span>
           <span className="text-gray-300">•</span>
@@ -110,13 +113,14 @@ function DesktopTopBar() {
             <>
               {/* Scoped search field (desktop) */}
               <div className="relative hidden lg:block">
+                <Search size={22} strokeWidth={2} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true" />
                 <input
                   readOnly
                   value=""
                   onFocus={() => setSearchOpen(true)}
                   onClick={() => setSearchOpen(true)}
                   placeholder={`Search in ${meta.label}…`}
-                  className="bg-white text-sm px-4 py-2 pl-9 rounded-full w-56 border border-gray-200 transition-all outline-none focus:ring-2 focus:ring-gray-100 placeholder-gray-400 text-gray-700 shadow-sm cursor-pointer"
+                  className="bg-white text-sm px-4 py-2 pl-10 rounded-full w-56 border border-gray-200 transition-all outline-none focus:ring-2 focus:ring-gray-100 placeholder-gray-400 text-gray-700 shadow-sm cursor-pointer"
                   aria-label="Open search"
                 />
               </div>
@@ -125,10 +129,11 @@ function DesktopTopBar() {
               <button
                 type="button"
                 onClick={() => setSearchOpen(true)}
-                className="lg:hidden p-2 rounded-full text-gray-600 hover:bg-gray-100"
+                className="lg:hidden p-3 rounded-full text-gray-600 hover:bg-gray-100"
                 title="Search"
               >
-              </button>
+                  <Search size={22} strokeWidth={2} />
+                </button>
             </>
           ) : null}
 
@@ -139,10 +144,11 @@ function DesktopTopBar() {
               setTrayTab("alerts");
               setTrayOpen(true);
             }}
-            className="relative p-2 rounded-full text-gray-600 hover:bg-gray-100"
+            className="relative p-3 rounded-full text-gray-600 hover:bg-gray-100"
             aria-label="Alerts"
             title="Alerts"
           >
+            <Bell size={22} strokeWidth={2} />
             {unreadHere > 0 ? (
               <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full" />
             ) : null}
@@ -151,11 +157,11 @@ function DesktopTopBar() {
           {/* Inbox shortcut */}
           <Link
             href="/siddes-inbox"
-            className="p-2 rounded-full text-gray-600 hover:bg-gray-100"
+            className="p-3 rounded-full text-gray-600 hover:bg-gray-100"
             aria-label="Inbox"
             title="Inbox"
           >
-            <Mail size={18} />
+            <Mail size={22} strokeWidth={2} />
           </Link>
 
           {/* Avatar menu */}
@@ -176,5 +182,6 @@ function DesktopTopBar() {
 
       <DesktopButlerTray open={trayOpen} onClose={() => setTrayOpen(false)} initialTab={trayTab} />
     </div>
+    </>
   );
 }

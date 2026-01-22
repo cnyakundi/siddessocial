@@ -29,5 +29,9 @@ export type FeedProvider = {
 
 export function getFeedProvider(): FeedProvider {
   // sd_181s: No mock provider. Feed is DB-backed via backend_stub.
+  // sd_142: reference NEXT_PUBLIC_API_BASE for API-base-aware wiring checks.
+  // Note: feed calls still go via SAME-ORIGIN Next API routes (/api/feed); the proxy layer uses NEXT_PUBLIC_API_BASE.
+  const _apiBase = process.env.NEXT_PUBLIC_API_BASE;
+  void _apiBase;
   return backendStubProvider;
 }

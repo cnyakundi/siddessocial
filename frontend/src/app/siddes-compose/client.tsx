@@ -771,11 +771,11 @@ const quickTools = useMemo<QuickTool[]>(() => {
     // Side-scoped templates (still plain-text posts; no fake post types)
     if (side === "public") {
       out.push({ id: "thread", label: "Thread", Icon: FileText, tone: "side", onClick: () => applyTemplate("thread"), title: "Insert thread starter" });
-      out.push({ id: "link", label: "Link", Icon: Link2, tone: "side", onClick: () => applyTemplate("link"), title: "Insert a link stub" });
+      out.push({ id: "link", label: "Link", Icon: Link2, tone: "side", onClick: () => applyTemplate("link"), title: "Insert a link" });
       out.push({ id: "townhall", label: "Town Hall Q", Icon: Mic, tone: "side", onClick: () => applyTemplate("townhall"), title: "Insert a question template" });
     } else if (side === "friends") {
       out.push({ id: "prompt", label: "Prompt", Icon: Sparkles, tone: "side", onClick: () => applyTemplate("prompt"), title: "Insert a prompt starter" });
-      out.push({ id: "checkin", label: "Check-in", Icon: MapPin, tone: "side", onClick: () => applyTemplate("checkin"), title: "Insert a location stub" });
+      out.push({ id: "checkin", label: "Check-in", Icon: MapPin, tone: "side", onClick: () => applyTemplate("checkin"), title: "Insert a location" });
     } else if (side === "work") {
       out.push({ id: "update", label: "Update", Icon: FileText, tone: "side", onClick: () => applyTemplate("work_update"), title: "Insert work update format" });
       out.push({ id: "task", label: "Task template", Icon: CheckSquare, tone: "side", onClick: () => applyTemplate("work_task"), title: "Insert task format" });
@@ -1171,8 +1171,8 @@ const quickTools = useMemo<QuickTool[]>(() => {
                   </div>
                 </div>
 
-                {/* Selected context chips (clear fast) */}
-                {selectedSetId && selectedSet ? (
+                                {/* Selected context chips (clear fast) */}
+                {selectedSetId && selectedSet && (
                   <div className="flex gap-2 flex-wrap mt-2">
                     <button
                       type="button"
@@ -1183,10 +1183,10 @@ const quickTools = useMemo<QuickTool[]>(() => {
                       Set: {selectedSet.label} ✕
                     </button>
                   </div>
-                ) : null}
+                )}
 
                 {/* sd_384_media: selected uploads */}
-                {mediaItems.length ? (
+                {mediaItems.length > 0 ? (
                   <div className="mt-3 flex flex-wrap gap-2">
                     {mediaItems.slice(0, 4).map((m) => {
                       const failed = m.status === "failed";
@@ -1212,7 +1212,7 @@ const quickTools = useMemo<QuickTool[]>(() => {
                             <span className="text-sm leading-none">&times;</span>
                           </button>
 
-                          {uploading || failed ? (
+                          {(uploading || failed) && (
                             <div
                               className={cn(
                                 "absolute inset-0 flex items-center justify-center text-[11px] font-bold",
@@ -1221,7 +1221,7 @@ const quickTools = useMemo<QuickTool[]>(() => {
                             >
                               {uploading ? "Uploading..." : "Failed"}
                             </div>
-                          ) : null}
+                          )}
                         </div>
                       );
                     })}
@@ -1232,7 +1232,7 @@ const quickTools = useMemo<QuickTool[]>(() => {
             </div>
           </div>
 
-          {/* 3) Footer */}
+{/* 3) Footer */}
           <div className="px-6 md:px-8 py-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
             <div className="flex items-center gap-4 min-w-0">
               <span className={cn("text-[10px] font-mono", overLimit ? "text-red-600 font-bold" : "text-gray-400")}>{charCount} / {maxChars}</span>
@@ -1296,9 +1296,6 @@ const quickTools = useMemo<QuickTool[]>(() => {
             </div>
           </div>
 
-          {process.env.NODE_ENV !== "production" ? (
-            <p className="px-8 pb-6 text-xs text-gray-400">Compose Intelligence v1: confidence-gated, explainable, reversible.</p>
-          ) : null}
         </div>
       </div>
       {/* sd_384_media: hidden file input */}
@@ -1360,8 +1357,8 @@ const quickTools = useMemo<QuickTool[]>(() => {
         onPick={(next) => setPublicChannel(next)}
       />
 
-      {/* Public confirm (above everything) */}
-      {publicConfirmOpen ? (
+            {/* Public confirm (above everything) */}
+      {publicConfirmOpen && (
         <div className="fixed inset-0 z-[120] flex items-end justify-center md:items-center">
           <button
             type="button"
@@ -1369,6 +1366,7 @@ const quickTools = useMemo<QuickTool[]>(() => {
             onClick={() => setPublicConfirmOpen(false)}
             aria-label="Close public confirm"
           />
+
           <div className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
             <div className="flex items-center justify-between mb-3">
               <div className={cn("font-bold", SIDE_THEMES.public.text)}>Post to Public?</div>
@@ -1399,11 +1397,11 @@ const quickTools = useMemo<QuickTool[]>(() => {
               </span>
             </div>
 
-            {pendingPublicText ? (
+            {pendingPublicText && (
               <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 text-xs text-gray-700 mb-4">
                 “{pendingPublicText}”
               </div>
-            ) : null}
+            )}
 
             <label className="flex items-center gap-2 text-xs text-gray-600 mb-4 select-none">
               <input
@@ -1433,7 +1431,7 @@ const quickTools = useMemo<QuickTool[]>(() => {
             </div>
           </div>
         </div>
-      ) : null}
+      )}
     </>
   );
 }

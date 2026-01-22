@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import SignupView, LoginView, LogoutView, MeView, GoogleAuthView, OnboardingCompleteView, RegionView, AgeGateConfirmView
+from .views import SignupView, LoginView, LogoutView, MeView, GoogleAuthView, UsernameSetView, OnboardingCompleteView, RegionView, AgeGateConfirmView
 from .password_reset import PasswordResetRequestView, PasswordResetConfirmView, PasswordChangeView
 from .email_verification import VerifyConfirmView, VerifyResendView
 from .account_lifecycle import (
@@ -23,6 +23,7 @@ urlpatterns = [
     path("verify/confirm", VerifyConfirmView.as_view()),
     path("verify/resend", VerifyResendView.as_view()),
     path("google", GoogleAuthView.as_view()),
+    path("username/set", UsernameSetView.as_view()),
     path("onboarding/complete", OnboardingCompleteView.as_view()),
     path("password/reset/request", PasswordResetRequestView.as_view()),
     path("password/reset/confirm", PasswordResetConfirmView.as_view()),

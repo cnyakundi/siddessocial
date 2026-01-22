@@ -832,7 +832,7 @@ function SiddesThreadPageInner() {
             </button>
           </div>
 
-          <MentionPicker open={mentionOpen} query={mentionQuery} items={[]} onPick={insertMention} />
+          <MentionPicker open={mentionOpen} query={mentionQuery} items={mentionCandidates} onPick={insertMention} />
 
           <div data-testid="thread-context-strip" className="mt-2 text-[11px] text-gray-400">
             Context: messages are sent under the thread’s locked Side unless you explicitly move it.

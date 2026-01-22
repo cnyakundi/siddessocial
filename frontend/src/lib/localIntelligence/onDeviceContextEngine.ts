@@ -245,7 +245,7 @@ export function suggestSetsFromMatches(matches: ContactMatch[]): SuggestedSet[] 
       side: coerceSide("work", "slate"),
       color: "slate",
       members,
-      reason: `On-device: shared work domain (${dom})`,
+      reason: "Suggested from your contacts: same work email domain",
     });
   }
 
@@ -278,7 +278,7 @@ export function suggestSetsFromMatches(matches: ContactMatch[]): SuggestedSet[] 
       side: coerceSide("close", "rose"),
       color: "rose",
       members: remaining,
-      reason: `On-device: shared surname (${titleCase(sn)})`,
+      reason: "Suggested from your contacts: same surname",
     });
   }
 
@@ -382,7 +382,7 @@ export function suggestSetsFromMatches(matches: ContactMatch[]): SuggestedSet[] 
         side: coerceSide("friends", "emerald"),
         color: "emerald",
         members,
-        reason: token ? `On-device: clustered by keyword (${titleCase(token)})` : "On-device: clustered by shared keywords",
+        reason: token ? `Suggested from your contacts: shared keyword (${titleCase(token)})` : "Suggested from your contacts: shared keywords",
       });
     }
   }
@@ -397,7 +397,7 @@ export function suggestSetsFromMatches(matches: ContactMatch[]): SuggestedSet[] 
       side: coerceSide("friends", "emerald"),
       color: "emerald",
       members: rem,
-      reason: `On-device: you matched ${uniq.length} people`,
+      reason: `Suggested from your contacts: ${uniq.length} matches`,
     });
   }
 

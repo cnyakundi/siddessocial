@@ -178,9 +178,8 @@ function SiddesSetsPageInner() {
 
   return (
     <>
-      <div className="min-h-screen bg-gray-50">
-      <div className="px-4 py-4">
-<div className="flex items-center justify-between md:justify-end gap-3 mb-3">
+      <div className="p-4">
+        <div className="flex items-center justify-between md:justify-end gap-3 mb-3">
           <div className="md:hidden hidden">
             <div className="text-sm font-extrabold text-gray-900">Sets</div>
             <div className="text-xs text-gray-500">
@@ -368,9 +367,9 @@ function SiddesSetsPageInner() {
               );
             })
           )}
-        </div>
       </div>
-    </div><CreateSetSheet
+    </div>
+      <CreateSetSheet
         open={createOpen}
         onClose={() => setCreateOpen(false)}
         canWrite={canWrite}

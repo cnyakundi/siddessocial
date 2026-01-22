@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 
-import { Ban, ExternalLink, EyeOff, Flag, Link2, Share2, X, Pencil, Trash2, Copy, VolumeX } from "lucide-react";
+import { Ban, ExternalLink, EyeOff, Flag, Link2, Share2, X, Pencil, Trash2, Copy, VolumeX, User } from "lucide-react";
 import type { FeedPost } from "@/src/lib/feedTypes";
 import type { SideId } from "@/src/lib/sides";
 import { toast } from "@/src/lib/toast";
@@ -51,6 +52,8 @@ export function PostActionsSheet({
 }) {
   useLockBodyScroll(open && Boolean(post));
 
+  const router = useRouter();
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -71,6 +74,18 @@ export function PostActionsSheet({
 
   const doOpen = () => {
     onOpen();
+    onClose();
+  };
+
+  const doViewProfile = () => {
+    const raw = String((post as any)?.handle || "").trim();
+    const u = raw.replace(/^@/, "").split(/\s+/)[0];
+    if (!u) {
+      toast.error("Could not open profile.");
+      onClose();
+      return;
+    }
+    router.push(`/u/${encodeURIComponent(u)}`);
     onClose();
   };
 
@@ -217,11 +232,18 @@ const doBlock = async () => {
   };
 
   return (
-    <div className="fixed inset-0 z-[98] flex items-end justify-center md:items-center">
+    <div className="fixed inset-0 z-[999] flex items-end justify-center md:items-center">
       <button
         type="button"
         className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-        onClick={onClose}
+        onPointerDown={(e) => {
+          e.preventDefault();
+          onClose();
+        }}
+        onClick={(e) => {
+          e.preventDefault();
+          onClose();
+        }}
         aria-label="Close actions"
       />
 
@@ -260,6 +282,20 @@ const doBlock = async () => {
             </div>
           </button>
 
+
+          <button
+            type="button"
+            onClick={doViewProfile}
+            className="w-full p-4 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center gap-4 text-left"
+          >
+            <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-800 shadow-sm">
+              <User size={18} />
+            </div>
+            <div className="min-w-0">
+              <div className="font-bold text-gray-900">View profile</div>
+              <div className="text-xs text-gray-500 truncate">Open @{String((post as any)?.handle || "").replace(/^@/, "")}</div>
+            </div>
+          </button>
           <button
             type="button"
             onClick={doCopyLink}
@@ -269,8 +305,8 @@ const doBlock = async () => {
               <Link2 size={18} />
             </div>
             <div>
-              <div className="font-bold text-gray-900">{isPublic ? "Copy link" : "Copy internal link"}</div>
-              <div className="text-xs text-gray-500">{isPublic ? "Share anywhere" : "Requires access"}</div>
+              <div className="font-bold text-gray-900">{isPublic ? "Copy link" : "Copy link"}</div>
+              <div className="text-xs text-gray-500">{isPublic ? "Share anywhere" : "Only people with access can open"}</div>
             </div>
           </button>
 

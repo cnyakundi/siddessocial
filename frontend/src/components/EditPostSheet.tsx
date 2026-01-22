@@ -83,7 +83,15 @@ export function EditPostSheet({
       <button
         type="button"
         className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-        onClick={onClose}
+        onPointerDown={(e) => {
+        // sd_481_sheet_close_reliability: pointerdown closes reliably on mobile
+        e.preventDefault();
+        onClose();
+      }}
+      onClick={(e) => {
+        e.preventDefault();
+        onClose();
+      }}
         aria-label="Close edit"
       />
 

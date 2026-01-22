@@ -7,7 +7,7 @@
     "build": "node scripts/build_next.js",
     "start": "NEXT_DIST_DIR=.next_build next start",
     "lint": "next lint",
-    "typecheck": "node -e \"const fs=require('fs');fs.rmSync('.next/types',{recursive:true,force:true});fs.rmSync('.next_build/types',{recursive:true,force:true});\" && node -e \"const fs=require('fs');fs.rmSync('.next/types',{recursive:true,force:true});fs.rmSync('.next_build/types',{recursive:true,force:true});\" && node -e \"const fs=require('fs');fs.rmSync('.next/types',{recursive:true,force:true});fs.rmSync('.next_build/types',{recursive:true,force:true});\" && node -e \"const fs=require('fs');fs.rmSync('.next/types',{recursive:true,force:true});fs.rmSync('.next_build/types',{recursive:true,force:true});\" && tsc --noEmit",
+    "typecheck": "node scripts/clean_next_types.js && tsc --noEmit",
     "test": "node -e \"console.log('no tests yet')\""
   },
   "dependencies": {

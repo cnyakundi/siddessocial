@@ -1,1 +1,1 @@
-export const SD_BUILD_STAMP = "2026-01-14T15:39:49 (sd_152d)";
+export const SD_BUILD_STAMP = "2026-01-14T15:39:49";

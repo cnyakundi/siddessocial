@@ -21,7 +21,7 @@ from siddes_backend.emailing import send_email
 from siddes_backend.identity import viewer_aliases
 from siddes_contacts.normalize import normalize_email
 from siddes_contacts.tokens import hmac_token
-from siddes_contacts.models import ContactIdentityToken
+from siddes_contacts.models import ContactIdentityToken, ContactMatchEdge
 
 from .models import SiddesProfile, EmailChangeToken, AccountDeleteToken, UserSession
 
@@ -86,6 +86,24 @@ def _ensure_email_identity_token(user, email: str) -> None:
         kind="email",
         defaults={"value_hint": email_n[:3] + "***"},
     )
+
+
+def _purge_contact_discoverability(user) -> None:
+    """Delete contact discoverability tokens + derived edges for this user (best-effort).
+
+    This ensures:
+      - Deactivated/deleted accounts cannot be discovered via /api/contacts/match
+      - Existing viewer-scoped edges don't keep suggesting a removed account
+    """
+    try:
+        ContactIdentityToken.objects.filter(user=user).delete()
+    except Exception:
+        pass
+    try:
+        ContactMatchEdge.objects.filter(viewer=user).delete()
+        ContactMatchEdge.objects.filter(matched_user=user).delete()
+    except Exception:
+        pass
 
 
 def _revoke_all_sessions_for_user(user) -> None:
@@ -256,6 +274,12 @@ class EmailChangeConfirmView(APIView):
             return Response({"ok": False, "error": "email_taken"}, status=status.HTTP_409_CONFLICT)
 
         with transaction.atomic():
+            # sd_473: revoke old email discoverability tokens (prevents matching by old email)
+            try:
+                ContactIdentityToken.objects.filter(user=user, kind="email").delete()
+            except Exception:
+                pass
+
             user.email = new_email
             user.save(update_fields=["email"])
 
@@ -320,6 +344,9 @@ class AccountDeactivateView(APIView):
             user.save(update_fields=["is_active"])
         except Exception:
             pass
+
+        # sd_473: purge contact discoverability tokens/edges for deactivated accounts
+        _purge_contact_discoverability(user)
 
         _revoke_all_sessions_for_user(user)
 
@@ -472,6 +499,9 @@ class AccountDeleteConfirmView(APIView):
 
             rec.used_at = now
             rec.save(update_fields=["used_at"])
+
+        # sd_473: purge contact discoverability tokens/edges for deleted accounts
+        _purge_contact_discoverability(user)
 
         _revoke_all_sessions_for_user(user)
 

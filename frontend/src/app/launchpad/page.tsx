@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { SD_BUILD_STAMP } from "@/src/lib/buildStamp";
 
 export default function LaunchpadPage() {
-  // sd_179j: Launchpad is dev-only.
+  // sd_179j: Launchpad is internal.
   if (process.env.NODE_ENV === "production") {
     notFound();
   }

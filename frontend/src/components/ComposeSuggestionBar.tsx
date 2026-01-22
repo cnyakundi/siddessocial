@@ -50,8 +50,13 @@ export function ComposeSuggestionBar({
                 key={`side:${s.side}`}
                 type="button"
                 onClick={() => onApplySide(s.side)}
-                className={cn("px-3 py-1.5 rounded-full text-xs font-bold border transition-colors", t.lightBg, t.border, t.text, "hover:opacity-90")}
-                title={`Why: ${s.reason} • ${(s.confidence * 100).toFixed(0)}%`}
+                className={cn(
+                  "px-3 py-1.5 rounded-full text-xs font-bold border transition-colors",
+                  t.lightBg,
+                  t.border,
+                  t.text,
+                  "hover:opacity-90"
+                )}
               >
                 {SIDES[s.side].label}
               </button>
@@ -67,9 +72,10 @@ export function ComposeSuggestionBar({
                 onClick={() => onToggleSet(s.setId)}
                 className={cn(
                   "px-3 py-1.5 rounded-full text-xs font-bold border hover:opacity-90",
-                  active ? "bg-orange-100 text-orange-800 border-orange-200" : "bg-orange-50 text-orange-700 border-orange-100"
+                  active
+                    ? "bg-orange-100 text-orange-800 border-orange-200"
+                    : "bg-orange-50 text-orange-700 border-orange-100"
                 )}
-                title={`Why: ${s.reason} • ${(s.confidence * 100).toFixed(0)}%`}
               >
                 {s.label}
               </button>
@@ -84,9 +90,10 @@ export function ComposeSuggestionBar({
               onClick={onToggleUrgent}
               className={cn(
                 "px-3 py-1.5 rounded-full text-xs font-bold border hover:opacity-90",
-                urgent ? "bg-red-100 text-red-800 border-red-200" : "bg-red-50 text-red-700 border-red-100"
+                urgent
+                  ? "bg-red-100 text-red-800 border-red-200"
+                  : "bg-red-50 text-red-700 border-red-100"
               )}
-              title={`Why: ${s.reason} • ${(s.confidence * 100).toFixed(0)}%`}
             >
               Urgent
             </button>
