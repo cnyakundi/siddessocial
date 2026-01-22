@@ -22,5 +22,7 @@ class ReplyRecord:
     author_id: str
     text: str
     created_at: float
+    parent_id: Optional[str] = None
+    depth: int = 0
     status: str = "created"  # created|queued|sent
     client_key: Optional[str] = None

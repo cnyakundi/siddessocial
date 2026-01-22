@@ -334,7 +334,7 @@ export default function BroadcastHubPage({ params }: { params: { id: string } })
   }
 
   return (
-    <div className="max-w-2xl mx-auto bg-white md:border-x border-gray-100 min-h-[calc(100vh-56px)]">
+    <div className="max-w-2xl mx-auto bg-white md:border-x border-gray-100 sd-min-h-shell">
       <div className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-gray-100 px-4 h-14 flex items-center gap-3">
         <button onClick={() => router.back()} className="p-2 -ml-2 hover:bg-gray-50 rounded-full text-gray-700" aria-label="Back">
           <ArrowLeft size={20} />

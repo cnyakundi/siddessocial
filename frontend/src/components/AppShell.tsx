@@ -6,7 +6,8 @@ import { usePathname } from "next/navigation";
 import { AppTopBar } from "@/src/components/AppTopBar";
 import { BottomNav } from "@/src/components/BottomNav";
 import { MobileAirlockOverlay } from "@/src/components/MobileAirlockOverlay";
-import { NotificationsDrawer } from "@/src/components/NotificationsDrawer";
+
+import { DesktopAirlockOverlay } from "@/src/components/DesktopAirlockOverlay";import { NotificationsDrawer } from "@/src/components/NotificationsDrawer";
 import { DesktopSideDock } from "@/src/components/DesktopSideDock";
 import { DesktopWorkspaceNav } from "@/src/components/DesktopWorkspaceNav";
 import { DesktopTopBar } from "@/src/components/DesktopTopBar";
@@ -45,7 +46,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-dvh bg-[#F8F9FA] text-gray-900">
       <PanicBanner />
 
-      {/* Mobile */}
+      
+
+      <DesktopAirlockOverlay />{/* Mobile */}
       <div className="lg:hidden">
         <AppTopBar onOpenNotificationsDrawer={() => setNotifsOpen(true)} />
         <MobileAirlockOverlay />
@@ -76,7 +79,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Center lane */}
-        <div className="col-start-3 row-start-2 min-h-[calc(100vh-56px)] bg-white border-x border-gray-100">
+        <div className="col-start-3 row-start-2 sd-min-h-shell bg-white border-x border-gray-100">
           <div>{children}</div>
         </div>
 

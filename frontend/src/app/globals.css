@@ -22,7 +22,15 @@ body {
   --safe-right: env(safe-area-inset-right);
   --safe-bottom: env(safe-area-inset-bottom);
   --safe-left: env(safe-area-inset-left);
+  --siddes-topbar-h: 64px;
 }
+
+@media (min-width: 1024px) {
+  :root {
+    --siddes-topbar-h: 80px;
+  }
+}
+
 
 @layer utilities {
   .min-h-dvh {
@@ -33,4 +41,9 @@ body {
     height: 100vh;
     height: 100dvh;
   }
+  .sd-min-h-shell {
+    min-height: calc(100vh - var(--siddes-topbar-h));
+    min-height: calc(100dvh - var(--siddes-topbar-h));
+  }
+
 }

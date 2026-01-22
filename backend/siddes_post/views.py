@@ -776,6 +776,7 @@ class PostReplyCreateView(APIView):
         body: Dict[str, Any] = request.data if isinstance(request.data, dict) else {}
         text = str(body.get("text") or "").strip()
         client_key = str(body.get("client_key") or body.get("clientKey") or "").strip() or None
+        parent_id = str(body.get("parent_id") or body.get("parentId") or "").strip() or None
 
         if not text:
             return Response({"ok": False, "error": "empty_text"}, status=status.HTTP_400_BAD_REQUEST)
