@@ -6,7 +6,7 @@ import { useParams } from "next/navigation";
 
 import { MoreHorizontal } from "lucide-react";
 
-import type { SideId } from "@/src/lib/sides";
+import { SIDES, type SideId } from "@/src/lib/sides";
 import {
   CopyLinkButton,
   PrismIdentityCard,
@@ -96,13 +96,15 @@ export default function UserProfilePage() {
   const facet = data?.facet;
   const user = data?.user;
 
+  const isOwner = !!(data as any)?.isOwner;
+
   const viewerSidedAs = (data?.viewerSidedAs || null) as SideId | null;
   const sharedSets = data?.sharedSets || [];
 
 
-  const doToggleFollow = async () => {
+  const doToggleSubscribe = async () => {
     if (!user?.handle) return;
-    const want = !((data as any)?.viewerFollows);
+    const want = !((data as any)?.viewerSubscribes);
     setBusy(true);
     try {
       const res = await fetch("/api/follow", {
@@ -112,7 +114,8 @@ export default function UserProfilePage() {
       });
       const j = (await res.json().catch(() => null)) as any;
       if (!res.ok || !j || j.ok !== true) {
-        const msg = res.status === 429 ? "Slow down." : "Could not update follow.";
+        const msg = res.status === 401 ? "Log in to subscribe." : res.status === 429 ? "Slow down." : "Could not update subscription.";
+
         toast.error(msg);
         throw new Error(msg);
       }
@@ -120,9 +123,8 @@ export default function UserProfilePage() {
         if (!prev || !prev.ok) return prev;
         return {
           ...(prev as any),
-          viewerFollows: !!j.following,
-          followers: typeof j.followers === "number" ? j.followers : (prev as any).followers,
-        } as any;
+          viewerSubscribes: !!j.following,
+} as any;
       });
     } finally {
       setBusy(false);
@@ -193,41 +195,102 @@ export default function UserProfilePage() {
               }}
             />
 
+
+            /* sd_537: relationship clarity */
+            {!isOwner ? (
+              <div className="mt-3 mb-4 flex flex-wrap gap-2 text-xs font-extrabold">
+                <div className="px-3 py-1.5 rounded-full bg-white border border-gray-200 text-gray-700">
+                  Access: <span className="text-gray-900">{SIDES[viewSide]?.label || viewSide}</span>
+                </div>
+                <div className="px-3 py-1.5 rounded-full bg-white border border-gray-200 text-gray-700">
+                  You Sided: <span className="text-gray-900">{viewerSidedAs ? (SIDES[viewerSidedAs]?.label || viewerSidedAs) : "Not set"}</span>
+                </div>
+                <div className="px-3 py-1.5 rounded-full bg-white border border-gray-200 text-gray-700">
+                  Public: <span className="text-gray-900">{(data as any)?.viewerSubscribes ? "Subscribed" : "Not subscribed"}</span>
+                </div>
+              </div>
+            ) : null}
+
             <PrismIdentityCard
               viewSide={displaySide}
               handle={user.handle}
               facet={facet}
               siders={data?.siders ?? null}
               sharedSets={sharedSets}
-              actions={
-                <div className="flex gap-3">
-                  <SideActionButtons viewerSidedAs={viewerSidedAs} onOpenSheet={() => setSideSheet(true)} />
-                  <CopyLinkButton href={href} />
-                  <button
-                    type="button"
-                    onClick={() => setActionsOpen(true)}
-                    className="px-4 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-extrabold text-sm hover:bg-gray-200 transition-all flex items-center gap-2"
-                    aria-label="More actions"
-                  >
-                    <MoreHorizontal size={18} />
-                  </button>
-                </div>
+actions={
+                isOwner ? (
+                  <div className="flex flex-col gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        try {
+                          window.location.href = "/siddes-profile/prism";
+                        } catch {}
+                      }}
+                      className="w-full py-2.5 rounded-xl font-extrabold text-sm text-white shadow-md active:scale-95 transition-all bg-slate-800 hover:bg-slate-900"
+                    >
+                      Edit identities
+                    </button>
+                    <div className="flex gap-3">
+                      <CopyLinkButton href={href} />
+                      <button
+                        type="button"
+                        onClick={() => setActionsOpen(true)}
+                        className="px-4 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-extrabold text-sm hover:bg-gray-200 transition-all flex items-center gap-2"
+                        aria-label="More actions"
+                      >
+                        <MoreHorizontal size={18} />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={async () => {
+                          await doToggleSubscribe();
+                        }}
+                        className={cn(
+                          "flex-1 py-2.5 rounded-xl font-extrabold text-sm shadow-md active:scale-95 transition-all",
+                          (data as any)?.viewerSubscribes ? "bg-blue-100 text-blue-800 hover:bg-blue-200" : "bg-blue-600 text-white hover:bg-blue-700",
+                          busy ? "opacity-80 cursor-not-allowed" : ""
+                        )}
+                      >
+                        {(data as any)?.viewerSubscribes ? "Unsubscribe" : "Subscribe"}
+                      </button>
+                      <SideActionButtons viewerSidedAs={viewerSidedAs} onOpenSheet={() => setSideSheet(true)} />
+                    </div>
+                    <div className="flex gap-3">
+                      <CopyLinkButton href={href} />
+                      <button
+                        type="button"
+                        onClick={() => setActionsOpen(true)}
+                        className="px-4 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-extrabold text-sm hover:bg-gray-200 transition-all flex items-center gap-2"
+                        aria-label="More actions"
+                      >
+                        <MoreHorizontal size={18} />
+                      </button>
+                    </div>
+                  </div>
+                )
               }
             />
-
+            {!isOwner ? (
             <SideWithSheet
               open={sideSheet}
               onClose={() => setSideSheet(false)}
               current={viewerSidedAs}
               busy={busy}
               follow={{
-                following: !!(data as any)?.viewerFollows,
-                followers: (data as any)?.followers ?? null,
-                busy,
-                onToggle: doToggleFollow,
+                following: !!(data as any)?.viewerSubscribes,
+busy,
+                onToggle: doToggleSubscribe,
               }}
               onPick={doPickSide}
             />
+            ) : null}
 
             <ProfileActionsSheet
               open={actionsOpen}

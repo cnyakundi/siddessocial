@@ -62,9 +62,9 @@ export type ProfileViewPayload = {
   requestedSide?: SideId;
   allowedSides?: SideId[];
   viewerAuthed?: boolean;
+  isOwner?: boolean;
   viewerFollows?: boolean;
-  followers?: number | null;
-  facet?: PrismFacet;
+facet?: PrismFacet;
   siders?: number | string | null;
   viewerSidedAs?: SideId | null;
   sharedSets?: string[];
@@ -155,8 +155,7 @@ export function SideWithSheet(props: {
   onPick: (side: SideId | "public") => Promise<void> | void;
   follow?: {
     following: boolean;
-    followers?: number | null;
-    busy?: boolean;
+busy?: boolean;
     onToggle: () => Promise<void> | void;
   };
 }) {
@@ -190,7 +189,7 @@ export function SideWithSheet(props: {
           </button>
         </div>
         
-        {/* Public follow is separate from Sides */}
+        {/* Public subscribe is separate from Sides */}
         {props.follow ? (
           <button
             type="button"
@@ -210,12 +209,12 @@ export function SideWithSheet(props: {
             </div>
             <div className="min-w-0 flex-1">
               <div className="font-extrabold text-gray-900 flex items-center gap-2">
-                {props.follow.following ? "Unfollow" : "Follow"}
+                {props.follow.following ? "Unsubscribe" : "Subscribe"}
                 {props.follow.following ? <Check size={16} className="text-blue-600" strokeWidth={3} /> : null}
               </div>
               <div className="text-xs text-gray-500">
-                {props.follow.following ? "Subscribed to Public only." : "Subscribe to Public highlights."}
-                {typeof props.follow.followers === "number" ? ` • ${props.follow.followers} followers` : ""}
+                {props.follow.following ? "Subscribed to Public updates." : "Subscribe to Public updates."}
+                
               </div>
             </div>
           </button>
@@ -580,7 +579,8 @@ export function PrismIdentityCard(props: {
   const avatarImage = (String((facet as any)?.avatarImage || "") || "").trim();
   const anthem = facet.anthem;
   const pulse = facet.pulse;
-  const truth = privacyTruth(viewSide);const isClose = viewSide === "close";
+  const truth = privacyTruth(viewSide);
+  const isClose = viewSide === "close";
   const showSiders = isClose || (typeof siders !== "undefined" && siders !== null);
 return (
     <div className={cn("w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden border", theme.border)}>
@@ -688,6 +688,7 @@ return (
             ) : (
               <div />
             )}
+
             {sharedSets && sharedSets.length > 0 ? (
               <div className="flex flex-col items-end">
                 <div className="text-xs font-extrabold text-gray-900 mb-2">Shared Sets</div>

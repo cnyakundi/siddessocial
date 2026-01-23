@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Inbox, Plus, Layers, User , type LucideIcon} from "lucide-react";
+import { Home, Inbox, Plus, Layers, User, Users, type LucideIcon } from "lucide-react";
 import { useSide } from "@/src/components/SideProvider";
 import { SIDE_THEMES, type SideId } from "@/src/lib/sides";
 import { getStoredLastPublicTopic, getStoredLastSetForSide } from "@/src/lib/audienceStore";
@@ -22,18 +22,18 @@ function initialsFromName(nameOrHandle: string) {
 
 function MeTabLink({ active, side }: { active: boolean; side: SideId }) {
   const [img, setImg] = useState<string | null>(null);
-  const [initials, setInitials] = useState<string>('U');
+  const [initials, setInitials] = useState<string>("U");
 
   useEffect(() => {
     let cancelled = false;
-    const cacheKey = '__sd_prism_cache_v1';
+    const cacheKey = "__sd_prism_cache_v1";
 
     const applyPayload = (j: any) => {
       try {
         const items = Array.isArray(j?.items) ? j.items : [];
         const f = items.find((x: any) => x?.side === side) || null;
-        const name = String(f?.displayName || j?.user?.username || 'You');
-        const av = (f?.avatarImage && String(f.avatarImage).trim()) || '';
+        const name = String(f?.displayName || j?.user?.username || "You");
+        const av = (f?.avatarImage && String(f.avatarImage).trim()) || "";
         if (!cancelled) {
           setInitials(initialsFromName(name));
           setImg(av || null);
@@ -46,7 +46,7 @@ function MeTabLink({ active, side }: { active: boolean; side: SideId }) {
       if (raw) applyPayload(JSON.parse(raw));
     } catch {}
 
-    fetch('/api/prism', { cache: 'no-store' })
+    fetch("/api/prism", { cache: "no-store" })
       .then((r) => r.json())
       .then((j) => {
         try {
@@ -62,27 +62,46 @@ function MeTabLink({ active, side }: { active: boolean; side: SideId }) {
   }, [side]);
 
   return (
-    <Link
-      href="/siddes-profile"
-      aria-label="Me"
-      className={cn(
-        'flex flex-col items-center justify-center gap-1 select-none active:scale-95 transition-transform',
-        active ? 'text-gray-900' : 'text-gray-400'
-      )}
-    >
-      <div
+    <div className="relative flex flex-col items-center justify-center">
+      <Link
+        href="/siddes-profile"
+        aria-label="Me"
         className={cn(
-          'w-6 h-6 rounded-full overflow-hidden flex items-center justify-center text-[10px] font-black border-2',
-          active ? 'border-gray-900' : 'border-transparent',
-          img ? 'bg-gray-100' : 'bg-gray-200'
+          "flex flex-col items-center justify-center gap-1 select-none active:scale-95 transition-transform",
+          active ? "text-gray-900" : "text-gray-400"
         )}
       >
-        {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : initials}
-      </div>
-      <span className={cn('text-[9px] font-black uppercase tracking-tighter', active ? 'opacity-100' : 'opacity-60')}>
-        Me
-      </span>
-    </Link>
+        <div
+          className={cn(
+            "w-6 h-6 rounded-full overflow-hidden flex items-center justify-center text-[10px] font-black border-2",
+            active ? "border-gray-900" : "border-transparent",
+            img ? "bg-gray-100" : "bg-gray-200"
+          )}
+        >
+          {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : initials}
+        </div>
+        <span className={cn("text-[9px] font-black uppercase tracking-tighter", active ? "opacity-100" : "opacity-60")}>
+          Me
+        </span>
+      </Link>
+
+      {/* Quick: People (1-tap) */}
+      <Link
+        href="/siddes-profile/people"
+        aria-label="People"
+        title="People"
+        className={cn("absolute -top-2 right-0 p-3 active:scale-90 transition-transform", active ? "opacity-100" : "opacity-70")}
+      >
+        <span
+          className={cn(
+            "w-5 h-5 rounded-full flex items-center justify-center bg-white border shadow-sm",
+            active ? "border-gray-900" : "border-gray-200"
+          )}
+        >
+          <Users size={12} strokeWidth={3} className="text-gray-700" />
+        </span>
+      </Link>
+    </div>
   );
 }
 

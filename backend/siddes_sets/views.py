@@ -69,14 +69,45 @@ STORE_MODE = os.environ.get("SD_SETS_STORE", DEFAULT_MODE).strip().lower()
 # Production hard rule: never allow in-memory sets store when DEBUG=False.
 if not IS_DEBUG:
     STORE_MODE = "db"
+
 USE_AUTO = STORE_MODE in ("auto", "smart")
-AUTO_DB_READY = _db_ready() if (USE_AUTO and IS_DEBUG) else False
 
-USE_DB = STORE_MODE in ("db", "database", "postgres", "pg") or (USE_AUTO and (not IS_DEBUG or AUTO_DB_READY))
-USE_MEMORY = STORE_MODE in ("memory", "inmemory") or (USE_AUTO and IS_DEBUG and not AUTO_DB_READY)
+# Store selection note:
+# - In DEBUG + auto mode, we start in-memory (safe when migrations are missing)
+#   and lazily switch to DB once tables are ready.
+# - This avoids Django test-runner import-time ordering issues (tables aren't
+#   created yet when modules import).
+if STORE_MODE in ("db", "database", "postgres", "pg") or (not IS_DEBUG):
+    _store = DbSetsStore()
+elif STORE_MODE in ("memory", "inmemory"):
+    _store = InMemoryApiSetsStore()
+else:
+    _store = InMemoryApiSetsStore()
 
-# Default: auto -> prefer DB when ready, otherwise memory.
-_store = DbSetsStore() if USE_DB else InMemoryApiSetsStore()
+
+def _get_store():
+    """Return the active Sets store.
+
+    In DEBUG+auto mode, this may switch from memory -> DB once migrations exist.
+    """
+
+    global _store
+    if not USE_AUTO:
+        return _store
+    if not IS_DEBUG:
+        return _store
+
+    try:
+        if _db_ready():
+            if not isinstance(_store, DbSetsStore):
+                _store = DbSetsStore()
+        else:
+            if not isinstance(_store, InMemoryApiSetsStore):
+                _store = InMemoryApiSetsStore()
+    except Exception:
+        pass
+
+    return _store
 
 
 def _raw_viewer_from_request(request) -> Optional[str]:
@@ -139,7 +170,7 @@ class SetsView(APIView):
         if side is not None and side not in VALID_SIDES:
             side = None
 
-        items = _store.list(owner_id=viewer, side=side)
+        items = _get_store().list(owner_id=viewer, side=side)
         return Response({"ok": True, "restricted": False, "viewer": viewer, "role": role, "items": items}, status=status.HTTP_200_OK)
 
     def post(self, request):
@@ -155,7 +186,7 @@ class SetsView(APIView):
         # Bulk create
         if isinstance(body.get("inputs"), list):
             inputs = [x for x in body.get("inputs") if isinstance(x, dict)]
-            items = _store.bulk_create(owner_id=viewer, inputs=inputs)  # type: ignore[arg-type]
+            items = _get_store().bulk_create(owner_id=viewer, inputs=inputs)  # type: ignore[arg-type]
             return Response({"ok": True, "restricted": False, "viewer": viewer, "role": role, "items": items}, status=status.HTTP_200_OK)
 
         side = str(body.get("side") or "friends")
@@ -163,7 +194,7 @@ class SetsView(APIView):
         members = body.get("members") if isinstance(body.get("members"), list) else []
         color = body.get("color") if isinstance(body.get("color"), str) else None
 
-        item = _store.create(owner_id=viewer, side=side, label=label, members=members, color=color)  # type: ignore[arg-type]
+        item = _get_store().create(owner_id=viewer, side=side, label=label, members=members, color=color)  # type: ignore[arg-type]
         return Response({"ok": True, "restricted": False, "viewer": viewer, "role": role, "item": item}, status=status.HTTP_200_OK)
 
 
@@ -178,7 +209,7 @@ class SetDetailView(APIView):
             return Response(_restricted_payload(has_viewer, viewer, role, extra={"item": None}), status=status.HTTP_200_OK)
 
         # Membership-based read: only return the item if viewer is owner or member.
-        item = _store.get(owner_id=viewer, set_id=set_id)
+        item = _get_store().get(owner_id=viewer, set_id=set_id)
         if not item:
             return Response(_restricted_payload(has_viewer, viewer, role, extra={"item": None}), status=status.HTTP_200_OK)
 
@@ -204,7 +235,7 @@ class SetDetailView(APIView):
         if isinstance(body.get("color"), str):
             patch["color"] = body.get("color")
 
-        item = _store.update(owner_id=viewer, set_id=set_id, patch=patch)
+        item = _get_store().update(owner_id=viewer, set_id=set_id, patch=patch)
         if not item:
             return Response({"ok": False, "restricted": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -221,7 +252,7 @@ class SetDetailView(APIView):
 
         ok = False
         try:
-            ok = bool(_store.delete(owner_id=viewer, set_id=set_id))
+            ok = bool(_get_store().delete(owner_id=viewer, set_id=set_id))
         except Exception:
             ok = False
 
@@ -249,7 +280,7 @@ class SetLeaveView(APIView):
             return Response({"ok": False, "restricted": True, "error": "restricted"}, status=status.HTTP_403_FORBIDDEN)
 
         # Avoid existence leaks: only allow leave for readable Sets.
-        cur = _store.get(owner_id=viewer, set_id=set_id)
+        cur = _get_store().get(owner_id=viewer, set_id=set_id)
         if not cur:
             return Response({"ok": False, "restricted": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -257,7 +288,7 @@ class SetLeaveView(APIView):
             return Response({"ok": False, "restricted": False, "error": "owner_cannot_leave"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            updated = _store.leave(owner_id=viewer, set_id=set_id)  # type: ignore[attr-defined]
+            updated = _get_store().leave(owner_id=viewer, set_id=set_id)  # type: ignore[attr-defined]
         except Exception:
             updated = None
 
@@ -278,9 +309,9 @@ class SetEventsView(APIView):
             return Response(_restricted_payload(has_viewer, viewer, role, extra={"items": []}), status=status.HTTP_200_OK)
 
         # Avoid existence leaks: only return events if the set is readable.
-        item = _store.get(owner_id=viewer, set_id=set_id)
+        item = _get_store().get(owner_id=viewer, set_id=set_id)
         if not item:
             return Response(_restricted_payload(has_viewer, viewer, role, extra={"items": []}), status=status.HTTP_200_OK)
 
-        items = _store.events(owner_id=viewer, set_id=set_id)
+        items = _get_store().events(owner_id=viewer, set_id=set_id)
         return Response({"ok": True, "restricted": False, "viewer": viewer, "role": role, "items": items}, status=status.HTTP_200_OK)

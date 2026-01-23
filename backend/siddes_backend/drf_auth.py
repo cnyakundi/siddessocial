@@ -29,7 +29,9 @@ class SiddesViewer:
 
     @property
     def is_authenticated(self) -> bool:  # DRF expects this
-        return True
+        # DEV viewer tokens are not real auth. Treat as unauthenticated so views
+        # fall back to x-sd-viewer/sd_viewer and role gates remain meaningful.
+        return False
 
     def __str__(self) -> str:
         return str(self.id)

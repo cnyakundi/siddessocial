@@ -84,7 +84,7 @@ export function SideBadge({
         className
       )}
       aria-label={`Current Side: ${meta.label}`}
-      title="Switch room"
+      title={showChevron ? "Switch room" : "Current room"}
     >
       <span className={cn("w-2 h-2 rounded-full", theme.primaryBg)} aria-hidden="true" />
       <span className={cn("text-[10px] font-black uppercase tracking-[0.15em]", theme.text)}>{meta.label} Side</span>

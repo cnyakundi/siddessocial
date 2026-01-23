@@ -91,9 +91,12 @@ Use `ops/deploy/vercel.env.example` as your template.
 
 ```
 curl -i https://<your-vercel-domain>/api/auth/me
+curl -i https://<your-vercel-domain>/api/_diag
 ```
 
 Expected: `200 OK` and JSON with `authenticated:false` when logged out.
+
+Then verify: `/api/_diag` returns `ok:true` and shows your configured backend origin.
 
 ---
 

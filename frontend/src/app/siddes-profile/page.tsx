@@ -41,6 +41,13 @@ export default function SiddesProfileHomePage() {
             >
               Identity Prism <ChevronRight size={18} className="text-gray-300" />
             </Link>
+            <Link
+              href="/siddes-profile/people"
+              className="w-full flex items-center justify-between p-4 bg-gray-50 rounded-2xl font-bold text-sm hover:bg-gray-100 active:bg-gray-100 transition-colors"
+            >
+              Prism People <ChevronRight size={18} className="text-gray-300" />
+            </Link>
+
           </div>
 
           <div className="mt-6 text-xs text-gray-400">

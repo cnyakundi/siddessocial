@@ -31,11 +31,9 @@ const SIDE_ICON: Record<SideId, LucideIcon> = {
  */
 export function MobileSideTabsRow() {
   const pathname = usePathname() || "";
-  const show =
-    pathname.startsWith("/siddes-feed") ||
-    pathname.startsWith("/siddes-sets") ||
-    pathname.startsWith("/siddes-inbox") ||
-    pathname.startsWith("/siddes-post");
+      const show =
+    pathname.startsWith("/siddes-") &&
+    !pathname.startsWith("/siddes-compose");
 
   const { side, setSide, sideLock } = useSide();
   const lockedSide = sideLock?.enabled ? sideLock.side : null;

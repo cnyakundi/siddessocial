@@ -7,7 +7,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import {
-  AlertTriangle, ChevronDown, Globe, Loader2, Trash2, X, FileText, Link2, Sparkles, MapPin, Mic, CheckSquare, ImagePlus
+  AlertTriangle, Globe, Loader2, Trash2, X, FileText, Link2, Sparkles, MapPin, Mic, CheckSquare, ImagePlus
 } from "lucide-react";
 import { useSide } from "@/src/components/SideProvider";
 import { enqueuePost, removeQueuedItem } from "@/src/lib/offlineQueue";
@@ -1017,47 +1017,33 @@ const quickTools = useMemo<QuickTool[]>(() => {
           <div className={cn("px-6 py-4 border-b flex items-center justify-between", theme.lightBg, theme.border)}>
             <div className="flex flex-col gap-2 min-w-0">
               <div className="flex items-center gap-2 min-w-0">
-              <div
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-extrabold transition-colors",
-                  "bg-white/70",
-                  theme.border,
-                  theme.text
-                )}
-                aria-label={`Posting in ${SIDES[side].label}`}
-                title={SIDES[side].privacyHint}
-              >
-                <span className={cn("w-2 h-2 rounded-full", theme.primaryBg)} aria-hidden="true" />
-                {SIDES[side].label} Side
-              </div>
-
-              <button
-                type="button"
-                onClick={openAudience}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-full border border-gray-200 bg-white/70 text-xs font-extrabold text-gray-700 hover:bg-white min-w-0"
-                aria-label={`Audience: ${audienceLabel}`}
-                title={side === "public" ? "Choose a topic" : "Choose a set"}
-              >
-                <span className="truncate max-w-[200px]">{side === "public" ? "Topic:" : "To:"} {audienceLabel}</span>
-                <ChevronDown size={12} className="text-gray-400" />
-              </button>
-
-              {urgent ? (
                 <button
                   type="button"
-                  onClick={() => setUrgent(false)}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-full border text-xs font-extrabold bg-red-50 text-red-700 border-red-100 hover:opacity-90"
-                  aria-label="Urgent on"
-                  title="Click to remove Urgent"
+                  onClick={openAudience}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-extrabold transition-colors",
+                    "bg-white/70 hover:bg-white/90 min-w-0",
+                    theme.border,
+                    theme.text
+                  )}
+                  aria-label={`Posting to ${lockLabel}`}
+                  title={SIDES[side].privacyHint}
                 >
-                  Urgent ✕
+                  <span className={cn("w-2 h-2 rounded-full", theme.primaryBg)} aria-hidden="true" />
+                  <span className="truncate max-w-[260px]">{lockLabel}</span>
                 </button>
-              ) : null}
-            </div>
 
-              <div className="md:hidden flex items-center gap-1.5 text-[10px] font-bold text-gray-500">
-                <span className={cn("w-1.5 h-1.5 rounded-full", theme.primaryBg)} aria-hidden="true" />
-                <span className="truncate">Posting to {lockLabel}</span>
+                {urgent ? (
+                  <button
+                    type="button"
+                    onClick={() => setUrgent(false)}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-full border text-xs font-extrabold bg-red-50 text-red-700 border-red-100 hover:opacity-90"
+                    aria-label="Urgent on"
+                    title="Click to remove Urgent"
+                  >
+                    Urgent ✕
+                  </button>
+                ) : null}
               </div>
             </div>
 

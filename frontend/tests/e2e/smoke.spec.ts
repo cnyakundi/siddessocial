@@ -1,7 +1,17 @@
 import { test, expect } from "@playwright/test";
 
+async function seed(page: any) {
+  await page.addInitScript(() => {
+    try {
+      localStorage.setItem("sd.activeSide", "friends");
+      localStorage.setItem("sd.lastNonPublicSide", "friends");
+    } catch {}
+  });
+}
+
 test.describe("Siddes smoke", () => {
   test("Feed loads or redirects to login", async ({ page }) => {
+    await seed(page);
     await page.goto("/siddes-feed", { waitUntil: "domcontentloaded" });
 
     if (page.url().includes("/login")) {
@@ -19,6 +29,7 @@ test.describe("Siddes smoke", () => {
   });
 
   test("Search renders input", async ({ page }) => {
+    await seed(page);
     await page.goto("/search?q=sarah", { waitUntil: "domcontentloaded" });
 
     const input = page
@@ -29,6 +40,7 @@ test.describe("Siddes smoke", () => {
   });
 
   test("Outbox page renders or redirects to login", async ({ page }) => {
+    await seed(page);
     await page.goto("/siddes-outbox", { waitUntil: "domcontentloaded" });
 
     if (page.url().includes("/login")) {
@@ -40,6 +52,7 @@ test.describe("Siddes smoke", () => {
   });
 
   test("Prism page loads or redirects to login", async ({ page }) => {
+    await seed(page);
     await page.goto("/siddes-profile/prism", { waitUntil: "domcontentloaded" });
 
     const deadline = Date.now() + 15_000;
@@ -51,7 +64,7 @@ test.describe("Siddes smoke", () => {
       if (url.includes("/login")) return;
 
       // If Prism UI is visible, pass.
-      const prismAny = page.locator('text=/Prism|Identity Prism|Edit Persona/i:visible').first();
+      const prismAny = page.locator("text=/Prism|Identity Prism|Edit Persona/i:visible").first();
       if (await prismAny.isVisible().catch(() => false)) {
         await expect(prismAny).toBeVisible();
         return;

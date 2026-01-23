@@ -288,6 +288,7 @@ class ProfileView(APIView):
         viewer = _user_from_request(request)
         viewer_authed = bool(viewer)
 
+        is_owner = bool(viewer and getattr(viewer, 'id', None) == getattr(target, 'id', None))
         # sd_424_profile_blocks: Blocks hard-stop profile visibility
         if viewer and viewer.id != target.id:
             try:
@@ -306,7 +307,9 @@ class ProfileView(APIView):
                 view_side = rel_in.side
 
         # Allowed sides (switching among these does NOT escalate access)
-        if view_side == "friends":
+        if is_owner:
+            allowed_sides = ["public", "friends", "close", "work"]
+        elif view_side == "friends":
             allowed_sides = ["public", "friends"]
         elif view_side == "close":
             allowed_sides = ["public", "friends", "close"]
@@ -331,7 +334,8 @@ class ProfileView(APIView):
                     "viewSide": view_side,
                     "requestedSide": requested,
                     "allowedSides": allowed_sides,
-                    "viewerAuthed": viewer_authed,
+                    "isOwner": is_owner,
+                "viewerAuthed": viewer_authed,
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )
@@ -361,6 +365,12 @@ class ProfileView(APIView):
         except Exception:
             followers_count = None
 
+
+        following_count = None
+        try:
+            following_count = int(UserFollow.objects.filter(follower=target).count())
+        except Exception:
+            following_count = None
         # Siders count: how many owners have placed target into a side
         siders_count: Optional[int] = None
         if view_side != "close":
