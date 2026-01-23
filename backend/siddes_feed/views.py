@@ -103,8 +103,8 @@ def _feed_cache_ttl() -> int:
     return ttl
 
 
-def _feed_cache_key(*, viewer: str, role: str, side: str, topic: str | None, limit: int, cursor: str | None) -> str:
-    raw = f"v1|viewer={viewer}|role={role}|side={side}|topic={topic or ''}|limit={limit}|cursor={cursor or ''}"
+def _feed_cache_key(*, viewer: str, role: str, side: str, topic: str | None, set_id: str | None, limit: int, cursor: str | None) -> str:
+    raw = f"v1|viewer={viewer}|role={role}|side={side}|topic={topic or ''}|set={set_id or ''}|limit={limit}|cursor={cursor or ''}"
     h = hashlib.sha256(raw.encode("utf-8")).hexdigest()
     return f"feed:v1:{h}"
 
@@ -127,6 +127,9 @@ class FeedView(APIView):
 
         topic_raw = str(getattr(request, "query_params", {}).get("topic") or "").strip().lower()
         topic = topic_raw or None
+
+        set_raw = str(getattr(request, "query_params", {}).get("set") or "").strip()
+        set_id = set_raw or None
 
         limit_raw = str(getattr(request, "query_params", {}).get("limit") or "").strip()
         cursor_raw = str(getattr(request, "query_params", {}).get("cursor") or "").strip() or None
@@ -152,6 +155,7 @@ class FeedView(APIView):
                 role=role,
                 side=str(side),
                 topic=topic,
+                set_id=set_id,
                 limit=limit,
                 cursor=cursor_raw,
             )

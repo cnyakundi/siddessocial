@@ -218,13 +218,74 @@ def _viewer_is_staff(viewer_id: str) -> bool:
         return False
 
 
+# sd_526: Side-only visibility uses SideMembership (room posts).
+# This makes the "Walking into a room" mental model true server-side.
+# Rule: for non-public posts WITHOUT set_id, viewer must be placed into
+# the author's Side via SideMembership (Close implies Friends).
+def _user_from_token(token: str):
+    """Best-effort resolve a Django User from an identity token.
+
+    Accepts:
+      - me_<id>
+      - @username (or username)
+
+    Fail-closed: returns None when unresolved or DB unavailable.
+    """
+    t = str(token or "").strip()
+    if not t:
+        return None
+    try:
+        from django.contrib.auth import get_user_model
+        from siddes_backend.identity import parse_viewer_user_id, normalize_handle  # type: ignore
+        User = get_user_model()
+        uid = parse_viewer_user_id(t)
+        if uid is not None:
+            return User.objects.filter(id=uid).first()
+        h = normalize_handle(t)
+        if h:
+            uname = str(h[1:] or "").strip()
+            if uname:
+                return User.objects.filter(username__iexact=uname).first()
+    except Exception:
+        return None
+    return None
+
+def _side_membership_allows(viewer_id: str, author_id: str, side: str) -> bool:
+    """Side-only visibility for set-less private posts.
+
+    Hierarchy:
+      - close members can view friends posts (friends includes close)
+      - work is separate
+    """
+    s = str(side or "").strip().lower()
+    if s not in ("friends", "close", "work"):
+        return False
+    try:
+        viewer_u = _user_from_token(viewer_id)
+        author_u = _user_from_token(author_id)
+        if not viewer_u or not author_u:
+            return False
+        from siddes_prism.models import SideMembership  # type: ignore
+        rel = SideMembership.objects.filter(owner=author_u, member=viewer_u).first()
+        if not rel:
+            return False
+        r = str(getattr(rel, "side", "") or "").strip().lower()
+        if not r:
+            return False
+        if s == "friends":
+            return r in ("friends", "close")
+        return r == s
+    except Exception:
+        return False
+
+
 def _can_view_post_record(*, viewer_id: str, side: str, author_id: str, set_id: Optional[str], is_hidden: bool = False) -> bool:
     """Launch-safe visibility rule (no demo relationship graph).
 
     - Author always sees own posts.
     - Public posts are viewable.
     - Non-public posts require Set membership when set_id is present.
-    - Non-public posts without set_id are author-only.
+    - Non-public posts without set_id use SideMembership (author has placed viewer into that Side).
     """
 
     s = str(side or "").strip().lower() or "public"
@@ -255,7 +316,8 @@ def _can_view_post_record(*, viewer_id: str, side: str, author_id: str, set_id: 
         ok_set, _set_side = _set_meta(viewer_id, sid)
         return bool(ok_set)
 
-    return False
+    # sd_526: Side-only (no Set) posts are visible to members placed into this Side.
+    return _side_membership_allows(viewer_id, author_id, s)
 
 
 def _author_label(author_id: str) -> str:

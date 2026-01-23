@@ -51,6 +51,9 @@ export async function GET(req: Request) {
   const topic = (url.searchParams.get("topic") || "").trim();
   if (topic) proxUrl.searchParams.set("topic", topic);
 
+  const set = (url.searchParams.get("set") || "").trim();
+  if (set) proxUrl.searchParams.set("set", set);
+
   const limit = (url.searchParams.get("limit") || "").trim();
   if (limit) proxUrl.searchParams.set("limit", limit);
 

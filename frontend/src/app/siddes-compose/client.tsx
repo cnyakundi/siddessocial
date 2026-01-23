@@ -493,6 +493,7 @@ export default function SiddesComposePage() {
   type MediaDraftItem = {
     id: string;
     name: string;
+    kind: "image" | "video";
     previewUrl: string;
     status: "uploading" | "ready" | "failed";
     r2Key?: string;
@@ -544,10 +545,17 @@ export default function SiddesComposePage() {
   };
 
   const addMediaFiles = async (files: FileList | File[]) => {
-    const list = Array.from(files as any).filter((f: any): f is File => !!f && typeof f === 'object' && typeof f.type === 'string');
-    const imgs = list.filter((f) => String(f.type || '').startsWith('image/'));
-    if (imgs.length === 0) {
-      toast.error("Pick an image file.");
+    const list = Array.from(files as any).filter(
+      (f: any): f is File => !!f && typeof f === "object" && typeof f.type === "string"
+    );
+
+    const media = list.filter((f) => {
+      const t = String(f.type || "");
+      return t.startsWith("image/") || t.startsWith("video/");
+    });
+
+    if (media.length === 0) {
+      toast.error("Pick a photo or video file.");
       return;
     }
 
@@ -559,25 +567,28 @@ export default function SiddesComposePage() {
         return;
       }
 
-      toast.error("Go online to upload photos.");
+      toast.error("Go online to upload media.");
       return;
     }
 
     const remaining = Math.max(0, 4 - mediaItems.length);
     if (remaining <= 0) {
-      toast.error("Max 4 photos.");
+      toast.error("Max 4 media items.");
       return;
     }
 
-    const batch = imgs.slice(0, remaining);
+    const batch = media.slice(0, remaining);
 
     for (const file of batch) {
+      const kind = String(file.type || "").startsWith("video/") ? "video" : "image";
       const id = `m_${Date.now()}_${Math.random().toString(16).slice(2)}`;
       const previewUrl = URL.createObjectURL(file);
-      setMediaItems((cur) => [...cur, { id, name: String((file as any).name || "photo"), previewUrl, status: "uploading" }]);
+      const name = String((file as any).name || (kind === "video" ? "video" : "photo"));
+
+      setMediaItems((cur) => [...cur, { id, name, kind, previewUrl, status: "uploading" }]);
 
       try {
-        const signed = await signUpload(file, "image");
+        const signed = await signUpload(file, kind);
         const url = signed?.upload?.url ? String(signed.upload.url) : "";
         const key = signed?.media?.r2Key ? String(signed.media.r2Key) : "";
         if (!signed?.ok || !url || !key) throw new Error(signed?.error || "sign_failed");
@@ -1200,13 +1211,25 @@ const quickTools = useMemo<QuickTool[]>(() => {
                           )}
                           title={m.name}
                         >
-                          {m.previewUrl ? <img src={m.previewUrl} alt="" className="w-full h-full object-cover" /> : null}
+                          {m.previewUrl ? (
+                            m.kind === "video" ? (
+                              <video
+                                src={m.previewUrl}
+                                className="w-full h-full object-cover"
+                                muted
+                                playsInline
+                                preload="metadata"
+                              />
+                            ) : (
+                              <img src={m.previewUrl} alt="" className="w-full h-full object-cover" />
+                            )
+                          ) : null}
 
                           <button
                             type="button"
                             onClick={() => removeMedia(m.id)}
                             className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/60"
-                            aria-label="Remove photo"
+                            aria-label="Remove media"
                             title="Remove"
                           >
                             <span className="text-sm leading-none">&times;</span>
@@ -1271,11 +1294,11 @@ const quickTools = useMemo<QuickTool[]>(() => {
                     ? "border-gray-200 text-gray-300 bg-white cursor-not-allowed"
                     : "border-gray-200 text-gray-700 bg-white hover:bg-gray-50"
                 )}
-                aria-label="Add photo"
-                title={!isOnline ? "Go online to upload" : mediaItems.length >= 4 ? "Max 4 photos" : "Add photo"}
+                aria-label="Add media"
+                title={!isOnline ? "Go online to upload" : mediaItems.length >= 4 ? "Max 4 media" : "Add photo"}
               >
                 <ImagePlus size={16} />
-                <span className="hidden sm:inline">Photo</span>
+                <span className="hidden sm:inline">Media</span>
               </button>
 
 
@@ -1302,7 +1325,7 @@ const quickTools = useMemo<QuickTool[]>(() => {
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,video/*"
         multiple
         className="hidden"
         onChange={(e) => {

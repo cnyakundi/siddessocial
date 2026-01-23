@@ -10,6 +10,7 @@ import type { SideId } from "@/src/lib/sides";
 import {
   CopyLinkButton,
   PrismIdentityCard,
+  PrismSideTabs,
   SideActionButtons,
   SideWithSheet,
   type ProfileViewPayload,
@@ -41,6 +42,8 @@ export default function UserProfilePage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
+  const [activeIdentitySide, setActiveIdentitySide] = useState<SideId>("public");
+
   const [sideSheet, setSideSheet] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -60,7 +63,8 @@ export default function UserProfilePage() {
       setErr(null);
 
       try {
-        const res = await fetch(`/api/profile/${encodeURIComponent(handle)}`, { cache: "no-store" });
+        const qs = activeIdentitySide ? `?side=${encodeURIComponent(activeIdentitySide)}` : "";
+        const res = await fetch(`/api/profile/${encodeURIComponent(handle)}${qs}`, { cache: "no-store" });
         const j = (await res.json().catch(() => null)) as any;
         if (!mounted) return;
 
@@ -68,6 +72,8 @@ export default function UserProfilePage() {
           setData(j && typeof j === "object" ? j : { ok: false, error: "bad_response" });
           setErr(j?.error || "not_found");
         } else {
+          const nextSide = (j?.requestedSide || j?.viewSide || "public") as SideId;
+          setActiveIdentitySide(nextSide);
           setData(j as ProfileViewPayload);
         }
       } catch {
@@ -82,14 +88,46 @@ export default function UserProfilePage() {
     return () => {
       mounted = false;
     };
-  }, [handle]);
+  }, [handle, activeIdentitySide]);
 
   const viewSide = (data?.viewSide || "public") as SideId;
+  const displaySide = ((data as any)?.requestedSide || viewSide) as SideId;
+  const allowedSides = ((data as any)?.allowedSides || ["public"]) as SideId[];
   const facet = data?.facet;
   const user = data?.user;
 
   const viewerSidedAs = (data?.viewerSidedAs || null) as SideId | null;
   const sharedSets = data?.sharedSets || [];
+
+
+  const doToggleFollow = async () => {
+    if (!user?.handle) return;
+    const want = !((data as any)?.viewerFollows);
+    setBusy(true);
+    try {
+      const res = await fetch("/api/follow", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ username: user.handle, follow: want }),
+      });
+      const j = (await res.json().catch(() => null)) as any;
+      if (!res.ok || !j || j.ok !== true) {
+        const msg = res.status === 429 ? "Slow down." : "Could not update follow.";
+        toast.error(msg);
+        throw new Error(msg);
+      }
+      setData((prev) => {
+        if (!prev || !prev.ok) return prev;
+        return {
+          ...(prev as any),
+          viewerFollows: !!j.following,
+          followers: typeof j.followers === "number" ? j.followers : (prev as any).followers,
+        } as any;
+      });
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const doPickSide = async (side: SideId | "public") => {
     if (!user?.handle) return;
@@ -104,7 +142,9 @@ export default function UserProfilePage() {
       const j = (await res.json().catch(() => null)) as any;
 
       if (!res.ok || !j || j.ok !== true) {
-        const msg = res.status === 429 ? "Slow down." : "Could not update Side.";
+        let msg = res.status === 429 ? "Slow down." : "Could not update Side.";
+        if (j?.error === "friends_required") msg = "Friends first (then Close).";
+        if (res.status === 401 || j?.error === "restricted") msg = "Login required.";
         toast.error(msg);
         throw new Error(msg);
       }
@@ -141,8 +181,20 @@ export default function UserProfilePage() {
           </div>
         ) : (
           <>
+            <PrismSideTabs
+              active={displaySide}
+              allowedSides={allowedSides}
+              onPick={(side) => {
+                if (!allowedSides.includes(side)) {
+                  toast.error("Locked.");
+                  return;
+                }
+                setActiveIdentitySide(side);
+              }}
+            />
+
             <PrismIdentityCard
-              viewSide={viewSide}
+              viewSide={displaySide}
               handle={user.handle}
               facet={facet}
               siders={data?.siders ?? null}
@@ -168,6 +220,12 @@ export default function UserProfilePage() {
               onClose={() => setSideSheet(false)}
               current={viewerSidedAs}
               busy={busy}
+              follow={{
+                following: !!(data as any)?.viewerFollows,
+                followers: (data as any)?.followers ?? null,
+                busy,
+                onToggle: doToggleFollow,
+              }}
               onPick={doPickSide}
             />
 
@@ -180,10 +238,7 @@ export default function UserProfilePage() {
             />
             
 
-            <div className="mt-4 text-xs text-gray-500">
-              You are viewing <span className="font-extrabold text-gray-700">{viewSide}</span> identity. Viewers cannot toggle identity.
-            </div>
-          </>
+                      </>
         )}
       </div>
     </div>

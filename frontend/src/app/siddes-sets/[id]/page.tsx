@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useSide } from "@/src/components/SideProvider";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { ArrowLeft, History, Mail, Plus, RefreshCcw, Settings, Shield, Trash2, UserMinus, LogOut } from "lucide-react";
 
@@ -118,6 +119,13 @@ async function safeJson(res: Response): Promise<any> {
 
 export default function SiddesSetHubPage({ params }: { params: { id: string } }) {
   const router = useRouter();
+  const { setSide: setAppSide, setSideLock, clearSideLock } = useSide();
+
+  useEffect(() => {
+    return () => {
+      clearSideLock();
+    };
+  }, [clearSideLock]);
 
   // sd_464c: restore scroll when returning from post detail
   useReturnScrollRestore();
@@ -171,6 +179,10 @@ export default function SiddesSetHubPage({ params }: { params: { id: string } })
       if (got) {
         setLabel(got.label);
         setSide(got.side);
+        try {
+          setSideLock({ side: got.side, reason: "set" });
+          setAppSide(got.side);
+        } catch {}
         setColor(got.color);
 
         const evts = await setsProvider.events(setId);

@@ -16,6 +16,8 @@ type SideSwitchOptions = {
   afterCancel?: () => void;
 };
 
+type SideLock = { enabled: boolean; side: SideId | null; reason: string | null };
+
 type SideContextValue = {
   side: SideId;
   /**
@@ -25,12 +27,17 @@ type SideContextValue = {
    */
   setSide: (side: SideId, opts?: SideSwitchOptions) => void;
   cycleSide: (dir?: 1 | -1) => void;
+  /** Route-level side lock (threads/sets). */
+  sideLock: SideLock;
+  setSideLock: (lock: { side: SideId; reason?: string }) => void;
+  clearSideLock: () => void;
 };
 
 const SideContext = createContext<SideContextValue | null>(null);
 
 export function SideProvider({ children }: { children: React.ReactNode }) {
   const [side, setSideState] = useState<SideId>("friends");
+  const [sideLock, setSideLockState] = useState<SideLock>({ enabled: false, side: null, reason: null });
 
   // Public entry confirm (centralized)
   const [confirmPublic, setConfirmPublic] = useState(false);
@@ -52,9 +59,23 @@ export function SideProvider({ children }: { children: React.ReactNode }) {
     if (s !== "public") setStoredLastNonPublicSide(s);
   };
 
+  const setSideLock = (lock: { side: SideId; reason?: string }) => {
+    setSideLockState({ enabled: true, side: lock.side, reason: lock.reason || null });
+  };
+
+  const clearSideLock = () => {
+    setSideLockState({ enabled: false, side: null, reason: null });
+  };
+
   const setSide = (next: SideId, opts?: SideSwitchOptions) => {
     const afterConfirm = opts?.afterConfirm;
     const afterCancel = opts?.afterCancel;
+
+    // Route lock: block switching away from locked side.
+    if (sideLock.enabled && sideLock.side && next !== sideLock.side) {
+      if (afterCancel) afterCancel();
+      return;
+    }
 
     // Threshold moment: entering Public must be deliberate.
     if (next === "public" && side !== "public") {
@@ -104,7 +125,7 @@ export function SideProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  const value: SideContextValue = { side, setSide, cycleSide };
+  const value: SideContextValue = { side, setSide, cycleSide, sideLock, setSideLock, clearSideLock };
 
   return (
     <SideContext.Provider value={value}>

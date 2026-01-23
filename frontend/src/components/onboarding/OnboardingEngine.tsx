@@ -17,11 +17,12 @@ import SidesExplainerStep from "@/src/components/onboarding/steps/SidesExplainer
 import CreateFirstSetStep from "@/src/components/onboarding/steps/CreateFirstSetStep";
 
 const AddPeopleStep = dynamic(() => import("@/src/components/onboarding/steps/AddPeopleStep"), { ssr: false });
+const PrismPeopleStep = dynamic(() => import("@/src/components/onboarding/steps/PrismPeopleStep"), { ssr: false });
 const FirstPostStep = dynamic(() => import("@/src/components/onboarding/steps/FirstPostStep"), { ssr: false });
 const RetentionStep = dynamic(() => import("@/src/components/onboarding/steps/RetentionStep"), { ssr: false });
 
-type StepId = "welcome" | "username" | "sides" | "create_set" | "add_people" | "first_post" | "install";
-const STEP_ORDER: StepId[] = ["welcome", "username", "sides", "create_set", "add_people", "first_post", "install"];
+type StepId = "welcome" | "username" | "sides" | "create_set" | "add_people" | "prism_people" | "first_post" | "install";
+const STEP_ORDER: StepId[] = ["welcome", "username", "sides", "create_set", "add_people", "prism_people", "first_post", "install"];
 
 type MeResp = {
   ok: boolean;
@@ -212,13 +213,13 @@ export function OnboardingEngine() {
     setContactSyncDone(!!payload.contactSyncDone);
 
     if (!firstSet) {
-      setStepId("first_post");
+      setStepId("prism_people");
       return;
     }
 
     const handles = (payload.handles || []).map((h) => String(h || "").trim()).filter(Boolean);
     if (!handles.length) {
-      setStepId("first_post");
+      setStepId("prism_people");
       return;
     }
 
@@ -231,12 +232,12 @@ export function OnboardingEngine() {
       });
       const d = (await r.json().catch(() => ({}))) as SetsPatchResp;
       if (r.ok && d?.ok) {
-        setStepId("first_post");
+        setStepId("prism_people");
         return;
       }
-      setStepId("first_post");
+      setStepId("prism_people");
     } catch {
-      setStepId("first_post");
+      setStepId("prism_people");
     } finally {
       setFinishBusy(false);
     }
@@ -317,11 +318,22 @@ export function OnboardingEngine() {
             setName={setInfo.name}
             sideId={setInfo.side}
             onContinue={(payload: { handles: string[]; contactSyncDone: boolean }) => applyMembersAndNext(payload)}
+            onSkip={() => setStepId("prism_people")}
+          />
+        </StepWrapper>
+
+
+        <StepWrapper active={stepId === "prism_people"} onBack={() => setStepId("add_people")}>
+          <PrismPeopleStep
+            onContinue={(payload: { contactSyncDone: boolean }) => {
+              setContactSyncDone((prev) => prev || !!payload.contactSyncDone);
+              setStepId("first_post");
+            }}
             onSkip={() => setStepId("first_post")}
           />
         </StepWrapper>
 
-        <StepWrapper active={stepId === "first_post"} onBack={() => setStepId("add_people")}>
+        <StepWrapper active={stepId === "first_post"} onBack={() => setStepId("prism_people")}>
           <FirstPostStep
             setInfo={firstSet ? { id: firstSet.id, name: firstSet.name, side: firstSet.side } : { id: "", name: "My Set", side: "friends" }}
             onPosted={() => setStepId("install")}

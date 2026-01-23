@@ -11,7 +11,7 @@ from siddes_visibility.policy import SideId
 # World-ready constraints:
 # - No fake Activity/Signals.
 # - Real engagement counters: likeCount, liked, replyCount, echoCount, echoed.
-# - Fail-closed visibility for non-public posts: author OR Set membership.
+# - Fail-closed visibility for non-public posts: author OR Set membership OR SideMembership (when set_id is empty).
 # - Public topics are DB-backed via Post.public_channel (optional server filter via ?topic=...)
 
 
@@ -136,6 +136,64 @@ def _set_allows(viewer_id: str, set_id: Optional[str]) -> bool:
             return False
 
 
+# sd_526: Side-only visibility uses SideMembership (room posts).
+# This makes set-less private posts (Friends/Close/Work) actually visible
+# to the people you've placed into that Side.
+# Close implies Friends (friends includes close).
+_SD_526_MEMO = {}
+
+def _user_from_token(token: str):
+    t = str(token or "").strip()
+    if not t:
+        return None
+    try:
+        from django.contrib.auth import get_user_model
+        from siddes_backend.identity import parse_viewer_user_id, normalize_handle  # type: ignore
+        User = get_user_model()
+        uid = parse_viewer_user_id(t)
+        if uid is not None:
+            return User.objects.filter(id=uid).first()
+        h = normalize_handle(t)
+        if h:
+            uname = str(h[1:] or "").strip()
+            if uname:
+                return User.objects.filter(username__iexact=uname).first()
+    except Exception:
+        return None
+    return None
+
+def _side_membership_allows(viewer_id: str, author_id: str, side: str) -> bool:
+    s = str(side or "").strip().lower()
+    if s not in ("friends", "close", "work"):
+        return False
+    key = (str(viewer_id or "").strip(), str(author_id or "").strip(), s)
+    if key in _SD_526_MEMO:
+        return bool(_SD_526_MEMO[key])
+    # keep memo bounded
+    try:
+        if len(_SD_526_MEMO) > 6000:
+            _SD_526_MEMO.clear()
+    except Exception:
+        pass
+    ok = False
+    try:
+        viewer_u = _user_from_token(viewer_id)
+        author_u = _user_from_token(author_id)
+        if viewer_u and author_u:
+            from siddes_prism.models import SideMembership  # type: ignore
+            rel = SideMembership.objects.filter(owner=author_u, member=viewer_u).first()
+            if rel:
+                r = str(getattr(rel, "side", "") or "").strip().lower()
+                if s == "friends":
+                    ok = r in ("friends", "close")
+                else:
+                    ok = (r == s)
+    except Exception:
+        ok = False
+    _SD_526_MEMO[key] = bool(ok)
+    return bool(ok)
+
+
 def _can_view_record(viewer_id: str, rec) -> bool:
     side = str(getattr(rec, "side", "") or "public").strip().lower()
     author_id = str(getattr(rec, "author_id", "") or "").strip()
@@ -169,8 +227,8 @@ def _can_view_record(viewer_id: str, rec) -> bool:
     if sid:
         return _set_allows(viewer_id, sid)
 
-    # Non-public without a Set is author-only.
-    return False
+    # sd_526: Side-only (no Set) posts are visible to members placed into this Side.
+    return _side_membership_allows(viewer_id, author_id, side)
 
 
 def _author_label(author_id: str) -> str:
@@ -420,7 +478,7 @@ def _hydrate_from_record(
     return out
 
 
-def list_feed(viewer_id: str, side: SideId, *, topic: str | None = None, limit: int = 200, cursor: str | None = None) -> Dict[str, Any]:
+def list_feed(viewer_id: str, side: SideId, *, topic: str | None = None, set_id: str | None = None, limit: int = 200, cursor: str | None = None) -> Dict[str, Any]:
     """Cursor-paginated feed (backward compatible).
 
     Inputs (via view query params):
@@ -446,6 +504,8 @@ def list_feed(viewer_id: str, side: SideId, *, topic: str | None = None, limit: 
     t = str(topic or "").strip().lower() or None
     if t == "all":
         t = None
+
+    sfilter = str(set_id or '').strip() or None
 
     # sd_422_user_hide: per-viewer hidden posts (personal)
     hidden_ids: set[str] = set()
@@ -495,6 +555,9 @@ def list_feed(viewer_id: str, side: SideId, *, topic: str | None = None, limit: 
             from siddes_post.models import Post  # type: ignore
 
             qs = Post.objects.filter(side=str(side)).order_by("-created_at", "-id")
+
+            if sfilter:
+                qs = qs.filter(set_id=sfilter)
 
             # Public topic filter (DB-backed)
             if str(side) == "public" and t:

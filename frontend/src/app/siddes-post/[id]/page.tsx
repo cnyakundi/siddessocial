@@ -271,7 +271,7 @@ function PostDetailInner() {
   const sp = useSearchParams();
   const id = (params?.id as string) || "";
 
-  const { side: activeSide, setSide } = useSide();
+  const { side: activeSide, setSide, setSideLock, clearSideLock } = useSide();
 
   const [found, setFound] = useState<Found>(null);
   const [loading, setLoading] = useState(false);
@@ -508,6 +508,16 @@ useEffect(() => {
       mounted = false;
     };
   }, [found]);
+
+
+  // sd_524: SideLock effect must not be conditional (hooks must run in a stable order).
+  const postSideForLock = found?.side;
+
+  useEffect(() => {
+    if (!postSideForLock) return;
+    setSideLock({ side: postSideForLock, reason: "thread" });
+    return () => clearSideLock();
+  }, [postSideForLock, setSideLock, clearSideLock]);
 
   if (loading && !found) {
     return (

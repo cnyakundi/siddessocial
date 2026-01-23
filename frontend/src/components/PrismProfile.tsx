@@ -2,10 +2,11 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
-  Globe,
+Globe,
   Users,
   Lock,
-  Briefcase,
+  
+  Heart,Briefcase,
   Shield,
   MapPin,
   Link as LinkIcon,
@@ -58,18 +59,71 @@ export type ProfileViewPayload = {
   ok: boolean;
   user?: { id: number; username: string; handle: string };
   viewSide?: SideId;
+  requestedSide?: SideId;
+  allowedSides?: SideId[];
+  viewerAuthed?: boolean;
+  viewerFollows?: boolean;
+  followers?: number | null;
   facet?: PrismFacet;
   siders?: number | string | null;
   viewerSidedAs?: SideId | null;
   sharedSets?: string[];
   error?: string;
 };
-const SIDE_ICON: Record<SideId, React.ComponentType<{ size?: string | number | undefined }>> = {
+const SIDE_ICON: Record<SideId, React.ComponentType<React.SVGProps<SVGSVGElement> & { size?: string | number }>> = {
   public: Globe,
   friends: Users,
-  close: Lock,
+  close: Heart,
   work: Briefcase,
 };
+
+
+export function PrismSideTabs(props: {
+  active: SideId;
+  allowedSides: SideId[];
+  onPick: (side: SideId) => void;
+}) {
+  const { active, allowedSides, onPick } = props;
+  const items: SideId[] = ["public", "friends", "close", "work"];
+  return (
+    <div className="mt-4">
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+        {items.map((side) => {
+          const t = SIDE_THEMES[side];
+          const Icon = SIDE_ICON[side];
+          const isActive = active === side;
+          const isAllowed = Array.isArray(allowedSides) ? allowedSides.includes(side) : side === "public";
+          const disabled = !isAllowed && !isActive;
+          return (
+            <button
+              key={side}
+              type="button"
+              disabled={disabled}
+              onClick={() => {
+                if (disabled) return;
+                onPick(side);
+              }}
+              className={cn(
+                "relative px-4 py-2 rounded-full font-extrabold text-sm whitespace-nowrap border transition-all flex items-center gap-2",
+                isActive ? cn(t.lightBg, "border-gray-200") : "bg-white border-gray-200 hover:bg-gray-50",
+                disabled ? "opacity-60 cursor-not-allowed" : ""
+              )}
+              aria-disabled={disabled}
+            >
+              <Icon size={16} className={isActive ? t.text : "text-gray-600"} />
+              <span className={isActive ? "text-gray-900" : "text-gray-700"}>{SIDES[side].label}</span>
+              {!isAllowed ? (
+                <span className="absolute -top-1 -right-1 bg-white rounded-full p-0.5 shadow-sm border border-gray-200">
+                  <Lock size={12} className="text-gray-500" />
+                </span>
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 const COVER: Record<SideId, string> = {
   public: "bg-gradient-to-r from-blue-600 to-blue-400",
   friends: "bg-gradient-to-r from-emerald-600 to-emerald-400",
@@ -99,6 +153,12 @@ export function SideWithSheet(props: {
   current: SideId | null;
   busy?: boolean;
   onPick: (side: SideId | "public") => Promise<void> | void;
+  follow?: {
+    following: boolean;
+    followers?: number | null;
+    busy?: boolean;
+    onToggle: () => Promise<void> | void;
+  };
 }) {
   const { open, onClose, current, busy, onPick } = props;
   useEffect(() => {
@@ -115,6 +175,7 @@ export function SideWithSheet(props: {
     { side: "close", title: "Close", desc: "Close vault." },
     { side: "work", title: "Work", desc: "Professional context." },
   ];
+  const closeUpgradeLocked = !(current === "friends" || current === "close");
   return (
     <div className="fixed inset-0 z-[98] flex items-end justify-center md:items-center">
       <button type="button" className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} aria-label="Close" />
@@ -128,16 +189,49 @@ export function SideWithSheet(props: {
             <X size={18} className="text-gray-500" />
           </button>
         </div>
+        
+        {/* Public follow is separate from Sides */}
+        {props.follow ? (
+          <button
+            type="button"
+            disabled={!!busy || !!props.follow.busy}
+            onClick={async () => {
+              try {
+                await props.follow?.onToggle();
+              } catch {}
+            }}
+            className={cn(
+              "w-full p-4 rounded-2xl bg-white hover:bg-gray-50 flex items-center gap-4 text-left border border-gray-200",
+              props.follow.following ? "shadow-sm" : ""
+            )}
+          >
+            <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-700 shadow-sm">
+              <Globe size={18} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="font-extrabold text-gray-900 flex items-center gap-2">
+                {props.follow.following ? "Unfollow" : "Follow"}
+                {props.follow.following ? <Check size={16} className="text-blue-600" strokeWidth={3} /> : null}
+              </div>
+              <div className="text-xs text-gray-500">
+                {props.follow.following ? "Subscribed to Public only." : "Subscribe to Public highlights."}
+                {typeof props.follow.followers === "number" ? ` • ${props.follow.followers} followers` : ""}
+              </div>
+            </div>
+          </button>
+        ) : null}
+
         <div className="space-y-2">
           {choices.map((c) => {
             const t = SIDE_THEMES[c.side];
             const Icon = SIDE_ICON[c.side];
             const active = current === c.side;
+            const closeLockedByUpgrade = c.side === "close" && closeUpgradeLocked;
             return (
               <button
                 key={c.side}
                 type="button"
-                disabled={!!busy}
+                disabled={!!busy || closeLockedByUpgrade}
                 onClick={async () => {
                   try {
                     await onPick(c.side);
@@ -146,7 +240,8 @@ export function SideWithSheet(props: {
                 }}
                 className={cn(
                   "w-full p-4 rounded-2xl bg-gray-50 hover:bg-gray-100 flex items-center gap-4 text-left border",
-                  active ? cn("border-gray-200", t.lightBg) : "border-gray-100"
+                  active ? cn("border-gray-200", t.lightBg) : "border-gray-100",
+                  closeLockedByUpgrade ? "opacity-60 cursor-not-allowed hover:bg-gray-50" : ""
                 )}
               >
                 <div className={cn("w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm", t.text)}>
@@ -157,7 +252,7 @@ export function SideWithSheet(props: {
                     {c.title}
                     {active ? <Check size={16} className={t.text} strokeWidth={3} /> : null}
                   </div>
-                  <div className="text-xs text-gray-500">{c.desc}</div>
+                  <div className="text-xs text-gray-500">{c.desc}{closeLockedByUpgrade ? " (Friends first)" : ""}</div>
                 </div>
               </button>
             );

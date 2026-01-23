@@ -12,7 +12,7 @@ from rest_framework.views import APIView
 from siddes_backend.csrf import dev_csrf_exempt
 from siddes_safety.policy import is_blocked_pair
 
-from .models import PrismFacet, PrismSideId, SideMembership
+from .models import PrismFacet, PrismSideId, SideMembership, UserFollow
 
 
 VIEW_SIDES = ("public", "friends", "close", "work")
@@ -267,7 +267,13 @@ def _normalize_username(raw: str) -> str:
 
 @method_decorator(dev_csrf_exempt, name="dispatch")
 class ProfileView(APIView):
-    """Viewer-resolved profile: GET /api/profile/<username>"""
+    """Viewer-resolved profile: GET /api/profile/<username>
+
+    Supports optional query param:
+      ?side=public|friends|close|work
+
+    Viewer may only fetch sides in `allowedSides` (no access escalation).
+    """
 
     def get(self, request, username: str):
         User = get_user_model()
@@ -280,9 +286,9 @@ class ProfileView(APIView):
             return Response({"ok": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
 
         viewer = _user_from_request(request)
+        viewer_authed = bool(viewer)
 
-
-        # sd_424_profile_blocks: Blocks hard-stop profile visibility (no view, no Side sheet)
+        # sd_424_profile_blocks: Blocks hard-stop profile visibility
         if viewer and viewer.id != target.id:
             try:
                 viewer_tok = viewer_id_for_user(viewer)
@@ -299,16 +305,61 @@ class ProfileView(APIView):
             if rel_in and rel_in.side in VIEW_SIDES:
                 view_side = rel_in.side
 
+        # Allowed sides (switching among these does NOT escalate access)
+        if view_side == "friends":
+            allowed_sides = ["public", "friends"]
+        elif view_side == "close":
+            allowed_sides = ["public", "friends", "close"]
+        elif view_side == "work":
+            allowed_sides = ["public", "work"]
+        else:
+            allowed_sides = ["public"]
+
+        requested = str(request.query_params.get("side") or "").strip().lower()
+        if not requested:
+            requested = view_side
+
+        if requested not in VIEW_SIDES:
+            return Response({"ok": False, "error": "invalid_side"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if requested not in allowed_sides:
+            return Response(
+                {
+                    "ok": False,
+                    "error": "locked",
+                    "user": {"id": target.id, "username": target.username, "handle": "@" + target.username},
+                    "viewSide": view_side,
+                    "requestedSide": requested,
+                    "allowedSides": allowed_sides,
+                    "viewerAuthed": viewer_authed,
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         _ensure_facets(target)
-        facet = PrismFacet.objects.filter(user=target, side=view_side).first()
+        facet = PrismFacet.objects.filter(user=target, side=requested).first()
         if not facet:
-            facet = PrismFacet.objects.create(user=target, side=view_side)
+            facet = PrismFacet.objects.create(user=target, side=requested)
 
         # What has the viewer done to this target? (owner=viewer, member=target)
         viewer_sided_as = None
         if viewer and viewer.id != target.id:
             rel_out = SideMembership.objects.filter(owner=viewer, member=target).first()
             viewer_sided_as = rel_out.side if rel_out else None
+
+        # Public follow (separate from SideMembership)
+        viewer_follows = False
+        if viewer and viewer.id != target.id:
+            try:
+                viewer_follows = UserFollow.objects.filter(follower=viewer, target=target).exists()
+            except Exception:
+                viewer_follows = False
+
+        followers_count = None
+        try:
+            followers_count = int(UserFollow.objects.filter(target=target).count())
+        except Exception:
+            followers_count = None
 
         # Siders count: how many owners have placed target into a side
         siders_count: Optional[int] = None
@@ -327,7 +378,6 @@ class ProfileView(APIView):
                 v_vid = viewer_id_for_user(viewer)
                 t_vid = viewer_id_for_user(target)
 
-                # DB portability: fetch a bounded number and filter in Python.
                 cand = list(SiddesSet.objects.filter(owner_id=v_vid).order_by("-updated_at")[:200])
                 for s in cand:
                     try:
@@ -339,7 +389,6 @@ class ProfileView(APIView):
                     except Exception:
                         continue
 
-                # De-dupe preserve order
                 seen = set()
                 out = []
                 for x in shared_sets:
@@ -356,13 +405,77 @@ class ProfileView(APIView):
                 "ok": True,
                 "user": {"id": target.id, "username": target.username, "handle": "@" + target.username},
                 "viewSide": view_side,
+                "requestedSide": requested,
+                "allowedSides": allowed_sides,
                 "facet": _facet_dict(facet),
                 "siders": ("Close Vault" if view_side == "close" else siders_count),
                 "viewerSidedAs": viewer_sided_as,
+                "viewerAuthed": viewer_authed,
+                "viewerFollows": bool(viewer_follows),
+                "followers": followers_count,
                 "sharedSets": shared_sets,
             },
             status=status.HTTP_200_OK,
         )
+
+
+@method_decorator(dev_csrf_exempt, name="dispatch")
+class FollowActionView(APIView):
+    """Viewer action: Follow/Unfollow someone. POST /api/follow
+
+    Body:
+      {"username": "@alice", "follow": true|false}
+    """
+
+    def post(self, request):
+        viewer = _user_from_request(request)
+        if not viewer:
+            return Response({"ok": False, "error": "restricted"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        body: Dict[str, Any] = request.data if isinstance(request.data, dict) else {}
+        uname = _normalize_username(body.get("username") or body.get("handle") or "")
+        if not uname:
+            return Response({"ok": False, "error": "missing_username"}, status=status.HTTP_400_BAD_REQUEST)
+
+        want = body.get("follow")
+        follow = bool(want) if isinstance(want, (bool, int)) else str(want or "").strip().lower() in ("1", "true", "yes", "y", "on", "follow")
+
+        User = get_user_model()
+        target = User.objects.filter(username__iexact=uname).first()
+        if not target:
+            return Response({"ok": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if target.id == viewer.id:
+            return Response({"ok": False, "error": "cannot_follow_self"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Respect blocks (allow unfollow; prevent follow when blocked)
+        try:
+            viewer_tok = viewer_id_for_user(viewer)
+            target_tok = "@" + str(getattr(target, "username", "") or "").lower()
+            if target_tok and follow and is_blocked_pair(viewer_tok, target_tok):
+                return Response({"ok": False, "error": "restricted"}, status=status.HTTP_403_FORBIDDEN)
+        except Exception:
+            pass
+
+        if not follow:
+            UserFollow.objects.filter(follower=viewer, target=target).delete()
+            try:
+                cnt = int(UserFollow.objects.filter(target=target).count())
+            except Exception:
+                cnt = None
+            return Response({"ok": True, "following": False, "followers": cnt}, status=status.HTTP_200_OK)
+
+        try:
+            UserFollow.objects.get_or_create(follower=viewer, target=target)
+        except Exception:
+            pass
+
+        try:
+            cnt = int(UserFollow.objects.filter(target=target).count())
+        except Exception:
+            cnt = None
+
+        return Response({"ok": True, "following": True, "followers": cnt}, status=status.HTTP_200_OK)
 
 
 @method_decorator(dev_csrf_exempt, name="dispatch")
@@ -417,6 +530,12 @@ class SideActionView(APIView):
 
         if side not in MEMBER_SIDES:
             return Response({"ok": False, "error": "invalid_side"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # sd_534_close_requires_friends: prevent jumping to Close without Friends first
+        if side == "close":
+            existing = SideMembership.objects.filter(owner=viewer, member=target).first()
+            if not existing or existing.side not in ("friends", "close"): 
+                return Response({"ok": False, "error": "friends_required"}, status=status.HTTP_400_BAD_REQUEST)
 
         obj, _ = SideMembership.objects.update_or_create(
             owner=viewer,

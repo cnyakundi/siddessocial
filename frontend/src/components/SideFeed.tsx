@@ -229,7 +229,7 @@ export function SideFeed() {
     const topic = side === "public" && FLAGS.publicChannels && publicChannel !== "all" ? publicChannel : null;
 
     provider
-      .listPage(side, { topic, limit: PAGE_LIMIT, cursor: nextCursor })
+      .listPage(side, { topic, set: (side !== "public" ? (activeSet || null) : null), limit: PAGE_LIMIT, cursor: nextCursor })
       .then((page) => {
         setRawPosts((prev) => {
           const merged = mergeUnique(prev, page.items || []);
@@ -258,6 +258,7 @@ export function SideFeed() {
     hasMore,
     nextCursor,
     provider,
+    activeSet,
     publicChannel,
     mergeUnique,
   ]);
@@ -307,7 +308,7 @@ export function SideFeed() {
       const topic = side === "public" && FLAGS.publicChannels && publicChannel !== "all" ? publicChannel : null;
 
       provider
-        .listPage(side, { topic, limit: PAGE_LIMIT, cursor: null })
+        .listPage(side, { topic, set: (side !== "public" ? (activeSet || null) : null), limit: PAGE_LIMIT, cursor: null })
         .then((page) => {
           if (!mounted) return;
           setRawPosts(page.items || []);

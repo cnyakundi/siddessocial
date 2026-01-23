@@ -1,0 +1,30 @@
+{
+  "rules": [
+    {
+      "allowed": {
+        "origins": [
+          "https://www.siddes.com",
+          "https://siddes.com",
+          "https://app.siddes.com",
+          "http://localhost:3000",
+          "http://127.0.0.1:3000"
+        ],
+        "methods": [
+          "PUT",
+          "GET",
+          "HEAD"
+        ],
+        "headers": [
+          "*"
+        ]
+      },
+      "id": "Siddes direct uploads",
+      "expose_headers": [
+        "ETag",
+        "Content-Length",
+        "Content-Type"
+      ],
+      "max_age_seconds": 3600
+    }
+  ]
+}

@@ -27,7 +27,9 @@ const ICONS: Record<SideId, React.ComponentType<any>> = {
  * - Active indicator: 1.5px bar on far-left edge of rail
  */
 export function DesktopSideDock() {
-  const { side, setSide } = useSide();
+  const { side, setSide, sideLock } = useSide();
+  const lockedSide = sideLock?.enabled ? sideLock.side : null;
+  const lockReason = sideLock?.enabled ? sideLock.reason : null;
 
   return (
     <aside className="h-screen sticky top-0 bg-white border-r border-gray-100 flex flex-col items-center">
@@ -45,6 +47,7 @@ export function DesktopSideDock() {
           const t = SIDE_THEMES[id];
           const Icon = ICONS[id];
           const isActive = id === side;
+          const allowed = !lockedSide || id === lockedSide;
 
           return (
             <div key={id} className="relative w-full flex justify-center">
@@ -54,16 +57,26 @@ export function DesktopSideDock() {
 
               <button
                 type="button"
-                onClick={() => setSide(id)}
+                disabled={!allowed}
+                onClick={() => {
+                  if (!allowed) return;
+                  setSide(id);
+                }}
                 aria-label={`${meta.label} Side`}
                 aria-current={isActive ? "page" : undefined}
                 title={`${meta.label} Side`}
                 className={cn(
                   "w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-200 relative group",
+                  !allowed ? "opacity-40 cursor-not-allowed" : null,
                   isActive ? cn(t.primaryBg, "text-white shadow-lg scale-110") : "bg-white text-gray-400 hover:bg-gray-50"
                 )}
               >
                 <Icon size={24} strokeWidth={2.5} fill={isActive ? "currentColor" : "none"} />
+                {!allowed ? (
+                  <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-white border border-gray-100 flex items-center justify-center shadow-sm" title={lockReason || "Locked"}>
+                    <Lock size={10} className="text-gray-400" />
+                  </span>
+                ) : null}
                 {/* Tooltip */}
                 <div className="absolute left-16 px-3 py-1.5 bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all pointer-events-none whitespace-nowrap z-50 shadow-xl">
                   {meta.label} Side

@@ -11,6 +11,61 @@ function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
 }
 
+function avatarUrl(seed: string): string {
+  const s = String(seed || "").replace(/^@/, "").trim() || "user";
+  // Dicebear is fine for mocks; replace with real profile media later.
+  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(s)}`;
+}
+
+function MembersPreview({ members, inverted }: { members: string[]; inverted?: boolean }) {
+  const list = Array.isArray(members) ? members.filter(Boolean) : [];
+  if (!list.length) {
+    return (
+      <div className={cn("text-[11px] truncate", inverted ? "text-white/80" : "text-gray-500")}>
+        No members yet
+      </div>
+    );
+  }
+
+  const shown = list.slice(0, 3);
+  const more = Math.max(0, list.length - shown.length);
+
+  return (
+    <div className="mt-1 flex items-center gap-2">
+      <div className="flex -space-x-2">
+        {shown.map((m) => (
+          <div
+            key={m}
+            className={cn(
+              "w-6 h-6 rounded-full border-2 overflow-hidden bg-gray-100 shadow-sm",
+              inverted ? "border-white/40" : "border-white"
+            )}
+            title={m}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={avatarUrl(m)} alt={m} className="w-full h-full object-cover" />
+          </div>
+        ))}
+        {more > 0 ? (
+          <div
+            className={cn(
+              "w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px] font-black",
+              inverted ? "border-white/40 bg-white/10 text-white" : "border-white bg-gray-100 text-gray-600"
+            )}
+            title={`${more} more`}
+          >
+            +{more}
+          </div>
+        ) : null}
+      </div>
+
+      <div className={cn("text-[11px] truncate", inverted ? "text-white/80" : "text-gray-500")}>
+        {list.length} people
+      </div>
+    </div>
+  );
+}
+
 export function SetPickerSheet({
   open,
   onClose,
@@ -50,21 +105,23 @@ export function SetPickerSheet({
         aria-label="Close set picker"
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
         onPointerDown={(e) => {
-        // sd_481_sheet_close_reliability: pointerdown closes reliably on mobile
-        e.preventDefault();
-        onClose();
-      }}
-      onClick={(e) => {
-        e.preventDefault();
-        onClose();
-      }}
+          // sd_481_sheet_close_reliability: pointerdown closes reliably on mobile
+          e.preventDefault();
+          onClose();
+        }}
+        onClick={(e) => {
+          e.preventDefault();
+          onClose();
+        }}
       />
 
       <div className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
         <div className="flex items-center justify-between gap-3 mb-4">
           <div>
             <h3 className="text-lg font-bold text-gray-900">{title}</h3>
-            <div className="text-xs text-gray-500 mt-1">Sets are subgroups inside your current Side.</div>
+            <div className="text-xs text-gray-500 mt-1">
+              Safety: Sets are rooms. You’re posting to the people inside.
+            </div>
           </div>
           <button
             type="button"
@@ -114,10 +171,11 @@ export function SetPickerSheet({
                 <div className="flex items-center gap-3 min-w-0">
                   <span className={cn("w-2.5 h-2.5 rounded-full", isActive ? "bg-white" : theme.bg)} />
                   <div className="min-w-0">
-                    <div className={cn("font-bold truncate", isActive ? "text-white" : "text-gray-900")}>{s.label}</div>
-                    <div className={cn("text-[11px] truncate", isActive ? "text-white/80" : "text-gray-500")}>
-                      {s.members.length ? `${s.members.length} members` : "No members yet"}
+                    <div className={cn("font-bold truncate", isActive ? "text-white" : "text-gray-900")}>
+                      {s.label}
                     </div>
+
+                    <MembersPreview members={s.members} inverted={isActive} />
                   </div>
                 </div>
 
@@ -153,11 +211,7 @@ export function SetPickerSheet({
           </button>
         ) : null}
 
-        <button
-          type="button"
-          onClick={onClose}
-          className="w-full mt-3 py-3 font-semibold text-gray-500 hover:bg-gray-50 rounded-xl"
-        >
+        <button type="button" onClick={onClose} className="w-full mt-3 py-3 font-semibold text-gray-500 hover:bg-gray-50 rounded-xl">
           Cancel
         </button>
       </div>

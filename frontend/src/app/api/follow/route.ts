@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { proxyJson } from "../../auth/_proxy";
+import { proxyJson } from "../auth/_proxy";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -11,13 +11,15 @@ function applySetCookies(resp: NextResponse, setCookies: string[]) {
   }
 }
 
-export async function GET(req: Request, ctx: { params: { username: string } }) {
-  const raw = String(ctx?.params?.username || "");
-  const username = decodeURIComponent(raw);
-  const u = new URL(req.url);
-  const path = "/api/profile/" + encodeURIComponent(username) + (u.search || "");
+export async function POST(req: Request) {
+  let body: any = null;
+  try {
+    body = await req.json();
+  } catch {
+    body = null;
+  }
 
-  const out = await proxyJson(req, path, "GET");
+  const out = await proxyJson(req, "/api/follow", "POST", body);
   if (out instanceof NextResponse) return out;
 
   const { res, data, setCookies } = out;

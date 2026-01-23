@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Home, Inbox, Plus, Layers, User , type LucideIcon} from "lucide-react";
 import { useSide } from "@/src/components/SideProvider";
 import { SIDE_THEMES, type SideId } from "@/src/lib/sides";
+import { getStoredLastPublicTopic, getStoredLastSetForSide } from "@/src/lib/audienceStore";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -125,6 +126,38 @@ export function BottomNav() {
   const { side } = useSide();
   const theme = SIDE_THEMES[side];
 
+  // sd_525: Create inherits the current room (Side + Set/Topic)
+  // - If you are inside a specific Set hub, Create targets that Set
+  // - Otherwise, it uses the last selected Set (private Sides) or Topic (Public)
+  // Note: uses useEffect so localStorage reads never run during SSR
+  const [createHref, setCreateHref] = useState<string>(`/siddes-compose?side=${encodeURIComponent(side)}`);
+
+  useEffect(() => {
+    const base = `/siddes-compose?side=${encodeURIComponent(side)}`;
+    let href = base;
+
+    // Prefer the explicit Set context when on a Set page
+    const m = pathname.match(/^\/siddes-sets\/([^\/]+)/);
+    if (m && side !== "public") {
+      try {
+        const setId = decodeURIComponent(m[1] || "");
+        if (setId) href = `${base}&set=${encodeURIComponent(setId)}`;
+      } catch {}
+      setCreateHref(href);
+      return;
+    }
+
+    if (side === "public") {
+      const topic = getStoredLastPublicTopic();
+      if (topic) href = `${base}&topic=${encodeURIComponent(topic)}`;
+    } else {
+      const lastSet = getStoredLastSetForSide(side);
+      if (lastSet) href = `${base}&set=${encodeURIComponent(lastSet)}`;
+    }
+
+    setCreateHref(href);
+  }, [side, pathname]);
+
   const isHome = pathname === "/siddes-feed" || pathname.startsWith("/siddes-broadcasts");
   const isCompose = pathname.startsWith("/siddes-compose");
   const isSets = pathname.startsWith("/siddes-sets");
@@ -146,7 +179,7 @@ export function BottomNav() {
 
           {/* MAGIC PLUS */}
           <Link
-            href={`/siddes-compose?side=${side}`}
+            href={createHref}
             aria-label="Create"
             className="flex flex-col items-center justify-center gap-1 select-none"
             title="Create"

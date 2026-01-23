@@ -102,7 +102,16 @@ export default function SiddesSettingsPage() {
         />
                 
 
-        <Link href="/siddes-outbox" className="block" data-testid="settings-outbox-link">
+                <Link href="/siddes-settings/prism-people" className="block" data-testid="settings-prism-people-link">
+          <div className="mt-2 flex items-center justify-between gap-4 p-4 rounded-2xl border border-gray-200 bg-white hover:bg-gray-50">
+            <div>
+              <div className="text-sm font-bold text-gray-900">Prism People</div>
+              <div className="text-xs text-gray-500 mt-1">Sort people into Friends / Close / Work. Reversible.</div>
+            </div>
+            <div className="text-xs font-extrabold text-gray-700">Open</div>
+          </div>
+        </Link>
+<Link href="/siddes-outbox" className="block" data-testid="settings-outbox-link">
           <div className="mt-2 flex items-center justify-between gap-4 p-4 rounded-2xl border border-gray-200 bg-white hover:bg-gray-50">
             <div>
               <div className="text-sm font-bold text-gray-900">Outbox</div>
