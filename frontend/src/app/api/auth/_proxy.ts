@@ -157,6 +157,7 @@ function buildProxyHeaders(req: Request, requestId: string): Record<string, stri
   const cookie = req.headers.get("cookie") || "";
   const allowDevViewer = process.env.NODE_ENV !== "production";
   const xViewer = allowDevViewer ? req.headers.get("x-sd-viewer") || "" : "";
+  const sdSide = req.headers.get("x-sd-side") || "";
   const csrf = req.headers.get("x-csrftoken") || "";
   const origin = req.headers.get("origin") || "";
   const referer = req.headers.get("referer") || "";
@@ -174,6 +175,7 @@ function buildProxyHeaders(req: Request, requestId: string): Record<string, stri
   };
   if (cookie) headers.cookie = cookie;
   if (xViewer) headers["x-sd-viewer"] = xViewer;
+  if (sdSide) headers["x-sd-side"] = sdSide;
   if (csrf) headers["x-csrftoken"] = csrf;
   if (origin) headers.origin = origin;
   if (referer) headers.referer = referer;

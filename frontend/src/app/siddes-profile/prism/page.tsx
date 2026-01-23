@@ -95,8 +95,11 @@ export default function SiddesProfilePage() {
     bio: string;
     location: string;
     website: string;
+    coverImage: string;
+    avatarImage: string;
     anthem: { title: string; artist: string };
     pulse: { label: string; text: string };
+    avatarMediaKey?: string;
   }) => {
     const res = await fetch("/api/prism", {
       method: "PATCH",

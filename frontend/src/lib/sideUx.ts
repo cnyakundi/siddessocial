@@ -64,7 +64,7 @@ export const SIDE_UX: Record<SideId, SideUx> = {
   close: {
     meaning: "The Bedroom",
     meaningShort: "Only close people",
-    composerPrompt: "Whisper to your inner circle…",
+    composerPrompt: "Whisper to your close people…",
     tools: ["mic", "camera", "heart"],
     persona: {
       name: "You",

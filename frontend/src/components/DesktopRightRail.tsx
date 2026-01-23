@@ -20,7 +20,7 @@ function cn(...parts: Array<string | undefined | false | null>) {
  *
  * sd_195: declutter + trust hygiene
  * - removed redundant right-rail search (DesktopTopBar already has search)
- * - removed placeholder "Circle Health" panel
+ * - removed placeholder "Context Health" panel
  * - removed dead Privacy/Terms links
  * - simplified set rows (no misleading plus button)
  */

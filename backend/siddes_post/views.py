@@ -827,6 +827,7 @@ class PostReplyCreateView(APIView):
                     notify(
                         viewer_id=author_id,
                         ntype="reply",
+                        side=side,
                         actor_id=viewer,
                         glimpse=text,
                         post_id=post_id,
@@ -978,9 +979,11 @@ class PostLikeView(APIView):
             if author_id and not _same_person(viewer, author_id):
                 from siddes_notifications.service import notify
                 post_text = str(getattr(rec, "text", "") or "") if rec is not None else ""
+                side = str(getattr(rec, "side", "") or "public") if rec is not None else "public"
                 notify(
                     viewer_id=author_id,
                     ntype="like",
+                    side=side,
                     actor_id=viewer,
                     glimpse=post_text,
                     post_id=post_id,
@@ -1193,9 +1196,11 @@ class PostQuoteEchoView(APIView):
             if base_author_id and not _same_person(viewer, base_author_id):
                 from siddes_notifications.service import notify
                 base_text = str(getattr(base, "text", "") or "")
+                base_side = str(getattr(base, "side", "") or "public")
                 notify(
                     viewer_id=base_author_id,
                     ntype="echo",
+                    side=base_side,
                     actor_id=viewer,
                     glimpse=text,
                     post_id=post_id,

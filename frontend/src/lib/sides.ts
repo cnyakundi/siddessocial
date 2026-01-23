@@ -29,7 +29,7 @@ export const SIDES: Record<
   close: {
     id: "close",
     label: "Close",
-    desc: "Inner circle",
+    desc: "Inner room",
     privacyHint: "Visible only to Close members",
     isPrivate: true,
   },

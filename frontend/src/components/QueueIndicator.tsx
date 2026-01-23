@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { flushQueue, loadQueue, countQueued, queueChangedEventName } from "@/src/lib/offlineQueue";
 
 export function QueueIndicator() {
+  const router = useRouter();
   const [count, setCount] = useState(0);
   const [flushing, setFlushing] = useState(false);
 

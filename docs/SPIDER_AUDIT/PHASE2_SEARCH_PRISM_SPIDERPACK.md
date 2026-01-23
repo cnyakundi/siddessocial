@@ -205,7 +205,7 @@ Frontend call site:
   "user": {"id": 2, "username": "bob", "handle": "@bob"},
   "viewSide": "public|friends|close|work",
   "facet": <PrismFacet>,
-  "siders": 123 | "Inner Circle" | null,
+  "siders": 123 | "Close Vault" | null,
   "viewerSidedAs": "friends|close|work" | null,
   "sharedSets": ["string", "string"]
 }

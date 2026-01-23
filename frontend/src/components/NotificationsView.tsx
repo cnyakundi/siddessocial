@@ -129,10 +129,14 @@ export function NotificationsView({ embedded = false }: { embedded?: boolean }) 
   const [restricted, setRestricted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [itemsRaw, setItemsRaw] = useState<NotificationItem[]>([]);
+  const unreadCount = useMemo(() => itemsRaw.filter((n) => !n?.read).length, [itemsRaw]);
+  const canMarkAllRead = !loading && !restricted && !error && unreadCount > 0;
+
 
   const markAllRead = async () => {
+    if (!canMarkAllRead) return;
     try {
-      const res = await fetch("/api/notifications/mark-all-read", { method: "POST" });
+      const res = await fetch("/api/notifications/mark-all-read", { method: "POST", headers: { "x-sd-side": side } });
       if (!res.ok) {
         toast(`Unable to mark read (HTTP ${res.status}).`);
         return;
@@ -154,7 +158,7 @@ export function NotificationsView({ embedded = false }: { embedded?: boolean }) 
       setError(null);
       try {
         // sd_181b: fetch DB-backed notifications
-        const res = await fetch("/api/notifications", { cache: "no-store" });
+        const res = await fetch("/api/notifications", { cache: "no-store", headers: { "x-sd-side": side } });
         if (!alive) return;
 
         // Fail-loud: do not mask 404/500 as "All caught up"
@@ -218,9 +222,13 @@ export function NotificationsView({ embedded = false }: { embedded?: boolean }) 
           <button
             type="button"
             onClick={markAllRead}
-            className="text-xs font-semibold text-gray-500 hover:underline"
+            disabled={!canMarkAllRead}
+            className={cn(
+              "text-xs font-semibold",
+              canMarkAllRead ? "text-gray-500 hover:underline" : "text-gray-300 cursor-not-allowed"
+            )}
           >
-            Mark all read
+            Mark all read{unreadCount ? " (" + unreadCount + ")" : ""}
           </button>
         </div>
 

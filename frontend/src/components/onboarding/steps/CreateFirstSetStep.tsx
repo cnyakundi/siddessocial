@@ -28,7 +28,7 @@ export default function CreateFirstSetStep({
     <div className="flex flex-col min-h-full px-10 pt-32 text-center pb-12">
       <h2 className="text-4xl font-black text-gray-900 tracking-tight mb-4 leading-tight">Create your first Set.</h2>
       <p className="text-gray-400 mb-12 font-medium leading-relaxed">
-        Sets = smaller circles inside a Side.
+        Sets = rooms inside a Side.
         <br />
         They help you post with zero audience mistakes.
       </p>

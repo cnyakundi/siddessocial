@@ -40,7 +40,7 @@ def _actor_label(actor_id: str) -> str:
     return a
 
 
-def notify(*, viewer_id: str, ntype: str, actor_id: str, glimpse: str = "", post_id: Optional[str] = None, post_title: Optional[str] = None) -> None:
+def notify(*, viewer_id: str, side: Optional[str] = None, ntype: str, actor_id: str, glimpse: str = "", post_id: Optional[str] = None, post_title: Optional[str] = None) -> None:
     """Create or refresh a viewer-scoped notification.
 
     - Deterministic id (upsert): one active row per (viewer_id, type, actor, post_id)
@@ -52,6 +52,10 @@ def notify(*, viewer_id: str, ntype: str, actor_id: str, glimpse: str = "", post
     vid = _safe_str(viewer_id)
     if not vid:
         return
+
+    sid = _safe_str(side) or "public"
+    if sid not in ("public", "friends", "close", "work"):
+        sid = "public"
 
     t = _safe_str(ntype)[:16]
     if not t:
@@ -67,13 +71,14 @@ def notify(*, viewer_id: str, ntype: str, actor_id: str, glimpse: str = "", post
     title = _short(title, 80)
     g = _short(g, 220)
 
-    key = f"{vid}|{t}|{actor}|{pid or ''}"
+    key = f"{vid}|{sid}|{t}|{actor}|{pid or ''}"
     nid = "n_" + hashlib.sha1(key.encode("utf-8")).hexdigest()[:16]
 
     now = float(time.time())
 
     defaults = {
         "viewer_id": vid,
+        "side": sid,
         "type": t,
         "actor": actor,
         "glimpse": g,

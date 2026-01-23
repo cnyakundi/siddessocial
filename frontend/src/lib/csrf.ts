@@ -72,15 +72,16 @@ export function patchFetchForCsrf(): void {
   const origFetch: typeof fetch = w.fetch.bind(w);
 
   w.fetch = async (input: any, init?: RequestInit) => {
+    let url = "";
+    let method = "GET";
     try {
       // Determine URL
-      let url = "";
       if (typeof input === "string") url = input;
       else if (input && typeof input.url === "string") url = input.url;
       else url = String(input || "");
 
       // Determine method
-      const method =
+      method =
         (init && (init as any).method) ||
         (input && typeof input.method === "string" ? input.method : "GET") ||
         "GET";
@@ -95,14 +96,42 @@ export function patchFetchForCsrf(): void {
           );
           if (!headers.has("x-csrftoken")) headers.set("x-csrftoken", token);
 
-          return origFetch(input, { ...(init || {}), headers });
+          try {
+            return await origFetch(input, { ...(init || {}), headers });
+          } catch (e: any) {
+            // For same-origin API calls, return a JSON error response instead of crashing the app.
+            try {
+              if (isApiUrl(url)) {
+                const detail = String(e?.message || e || "network_error");
+                return new Response(JSON.stringify({ ok: false, error: "network_error", detail }), {
+                  status: 503,
+                  headers: { "content-type": "application/json" },
+                });
+              }
+            } catch {}
+            throw e;
+          }
         }
       }
     } catch {
       // fall through
     }
 
-    return origFetch(input, init as any);
+    try {
+      return await origFetch(input, init as any);
+    } catch (e: any) {
+      // For same-origin API calls, return a JSON error response instead of crashing the app.
+      try {
+        if (isApiUrl(url)) {
+          const detail = String(e?.message || e || "network_error");
+          return new Response(JSON.stringify({ ok: false, error: "network_error", detail }), {
+            status: 503,
+            headers: { "content-type": "application/json" },
+          });
+        }
+      } catch {}
+      throw e;
+    }
   };
 
   patched = true;

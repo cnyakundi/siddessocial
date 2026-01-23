@@ -13,6 +13,8 @@ class Notification(models.Model):
 
     viewer_id = models.CharField(max_length=64, db_index=True)
 
+    side = models.CharField(max_length=16, default="public", db_index=True)
+
     # reply | like | mention
     type = models.CharField(max_length=16, db_index=True)
 

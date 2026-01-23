@@ -64,10 +64,10 @@ export default function AddPeopleStep({
   }
 
   const heading = useMemo(() => {
-    if (sideId === "close") return "Add your inner circle ❤️";
+    if (sideId === "close") return "Add your close people ❤️";
     if (sideId === "friends") return "Pick your people";
     if (sideId === "work") return "Add your team";
-    return "Bring your circle";
+    return "Bring your people";
   }, [sideId]);
 
   async function loadSuggestions() {

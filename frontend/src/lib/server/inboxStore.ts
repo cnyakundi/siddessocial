@@ -266,7 +266,7 @@ function seedOnce() {
     },
     {
       id: "t_close2",
-      title: "Inner Circle",
+      title: "Close Vault",
       lockedSide: "close",
       time: "1d",
       messages: [

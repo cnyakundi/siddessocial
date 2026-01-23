@@ -1,5 +1,7 @@
 "use client";
 
+import { getStoredActiveSide } from "./sideStore";
+
 /**
  * Notifications Activity (singleton) — deterministic unread badge for the bell.
  *
@@ -64,12 +66,22 @@ function computeUnread(items: NotifItem[]): number {
   return unread;
 }
 
+function _notifSide(): string {
+  try {
+    const s = getStoredActiveSide();
+    const v = String(s || "").trim();
+    if (v === "public" || v === "friends" || v === "close" || v === "work") return v;
+  } catch {}
+  return "friends";
+}
+
 export async function refreshNotificationsActivity(opts?: { force?: boolean }): Promise<void> {
   if (inFlight) return inFlight;
 
   inFlight = (async () => {
     try {
-      const res = await fetch("/api/notifications", { cache: "no-store" });
+      const side = _notifSide();
+      const res = await fetch("/api/notifications", { cache: "no-store", headers: { "x-sd-side": side } });
       if (!res.ok) return;
 
       const j = (await res.json().catch(() => ({}))) as NotifsResp;

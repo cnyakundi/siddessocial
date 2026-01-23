@@ -1,14 +1,88 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Inbox, Plus, Layers, User , type LucideIcon} from "lucide-react";
 import { useSide } from "@/src/components/SideProvider";
-import { SIDE_THEMES } from "@/src/lib/sides";
+import { SIDE_THEMES, type SideId } from "@/src/lib/sides";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
+}
+
+function initialsFromName(nameOrHandle: string) {
+  const s = String(nameOrHandle || '').replace(/^@/, '').trim();
+  if (!s) return 'U';
+  const parts = s.split(/\s+/).filter(Boolean);
+  if (parts.length === 1) return (parts[0][0] || 'U').toUpperCase();
+  return ((parts[0][0] || 'U') + (parts[parts.length - 1][0] || 'U')).toUpperCase();
+}
+
+function MeTabLink({ active, side }: { active: boolean; side: SideId }) {
+  const [img, setImg] = useState<string | null>(null);
+  const [initials, setInitials] = useState<string>('U');
+
+  useEffect(() => {
+    let cancelled = false;
+    const cacheKey = '__sd_prism_cache_v1';
+
+    const applyPayload = (j: any) => {
+      try {
+        const items = Array.isArray(j?.items) ? j.items : [];
+        const f = items.find((x: any) => x?.side === side) || null;
+        const name = String(f?.displayName || j?.user?.username || 'You');
+        const av = (f?.avatarImage && String(f.avatarImage).trim()) || '';
+        if (!cancelled) {
+          setInitials(initialsFromName(name));
+          setImg(av || null);
+        }
+      } catch {}
+    };
+
+    try {
+      const raw = window.sessionStorage.getItem(cacheKey);
+      if (raw) applyPayload(JSON.parse(raw));
+    } catch {}
+
+    fetch('/api/prism', { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((j) => {
+        try {
+          window.sessionStorage.setItem(cacheKey, JSON.stringify(j));
+        } catch {}
+        applyPayload(j);
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [side]);
+
+  return (
+    <Link
+      href="/siddes-profile"
+      aria-label="Me"
+      className={cn(
+        'flex flex-col items-center justify-center gap-1 select-none active:scale-95 transition-transform',
+        active ? 'text-gray-900' : 'text-gray-400'
+      )}
+    >
+      <div
+        className={cn(
+          'w-6 h-6 rounded-full overflow-hidden flex items-center justify-center text-[10px] font-black border-2',
+          active ? 'border-gray-900' : 'border-transparent',
+          img ? 'bg-gray-100' : 'bg-gray-200'
+        )}
+      >
+        {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : initials}
+      </div>
+      <span className={cn('text-[9px] font-black uppercase tracking-tighter', active ? 'opacity-100' : 'opacity-60')}>
+        Me
+      </span>
+    </Link>
+  );
 }
 
 function TabLink({
@@ -100,7 +174,7 @@ export function BottomNav() {
 
           <TabLink href="/siddes-inbox" label="Inbox" Icon={Inbox} active={isInbox} />
 
-          <TabLink href="/siddes-profile" label="Me" Icon={User} active={isMe} />
+          <MeTabLink active={isMe} side={side} />
         </div>
       </div>
     </nav>

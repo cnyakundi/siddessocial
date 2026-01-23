@@ -97,6 +97,43 @@ def _viewer_ctx(request) -> Tuple[bool, str, str]:
 
 # sd_384_media: allow viewers who can view the attached post to fetch private media
 
+def _parse_me_id(raw: str) -> Optional[int]:
+    s = str(raw or "").strip().lower()
+    if not s:
+        return None
+    if s.startswith("me_"):
+        s = s[3:]
+    try:
+        return int(s)
+    except Exception:
+        return None
+
+
+def _viewer_can_view_prism_avatar(viewer_id: str, owner_viewer_id: str, side: str) -> bool:
+    """Allow access to private avatar media for viewers who can see the owner's facet."""
+    v_uid = _parse_me_id(viewer_id)
+    o_uid = _parse_me_id(owner_viewer_id)
+    s = str(side or "").strip().lower()
+    if not v_uid or not o_uid or not s:
+        return False
+    if v_uid == o_uid:
+        return True
+    if s == "public":
+        return True
+    try:
+        from django.contrib.auth import get_user_model
+        from siddes_prism.models import SideMembership
+
+        User = get_user_model()
+        owner = User.objects.filter(id=o_uid).first()
+        viewer = User.objects.filter(id=v_uid).first()
+        if not owner or not viewer:
+            return False
+        return SideMembership.objects.filter(owner=owner, member=viewer, side=s).exists()
+    except Exception:
+        return False
+
+
 def _viewer_can_view_post(viewer_id: str, post_id: str) -> bool:
     vid = str(viewer_id or "").strip()
     pid = str(post_id or "").strip()
@@ -310,8 +347,13 @@ class MediaSignedUrlView(APIView):
 
             if obj.owner_id != viewer:
                 pid = str(getattr(obj, "post_id", "") or "").strip()
-                if not pid or not _viewer_can_view_post(viewer, pid):
-                    return Response({'ok': False, 'error': 'forbidden'}, status=status.HTTP_403_FORBIDDEN)
+                if pid.startswith("prism_avatar:"):
+                    side = pid.split(":", 1)[1].strip().lower() if ":" in pid else ""
+                    if not _viewer_can_view_prism_avatar(viewer, obj.owner_id, side):
+                        return Response({'ok': False, 'error': 'forbidden'}, status=status.HTTP_403_FORBIDDEN)
+                else:
+                    if not pid or not _viewer_can_view_post(viewer, pid):
+                        return Response({'ok': False, 'error': 'forbidden'}, status=status.HTTP_403_FORBIDDEN)
 
         ok, cfg = _r2_cfg()
         if not ok:

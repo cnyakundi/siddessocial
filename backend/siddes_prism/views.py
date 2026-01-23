@@ -144,6 +144,24 @@ def _ensure_facets(user) -> None:
         PrismFacet.objects.get_or_create(user=user, side=side, defaults=defaults.get(side, {}))
 
 
+def _avatar_url_for_facet(f: PrismFacet) -> Optional[str]:
+    """Resolve avatar URL for a facet.
+
+    Uploaded avatar is stored as an R2 key (avatar_media_key). We return a /m/* URL.
+    Public side avatars may be public; private sides remain private (short-lived tokens).
+    """
+    k = str(getattr(f, "avatar_media_key", "") or "").strip()
+    if k:
+        try:
+            from siddes_media.token_urls import build_media_url
+            is_pub = str(getattr(f, "side", "") or "").strip().lower() == "public"
+            return build_media_url(k, is_public=bool(is_pub))
+        except Exception:
+            return "/m/" + k.lstrip("/")
+    raw = str(getattr(f, "avatar_image_url", "") or "").strip()
+    return raw or None
+
+
 def _facet_dict(f: PrismFacet) -> Dict[str, Any]:
     return {
         "side": f.side,
@@ -153,6 +171,8 @@ def _facet_dict(f: PrismFacet) -> Dict[str, Any]:
         "location": f.location or None,
         "website": f.website or None,
         "coverImage": (f.cover_image_url or None),
+        "avatarMediaKey": (str(getattr(f, "avatar_media_key", "") or "").strip() or None),
+        "avatarImage": _avatar_url_for_facet(f),
         "anthem": (
             {"title": f.anthem_title, "artist": f.anthem_artist}
             if (f.anthem_title or f.anthem_artist)
@@ -217,6 +237,8 @@ class PrismView(APIView):
         _set_str("website", "website", 160)
 
         _set_str("cover_image_url", "coverImage", 300)
+        _set_str("avatar_image_url", "avatarImage", 300)
+        _set_str("avatar_media_key", "avatarMediaKey", 512)
         anthem = body.get("anthem") if isinstance(body.get("anthem"), dict) else None
         if anthem is not None:
             at = str(anthem.get("title") or "").strip()[:96]
@@ -335,7 +357,7 @@ class ProfileView(APIView):
                 "user": {"id": target.id, "username": target.username, "handle": "@" + target.username},
                 "viewSide": view_side,
                 "facet": _facet_dict(facet),
-                "siders": ("Inner Circle" if view_side == "close" else siders_count),
+                "siders": ("Close Vault" if view_side == "close" else siders_count),
                 "viewerSidedAs": viewer_sided_as,
                 "sharedSets": shared_sets,
             },

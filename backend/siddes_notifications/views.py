@@ -63,6 +63,10 @@ class NotificationsListView(APIView):
 
 
         qs = Notification.objects.filter(viewer_id=viewer).order_by("-created_at")[:50]
+        side = str(request.headers.get("x-sd-side") or request.query_params.get("side") or "").strip().lower()
+        if side not in ("public", "friends", "close", "work"):
+            side = "public"
+        qs = qs.filter(side=side)
         items: list[Dict[str, Any]] = []
         for n in qs:
             try:
@@ -99,7 +103,10 @@ class NotificationsMarkAllReadView(APIView):
 
         now = float(time.time())
         try:
-            updated = Notification.objects.filter(viewer_id=viewer, read_at__isnull=True).update(read_at=now)
+            side = str(request.headers.get("x-sd-side") or request.query_params.get("side") or "").strip().lower()
+            if side not in ("public", "friends", "close", "work"):
+                side = "public"
+            updated = Notification.objects.filter(viewer_id=viewer, side=side, read_at__isnull=True).update(read_at=now)
         except Exception:
             updated = 0
 

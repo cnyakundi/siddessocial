@@ -1,6 +1,5 @@
 "use client";
-
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Globe,
@@ -20,14 +19,21 @@ import {
   Copy,
   Pencil,
 } from "lucide-react";
-
 import type { SideId } from "@/src/lib/sides";
 import { SIDES, SIDE_THEMES } from "@/src/lib/sides";
-
+import { signUpload, uploadToSignedUrl, commitUpload } from "@/src/lib/mediaClient";
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
 }
-
+function errorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string") return err;
+  try {
+    return JSON.stringify(err);
+  } catch {
+    return String(err);
+  }
+}
 export type PrismFacet = {
   side: SideId;
   displayName: string;
@@ -36,18 +42,18 @@ export type PrismFacet = {
   location?: string | null;
   website?: string | null;
   coverImage?: string | null;
+  avatarImage?: string | null;
   anthem?: { title: string; artist: string } | null;
   pulse?: { label: string; text: string } | null;
   updatedAt?: string | null;
+  avatarMediaKey?: string | null;
 };
-
 export type PrismOwnerPayload = {
   ok: boolean;
   user?: { id: number; username: string; handle: string };
   items?: PrismFacet[];
   error?: string;
 };
-
 export type ProfileViewPayload = {
   ok: boolean;
   user?: { id: number; username: string; handle: string };
@@ -58,21 +64,18 @@ export type ProfileViewPayload = {
   sharedSets?: string[];
   error?: string;
 };
-
 const SIDE_ICON: Record<SideId, React.ComponentType<{ size?: string | number | undefined }>> = {
   public: Globe,
   friends: Users,
   close: Lock,
   work: Briefcase,
 };
-
 const COVER: Record<SideId, string> = {
   public: "bg-gradient-to-r from-blue-600 to-blue-400",
   friends: "bg-gradient-to-r from-emerald-600 to-emerald-400",
   close: "bg-gradient-to-r from-rose-600 to-rose-400",
   work: "bg-gradient-to-r from-slate-700 to-slate-500",
 };
-
 function initialsFrom(nameOrHandle: string) {
   const s = (nameOrHandle || "").replace(/^@/, "").trim();
   if (!s) return "U";
@@ -80,19 +83,16 @@ function initialsFrom(nameOrHandle: string) {
   if (parts.length === 1) return (parts[0][0] || "U").toUpperCase();
   return ((parts[0][0] || "U") + (parts[parts.length - 1][0] || "U")).toUpperCase();
 }
-
 function safeWebsiteHref(website: string) {
   const w = (website || "").trim();
   if (!w) return "#";
   if (w.startsWith("http://") || w.startsWith("https://")) return w;
   return "https://" + w;
 }
-
 function privacyTruth(viewSide: SideId) {
   if (viewSide === "public") return "Public identity";
   return `Visible to ${SIDES[viewSide].label} Side`;
 }
-
 export function SideWithSheet(props: {
   open: boolean;
   onClose: () => void;
@@ -101,7 +101,6 @@ export function SideWithSheet(props: {
   onPick: (side: SideId | "public") => Promise<void> | void;
 }) {
   const { open, onClose, current, busy, onPick } = props;
-
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
@@ -110,15 +109,12 @@ export function SideWithSheet(props: {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
-
   if (!open) return null;
-
   const choices: Array<{ side: SideId; title: string; desc: string }> = [
     { side: "friends", title: "Friends", desc: "Casual, private." },
-    { side: "close", title: "Close", desc: "Inner circle." },
+    { side: "close", title: "Close", desc: "Close vault." },
     { side: "work", title: "Work", desc: "Professional context." },
   ];
-
   return (
     <div className="fixed inset-0 z-[98] flex items-end justify-center md:items-center">
       <button type="button" className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} aria-label="Close" />
@@ -132,7 +128,6 @@ export function SideWithSheet(props: {
             <X size={18} className="text-gray-500" />
           </button>
         </div>
-
         <div className="space-y-2">
           {choices.map((c) => {
             const t = SIDE_THEMES[c.side];
@@ -167,7 +162,6 @@ export function SideWithSheet(props: {
               </button>
             );
           })}
-
           <button
             type="button"
             disabled={!!busy}
@@ -188,7 +182,6 @@ export function SideWithSheet(props: {
             </div>
           </button>
         </div>
-
         <button type="button" onClick={onClose} className="w-full mt-6 py-3 font-semibold text-gray-500 hover:bg-gray-50 rounded-xl">
           Cancel
         </button>
@@ -196,7 +189,6 @@ export function SideWithSheet(props: {
     </div>
   );
 }
-
 export function PrismFacetEditSheet(props: {
   open: boolean;
   onClose: () => void;
@@ -210,26 +202,30 @@ export function PrismFacetEditSheet(props: {
     location: string;
     website: string;
     coverImage: string;
+    avatarImage: string;
     anthem: { title: string; artist: string };
     pulse: { label: string; text: string };
+    avatarMediaKey?: string;
   }) => Promise<void>;
 }) {
   const { open, onClose, side, facet, onSave } = props;
-
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-
   const [displayName, setDisplayName] = useState("");
   const [headline, setHeadline] = useState("");
   const [bio, setBio] = useState("");
   const [location, setLocation] = useState("");
   const [website, setWebsite] = useState("");
   const [coverImage, setCoverImage] = useState<string>("" );
+  const [avatarMediaKey, setAvatarMediaKey] = useState<string>("");
+  const [avatarPreview, setAvatarPreview] = useState<string>("");
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement | null>(null);
+  const [avatarImage, setAvatarImage] = useState<string>("" );
   const [anthemTitle, setAnthemTitle] = useState("");
   const [anthemArtist, setAnthemArtist] = useState("");
   const [pulseLabel, setPulseLabel] = useState("");
   const [pulseText, setPulseText] = useState("");
-
   useEffect(() => {
     if (!open) return;
     setErr(null);
@@ -239,12 +235,14 @@ export function PrismFacetEditSheet(props: {
     setLocation(String(facet?.location || ""));
     setWebsite(String(facet?.website || ""));
     setCoverImage(String((facet as any)?.coverImage || ""));
+    setAvatarMediaKey(String((facet as any)?.avatarMediaKey || ""));
+    setAvatarPreview(String((facet as any)?.avatarImage || ""));
+    setAvatarImage(String((facet as any)?.avatarImage || ""));
     setAnthemTitle(String(facet?.anthem?.title || ""));
     setAnthemArtist(String(facet?.anthem?.artist || ""));
     setPulseLabel(String(facet?.pulse?.label || ""));
     setPulseText(String(facet?.pulse?.text || ""));
   }, [open, facet]);
-
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
@@ -253,11 +251,8 @@ export function PrismFacetEditSheet(props: {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
-
   if (!open) return null;
-
   const theme = SIDE_THEMES[side];
-
   const saveNow = async () => {
     setErr(null);
     setSaving(true);
@@ -270,6 +265,7 @@ export function PrismFacetEditSheet(props: {
         location: location.trim(),
         website: website.trim(),
         coverImage: coverImage.trim(),
+        avatarImage: avatarImage.trim(),
         anthem: { title: anthemTitle.trim(), artist: anthemArtist.trim() },
         pulse: { label: pulseLabel.trim(), text: pulseText.trim() },
       });
@@ -280,7 +276,6 @@ export function PrismFacetEditSheet(props: {
       setSaving(false);
     }
   };
-
   return (
     <div className="fixed inset-0 z-[99] flex items-end justify-center md:items-center">
       <button type="button" className="absolute inset-0 bg-black/40" onClick={onClose} aria-label="Close" />
@@ -296,7 +291,6 @@ export function PrismFacetEditSheet(props: {
             </button>
           </div>
         </div>
-
         {err ? (
           <div className="px-4 pt-4">
             <div className="p-3 rounded-2xl border border-red-200 bg-red-50 text-red-700 text-sm">
@@ -305,24 +299,110 @@ export function PrismFacetEditSheet(props: {
             </div>
           </div>
         ) : null}
-
         <div className="px-4 py-4 space-y-4">
+        {/* Avatar photo (upload) */}
+        <div className="p-4 rounded-2xl border border-gray-200 bg-white flex items-center gap-4">
+          <div
+            className={cn(
+              "w-16 h-16 rounded-full bg-gray-100 overflow-hidden border-2 border-white shadow-sm flex items-center justify-center font-black text-lg select-none ring-2",
+              theme.ring
+            )}
+          >
+            {avatarPreview ? (
+              <img src={avatarPreview} alt="Avatar preview" className="w-full h-full object-cover" />
+            ) : (
+              initialsFrom(displayName || (facet?.displayName || "You"))
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-bold text-gray-900">Avatar photo</div>
+            <div className="text-[11px] text-gray-500 mt-1">Upload a face/photo for this Side only.</div>
+            <div className="text-[11px] text-gray-400 mt-1">Safety: this does not change your other personas.</div>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
+                e.target.value = "";
+                if (!file) return;
+                setErr(null);
+                setAvatarBusy(true);
+                try {
+                  const localPreview = URL.createObjectURL(file);
+                  setAvatarPreview(localPreview);
+                  const signed = await signUpload(file, "image");
+                  const putUrl = String(signed?.upload?.url || "");
+                  const key = String(signed?.media?.r2Key || "");
+                  if (!signed?.ok || !putUrl || !key) throw new Error(signed?.error || "sign_failed");
+                  const ok = await uploadToSignedUrl(putUrl, file, signed?.upload?.headers || undefined);
+                  if (!ok) throw new Error("upload_failed");
+                  const committed = await commitUpload(key, {
+                    isPublic: side === "public",
+                    postId: "prism_avatar:" + side,
+                  });
+                  if (!committed?.ok) throw new Error(committed?.error || "commit_failed");
+                  setAvatarMediaKey(key);
+                  await onSave({ side, avatarMediaKey: key } as any);
+                } catch (err) {
+                  setErr(errorMessage(err) || "Avatar upload failed.");
+                } finally {
+                  setAvatarBusy(false);
+                }
+              }}
+            />
+            <button
+              type="button"
+              disabled={avatarBusy}
+              onClick={() => avatarInputRef.current?.click()}
+              className={cn(
+                "px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest border transition-all",
+                avatarBusy ? "bg-gray-100 text-gray-300 border-gray-200 cursor-not-allowed" : "bg-white text-gray-900 border-gray-200 hover:bg-gray-50"
+              )}
+            >
+              {avatarBusy ? "Uploading…" : "Upload"}
+            </button>
+            <button
+              type="button"
+              disabled={avatarBusy || !avatarMediaKey}
+              onClick={async () => {
+                setErr(null);
+                setAvatarBusy(true);
+                try {
+                  setAvatarMediaKey("");
+                  setAvatarPreview("");
+                  await onSave({ side, avatarMediaKey: "" } as any);
+                } catch (err) {
+                  setErr(errorMessage(err) || "Remove failed.");
+                } finally {
+                  setAvatarBusy(false);
+                }
+              }}
+              className={cn(
+                "px-3 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest border transition-all",
+                (!avatarMediaKey || avatarBusy) ? "bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed" : "bg-gray-50 text-gray-500 border-gray-200 hover:text-gray-900"
+              )}
+            >
+              Remove
+            </button>
+          </div>
+        </div>
           <div>
             <div className="text-sm font-bold text-gray-900 mb-1">Display name</div>
             <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900" />
           </div>
-
           <div>
             <div className="text-sm font-bold text-gray-900 mb-1">Headline</div>
             <input value={headline} onChange={(e) => setHeadline(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900" />
           </div>
-
           <div>
             <div className="text-sm font-bold text-gray-900 mb-1">Bio</div>
             <textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={4} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900" />
             <div className="text-[11px] text-gray-500 mt-1">Keep it calm. No cross-Side leakage.</div>
           </div>
-
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <div className="text-sm font-bold text-gray-900 mb-1">Location</div>
@@ -332,7 +412,16 @@ export function PrismFacetEditSheet(props: {
               <div className="text-sm font-bold text-gray-900 mb-1">Website</div>
               <input value={website} onChange={(e) => setWebsite(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900" />
             </div>
-
+          <div>
+            <div className="text-sm font-bold text-gray-900 mb-1">Avatar image URL</div>
+            <input
+              value={avatarImage}
+              onChange={(e) => setAvatarImage(e.target.value)}
+              placeholder="https://..."
+              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900"
+            />
+            <div className="text-[11px] text-gray-500 mt-1">Optional. Used for your Side-aware avatar (Me button). Scoped to this identity.</div>
+          </div>
           <div>
             <div className="text-sm font-bold text-gray-900 mb-1">Cover image URL</div>
             <input
@@ -343,9 +432,7 @@ export function PrismFacetEditSheet(props: {
             />
             <div className="text-[11px] text-gray-500 mt-1">Optional. Scoped to this identity.</div>
           </div>
-
           </div>
-
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <div className="text-sm font-bold text-gray-900 mb-1">Anthem title</div>
@@ -356,17 +443,14 @@ export function PrismFacetEditSheet(props: {
               <input value={anthemArtist} onChange={(e) => setAnthemArtist(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900" />
             </div>
           </div>
-
           <div>
             <div className="text-sm font-bold text-gray-900 mb-1">Pulse label</div>
             <input value={pulseLabel} onChange={(e) => setPulseLabel(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900" />
           </div>
-
           <div>
             <div className="text-sm font-bold text-gray-900 mb-1">Pulse text</div>
             <textarea value={pulseText} onChange={(e) => setPulseText(e.target.value)} rows={3} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900" />
           </div>
-
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose} disabled={saving} className="flex-1 py-3 rounded-xl font-extrabold text-gray-700 border border-gray-200 hover:bg-gray-50">
               Cancel
@@ -380,7 +464,6 @@ export function PrismFacetEditSheet(props: {
     </div>
   );
 }
-
 export function PrismIdentityCard(props: {
   viewSide: SideId;
   handle: string;
@@ -390,21 +473,19 @@ export function PrismIdentityCard(props: {
   actions?: React.ReactNode;
 }) {
   const { viewSide, handle, facet, siders, sharedSets, actions } = props;
-
   const theme = SIDE_THEMES[viewSide];
   const Icon = SIDE_ICON[viewSide];
-
   const name = facet.displayName || handle || "User";
+  const avatarUrl = String((facet as any)?.avatarImage || "").trim();
   const headline = (facet.headline || "").trim();
   const bio = (facet.bio || "").trim();
   const location = (facet.location || "").trim();
   const website = (facet.website || "").trim();
   const coverImage = (facet.coverImage || "").trim();
+  const avatarImage = (String((facet as any)?.avatarImage || "") || "").trim();
   const anthem = facet.anthem;
   const pulse = facet.pulse;
-
   const truth = privacyTruth(viewSide);const isClose = viewSide === "close";
-
   const showSiders = isClose || (typeof siders !== "undefined" && siders !== null);
 return (
     <div className={cn("w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden border", theme.border)}>
@@ -421,7 +502,6 @@ return (
           </div>
         </div>
       </div>
-
       <div className="px-6 relative pb-6">
         {/* Avatar */}
         <div className="relative -mt-10 mb-4 inline-block">
@@ -433,20 +513,22 @@ return (
             aria-hidden="true"
             title={name}
           >
-            {initialsFrom(name)}
+            {avatarImage ? (
+              <img src={avatarImage} alt="" className="w-full h-full object-cover" />
+            ) : (
+              initialsFrom(name)
+            )}
           </div>
           <div className={cn("absolute bottom-1 right-1 w-8 h-8 rounded-full border-[3px] border-white flex items-center justify-center text-white shadow-sm", theme.primaryBg)}>
             <Icon size={14} />
           </div>
         </div>
-
         {/* Identity */}
         <div className="mb-4">
           <h1 className="text-2xl font-black text-gray-900 tracking-tight leading-tight">{name}</h1>
           <div className="text-sm text-gray-500 font-semibold mt-1">{handle}</div>
           {headline ? <div className="text-sm text-gray-700 font-semibold mt-2">{headline}</div> : null}
         </div>
-
         {/* Anthem */}
         {anthem && (anthem.title || anthem.artist) ? (
           <div className="mb-5 flex items-center gap-3 p-2 bg-gray-50 rounded-xl border border-gray-100 max-w-xs">
@@ -460,18 +542,15 @@ return (
             <PlayCircle size={20} className="text-gray-300" />
           </div>
         ) : null}
-
         {/* Bio */}
         <div className="mb-5">
           <p className={cn("text-sm leading-relaxed", bio ? "text-gray-800" : "text-gray-400")}>{bio || "No bio yet."}</p>
-
           <div className="flex flex-wrap gap-y-2 gap-x-4 text-xs text-gray-500 font-medium mt-3">
             {location ? (
               <div className="flex items-center gap-1">
                 <MapPin size={14} /> {location}
               </div>
             ) : null}
-
             {website ? (
               <a
                 href={safeWebsiteHref(website)}
@@ -482,16 +561,13 @@ return (
                 <LinkIcon size={14} /> {website}
               </a>
             ) : null}
-
             <div className="flex items-center gap-1 text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
               <Shield size={10} /> {truth}
             </div>
           </div>
         </div>
-
         {/* Actions */}
         {actions ? <div className="mb-6">{actions}</div> : null}
-
         {/* Pulse */}
         {pulse && (pulse.label || pulse.text) ? (
           <div className="mb-6">
@@ -506,19 +582,17 @@ return (
             </div>
           </div>
         ) : null}
-
         {/* Siders + Shared Sets */}
         {(showSiders || (sharedSets && sharedSets.length > 0)) ? (
           <div className="py-4 border-t border-gray-100 flex items-start justify-between gap-4">
             {showSiders ? (
               <div className="flex flex-col">
-                <span className="text-lg font-black text-gray-900">{isClose ? "Inner Circle" : String(siders ?? "")}</span>
+                <span className="text-lg font-black text-gray-900">{isClose ? "Close Vault" : String(siders ?? "")}</span>
                 <span className="text-xs text-gray-500 font-medium">{isClose ? "Private Set" : "Siders"}</span>
               </div>
             ) : (
               <div />
             )}
-
             {sharedSets && sharedSets.length > 0 ? (
               <div className="flex flex-col items-end">
                 <div className="text-xs font-extrabold text-gray-900 mb-2">Shared Sets</div>
@@ -540,10 +614,8 @@ return (
     </div>
   );
 }
-
 export function CopyLinkButton({ href, label }: { href: string; label?: string }) {
   const [copied, setCopied] = useState(false);
-
   const doCopy = async () => {
     try {
       await navigator.clipboard.writeText(href);
@@ -553,20 +625,17 @@ export function CopyLinkButton({ href, label }: { href: string; label?: string }
       // best-effort
     }
   };
-
   return (
     <button type="button" onClick={doCopy} className="px-4 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-extrabold text-sm hover:bg-gray-200 transition-all flex items-center gap-2">
       <Copy size={16} /> {copied ? "Copied" : label || "Copy link"}
     </button>
   );
 }
-
 export function SideActionButtons(props: {
   viewerSidedAs: SideId | null;
   onOpenSheet: () => void;
 }) {
   const { viewerSidedAs, onOpenSheet } = props;
-
   if (viewerSidedAs && viewerSidedAs !== "public") {
     const t = SIDE_THEMES[viewerSidedAs];
     return (
@@ -582,7 +651,6 @@ export function SideActionButtons(props: {
       </button>
     );
   }
-
   return (
     <button
       type="button"
@@ -593,7 +661,6 @@ export function SideActionButtons(props: {
     </button>
   );
 }
-
 export function EditFacetButton({ onClick }: { onClick: () => void }) {
   return (
     <button type="button" onClick={onClick} className="flex-1 py-2.5 rounded-xl font-extrabold text-sm text-white shadow-md active:scale-95 transition-all flex items-center justify-center gap-2 bg-gray-900 hover:bg-black">
@@ -601,12 +668,9 @@ export function EditFacetButton({ onClick }: { onClick: () => void }) {
     </button>
   );
 }
-
 export function OwnerTopRow(props: { username: string; previewSide: SideId; setPreviewSide: (s: SideId) => void }) {
   const { username, previewSide, setPreviewSide } = props;
-
   const sides: SideId[] = ["public", "friends", "close", "work"];
-
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-4">
       <div className="flex items-start justify-between gap-3">
@@ -614,12 +678,10 @@ export function OwnerTopRow(props: { username: string; previewSide: SideId; setP
           <div className="text-sm font-black text-gray-900">Preview identities</div>
           <div className="text-xs text-gray-500 mt-1">Only you can toggle. Everyone else sees one identity chosen by relationship.</div>
         </div>
-
         <Link href={`/u/${encodeURIComponent(username)}`} className="px-3 py-2 rounded-xl text-sm font-extrabold border border-gray-200 bg-white hover:bg-gray-50">
           View as others
         </Link>
       </div>
-
       <div className="mt-3 flex flex-wrap gap-2">
         {sides.map((s) => {
           const t = SIDE_THEMES[s];

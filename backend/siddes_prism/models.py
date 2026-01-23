@@ -28,6 +28,11 @@ class PrismFacet(models.Model):
     website = models.CharField(max_length=160, blank=True, default="")
     cover_image_url = models.CharField(max_length=300, blank=True, default="")
 
+    avatar_image_url = models.CharField(max_length=300, blank=True, default="")
+
+    avatar_media_key = models.CharField(max_length=512, blank=True, default="")
+
+
     anthem_title = models.CharField(max_length=96, blank=True, default="")
     anthem_artist = models.CharField(max_length=96, blank=True, default="")
 

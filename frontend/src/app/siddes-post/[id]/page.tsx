@@ -11,7 +11,6 @@ import { PostCard } from "@/src/components/PostCard";
 import { FLAGS } from "@/src/lib/flags";
 import type { PublicCalmUiState } from "@/src/lib/publicCalmUi";
 import { EVT_PUBLIC_CALM_UI_CHANGED, loadPublicCalmUi } from "@/src/lib/publicCalmUi";
-import { ReplyComposer } from "@/src/components/ReplyComposer";
 import { ContentColumn } from "@/src/components/ContentColumn";
 import { toast } from "@/src/lib/toast";
 import { getStubViewerCookie, isStubMe } from "@/src/lib/stubViewerClient";
@@ -27,7 +26,7 @@ import {
 
 type Found = { post: FeedPost; side: SideId } | null;
 
-type StoredReply = { id: string; postId: string; authorId: string; author?: string; handle?: string; text: string; createdAt: number; clientKey?: string | null };
+type StoredReply = { id: string; postId: string; authorId: string; author?: string; handle?: string; text: string; createdAt: number; clientKey?: string | null; parentId?: string | null; depth?: number };
 
 type ReplySendError = { kind: "validation" | "restricted" | "network" | "server" | "unknown"; message: string };
 
@@ -115,7 +114,7 @@ function QueuedReplies({ postId }: { postId: string }) {
   );
 }
 
-function SentReplies({ postId }: { postId: string }) {
+function SentReplies({ postId, onReplyTo }: { postId: string; onReplyTo?: (parentId: string, label: string) => void }) {
   const [replies, setReplies] = useState<StoredReply[]>([]);
   const [loading, setLoading] = useState(false);
   const [viewerId, setViewerId] = useState<string | null>(null);
@@ -187,16 +186,32 @@ function SentReplies({ postId }: { postId: string }) {
           {replies.map((r) => {
             const mine = viewerId ? r.authorId === viewerId : isStubMe(r.authorId);
             const who = mine ? "You" : (r.author || r.handle || r.authorId || "Unknown");
+            const depth = Math.max(0, Math.min(3, Number((r as any).depth || 0)));
+            const isNested = depth > 0;
+            const indentPx = depth * 20;
+
             return (
-              <div key={r.id} className="p-3 rounded-2xl border border-gray-200 bg-white">
-                <div className="flex items-start gap-3">
-                  <ReplyAvatar label={who} tone="neutral" />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2 text-xs mb-1">
-                      <span className="font-extrabold text-gray-900 truncate">{who}</span>
-                      <span className="tabular-nums text-gray-400">{new Date(r.createdAt).toLocaleTimeString()}</span>
+              <div key={r.id} className="relative" style={{ marginLeft: indentPx }}>
+                {isNested ? <div className="absolute -left-3 top-0 bottom-8 w-px bg-gray-200" /> : null}
+                <div className="p-3 rounded-2xl border border-gray-200 bg-white">
+                  <div className="flex items-start gap-3">
+                    <ReplyAvatar label={who} tone="neutral" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2 text-xs mb-1">
+                        <span className="font-extrabold text-gray-900 truncate">{who}</span>
+                        <span className="tabular-nums text-gray-400">{new Date(r.createdAt).toLocaleTimeString()}</span>
+                      </div>
+                      <div className="text-sm text-gray-900 leading-relaxed">{r.text}</div>
+                      <div className="mt-2 flex items-center gap-3 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">
+                        <button
+                          type="button"
+                          className="hover:text-gray-900"
+                          onClick={() => onReplyTo?.(r.id, who)}
+                        >
+                          Reply
+                        </button>
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-900 leading-relaxed">{r.text}</div>
                   </div>
                 </div>
               </div>
@@ -261,16 +276,126 @@ function PostDetailInner() {
   const [found, setFound] = useState<Found>(null);
   const [loading, setLoading] = useState(false);
 
-  const [replyOpen, setReplyOpen] = useState(false);
+  const [replyText, setReplyText] = useState("");
+  const [replyTo, setReplyTo] = useState<{ parentId: string | null; label: string } | null>(null);
+  const replyInputRef = React.useRef<HTMLInputElement | null>(null);
   const [replyBusy, setReplyBusy] = useState(false);
   const [replyError, setReplyError] = useState<ReplySendError | null>(null);
   const [queuedCount, setQueuedCount] = useState(0);
 
-  useEffect(() => {
-    if (!replyOpen) return;
+const sendReplyNow = useCallback(async () => {
+  if (!found) return;
+
+  const postSide = found.side;
+  if (activeSide !== postSide) {
+    toast.error(`Enter ${SIDES[postSide].label} to reply.`);
+    return;
+  }
+
+  const t = String(replyText || "").trim();
+  const parentId = replyTo?.parentId ? String(replyTo.parentId) : null;
+
+  if (!t) {
+    setReplyError({ kind: "validation", message: "Write something first." });
+    return;
+  }
+
+  if (t.length > 2000) {
+    setReplyError({ kind: "validation", message: "Too long. Max 2000 characters." });
+    return;
+  }
+
+  if (replyBusy) return;
+  setReplyBusy(true);
+  setReplyError(null);
+
+  const onlineNow = typeof navigator !== "undefined" ? navigator.onLine : true;
+
+  // Offline: queue and keep UI truthful.
+  if (!onlineNow) {
+    const queued = enqueueReply(found.side, found.post.id, t, parentId);
+    setReplyText("");
+    setReplyTo(null);
     setReplyBusy(false);
-    setReplyError(null);
-  }, [replyOpen]);
+    toast.undo("Reply queued (offline).", () => removeQueuedItem(queued.id));
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/post/${encodeURIComponent(found.post.id)}/reply`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ text: t, parentId, client_key: `reply_${Date.now().toString(36)}` }),
+    });
+
+    if (res.ok) {
+      const data = await res.json().catch(() => null);
+      if (!data || data.ok !== false) {
+        setReplyText("");
+        setReplyTo(null);
+        setReplyBusy(false);
+        toast.success("Reply sent.");
+        try {
+          window.dispatchEvent(new Event(`sd.post.replies.changed:${found.post.id}`));
+        } catch {
+          // ignore
+        }
+        return;
+      }
+    }
+
+    const j = await res.json().catch(() => null);
+    const code = j && typeof j.error === "string" ? j.error : "request_failed";
+
+    if (res.status === 400) {
+      if (code === "too_long" && j && typeof j.max === "number") {
+        setReplyError({ kind: "validation", message: `Too long. Max ${j.max} characters.` });
+      } else if (code === "empty_text") {
+        setReplyError({ kind: "validation", message: "Write something first." });
+      } else {
+        setReplyError({ kind: "validation", message: "Couldn’t send — check your reply." });
+      }
+      setReplyBusy(false);
+      return;
+    }
+
+    if (res.status === 401) {
+      setReplyError({ kind: "restricted", message: "Login required to reply." });
+      setReplyBusy(false);
+      return;
+    }
+
+    if (res.status === 403) {
+      const hint = j && typeof j.error === "string" ? String(j.error) : "restricted";
+      if (hint === "public_trust_low" && j && typeof j.min_trust === "number") {
+        setReplyError({ kind: "restricted", message: `Public replies require Trust L${j.min_trust}+.` });
+      } else if (hint === "rate_limited" && j && typeof j.retry_after_ms === "number") {
+        const sec = Math.max(1, Math.round(Number(j.retry_after_ms) / 1000));
+        setReplyError({ kind: "restricted", message: `Slow down — try again in ${sec}s.` });
+      } else {
+        setReplyError({ kind: "restricted", message: "Restricted: you can’t reply here." });
+      }
+      setReplyBusy(false);
+      return;
+    }
+
+    if (res.status >= 500) {
+      setReplyError({ kind: "server", message: "Server error — reply not sent. Try again." });
+      setReplyBusy(false);
+      return;
+    }
+
+    setReplyError({ kind: "unknown", message: "Couldn’t send reply — try again." });
+    setReplyBusy(false);
+    return;
+  } catch {
+    setReplyError({ kind: "network", message: "Network error — reply not sent. Try again." });
+    setReplyBusy(false);
+    return;
+  }
+}, [found, activeSide, replyText, replyTo, replyBusy]);
+
+
 
   // Public Visual Calm (counts) — hydration-safe: read localStorage after mount.
   const [publicCalm, setPublicCalm] = useState<PublicCalmUiState | null>(null);
@@ -287,9 +412,17 @@ function PostDetailInner() {
     };
   }, [id]);
 
-  useEffect(() => {
-    if (shouldOpenReply(sp)) setReplyOpen(true);
-  }, [sp]);
+useEffect(() => {
+  if (!shouldOpenReply(sp)) return;
+  // Focus the sticky composer when opened via ?reply=1
+  window.setTimeout(() => {
+    try {
+      replyInputRef.current?.focus();
+    } catch {
+      // ignore
+    }
+  }, 50);
+}, [sp]);
 
   // Hydration-safe: Visual Calm preference (localStorage) after mount.
   useEffect(() => {
@@ -450,7 +583,7 @@ function PostDetailInner() {
   };
 
   return (
-    <div className="py-4">
+    <div className="py-4 pb-28">
       <ContentColumn>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">
@@ -475,7 +608,7 @@ function PostDetailInner() {
             <button
               type="button"
               className="px-4 py-2 rounded-full bg-gray-900 text-white text-sm font-extrabold hover:opacity-90"
-              onClick={() => setReplyOpen(true)}
+              onClick={() => { setReplyTo(null); try { replyInputRef.current?.focus(); } catch {} }}
             >
               Reply
             </button>
@@ -510,7 +643,7 @@ function PostDetailInner() {
             ) : (
               <button
                 type="button"
-                onClick={() => setReplyOpen(true)}
+                onClick={() => { setReplyTo(null); try { replyInputRef.current?.focus(); } catch {} }}
                 className="px-3 py-2 rounded-full border border-gray-200 bg-white text-sm font-extrabold text-gray-800 hover:bg-gray-100"
               >
                 Add reply
@@ -519,122 +652,84 @@ function PostDetailInner() {
           </div>
 
           <QueuedReplies postId={found.post.id} />
-          <SentReplies postId={found.post.id} />
+<SentReplies
+  postId={found.post.id}
+  onReplyTo={(parentId, label) => {
+    setReplyTo({ parentId, label });
+    try {
+      replyInputRef.current?.focus();
+    } catch {
+      // ignore
+    }
+  }}
+/>
         </div>
       </ContentColumn>
 
-      <ReplyComposer
-        open={replyOpen}
-        onClose={() => {
-          setReplyOpen(false);
-          setReplyBusy(false);
-          setReplyError(null);
-        }}
-        post={found.post}
-        side={found.side}
-        busy={replyBusy}
-        error={replyError}
-        maxLen={2000}
-        onSend={async (text) => {
-          const t = String(text || "").trim();
-          if (!t) {
-            setReplyError({ kind: "validation", message: "Write something first." });
-            return;
-          }
+<div className="fixed bottom-0 left-0 right-0 z-[70] bg-white/95 backdrop-blur border-t border-gray-100">
+  <ContentColumn className="py-3">
+    {mismatch ? (
+      <div className="flex items-center justify-between gap-3">
+        <div className="text-sm font-bold text-gray-700">
+          Enter <span className={theme.text}>{postMeta.label}</span> to reply.
+        </div>
+        <button
+          type="button"
+          className={cn("px-4 py-2 rounded-full text-white text-sm font-extrabold hover:opacity-90", theme.primaryBg)}
+          onClick={enterSide}
+        >
+          Enter {postMeta.label}
+        </button>
+      </div>
+    ) : (
+      <div className="space-y-2">
+        {replyError ? (
+          <div className="text-xs font-extrabold text-rose-600">{replyError.message}</div>
+        ) : null}
 
-          if (t.length > 2000) {
-            setReplyError({ kind: "validation", message: "Too long. Max 2000 characters." });
-            return;
-          }
+        {replyTo ? (
+          <div className="flex items-center justify-between gap-3 text-[10px] font-extrabold uppercase tracking-widest text-gray-400">
+            <span className="truncate">Replying to {replyTo.label}</span>
+            <button
+              type="button"
+              className="px-3 py-1 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200"
+              onClick={() => setReplyTo(null)}
+            >
+              Clear
+            </button>
+          </div>
+        ) : null}
 
-          if (replyBusy) return;
-          setReplyBusy(true);
-          setReplyError(null);
-
-          const onlineNow = typeof navigator !== "undefined" ? navigator.onLine : true;
-
-          // Offline: queue and close (undo).
-          if (!onlineNow) {
-            const queued = enqueueReply(found.side, found.post.id, t);
-            setReplyOpen(false);
-            setReplyBusy(false);
-            toast.undo("Reply queued (offline).", () => removeQueuedItem(queued.id));
-            return;
-          }
-
-          try {
-            const res = await fetch(`/api/post/${encodeURIComponent(found.post.id)}/reply`, {
-              method: "POST",
-              headers: { "content-type": "application/json" },
-              body: JSON.stringify({ text: t, client_key: `reply_${Date.now().toString(36)}` }),
-            });
-
-            if (res.ok) {
-              const data = await res.json().catch(() => null);
-              if (!data || data.ok !== false) {
-                setReplyOpen(false);
-                setReplyBusy(false);
-                toast.success("Reply sent.");
-                try {
-                  window.dispatchEvent(new Event(`sd.post.replies.changed:${found.post.id}`));
-                } catch {
-                  // ignore
-                }
-                return;
+        <div className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 focus-within:bg-white focus-within:border-gray-200 transition-all shadow-inner">
+          <input
+            ref={replyInputRef}
+            value={replyText}
+            onChange={(e) => setReplyText(e.target.value)}
+            placeholder="Write a reply…"
+            className="flex-1 bg-transparent outline-none text-sm font-bold placeholder-gray-300"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                sendReplyNow();
               }
-            }
-
-            const j = await res.json().catch(() => null);
-            const code = j && typeof j.error === "string" ? j.error : "request_failed";
-
-            if (res.status === 400) {
-              if (code === "too_long" && j && typeof j.max === "number") {
-                setReplyError({ kind: "validation", message: `Too long. Max ${j.max} characters.` });
-              } else if (code === "empty_text") {
-                setReplyError({ kind: "validation", message: "Write something first." });
-              } else {
-                setReplyError({ kind: "validation", message: "Couldn’t send — check your reply." });
-              }
-              setReplyBusy(false);
-              return;
-            }
-
-            if (res.status === 401) {
-              setReplyError({ kind: "restricted", message: "Login required to reply." });
-              setReplyBusy(false);
-              return;
-            }
-
-            if (res.status === 403) {
-              const hint = j && typeof j.error === "string" ? String(j.error) : "restricted";
-              if (hint === "public_trust_low" && j && typeof j.min_trust === "number") {
-                setReplyError({ kind: "restricted", message: `Public replies require Trust L${j.min_trust}+.` });
-              } else if (hint === "rate_limited" && j && typeof j.retry_after_ms === "number") {
-                const sec = Math.max(1, Math.round(Number(j.retry_after_ms) / 1000));
-                setReplyError({ kind: "restricted", message: `Slow down — try again in ${sec}s.` });
-              } else {
-                setReplyError({ kind: "restricted", message: "Restricted: you can’t reply here." });
-              }
-              setReplyBusy(false);
-              return;
-            }
-
-            if (res.status >= 500) {
-              setReplyError({ kind: "server", message: "Server error — reply not sent. Try again." });
-              setReplyBusy(false);
-              return;
-            }
-
-            setReplyError({ kind: "unknown", message: "Couldn’t send reply — try again." });
-            setReplyBusy(false);
-            return;
-          } catch {
-            setReplyError({ kind: "network", message: "Network error — reply not sent. Try again." });
-            setReplyBusy(false);
-            return;
-          }
-        }}
-      />
+            }}
+          />
+          <button
+            type="button"
+            onClick={sendReplyNow}
+            disabled={replyBusy || !replyText.trim()}
+            className={cn(
+              "px-4 py-2 rounded-full text-sm font-extrabold text-white",
+              (replyBusy || !replyText.trim()) ? "bg-gray-200 cursor-not-allowed" : theme.primaryBg
+            )}
+          >
+            {replyBusy ? "Sending…" : "Send"}
+          </button>
+        </div>
+      </div>
+    )}
+  </ContentColumn>
+</div>
 
 </div>
   );
@@ -647,3 +742,4 @@ export default function SiddesPostDetailPage() {
     </Suspense>
   );
 }
+

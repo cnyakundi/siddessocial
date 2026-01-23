@@ -11,12 +11,12 @@ import { DesktopAirlockOverlay } from "@/src/components/DesktopAirlockOverlay";i
 import { DesktopSideDock } from "@/src/components/DesktopSideDock";
 import { DesktopWorkspaceNav } from "@/src/components/DesktopWorkspaceNav";
 import { DesktopTopBar } from "@/src/components/DesktopTopBar";
-import { DesktopRightRail } from "@/src/components/DesktopRightRail";
-
+import { DesktopContextInspectorRail } from "@/src/components/DesktopContextInspectorRail";
 import { PanicBanner } from "@/src/components/PanicBanner";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [notifsOpen, setNotifsOpen] = useState(false);
+  const [inspectorExpanded, setInspectorExpanded] = useState(false);
   const pathname = usePathname() || "/";
 
   const CHROME_HIDDEN_PREFIXES = [
@@ -62,7 +62,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Desktop (Command Center) */}
-      <div className="hidden lg:grid w-full max-w-[1480px] mx-auto lg:grid-rows-[80px,1fr] lg:grid-cols-[80px,256px,minmax(0,760px)] xl:grid-cols-[80px,256px,minmax(0,760px),360px]">
+      <div className={`hidden lg:grid w-full max-w-[1480px] mx-auto lg:grid-rows-[80px,1fr] lg:grid-cols-[80px,256px,minmax(0,760px)] ${inspectorExpanded ? "xl:grid-cols-[80px,256px,minmax(0,760px),360px]" : "xl:grid-cols-[80px,256px,minmax(0,760px),72px]"}`}>
         {/* Side dock (threshold controls) */}
         <div className="row-span-2">
           <DesktopSideDock />
@@ -85,7 +85,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* Right rail (xl-only) */}
         <div className="hidden xl:block col-start-4 row-start-2">
-          <DesktopRightRail />
+          <DesktopContextInspectorRail expanded={inspectorExpanded} onExpandedChange={setInspectorExpanded} />
         </div>
       </div>
     </div>
