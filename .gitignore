@@ -107,3 +107,4 @@ ops/deploy/frontend.env.prod.local
 
 # Docker production env (do not commit)
 ops/docker/.env.prod
+siddes_login_debug.zip
