@@ -25,7 +25,6 @@ export default function SiddesAccountPage() {
   const [data, setData] = useState<MePayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
-  const prismEnabled = process.env.NODE_ENV !== "production"; // Prism is DEV-only until backed by real server profile/personas
 
   useEffect(() => {
     let mounted = true;
@@ -88,9 +87,16 @@ export default function SiddesAccountPage() {
             href="/siddes-profile"
             className="rounded-2xl border border-gray-200 bg-white hover:bg-gray-50 p-4"
           >
-            <div className="text-sm font-extrabold text-gray-900">{prismEnabled ? "Prism Identity" : "Profile"}</div>
-            <div className="text-xs text-gray-500 mt-1">{prismEnabled ? "How you appear in each Side" : "Your identity & account"}</div>
-          </Link>
+            <div className="text-sm font-extrabold text-gray-900">Prism Identity</div>
+            <div className="text-xs text-gray-500 mt-1">How you appear in each Side</div>
+          </Link><Link
+  href="/siddes-profile/account/signin-methods"
+  className="rounded-2xl border border-gray-200 bg-white hover:bg-gray-50 p-4"
+>
+  <div className="text-sm font-extrabold text-gray-900">Sign-in methods</div>
+  <div className="text-xs text-gray-500 mt-1">Passkeys, Apple, Google, phone</div>
+</Link>
+
           <Link
             href="/siddes-profile/account/password"
             className="rounded-2xl border border-gray-200 bg-white hover:bg-gray-50 p-4"
@@ -114,6 +120,15 @@ export default function SiddesAccountPage() {
             <div className="text-sm font-extrabold text-gray-900">Export</div>
             <div className="text-xs text-gray-500 mt-1">Download your data</div>
           </Link>
+
+          <Link
+            href="/siddes-profile/siders"
+            className="rounded-2xl border border-gray-200 bg-white hover:bg-gray-50 p-4"
+          >
+            <div className="text-sm font-extrabold text-gray-900">Access list</div>
+            <div className="text-xs text-gray-500 mt-1">Who can see you in Friends / Close / Work</div>
+          </Link>
+
 
           <Link
             href="/siddes-profile/account/danger"

@@ -633,7 +633,7 @@ export default function SiddesSetHubPage({ params }: { params: { id: string } })
 
               <div className="space-y-3">
                 {posts.map((p: any) => (
-                  <PostCard key={(p as any).id} post={p as any}  side={item ? item.side : side} />
+                  <PostCard key={(p as any).id} post={p as any}  side={item ? item.side : side} variant="row" />
                 ))}
               </div>
 

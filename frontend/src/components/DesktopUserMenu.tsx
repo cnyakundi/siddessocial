@@ -2,7 +2,7 @@
 
 import React, { useEffect } from "react";
 import Link from "next/link";
-import { LogOut, Settings, User, Link as LinkIcon, Grid3X3, FileText } from "lucide-react";
+import { LogOut, User, Link as LinkIcon, Grid3X3, FileText } from "lucide-react";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -27,8 +27,6 @@ export function DesktopUserMenu({
   }, [open, onClose]);
 
   if (!open) return null;
-
-  const prismEnabled = process.env.NODE_ENV !== "production"; // Prism is DEV-only until backed by real server profile/personas
 
   const onLogout = async () => {
     try {
@@ -57,10 +55,10 @@ export function DesktopUserMenu({
 
         <div className="p-2">
           <Link href="/siddes-profile" className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-gray-50 text-sm font-bold text-gray-700">
-            <User size={16} className="text-gray-500" /> {prismEnabled ? "Prism Profile" : "Profile"}
+            <User size={16} className="text-gray-500" /> Prism Identity
           </Link>
           <Link href="/siddes-profile/account" className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-gray-50 text-sm font-bold text-gray-700">
-            <FileText size={16} className="text-gray-500" /> Account &amp; session
+            <FileText size={16} className="text-gray-500" /> Account
           </Link>
           <Link href="/siddes-sets" className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-gray-50 text-sm font-bold text-gray-700">
             <Grid3X3 size={16} className="text-gray-500" /> Sets
@@ -68,10 +66,7 @@ export function DesktopUserMenu({
           <Link href="/siddes-invites" className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-gray-50 text-sm font-bold text-gray-700">
             <LinkIcon size={16} className="text-gray-500" /> Invites
           </Link>
-          <Link href="/siddes-profile/account" className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-gray-50 text-sm font-bold text-gray-700">
-            <Settings size={16} className="text-gray-500" /> Settings
-          </Link>
-        </div>
+</div>
 
         <div className="p-2 border-t border-gray-100">
           <button

@@ -92,6 +92,110 @@ def _audit(*, request, actor_id: str, action: str, target_type: str, target_id: 
         return
 
 
+
+def _revoke_private_access_on_block(*, viewer_token: str, target_token: str) -> None:
+    """Best-effort safety: blocking revokes private access edges.
+
+    Effects (best-effort; must never raise):
+    - Delete SideMembership edges in BOTH directions.
+    - Remove each user from the other's Sets (both JSON + normalized table if present).
+
+    NOTE: This function intentionally does NOT restore anything on unblock.
+    """
+
+    try:
+        from django.contrib.auth import get_user_model
+        from siddes_backend.identity import parse_viewer_user_id, normalize_handle, viewer_aliases
+        from siddes_prism.models import SideMembership
+        from siddes_sets.models import SiddesSet, SiddesSetMember
+    except Exception:
+        return
+
+    def _safe_list(x: object) -> list[str]:
+        try:
+            return [str(v).strip() for v in (x or []) if str(v).strip()]
+        except Exception:
+            return []
+
+    def _purge_member_from_sets(*, owner_ids: list[str], member_aliases: list[str]) -> None:
+        if not owner_ids or not member_aliases:
+            return
+
+        # Normalized table (best-effort)
+        try:
+            SiddesSetMember.objects.filter(set__owner_id__in=owner_ids, member_id__in=member_aliases).delete()
+        except Exception:
+            pass
+
+        # JSON members list (payload parity)
+        try:
+            qs = SiddesSet.objects.filter(owner_id__in=owner_ids)
+            for st in qs.iterator():
+                members = st.members if isinstance(st.members, list) else []
+                members_s = [str(m).strip() for m in members if str(m).strip()]
+                new = [m for m in members_s if m not in member_aliases]
+                if new != members_s:
+                    st.members = new
+                    st.save(update_fields=["members", "updated_at"])
+        except Exception:
+            return
+
+    try:
+        vtok = str(viewer_token or "").strip()
+        ttok = str(target_token or "").strip()
+        if not vtok or not ttok:
+            return
+
+        v_uid = parse_viewer_user_id(vtok)
+        if v_uid is None:
+            # If we can't map the blocker to a real user, we can't revoke SideMembership.
+            # Still attempt Sets cleanup via tokens.
+            v_alias = list(viewer_aliases(vtok) or {vtok})
+            t_alias = list(viewer_aliases(ttok) or {ttok})
+            if vtok.startswith("me_") and "me" not in v_alias:
+                v_alias.append("me")
+            if ttok.startswith("me_") and "me" not in t_alias:
+                t_alias.append("me")
+            _purge_member_from_sets(owner_ids=_safe_list(v_alias), member_aliases=_safe_list(t_alias))
+            _purge_member_from_sets(owner_ids=_safe_list(t_alias), member_aliases=_safe_list(v_alias))
+            return
+
+        User = get_user_model()
+        viewer_user = User.objects.filter(id=v_uid).first()
+        if viewer_user is None:
+            return
+
+        # Resolve target user.
+        t_user = None
+        t_uid = parse_viewer_user_id(ttok)
+        if t_uid is not None:
+            t_user = User.objects.filter(id=t_uid).first()
+        else:
+            h = normalize_handle(ttok)
+            if h:
+                uname = h[1:]
+                t_user = User.objects.filter(username__iexact=uname).first()
+
+        if t_user is not None:
+            SideMembership.objects.filter(owner=viewer_user, member=t_user).delete()
+            SideMembership.objects.filter(owner=t_user, member=viewer_user).delete()
+
+        # Token-based Set cleanup (both directions)
+        v_alias = list(viewer_aliases(vtok) or {vtok})
+        t_alias = list(viewer_aliases(ttok) or {ttok})
+
+        # Include legacy dev owner token for safety (seeded sets use owner_id="me").
+        if vtok.startswith("me_") and "me" not in v_alias:
+            v_alias.append("me")
+        if ttok.startswith("me_") and "me" not in t_alias:
+            t_alias.append("me")
+
+        _purge_member_from_sets(owner_ids=_safe_list(v_alias), member_aliases=_safe_list(t_alias))
+        _purge_member_from_sets(owner_ids=_safe_list(t_alias), member_aliases=_safe_list(v_alias))
+    except Exception:
+        return
+
+
 @method_decorator(dev_csrf_exempt, name="dispatch")
 class BlocksView(APIView):
     throttle_scope = "safety_block"
@@ -125,6 +229,8 @@ class BlocksView(APIView):
             return Response({"ok": False, "error": "cannot_block_self"}, status=status.HTTP_400_BAD_REQUEST)
 
         UserBlock.objects.get_or_create(blocker_id=viewer, blocked_token=target)
+
+        _revoke_private_access_on_block(viewer_token=viewer, target_token=target)
         return Response({"ok": True, "blocked": True, "target": target}, status=status.HTTP_200_OK)
 
 

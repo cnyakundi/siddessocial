@@ -1,21 +1,9 @@
 import { NextResponse } from "next/server";
 import { proxyJson } from "../../../_proxy";
+import { applyProxyCookies } from "../../../_cookie";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
-
-function applySetCookies(resp: NextResponse, setCookies: string[]) {
-  for (const sc of setCookies || []) {
-    if (!sc) continue;
-    resp.headers.append("set-cookie", sc);
-  }
-}
-
-function dropCookieByName(setCookies: string[], name: string): string[] {
-  const n = String(name || "").toLowerCase();
-  if (!n) return setCookies || [];
-  return (setCookies || []).filter((c) => !String(c || "").toLowerCase().trim().startsWith(n + "="));
-}
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
@@ -28,19 +16,6 @@ export async function POST(req: Request) {
     headers: { "cache-control": "no-store" },
   });
 
-  const session = data?.session;
-  const sessName = String(session?.name || "sessionid");
-
-  applySetCookies(resp, dropCookieByName(setCookies || [], sessName));
-
-  if (session?.name && session?.value) {
-    resp.cookies.set(String(session.name), String(session.value), {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-    });
-  }
-
+  applyProxyCookies(resp, data, setCookies || []);
   return resp;
 }

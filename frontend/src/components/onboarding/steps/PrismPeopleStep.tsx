@@ -91,6 +91,10 @@ export default function PrismPeopleStep({
   const [fillFriends, setFillFriends] = useState(false);
   const [createSets, setCreateSets] = useState(false);
 
+  const [sensitiveConfirmOpen, setSensitiveConfirmOpen] = useState(false); // sd_532_sensitive_confirm
+  const [sensitiveCounts, setSensitiveCounts] = useState<{ close: number; work: number; total: number }>({ close: 0, work: 0, total: 0 }); // sd_532_sensitive_confirm
+
+
   function toast(m: string) {
     setToastMsg(m);
     setToastOn(true);
@@ -216,7 +220,7 @@ export default function PrismPeopleStep({
     return { total, selected, people: people.size };
   }, [matches.length, selectedGroups]);
 
-  async function applyAndContinue() {
+  async function applyAndContinue(forceConfirmed: boolean = false) {
     setErr(null);
     setBusy(true);
 
@@ -244,15 +248,50 @@ export default function PrismPeopleStep({
         }
       }
 
-      // 2) Apply side edges (sequential, calm)
       const entries = Array.from(assignments.entries());
+      let closeN = 0;
+      let workN = 0;
+      for (const [, s] of entries) {
+        if (s === "close") closeN++;
+        if (s === "work") workN++;
+      }
+
+      // sd_532_sensitive_confirm: require explicit user confirmation before granting Close/Work access
+      if (!forceConfirmed && (closeN > 0 || workN > 0)) {
+        setSensitiveCounts({ close: closeN, work: workN, total: entries.length });
+        setSensitiveConfirmOpen(true);
+        setBusy(false);
+        return;
+      }
+
+      setSensitiveConfirmOpen(false);
+
+      // 2) Apply side edges (sequential, calm)
       for (let i = 0; i < entries.length; i++) {
         const [handle, side] = entries[i];
         try {
+          // Close requires Friends first (server rule). Do it automatically.
+          if (side === "close") {
+            try {
+              const r0 = await fetch("/api/side", {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ username: handle, side: "friends" }),
+              });
+              await r0.json().catch(() => ({}));
+            } catch {
+              // ignore
+            }
+          }
+
           const r = await fetch("/api/side", {
             method: "POST",
             headers: { "content-type": "application/json" },
-            body: JSON.stringify({ username: handle, side }),
+            body: JSON.stringify({
+              username: handle,
+              side,
+              confirm: side === "close" || side === "work" ? true : undefined, // sd_530 align
+            }),
           });
           await r.json().catch(() => ({}));
         } catch {
@@ -290,11 +329,75 @@ export default function PrismPeopleStep({
     }
   }
 
+
   const canApply = !busy && !syncing && (selectedGroups.length > 0 || fillFriends);
 
   return (
     <div className="flex flex-col min-h-full px-10 pt-28 text-center pb-12">
       <Toast message={toastMsg} visible={toastOn} />
+
+
+      {/* sd_532_sensitive_confirm: Close/Work grant confirmation */}
+      {sensitiveConfirmOpen ? (
+        <div className="fixed inset-0 z-[96] flex items-end justify-center md:items-center">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+            onClick={() => !busy && setSensitiveConfirmOpen(false)}
+            aria-label="Close"
+          />
+          <div className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
+            <div className="text-lg font-black text-gray-900">Confirm private access</div>
+            <div className="text-xs text-gray-500 mt-1 leading-relaxed">
+              You’re about to place people into your <span className="font-black text-gray-900">Close</span> and/or <span className="font-black text-gray-900">Work</span> Side.
+              That grants them access to your private identities and posts.
+            </div>
+
+            <div className="mt-4 space-y-2">
+              {sensitiveCounts.close > 0 ? (
+                <div className="p-4 rounded-2xl border border-gray-200 bg-rose-50">
+                  <div className="text-xs font-black text-rose-700">Close</div>
+                  <div className="text-sm font-extrabold text-gray-900 mt-0.5">{sensitiveCounts.close} people</div>
+                </div>
+              ) : null}
+              {sensitiveCounts.work > 0 ? (
+                <div className="p-4 rounded-2xl border border-gray-200 bg-slate-50">
+                  <div className="text-xs font-black text-slate-700">Work</div>
+                  <div className="text-sm font-extrabold text-gray-900 mt-0.5">{sensitiveCounts.work} people</div>
+                </div>
+              ) : null}
+              <div className="text-[11px] text-gray-500">
+                Total changes: <span className="font-black text-gray-900">{sensitiveCounts.total}</span>
+              </div>
+            </div>
+
+            <div className="mt-3 text-[11px] text-gray-600 leading-relaxed">
+              This does <span className="font-black">not</span> unlock their private identities for you.
+              It only changes what <span className="font-black">they</span> can access of <span className="font-black">you</span>.
+            </div>
+
+            <div className="mt-5 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setSensitiveConfirmOpen(false)}
+                className="flex-1 py-3 rounded-xl bg-white border border-gray-200 text-gray-800 font-extrabold text-sm hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSensitiveConfirmOpen(false);
+                  applyAndContinue(true);
+                }}
+                className="flex-1 py-3 rounded-xl bg-gray-900 text-white font-extrabold text-sm shadow-md active:scale-95 transition-all"
+              >
+                Grant access
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <div className="inline-flex items-center justify-center gap-2 text-xs font-black uppercase tracking-[0.22em] text-gray-400 mb-4">
         <Sparkles size={16} /> Prism People

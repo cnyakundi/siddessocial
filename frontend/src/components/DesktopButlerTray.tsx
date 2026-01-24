@@ -21,85 +21,9 @@ function cn(...parts: Array<string | undefined | false | null>) {
 
 type TabId = "alerts" | "context";
 
-function BroadcastUpdates({ onClose }: { onClose: () => void }) {
-  const { side } = useSide();
-  const [items, setItems] = useState<Array<any> | null>(null);
-
-  useEffect(() => {
-    if (side !== "public") return;
-    let mounted = true;
-
-    fetch("/api/broadcasts/unread", { cache: "no-store" })
-      .then((r) => r.json())
-      .then((d) => {
-        if (!mounted) return;
-        setItems(Array.isArray(d?.items) ? d.items : []);
-      })
-      .catch(() => {
-        if (!mounted) return;
-        setItems([]);
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, [side]);
-
-  if (side !== "public") return null;
-
-  if (items === null) {
-    return (
-      <div className="p-4 rounded-2xl border border-gray-100 bg-gray-50 mb-4">
-        <div className="text-xs font-extrabold uppercase tracking-widest text-gray-400">
-          Broadcast updates
-        </div>
-        <div className="mt-2 text-sm text-gray-500">Loading...</div>
-      </div>
-    );
-  }
-
-  if (!items.length) return null;
-
-  return (
-    <div className="p-4 rounded-2xl border border-gray-100 bg-white mb-4">
-      <div className="flex items-center justify-between">
-        <div className="text-xs font-extrabold uppercase tracking-widest text-gray-400">
-          Broadcast updates
-        </div>
-        <Link
-          href="/siddes-feed"
-          onClick={onClose}
-          className="text-xs font-bold text-gray-900 hover:underline"
-        >
-          Open
-        </Link>
-      </div>
-
-      <div className="mt-3 space-y-2">
-        {items.slice(0, 6).map((b) => (
-          <Link
-            key={b.id}
-            href={`/siddes-feed/${b.id}`}
-            onClick={onClose}
-            className="flex items-center justify-between p-3 rounded-xl border border-gray-100 hover:bg-gray-50"
-          >
-            <div className="min-w-0">
-              <div className="text-sm font-bold text-gray-900 truncate">{b.name}</div>
-              <div className="text-xs text-gray-500 truncate">{b.handle}</div>
-            </div>
-            <span
-              className="w-2.5 h-2.5 rounded-full bg-blue-600 shrink-0"
-              title="New updates"
-            />
-          </Link>
-        ))}
-      </div>
-
-      <div className="mt-3 text-[11px] text-gray-400">
-        Quiet dots only. No addictive counters.
-      </div>
-    </div>
-  );
+function PublicUpdates(_: { onClose: () => void }) {
+  // MVP: no Public updates surface here yet (Broadcasts removed).
+  return null;
 }
 
 function ContextCard() {
@@ -124,8 +48,8 @@ function ContextCard() {
         },
         {
           icon: Users,
-          title: "Broadcasts",
-          desc: "Follow calm channels you trust.",
+          title: "Channels",
+          desc: "Calm public channels you trust.",
           href: "/siddes-feed",
         },
       ];
@@ -282,7 +206,7 @@ export function DesktopButlerTray({
         <div className="p-4 overflow-y-auto h-[calc(100%-120px)]">
           {tab === "alerts" ? (
             <>
-              <BroadcastUpdates onClose={onClose} />
+              <PublicUpdates onClose={onClose} />
               <NotificationsView embedded />
             </>
           ) : (

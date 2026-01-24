@@ -18,6 +18,9 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "Siddes",
   },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [

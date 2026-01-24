@@ -12,12 +12,18 @@ from .account_lifecycle import (
     ExportDataView,
 )
 from .sessions import SessionsListView, SessionsRevokeView, SessionsLogoutAllView
+from .connected import ConnectedAuthMethodsView
+
+from .magic_link import MagicLinkRequestView, MagicLinkConsumeView
 
 urlpatterns = [
+    path("magic/request", MagicLinkRequestView.as_view()),
+    path("magic/consume", MagicLinkConsumeView.as_view()),
     path("signup", SignupView.as_view()),
     path("login", LoginView.as_view()),
     path("logout", LogoutView.as_view()),
     path("me", MeView.as_view()),
+    path("connected", ConnectedAuthMethodsView.as_view()),
     path("region", RegionView.as_view()),
     path("age/confirm", AgeGateConfirmView.as_view()),
     path("verify/confirm", VerifyConfirmView.as_view()),

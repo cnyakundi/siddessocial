@@ -12,7 +12,7 @@ from rest_framework.views import APIView
 from siddes_backend.csrf import dev_csrf_exempt
 from siddes_safety.policy import is_blocked_pair
 
-from .models import PrismFacet, PrismSideId, SideMembership, UserFollow
+from .models import PrismFacet, PrismSideId, SideMembership
 
 
 VIEW_SIDES = ("public", "friends", "close", "work")
@@ -25,6 +25,104 @@ def _truthy(v: str | None) -> bool:
 
 def viewer_id_for_user(user) -> str:
     return f"me_{getattr(user, 'id', '')}"
+
+
+def _allowed_set_sides_for_side(side: str) -> set[str]:
+    s = str(side or '').strip().lower()
+    if s == 'friends':
+        return {'friends'}
+    if s == 'close':
+        return {'friends', 'close'}
+    if s == 'work':
+        return {'work'}
+    return set()
+
+def _prune_member_from_owner_sets(*, owner_tok: str, member_handle: str, allowed_sides: set[str]) -> int:
+    """Best-effort: remove member_handle from any of owner's Sets outside allowed_sides.
+
+    Privacy hardening: SideMembership is the canonical 'who can see me' edge.
+    If a person is no longer in your Friends/Close/Work, they must not silently
+    retain access via old Set membership.
+    """
+    try:
+        from siddes_sets.models import SiddesSet, SiddesSetMember, SiddesSetEvent, SetEventKind  # type: ignore
+    except Exception:
+        return 0
+
+    owner = str(owner_tok or '').strip()
+    mh = str(member_handle or '').strip().lower()
+    if not owner or not mh:
+        return 0
+
+    # Fast path: membership table -> sets owned by this owner.
+    set_ids: list[str] = []
+    try:
+        qs = SiddesSetMember.objects.select_related('set').filter(member_id=mh, set__owner_id=owner)
+        if allowed_sides:
+            qs = qs.exclude(set__side__in=list(allowed_sides))
+        set_ids = list(qs.values_list('set_id', flat=True))
+    except Exception:
+        set_ids = []
+
+    try:
+        if set_ids:
+            sets = list(SiddesSet.objects.filter(id__in=set_ids, owner_id=owner))
+        else:
+            # Fallback: scan a bounded number of owner sets.
+            sets = list(SiddesSet.objects.filter(owner_id=owner)[:800])
+    except Exception:
+        return 0
+
+    import time as _time
+    import uuid as _uuid
+
+    touched = 0
+    for s in sets:
+        try:
+            side = str(getattr(s, 'side', '') or '').strip().lower()
+            if allowed_sides and side in allowed_sides:
+                continue
+
+            members = getattr(s, 'members', []) or []
+            if not isinstance(members, list):
+                members = []
+            prev = [str(m) for m in members if isinstance(m, (str, int, float))]
+            prev_norm = [str(m).strip().lower() for m in prev]
+            if mh not in prev_norm:
+                # still delete any stale membership row (best-effort)
+                try:
+                    SiddesSetMember.objects.filter(set=s, member_id=mh).delete()
+                except Exception:
+                    pass
+                continue
+
+            nxt = [prev[i] for i, mn in enumerate(prev_norm) if mn != mh]
+            s.members = nxt
+            s.save(update_fields=['members', 'updated_at'])
+
+            try:
+                SiddesSetMember.objects.filter(set=s, member_id=mh).delete()
+            except Exception:
+                pass
+
+            # Best-effort audit event
+            try:
+                SiddesSetEvent.objects.create(
+                    id='se_' + _uuid.uuid4().hex[:10],
+                    set=s,
+                    ts_ms=int(_time.time() * 1000),
+                    kind=SetEventKind.MEMBERS_UPDATED,
+                    by=owner,
+                    data={'from': prev, 'to': nxt, 'via': 'side_prune', 'member': mh, 'allowed': sorted(list(allowed_sides))},
+                )
+            except Exception:
+                pass
+
+            touched += 1
+        except Exception:
+            continue
+
+    return touched
 
 
 def _parse_me_id(raw: str) -> Optional[int]:
@@ -351,26 +449,6 @@ class ProfileView(APIView):
             rel_out = SideMembership.objects.filter(owner=viewer, member=target).first()
             viewer_sided_as = rel_out.side if rel_out else None
 
-        # Public follow (separate from SideMembership)
-        viewer_follows = False
-        if viewer and viewer.id != target.id:
-            try:
-                viewer_follows = UserFollow.objects.filter(follower=viewer, target=target).exists()
-            except Exception:
-                viewer_follows = False
-
-        followers_count = None
-        try:
-            followers_count = int(UserFollow.objects.filter(target=target).count())
-        except Exception:
-            followers_count = None
-
-
-        following_count = None
-        try:
-            following_count = int(UserFollow.objects.filter(follower=target).count())
-        except Exception:
-            following_count = None
         # Siders count: how many owners have placed target into a side
         siders_count: Optional[int] = None
         if view_side != "close":
@@ -410,6 +488,176 @@ class ProfileView(APIView):
             except Exception:
                 shared_sets = []
 
+        # --- Profile posts (side-aware, no access escalation) ---
+        # Returns recent posts authored by the target in the requested Side.
+        # Visibility rules remain server-truth:
+        # - Same Side gating (requestedSide must be allowed)
+        # - Set membership (fail-closed)
+        # - Block/mute enforcement
+        # - Per-viewer hidden posts
+        posts_payload: Dict[str, Any] = {"side": requested, "count": 0, "items": [], "nextCursor": None, "hasMore": False}
+
+        try:
+            import time
+            from django.db.models import Q
+            from siddes_post.models import Post  # type: ignore
+            from siddes_feed.feed_stub import (
+                _bulk_echo,
+                _bulk_engagement,
+                _bulk_media,
+                _can_view_record,
+                _hydrate_from_record,
+            )
+
+            viewer_tok = viewer_id_for_user(viewer) if viewer else "anon"
+            author_tok = viewer_id_for_user(target)
+
+            lim_raw = str(getattr(request, "query_params", {}).get("limit") or "").strip()
+            try:
+                lim = int(lim_raw) if lim_raw else 40
+            except Exception:
+                lim = 40
+            if lim < 1:
+                lim = 1
+            if lim > 80:
+                lim = 80
+
+            cursor_raw = str(getattr(request, "query_params", {}).get("cursor") or "").strip() or None
+
+            def parse_cursor(cur: str | None) -> Tuple[Optional[float], str]:
+                raw = str(cur or "").strip()
+                if not raw or "|" not in raw:
+                    return None, ""
+                a, b = raw.split("|", 1)
+                a = a.strip()
+                b = b.strip()
+                if not a or not b:
+                    return None, ""
+                try:
+                    ts = float(a)
+                except Exception:
+                    return None, ""
+                return ts, b
+
+            def encode_cursor(rec: Any) -> str:
+                ts = float(getattr(rec, "created_at", 0.0) or 0.0)
+                pid = str(getattr(rec, "id", "") or "").strip()
+                return f"{ts:.6f}|{pid}"
+
+            # Per-viewer hidden posts (personal)
+            hidden_ids: set[str] = set()
+            try:
+                from siddes_safety.models import UserHiddenPost  # type: ignore
+
+                rows = list(
+                    UserHiddenPost.objects.filter(viewer_id=str(viewer_tok))
+                    .values_list("post_id", flat=True)[:5000]
+                )
+                hidden_ids = {str(x).strip() for x in rows if str(x).strip()}
+            except Exception:
+                hidden_ids = set()
+
+            batch_size = max(200, lim * 5)
+            if batch_size > 500:
+                batch_size = 500
+
+            visible: List[Any] = []
+            after = cursor_raw
+            last_scanned: Any = None
+            has_more_underlying = False
+
+            loops = 0
+            while len(visible) < lim and loops < 5:
+                loops += 1
+
+                qs = Post.objects.filter(author_id=author_tok, side=str(requested)).order_by("-created_at", "-id")
+                cts, cid = parse_cursor(after)
+                if cts is not None and cid:
+                    qs = qs.filter(Q(created_at__lt=cts) | (Q(created_at=cts) & Q(id__lt=cid)))
+
+                recs = list(qs[: batch_size + 1])
+                if not recs:
+                    has_more_underlying = False
+                    break
+
+                more_underlying = len(recs) > batch_size
+                if more_underlying:
+                    recs = recs[:batch_size]
+
+                stopped_early = False
+                for r in recs:
+                    last_scanned = r
+                    pid = str(getattr(r, "id", "") or "").strip()
+                    if pid and pid in hidden_ids:
+                        continue
+                    if not _can_view_record(viewer_tok, r):
+                        continue
+                    visible.append(r)
+                    if len(visible) >= lim:
+                        stopped_early = True
+                        break
+
+                if stopped_early:
+                    has_more_underlying = True
+                    break
+
+                if more_underlying and last_scanned is not None:
+                    has_more_underlying = True
+                    after = encode_cursor(last_scanned)
+                    continue
+
+                has_more_underlying = False
+                break
+
+            post_ids = [str(getattr(r, "id", "") or "").strip() for r in visible if str(getattr(r, "id", "") or "").strip()]
+            like_counts, reply_counts, liked_ids = _bulk_engagement(viewer_tok, post_ids)
+            echo_counts, echoed_ids = _bulk_echo(viewer_tok, post_ids, requested, visible)
+            media_map = _bulk_media(post_ids)
+
+            items: List[dict] = []
+            side_name = str(getattr(facet, "display_name", "") or "").strip()
+
+            for r in visible:
+                pid = str(getattr(r, "id", "") or "").strip()
+                it = _hydrate_from_record(
+                    r,
+                    viewer_id=viewer_tok,
+                    like_count=int(like_counts.get(pid, 0) or 0),
+                    reply_count=int(reply_counts.get(pid, 0) or 0),
+                    liked=(pid in liked_ids),
+                    echo_count=int(echo_counts.get(pid, 0) or 0),
+                    echoed=(pid in echoed_ids),
+                )
+
+                if side_name:
+                    it["author"] = side_name
+
+                media = media_map.get(pid) or []
+                if media:
+                    it["media"] = media
+                    it["kind"] = "image"
+
+                items.append(it)
+
+            next_cursor = None
+            if has_more_underlying:
+                if visible:
+                    next_cursor = encode_cursor(visible[-1])
+                elif last_scanned is not None:
+                    next_cursor = encode_cursor(last_scanned)
+
+            posts_payload = {
+                "side": requested,
+                "count": len(items),
+                "items": items,
+                "nextCursor": next_cursor,
+                "hasMore": bool(next_cursor),
+                "serverTs": time.time(),
+            }
+        except Exception:
+            # Best-effort: profile must still render even if posts hydration fails.
+            posts_payload = {"side": requested, "count": 0, "items": [], "nextCursor": None, "hasMore": False}
+
         return Response(
             {
                 "ok": True,
@@ -421,71 +669,11 @@ class ProfileView(APIView):
                 "siders": ("Close Vault" if view_side == "close" else siders_count),
                 "viewerSidedAs": viewer_sided_as,
                 "viewerAuthed": viewer_authed,
-                "viewerFollows": bool(viewer_follows),
-                "followers": followers_count,
                 "sharedSets": shared_sets,
+                "posts": posts_payload,
             },
             status=status.HTTP_200_OK,
         )
-
-
-@method_decorator(dev_csrf_exempt, name="dispatch")
-class FollowActionView(APIView):
-    """Viewer action: Follow/Unfollow someone. POST /api/follow
-
-    Body:
-      {"username": "@alice", "follow": true|false}
-    """
-
-    def post(self, request):
-        viewer = _user_from_request(request)
-        if not viewer:
-            return Response({"ok": False, "error": "restricted"}, status=status.HTTP_401_UNAUTHORIZED)
-
-        body: Dict[str, Any] = request.data if isinstance(request.data, dict) else {}
-        uname = _normalize_username(body.get("username") or body.get("handle") or "")
-        if not uname:
-            return Response({"ok": False, "error": "missing_username"}, status=status.HTTP_400_BAD_REQUEST)
-
-        want = body.get("follow")
-        follow = bool(want) if isinstance(want, (bool, int)) else str(want or "").strip().lower() in ("1", "true", "yes", "y", "on", "follow")
-
-        User = get_user_model()
-        target = User.objects.filter(username__iexact=uname).first()
-        if not target:
-            return Response({"ok": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
-
-        if target.id == viewer.id:
-            return Response({"ok": False, "error": "cannot_follow_self"}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Respect blocks (allow unfollow; prevent follow when blocked)
-        try:
-            viewer_tok = viewer_id_for_user(viewer)
-            target_tok = "@" + str(getattr(target, "username", "") or "").lower()
-            if target_tok and follow and is_blocked_pair(viewer_tok, target_tok):
-                return Response({"ok": False, "error": "restricted"}, status=status.HTTP_403_FORBIDDEN)
-        except Exception:
-            pass
-
-        if not follow:
-            UserFollow.objects.filter(follower=viewer, target=target).delete()
-            try:
-                cnt = int(UserFollow.objects.filter(target=target).count())
-            except Exception:
-                cnt = None
-            return Response({"ok": True, "following": False, "followers": cnt}, status=status.HTTP_200_OK)
-
-        try:
-            UserFollow.objects.get_or_create(follower=viewer, target=target)
-        except Exception:
-            pass
-
-        try:
-            cnt = int(UserFollow.objects.filter(target=target).count())
-        except Exception:
-            cnt = None
-
-        return Response({"ok": True, "following": True, "followers": cnt}, status=status.HTTP_200_OK)
 
 
 @method_decorator(dev_csrf_exempt, name="dispatch")
@@ -524,6 +712,9 @@ class SideActionView(APIView):
         if target.id == viewer.id:
             return Response({"ok": False, "error": "cannot_side_self"}, status=status.HTTP_400_BAD_REQUEST)
 
+        owner_tok = viewer_id_for_user(viewer)
+        member_handle = "@" + str(getattr(target, "username", "") or "").lower()
+
 
         # sd_424_side_action_blocks: respect blocks (allow unside; prevent setting a side when blocked)
         try:
@@ -535,13 +726,25 @@ class SideActionView(APIView):
             pass
 
         if side == "public":
+            try:
+                _prune_member_from_owner_sets(owner_tok=owner_tok, member_handle=member_handle, allowed_sides=set())
+            except Exception:
+                pass
+
             SideMembership.objects.filter(owner=viewer, member=target).delete()
             return Response({"ok": True, "side": None}, status=status.HTTP_200_OK)
 
         if side not in MEMBER_SIDES:
             return Response({"ok": False, "error": "invalid_side"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # sd_534_close_requires_friends: prevent jumping to Close without Friends first
+        
+        # sd_530_confirm_close_work: require explicit confirm for Close/Work
+        if side in ("close", "work"):
+            c = body.get("confirm")
+            if not (c is True or _truthy(str(c))):
+                return Response({"ok": False, "error": "confirm_required"}, status=status.HTTP_400_BAD_REQUEST)
+
+# sd_534_close_requires_friends: prevent jumping to Close without Friends first
         if side == "close":
             existing = SideMembership.objects.filter(owner=viewer, member=target).first()
             if not existing or existing.side not in ("friends", "close"): 
@@ -553,4 +756,95 @@ class SideActionView(APIView):
             defaults={"side": side},
         )
 
+        try:
+            _prune_member_from_owner_sets(owner_tok=owner_tok, member_handle=member_handle, allowed_sides=_allowed_set_sides_for_side(side))
+        except Exception:
+            pass
+
         return Response({"ok": True, "side": obj.side}, status=status.HTTP_200_OK)
+
+@method_decorator(dev_csrf_exempt, name="dispatch")
+class SidersLedgerView(APIView):
+    """Self-only roster: who can see YOU in each Side.
+
+    GET /api/siders
+
+    Returns people you have placed into Friends/Close/Work (owner=you → member=them).
+    """
+
+    def get(self, request):
+        viewer = _user_from_request(request)
+        if not viewer:
+            return Response({"ok": False, "error": "restricted"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # Outgoing edges: viewer → member
+        rels = (
+            SideMembership.objects.filter(owner=viewer)
+            .select_related("member")
+            .order_by("-updated_at")
+        )
+
+        buckets = {"friends": [], "close": [], "work": []}
+        member_ids = []
+        for r in rels:
+            s = str(getattr(r, "side", "") or "").strip().lower()
+            if s not in buckets:
+                continue
+            m = getattr(r, "member", None)
+            if not m:
+                continue
+            buckets[s].append((m, getattr(r, "updated_at", None)))
+            try:
+                member_ids.append(int(getattr(m, "id")))
+            except Exception:
+                pass
+
+        facet_by_uid = {}
+        if member_ids:
+            try:
+                for f in PrismFacet.objects.filter(user_id__in=member_ids, side="public"):
+                    facet_by_uid[int(f.user_id)] = f
+            except Exception:
+                facet_by_uid = {}
+
+        def pack(u, side: str, updated_at):
+            uid = int(getattr(u, "id"))
+            username = str(getattr(u, "username", "") or "").strip()
+            handle = "@" + username if username else ""
+            f = facet_by_uid.get(uid)
+            display = ""
+            avatar = ""
+            if f is not None:
+                display = str(getattr(f, "display_name", "") or "").strip()
+                avatar = str(getattr(f, "avatar_image_url", "") or "").strip()
+            if not display:
+                display = username or handle or ""
+            ts = None
+            try:
+                ts = updated_at.isoformat() if updated_at is not None else None
+            except Exception:
+                ts = None
+            return {
+                "id": uid,
+                "handle": handle,
+                "displayName": display,
+                "avatarImage": avatar,
+                "side": side,
+                "updatedAt": ts,
+            }
+
+        out = {
+            "ok": True,
+            "counts": {
+                "friends": len(buckets["friends"]),
+                "close": len(buckets["close"]),
+                "work": len(buckets["work"]),
+            },
+            "sides": {
+                "friends": [pack(u, "friends", ts) for (u, ts) in buckets["friends"]],
+                "close": [pack(u, "close", ts) for (u, ts) in buckets["close"]],
+                "work": [pack(u, "work", ts) for (u, ts) in buckets["work"]],
+            },
+        }
+        return Response(out, status=status.HTTP_200_OK)
+

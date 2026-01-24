@@ -15,6 +15,10 @@ Implementation note:
 from __future__ import annotations
 
 import os
+
+# sd_121b: explicit mode boolean for SD_INBOX_STORE=db (used by test harness gate)
+USE_DB = (str(os.environ.get("SD_INBOX_STORE", "")).strip().lower() == "db")
+
 from typing import Any, Optional
 
 from django.utils.decorators import method_decorator
@@ -28,6 +32,7 @@ from .endpoint_stub import get_thread, list_threads, send_message, set_locked_si
 from .store_devnull import DevNullInboxStore
 from .store_db import DbInboxStore
 from .store_memory import InMemoryInboxStore
+from .visibility_stub import resolve_viewer_role
 
 from siddes_safety.policy import is_blocked_pair
 
@@ -163,19 +168,64 @@ def _db_ready() -> bool:
 
 
 IS_DEBUG = getattr(settings, "DEBUG", False)
-ALLOW_MEMORY = (str(os.environ.get("SIDDES_ALLOW_MEMORY_STORES", "")).strip() == "1") and bool(IS_DEBUG)
 
-# World-ready default: DB-backed inbox store.
-# Memory/demo inbox is allowed ONLY when DEBUG=True and SIDDES_ALLOW_MEMORY_STORES=1.
-if ALLOW_MEMORY:
+# Store selection (sd_121b / sd_123)
+#
+# SD_INBOX_STORE modes:
+#   - memory (default): dev-only in-memory inbox (seeded demo content)
+#   - auto           : use DB if ready, else memory (dev-only)
+#   - db             : force DB store
+#   - devnull        : always restricted-safe (no content)
+INBOX_STORE = str(os.environ.get("SD_INBOX_STORE", "memory") or "memory").strip().lower()
+
+USE_DB = (INBOX_STORE == "db")
+USE_AUTO = (INBOX_STORE == "auto")
+USE_DEVNULL = (INBOX_STORE in ("devnull", "null", "none"))
+USE_MEMORY = (INBOX_STORE in ("memory", "mem", "inmemory", "ram"))
+
+# Dev-only allowance: never run memory store when DEBUG=False.
+ALLOW_MEMORY = bool(IS_DEBUG)
+
+# Optional dev helper: shadow-write memory ops into DB best-effort.
+DUALWRITE_DB = _truthy(os.environ.get("SD_INBOX_DUALWRITE_DB", ""))
+
+
+def _make_memory_store():
     mem = InMemoryInboxStore()
     try:
+        # Seed is dev-only (DEBUG).
         mem.seed_demo()
     except Exception:
         pass
-    store = mem
-else:
+
+    if DUALWRITE_DB:
+        try:
+            from .store_dualwrite import DualWriteInboxStore  # local import (dev-only path)
+            # Only attempt shadow-write when DB is reachable/migrated.
+            if _db_ready():
+                return DualWriteInboxStore(primary=mem, shadow_db=DbInboxStore())
+        except Exception:
+            pass
+
+    return mem
+
+
+# Default-safe selection.
+if USE_DEVNULL:
+    store = DevNullInboxStore()
+elif USE_DB:
     store = DbInboxStore()
+elif USE_AUTO:
+    if _db_ready():
+        store = DbInboxStore()
+    else:
+        store = _make_memory_store() if ALLOW_MEMORY else DevNullInboxStore()
+else:
+    # Default: memory for dev; DB for prod (DEBUG=False)
+    if ALLOW_MEMORY and USE_MEMORY:
+        store = _make_memory_store()
+    else:
+        store = DbInboxStore()
 
 
 
@@ -199,7 +249,7 @@ def get_viewer_id(request) -> Optional[str]:
 
     raw = request.headers.get("x-sd-viewer") or getattr(request, "COOKIES", {}).get("sd_viewer")
     raw = str(raw or "").strip()
-    return raw or None
+    return resolve_viewer_role(raw)
 
 
 

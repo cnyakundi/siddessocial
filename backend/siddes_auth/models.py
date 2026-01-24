@@ -80,6 +80,23 @@ class PasswordResetToken(models.Model):
             models.Index(fields=["user", "created_at"]),
         ]
 
+class MagicLinkToken(models.Model):
+    """Single-use email magic-link token (hashed)."""
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="magic_link_tokens")
+    email = models.EmailField()
+    token_hash = models.CharField(max_length=64, unique=True)
+    expires_at = models.DateTimeField()
+    used_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["user", "created_at"]),
+        ]
+
+
+
 class UserSession(models.Model):
     """Tracked sessions for a user (device/session management)."""
 

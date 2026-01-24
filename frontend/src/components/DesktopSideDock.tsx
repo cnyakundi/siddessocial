@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Globe, Users, Lock, Briefcase, Zap, Layers, MessageSquare, User as UserIcon, Plus } from "lucide-react";
+import { Globe, Users, Heart, Briefcase, Zap, Layers, MessageSquare, User as UserIcon, Plus , Lock as LockIcon } from "lucide-react";
 import { useSide } from "@/src/components/SideProvider";
 import { SIDES, SIDE_ORDER, SIDE_THEMES, type SideId } from "@/src/lib/sides";
 
@@ -14,7 +14,7 @@ function cn(...parts: Array<string | undefined | false | null>) {
 const SIDE_ICONS: Record<SideId, React.ComponentType<any>> = {
   public: Globe,
   friends: Users,
-  close: Lock,
+  close: Heart,
   work: Briefcase,
 };
 
@@ -130,7 +130,7 @@ export function DesktopSideDock() {
                     className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-white border border-gray-100 flex items-center justify-center shadow-sm"
                     title={lockReason || "Locked"}
                   >
-                    <Lock size={10} className="text-gray-400" />
+                    <LockIcon size={10} className="text-gray-400" />
                   </span>
                 ) : null}
                 <div className="absolute left-16 px-3 py-1.5 bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all pointer-events-none whitespace-nowrap z-50 shadow-xl">

@@ -159,7 +159,7 @@ export function DesktopContextInspectorRail({ expanded, onExpandedChange }: Prop
           <div className="mt-3 flex items-center justify-between pt-3 border-t border-gray-50">
             <div className="text-xs text-gray-500">{queued > 0 ? `${queued} queued` : "No queued items"}</div>
             <Link href="/siddes-profile/account" className="text-xs font-bold text-gray-600 hover:underline">
-              Settings
+              Account
             </Link>
           </div>
         </div>

@@ -66,7 +66,7 @@ export default function AboutPage() {
           <div className="rounded-2xl border border-gray-200 bg-white p-5">
             <div className="text-sm font-black">Calm defaults</div>
             <p className="mt-2 text-sm text-gray-600 leading-relaxed">
-              No one-big-feed fatigue. In Public you follow Topics and broadcasts you trust. In private Sides you stay scoped.
+              No one-big-feed fatigue. In Public you tune with Topics + Trust Dial. In private Sides you stay scoped by Sets.
             </p>
           </div>
           <div className="rounded-2xl border border-gray-200 bg-white p-5">

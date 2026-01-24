@@ -16,6 +16,8 @@ import {
   type ProfileViewPayload,
 } from "@/src/components/PrismProfile";
 
+import { PostCard } from "@/src/components/PostCard";
+
 import { ProfileActionsSheet } from "@/src/components/ProfileActionsSheet";
 import { toast } from "@/src/lib/toast";
 
@@ -42,12 +44,15 @@ export default function UserProfilePage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
+  const [loadingMore, setLoadingMore] = useState(false);
+
   const [activeIdentitySide, setActiveIdentitySide] = useState<SideId>("public");
 
   const [sideSheet, setSideSheet] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const [actionsOpen, setActionsOpen] = useState(false); // sd_424_profile_actions
+  const [lockedSide, setLockedSide] = useState<SideId | null>(null); // sd_529_locked_tab_explainer
 
   useEffect(() => {
     let mounted = true;
@@ -67,6 +72,17 @@ export default function UserProfilePage() {
         const res = await fetch(`/api/profile/${encodeURIComponent(handle)}${qs}`, { cache: "no-store" });
         const j = (await res.json().catch(() => null)) as any;
         if (!mounted) return;
+
+        // sd_538_locked_403_fallback: locked side requested (e.g. URL) -> fall back to viewSide
+        if (j && typeof j === "object" && j.ok === false && j.error === "locked") {
+          const fallback = (j.viewSide || "public") as SideId;
+          const requested = (j.requestedSide || activeIdentitySide || "public") as SideId;
+          if (fallback && fallback !== activeIdentitySide) {
+            toast.info(`Locked: ${SIDES[requested]?.label || requested}. Showing ${SIDES[fallback]?.label || fallback}.`);
+            setActiveIdentitySide(fallback);
+            return;
+          }
+        }
 
         if (!j || typeof j !== "object" || !j.ok) {
           setData(j && typeof j === "object" ? j : { ok: false, error: "bad_response" });
@@ -101,51 +117,34 @@ export default function UserProfilePage() {
   const viewerSidedAs = (data?.viewerSidedAs || null) as SideId | null;
   const sharedSets = data?.sharedSets || [];
 
+  const postsPayload = data?.posts || null;
+  const posts = postsPayload?.items || [];
 
-  const doToggleSubscribe = async () => {
+  const avatarUrl = String((facet as any)?.avatarImage || "").trim() || null;
+
+
+  const doPickSide = async (side: SideId | "public", opts?: { silent?: boolean }) => {
     if (!user?.handle) return;
-    const want = !((data as any)?.viewerSubscribes);
-    setBusy(true);
-    try {
-      const res = await fetch("/api/follow", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ username: user.handle, follow: want }),
-      });
-      const j = (await res.json().catch(() => null)) as any;
-      if (!res.ok || !j || j.ok !== true) {
-        const msg = res.status === 401 ? "Log in to subscribe." : res.status === 429 ? "Slow down." : "Could not update subscription.";
 
-        toast.error(msg);
-        throw new Error(msg);
-      }
-      setData((prev) => {
-        if (!prev || !prev.ok) return prev;
-        return {
-          ...(prev as any),
-          viewerSubscribes: !!j.following,
-} as any;
-      });
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const doPickSide = async (side: SideId | "public") => {
-    if (!user?.handle) return;
+    const before = viewerSidedAs;
 
     setBusy(true);
     try {
       const res = await fetch("/api/side", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ username: user.handle, side }),
+        body: JSON.stringify({
+          username: user.handle,
+          side,
+          confirm: side === "close" || side === "work" ? true : undefined,
+        }),
       });
       const j = (await res.json().catch(() => null)) as any;
 
       if (!res.ok || !j || j.ok !== true) {
         let msg = res.status === 429 ? "Slow down." : "Could not update Side.";
         if (j?.error === "friends_required") msg = "Friends first (then Close).";
+        if (j?.error === "confirm_required") msg = "Confirmation required for Close/Work.";
         if (res.status === 401 || j?.error === "restricted") msg = "Login required.";
         toast.error(msg);
         throw new Error(msg);
@@ -155,12 +154,87 @@ export default function UserProfilePage() {
         if (!prev || !prev.ok) return prev;
         return { ...prev, viewerSidedAs: j.side || null } as any;
       });
+
+      if (!opts?.silent) {
+        const nextSide = (j?.side || null) as SideId | null;
+        const beforeKey = before || "public";
+        const nextKey = (nextSide || "public") as any;
+        if (String(beforeKey) !== String(nextKey)) {
+          const nextLabel = nextSide ? (SIDES[nextSide]?.label || nextSide) : "Public";
+          toast.undo(`You show them: ${nextLabel}`, () => {
+            void doPickSide((before || "public") as any, { silent: true });
+            toast.success("Undone");
+          });
+        }
+      }
     } finally {
       setBusy(false);
     }
   };
 
 
+
+
+  const loadMore = async () => {
+    if (!handle || loadingMore) return;
+    const cur = String((postsPayload as any)?.nextCursor || "").trim();
+    if (!cur) return;
+
+    setLoadingMore(true);
+    try {
+      const qs = `?side=${encodeURIComponent(displaySide)}&cursor=${encodeURIComponent(cur)}`;
+      const res = await fetch(`/api/profile/${encodeURIComponent(handle)}${qs}`, { cache: "no-store" });
+      const j = (await res.json().catch(() => null)) as any;
+      if (!res.ok || !j || j.ok !== true || !j.posts) {
+        throw new Error(j?.error || "request_failed");
+      }
+      const more = Array.isArray(j.posts.items) ? j.posts.items : [];
+
+      setData((prev) => {
+        if (!prev || !prev.ok) return prev;
+        const prevItems = Array.isArray((prev as any).posts?.items) ? (prev as any).posts.items : [];
+        const seen = new Set<string>();
+        const merged: any[] = [];
+
+        for (const p of prevItems) {
+          if (p && (p as any).id) {
+            const id = String((p as any).id);
+            if (!seen.has(id)) {
+              seen.add(id);
+              merged.push(p);
+            }
+          }
+        }
+
+        for (const p of more) {
+          if (p && (p as any).id) {
+            const id = String((p as any).id);
+            if (!seen.has(id)) {
+              seen.add(id);
+              merged.push(p);
+            }
+          }
+        }
+
+        const nextCur = String(j.posts.nextCursor || "").trim() || null;
+        return {
+          ...(prev as any),
+          posts: {
+            ...(prev as any).posts,
+            ...j.posts,
+            items: merged,
+            count: merged.length,
+            nextCursor: nextCur,
+            hasMore: Boolean(nextCur),
+          },
+        } as any;
+      });
+    } catch {
+      toast.error("Couldn't load more.");
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const href = useMemo(() => {
     if (typeof window === "undefined") return "";
@@ -187,21 +261,92 @@ export default function UserProfilePage() {
               active={displaySide}
               allowedSides={allowedSides}
               onPick={(side) => setActiveIdentitySide(side)}
-              onLockedPick={() => setSideSheet(true)}
+              onLockedPick={(side) => setLockedSide(side)}
             />
 
 
-            {/* sd_537: relationship clarity */}
+            {/* sd_529_locked_tab_explainer: locked identity tabs never open Side sheet */}
+            {!isOwner && lockedSide ? (
+              <div className="fixed inset-0 z-[97] flex items-end justify-center md:items-center">
+                <button
+                  type="button"
+                  className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+                  onClick={() => setLockedSide(null)}
+                  aria-label="Close"
+                />
+                <div className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-lg font-black text-gray-900">
+                        Locked: {SIDES[lockedSide]?.label || lockedSide}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        You can’t view {user?.handle}’s {SIDES[lockedSide]?.label || lockedSide} identity.
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setLockedSide(null)}
+                      className="p-2 rounded-full hover:bg-gray-100"
+                      aria-label="Close"
+                    >
+                      <span className="sr-only">Close</span>
+                      <MoreHorizontal size={18} className="text-gray-400" />
+                    </button>
+                  </div>
+
+                  <div className="mt-4 space-y-3">
+                    <div className="p-4 rounded-2xl border border-gray-200 bg-gray-50 text-sm text-gray-700">
+                      <div className="font-extrabold text-gray-900">How this works</div>
+                      <div className="text-xs text-gray-600 mt-1 leading-relaxed">
+                        Only <span className="font-bold">{user?.handle}</span> can place you into their {SIDES[lockedSide]?.label || lockedSide} Side.
+                        Nothing you click here unlocks it.
+                      </div>
+                      <div className="mt-2 text-xs text-gray-600">
+                        They currently show you: <span className="font-black text-gray-900">{SIDES[viewSide]?.label || viewSide}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setLockedSide(null)}
+                        className="flex-1 py-3 rounded-xl bg-gray-900 text-white font-extrabold text-sm shadow-md active:scale-95 transition-all"
+                      >
+                        Got it
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLockedSide(null);
+                          setSideSheet(true);
+                        }}
+                        className="px-4 py-3 rounded-xl bg-white border border-gray-200 text-gray-800 font-extrabold text-sm hover:bg-gray-50"
+                      >
+                        Manage what you show them
+                      </button>
+                    </div>
+
+                    <div className="text-[11px] text-gray-500">
+                      Tip: Your <span className="font-bold">Side</span> action controls what <span className="font-bold">they</span> can access of you.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+
+            {/* sd_528: relationship clarity (directional) */}
             {!isOwner ? (
               <div className="mt-3 mb-4 flex flex-wrap gap-2 text-xs font-extrabold">
                 <div className="px-3 py-1.5 rounded-full bg-white border border-gray-200 text-gray-700">
-                  Access: <span className="text-gray-900">{SIDES[viewSide]?.label || viewSide}</span>
+                  They show you: <span className="text-gray-900">{SIDES[viewSide]?.label || viewSide}</span>
                 </div>
                 <div className="px-3 py-1.5 rounded-full bg-white border border-gray-200 text-gray-700">
-                  You Sided: <span className="text-gray-900">{viewerSidedAs ? (SIDES[viewerSidedAs]?.label || viewerSidedAs) : "Not set"}</span>
-                </div>
-                <div className="px-3 py-1.5 rounded-full bg-white border border-gray-200 text-gray-700">
-                  Public: <span className="text-gray-900">{(data as any)?.viewerSubscribes ? "Subscribed" : "Not subscribed"}</span>
+                  You show them:{" "}
+                  <span className="text-gray-900">
+                    {viewerSidedAs ? (SIDES[viewerSidedAs]?.label || viewerSidedAs) : "Public"}
+                  </span>
                 </div>
               </div>
             ) : null}
@@ -241,20 +386,6 @@ actions={
                 ) : (
                   <div className="flex flex-col gap-3">
                     <div className="flex gap-3">
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={async () => {
-                          await doToggleSubscribe();
-                        }}
-                        className={cn(
-                          "flex-1 py-2.5 rounded-xl font-extrabold text-sm shadow-md active:scale-95 transition-all",
-                          (data as any)?.viewerSubscribes ? "bg-blue-100 text-blue-800 hover:bg-blue-200" : "bg-blue-600 text-white hover:bg-blue-700",
-                          busy ? "opacity-80 cursor-not-allowed" : ""
-                        )}
-                      >
-                        {(data as any)?.viewerSubscribes ? "Unsubscribe" : "Subscribe"}
-                      </button>
                       <SideActionButtons viewerSidedAs={viewerSidedAs} onOpenSheet={() => setSideSheet(true)} />
                     </div>
                     <div className="flex gap-3">
@@ -272,18 +403,53 @@ actions={
                 )
               }
             />
+
+            {/* Profile feed (side-aware) */}
+            <div className="mt-6">
+              <div className="flex items-end justify-between mb-2 px-1">
+                <div className="text-xs font-extrabold text-gray-500 uppercase tracking-wider">Posts</div>
+                {postsPayload ? (
+                  <div className="text-xs text-gray-400 font-semibold tabular-nums">{posts.length}</div>
+                ) : null}
+              </div>
+
+              <div className="rounded-3xl border border-gray-200 bg-white overflow-hidden">
+                {posts.length ? (
+                  <>
+                    {posts.map((post) => (
+                      <PostCard key={post.id} post={post} side={displaySide} variant="row" avatarUrl={avatarUrl} />
+                    ))}
+                    {postsPayload?.hasMore ? (
+                      <div className="py-4 flex justify-center border-t border-gray-100 bg-white">
+                        <button
+                          type="button"
+                          onClick={loadMore}
+                          disabled={loadingMore}
+                          className="px-4 py-2.5 rounded-xl bg-gray-900 text-white font-extrabold text-sm shadow-sm hover:opacity-90 disabled:opacity-50"
+                        >
+                          {loadingMore ? "Loading…" : "Load more"}
+                        </button>
+                      </div>
+                    ) : null}
+                  </>
+                ) : (
+                  <div className="py-14 text-center px-6">
+                    <div className="text-sm font-extrabold text-gray-900">No posts visible</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      Nothing visible in {SIDES[displaySide]?.label || displaySide}.
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
             {!isOwner ? (
             <SideWithSheet
               open={sideSheet}
               onClose={() => setSideSheet(false)}
               current={viewerSidedAs}
               busy={busy}
-              follow={{
-                following: !!(data as any)?.viewerSubscribes,
-busy,
-                onToggle: doToggleSubscribe,
-              }}
-              onPick={doPickSide}
+onPick={doPickSide}
             />
             ) : null}
 
@@ -302,3 +468,4 @@ busy,
     </div>
   );
 }
+

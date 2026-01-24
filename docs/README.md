@@ -14,6 +14,8 @@ If you have zero context, start with:
 - `ARCHITECTURE.md` — system overview
 
 ## Feature docs
+- Graph: `GRAPH.md` — Prism relationship graph (directional Sides + invariants)
+
 - Feed: `FEED_BACKEND.md`, `PERFORMANCE_SUPERSONIC.md`
 - Posts: `POSTS_CREATE_BACKEND.md`, `POST_DETAIL_BACKEND.md`, `POST_EDIT_DELETE.md`
 - Sets: `SETS_BACKEND.md`

@@ -17,10 +17,7 @@ export function PublicTuneSheet({
   showTopics,
   showTrust,
   showCounts,
-  showMode,
-  publicMode,
-  onPublicMode,
-  publicChannel,
+publicChannel,
   onPublicChannel,
   trustMode,
   onTrustMode,
@@ -32,10 +29,7 @@ export function PublicTuneSheet({
   showTopics: boolean;
   showTrust: boolean;
   showCounts: boolean;
-  showMode?: boolean;
-  publicMode?: "following" | "broadcasts";
-  onPublicMode?: (m: "following" | "broadcasts") => void;
-  publicChannel: "all" | PublicChannelId;
+publicChannel: "all" | PublicChannelId;
   onPublicChannel: (id: "all" | PublicChannelId) => void;
   trustMode: PublicTrustMode;
   onTrustMode: (m: PublicTrustMode) => void;
@@ -55,8 +49,7 @@ export function PublicTuneSheet({
   useLockBodyScroll(open);
   if (!open) return null;
 
-  const hasAnything = showTopics || showTrust || showCounts || !!showMode;
-
+  const hasAnything = showTopics || showTrust || showCounts ;
   return (
     <div className="fixed inset-0 z-[99] flex items-end justify-center md:items-center">
       <button type="button" className="absolute inset-0 bg-black/40 backdrop-blur-sm" onPointerDown={(e) => {
@@ -85,39 +78,6 @@ export function PublicTuneSheet({
         <div className="p-4 space-y-5">
           {!hasAnything ? (
             <div className="text-sm text-gray-500">Nothing to tune yet.</div>
-          ) : null}
-
-          {showMode ? (
-            <section>
-              <div className="text-xs font-extrabold uppercase tracking-widest text-gray-500 mb-2">Feed</div>
-
-              <div className="grid grid-cols-2 gap-2">
-                {([
-                  { id: "following", label: "Following", hint: "People you follow" },
-                  { id: "broadcasts", label: "Broadcasts", hint: "Desks you follow" },
-                ] as const).map((opt) => {
-                  const current = publicMode || "following";
-                  const active = current === opt.id;
-                  return (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      onClick={() => onPublicMode?.(opt.id)}
-                      className={cn(
-                        "px-3 py-2 rounded-2xl border text-left",
-                        active ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
-                      )}
-                    >
-                      <div className="text-sm font-extrabold flex items-center gap-2">
-                        {active ? <Check size={16} /> : null}
-                        {opt.label}
-                      </div>
-                      <div className={cn("text-xs mt-0.5", active ? "text-gray-200" : "text-gray-500")}>{opt.hint}</div>
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
           ) : null}
 
           {showTopics ? (

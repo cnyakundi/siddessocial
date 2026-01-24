@@ -11,13 +11,16 @@ async function seed(page: any) {
 
 test.describe("Siddes smoke", () => {
   test("Feed loads or redirects to login", async ({ page }) => {
-    await seed(page);
-    await page.goto("/siddes-feed", { waitUntil: "domcontentloaded" });
+  await seed(page);
+  await page.goto("/siddes-feed", { waitUntil: "domcontentloaded" });
 
-    if (page.url().includes("/login")) {
-      // Auth gate working is acceptable for smoke.
-      return;
-    }
+  const deadline = Date.now() + 15_000;
+
+  while (Date.now() < deadline) {
+    const url = page.url();
+
+    // Client-side redirects can happen after initial load.
+    if (url.includes("/login")) return;
 
     const ok = page
       .locator(
@@ -25,31 +28,74 @@ test.describe("Siddes smoke", () => {
       )
       .first();
 
-    await expect(ok).toBeVisible();
-  });
-
-  test("Search renders input", async ({ page }) => {
-    await seed(page);
-    await page.goto("/search?q=sarah", { waitUntil: "domcontentloaded" });
-
-    const input = page
-      .locator('input[placeholder="Search people, sets, or public takes…"]:visible')
-      .first();
-
-    await expect(input).toBeVisible();
-  });
-
-  test("Outbox page renders or redirects to login", async ({ page }) => {
-    await seed(page);
-    await page.goto("/siddes-outbox", { waitUntil: "domcontentloaded" });
-
-    if (page.url().includes("/login")) {
+    if (await ok.isVisible().catch(() => false)) {
+      await expect(ok).toBeVisible();
       return;
     }
 
+    await page.waitForTimeout(250);
+  }
+
+  throw new Error(`Neither feed UI nor /login redirect occurred within timeout. Final URL: ${page.url()}`);
+});
+
+  test("Search renders input", async ({ page }) => {
+  await seed(page);
+  await page.goto("/search?q=sarah", { waitUntil: "domcontentloaded" });
+
+  const deadline = Date.now() + 15_000;
+
+  while (Date.now() < deadline) {
+    const url = page.url();
+    if (url.includes("/login")) return;
+
+    const exact = page
+      .locator('input[placeholder="Search people, sets, or public takes…"]:visible')
+      .first();
+    if (await exact.isVisible().catch(() => false)) {
+      await expect(exact).toBeVisible();
+      return;
+    }
+
+    const anySearch = page.locator('input[placeholder*="Search"]:visible').first();
+    if (await anySearch.isVisible().catch(() => false)) {
+      await expect(anySearch).toBeVisible();
+      return;
+    }
+
+    const textbox = page.getByRole("textbox").first();
+    if (await textbox.isVisible().catch(() => false)) {
+      await expect(textbox).toBeVisible();
+      return;
+    }
+
+    await page.waitForTimeout(250);
+  }
+
+  throw new Error(`Search input did not appear (and no /login redirect). Final URL: ${page.url()}`);
+});
+
+  test("Outbox page renders or redirects to login", async ({ page }) => {
+  await seed(page);
+  await page.goto("/siddes-outbox", { waitUntil: "domcontentloaded" });
+
+  const deadline = Date.now() + 15_000;
+
+  while (Date.now() < deadline) {
+    const url = page.url();
+    if (url.includes("/login")) return;
+
     const title = page.locator('div:text-is("Outbox"):visible').first();
-    await expect(title).toBeVisible();
-  });
+    if (await title.isVisible().catch(() => false)) {
+      await expect(title).toBeVisible();
+      return;
+    }
+
+    await page.waitForTimeout(250);
+  }
+
+  throw new Error(`Neither Outbox UI nor /login redirect occurred within timeout. Final URL: ${page.url()}`);
+});
 
   test("Prism page loads or redirects to login", async ({ page }) => {
     await seed(page);

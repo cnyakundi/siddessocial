@@ -17,6 +17,8 @@ Default-safe rules:
 
 from __future__ import annotations
 
+import os
+
 import math
 import re
 import time
@@ -42,6 +44,15 @@ from .models import Ritual, RitualIgnite, RitualResponse
 
 
 _ALLOWED_SIDES = {"public", "friends", "close", "work"}
+
+
+# --- Feature flags (MVP hardening) ---
+def _truthy(v: str | None) -> bool:
+    return str(v or "").strip().lower() in ("1", "true", "yes", "y", "on")
+
+def _broadcasts_enabled() -> bool:
+    # Broadcasts are not MVP. Enable explicitly.
+    return _truthy(os.environ.get("SIDDES_BROADCASTS_ENABLED", "0"))
 _DOCK_STATUS = {"active", "warming"}
 
 
@@ -550,6 +561,8 @@ class RitualsView(APIView):
         set_item = None
 
         if set_id and str(set_id).startswith("b_"):
+            if not _broadcasts_enabled():
+                return Response({"ok": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
             side = "public"
             try:
                 from siddes_broadcasts.store_db import STORE as _BC_STORE

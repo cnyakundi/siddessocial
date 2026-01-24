@@ -35,11 +35,13 @@ function parseIdentifiers(raw: string): string[] {
 export default function AddPeopleStep({
   setName,
   sideId,
+  myHandle,
   onContinue,
   onSkip,
 }: {
   setName: string;
   sideId: SideId;
+  myHandle?: string;
   onContinue: (payload: { handles: string[]; contactSyncDone: boolean }) => void;
   onSkip: () => void;
 }) {
@@ -54,9 +56,11 @@ export default function AddPeopleStep({
   const [toastOn, setToastOn] = useState(false);
   const [contactSyncDone, setContactSyncDone] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-
-  const INVITE_URL = "https://siddes.com/i/access";
-
+  const JOIN_URL = typeof window !== "undefined" ? window.location.origin + "/signup" : "/signup";
+  const myHandleSafe = String(myHandle || "").trim();
+  const inviteText = myHandleSafe
+    ? "Join me on Siddes. After you sign up, search @" + myHandleSafe + " and I will add you to " + setName + "."
+    : "Join me on Siddes. After you sign up, find me and I will add you to " + setName + ".";
   function toast(msg: string) {
     setToastMsg(msg);
     setToastOn(true);
@@ -101,7 +105,7 @@ export default function AddPeopleStep({
       setMatches(rows);
       setContactSyncDone(true);
       setViewState("results");
-      toast(rows.length ? `Found ${rows.length} siders` : "No matches yet");
+      toast(rows.length ? `Found ${rows.length} people` : "No matches yet");
       loadSuggestions();
     } catch {
       setViewState("results");
@@ -111,10 +115,10 @@ export default function AddPeopleStep({
 
   async function copyInvite() {
     try {
-      await navigator.clipboard.writeText(INVITE_URL);
+      await navigator.clipboard.writeText(inviteText + " " + JOIN_URL);
       toast("Link copied!");
     } catch {
-      window.prompt("Copy this link:", INVITE_URL);
+      window.prompt("Copy this invite:", inviteText + " " + JOIN_URL);
     }
   }
 
@@ -122,7 +126,7 @@ export default function AddPeopleStep({
     const navShare = navigator as unknown as { share?: (data: ShareData) => Promise<void> };
     if (typeof navShare.share === "function") {
       try {
-        await navShare.share({ title: "Join Siddes", text: `Join my \"${setName}\" Set on Siddes`, url: INVITE_URL });
+        await navShare.share({ title: "Join Siddes", text: inviteText, url: JOIN_URL });
         return;
       } catch {
         // fall through
@@ -132,10 +136,11 @@ export default function AddPeopleStep({
   }
 
   function openWhatsApp() {
-    const wa = `https://wa.me/?text=${encodeURIComponent(`Join my \"${setName}\" Set on Siddes: ${INVITE_URL}`)}`;
-    window.open(wa, "_blank", "noopener,noreferrer");
-    toast("Opening WhatsApp...");
-  }
+      const msg = inviteText + " " + JOIN_URL;
+      const wa = "https://wa.me/?text=" + encodeURIComponent(msg);
+      window.open(wa, "_blank", "noopener,noreferrer");
+      toast("Opening WhatsApp...");
+    }
 
   function toggle(handle: string, name?: string) {
     const h = String(handle || "").trim();
@@ -261,7 +266,7 @@ export default function AddPeopleStep({
 
       <h2 className="text-4xl font-black text-gray-900 tracking-tight mb-2 leading-[0.95]">{heading}</h2>
       <p className="text-gray-400 mb-8 font-medium leading-tight px-4 italic">
-        Invite them to your <strong className="text-gray-900">{setName}</strong> Set.
+        Invite them to join Siddes, then add them to your <strong className="text-gray-900">{setName}</strong> Set.
       </p>
 
       <div className="space-y-3 mb-8">

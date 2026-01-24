@@ -330,6 +330,9 @@ def _bulk_media(post_ids: List[str]) -> Dict[str, List[Dict[str, Any]]]:
                     "kind": str(getattr(m, "kind", "") or "image"),
                     "contentType": str(getattr(m, "content_type", "") or ""),
                     "url": build_media_url(key, is_public=bool(getattr(m, "is_public", False))),
+                    "width": int(getattr(m, "width", 0) or 0) or None,
+                    "height": int(getattr(m, "height", 0) or 0) or None,
+                    "durationMs": int(getattr(m, "duration_ms", 0) or 0) or None,
                 }
             )
     except Exception:
@@ -700,3 +703,6 @@ def list_feed(viewer_id: str, side: SideId, *, topic: str | None = None, set_id:
         "hasMore": bool(next_cursor),
         "serverTs": time.time(),
     }
+
+
+# sd_555_media_meta: applied

@@ -246,6 +246,10 @@ function SiddesSetsPageInner() {
           ) : null}
         </div>
 
+        <div className="text-[11px] text-gray-500 -mt-2 mb-4 text-right">
+          Guided flow • Name → Side → Theme → Members → Create
+        </div>
+
         {advanced ? (
           <div className="mb-4">
             <SuggestedSetsTray onCreated={() => void refresh()} />

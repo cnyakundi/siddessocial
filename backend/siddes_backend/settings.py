@@ -68,6 +68,10 @@ SIDDES_TELEMETRY_ENABLED = _truthy(os.environ.get("SIDDES_TELEMETRY_ENABLED", "1
 SIDDES_TELEMETRY_RETENTION_DAYS = _env_int("SIDDES_TELEMETRY_RETENTION_DAYS", 30)
 
 
+# Broadcasts are not MVP. Enable explicitly.
+SIDDES_BROADCASTS_ENABLED = _truthy(os.environ.get("SIDDES_BROADCASTS_ENABLED", "0"))
+
+
 SECRET_KEY = _env("DJANGO_SECRET_KEY", "dev-insecure-change-me")
 DEBUG = _truthy(os.environ.get("DJANGO_DEBUG", "1"))
 
@@ -118,7 +122,6 @@ INSTALLED_APPS = [
     "siddes_sets.apps.SiddesSetsConfig",
     "siddes_invites.apps.SiddesInvitesConfig",
     "siddes_feed.apps.SiddesFeedConfig",
-    "siddes_broadcasts.apps.SiddesBroadcastsConfig",
     "siddes_slate.apps.SiddesSlateConfig",
     "siddes_notifications.apps.SiddesNotificationsConfig",
     "siddes_safety.apps.SiddesSafetyConfig",
@@ -129,6 +132,11 @@ INSTALLED_APPS = [
     "siddes_search.apps.SiddesSearchConfig",
     "siddes_media.apps.SiddesMediaConfig",
 ]
+
+
+# Broadcasts are disabled for MVP unless explicitly enabled.
+if SIDDES_BROADCASTS_ENABLED:
+    INSTALLED_APPS.append("siddes_broadcasts.apps.SiddesBroadcastsConfig")
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -292,6 +300,8 @@ REST_FRAMEWORK = {
 
         "auth_signup": _env("SIDDES_THROTTLE_AUTH_SIGNUP", "10/hour"),
         "auth_google": _env("SIDDES_THROTTLE_AUTH_GOOGLE", "30/min"),
+        "auth_magic_request": _env("SIDDES_THROTTLE_AUTH_MAGIC_REQUEST", "10/hour"),
+        "auth_magic_consume": _env("SIDDES_THROTTLE_AUTH_MAGIC_CONSUME", "30/min"),
 
         "auth_pw_reset_request": _env("SIDDES_THROTTLE_AUTH_PW_RESET_REQUEST", "5/hour"),
         "auth_pw_reset_confirm": _env("SIDDES_THROTTLE_AUTH_PW_RESET_CONFIRM", "30/min"),

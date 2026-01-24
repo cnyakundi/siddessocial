@@ -47,3 +47,13 @@ body {
   }
 
 }
+
+
+/* sd_546: hide scrollbars (horizontal carousels) */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

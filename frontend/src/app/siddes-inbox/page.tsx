@@ -12,6 +12,14 @@ import type { SideId } from "@/src/lib/sides";
 import { SIDE_THEMES, SIDES } from "@/src/lib/sides";
 import type { InboxThreadItem } from "@/src/lib/inboxProvider";
 import { getInboxProvider } from "@/src/lib/inboxProvider";
+import { ensureThreadLockedSide } from "@/src/lib/threadStore";
+import { InboxBanner } from "@/src/components/InboxBanner";
+import { isRestrictedError, restrictedMessage } from "@/src/lib/restricted";
+import { InboxStubDebugPanel, useInboxStubViewer } from "@/src/components/InboxStubDebugPanel";
+
+import { useInboxStubViewer } from "@/src/lib/useInboxStubViewer";
+
+type InboxFilter = "all" | "this" | "mismatch" | "unread";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -109,6 +117,44 @@ function AvatarBubble({
   );
 }
 
+function SidePill({ side }: { side: SideId }) {
+  const t = SIDE_THEMES[side];
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-extrabold",
+        t.lightBg,
+        t.border,
+        t.text
+      )}
+      title={SIDES[side].privacyHint}
+      aria-label={"Locked Side: " + SIDES[side].label}
+    >
+      <span className={cn("w-2 h-2 rounded-full", t.primaryBg)} aria-hidden="true" />
+      <span className="whitespace-nowrap">{SIDES[side].label}</span>
+    </span>
+  );
+}
+
+function ContextRiskBadge({ isPrivate }: { isPrivate: boolean }) {
+  if (!isPrivate) return null;
+  return (
+    <span
+      data-testid="context-risk"
+      className={cn(
+        "inline-flex items-center px-2 py-1 rounded-full border text-[11px] font-extrabold",
+        "bg-amber-50",
+        "border-amber-200",
+        "text-amber-700"
+      )}
+      title="Context Risk"
+      aria-label="Context Risk"
+    >
+      Context Risk
+    </span>
+  );
+}
+
 export default function SiddesInboxPage() {
   return (
     <Suspense fallback={<div className="px-4 py-4 text-xs text-gray-500">Loading inbox…</div>}>
@@ -131,22 +177,27 @@ function SiddesInboxPageInner() {
 
   // sd_543b: unlock power tools only when explicitly requested
   const advanced = params.get("advanced") === "1";
-
   // sd_464d1: restore scroll when returning from thread detail
   useReturnScrollRestore();
 
   const provider = useMemo(() => getInboxProvider(), []);
+  const [viewerInput, setViewerInput] = useInboxStubViewer();
+  const viewer = (viewerInput || "").trim() || undefined;
   const PAGE_SIZE = 25;
 
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [restricted, setRestricted] = useState(false);
 
   const [threads, setThreads] = useState<InboxThreadItem[]>([]);
   const [hasMore, setHasMore] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
 
   const [query, setQuery] = useState("");
+
+  const [filter, setFilter] = useState<InboxFilter>("this");
+
 
   useEffect(() => {
     if (!advanced) setQuery("");
@@ -156,23 +207,41 @@ function SiddesInboxPageInner() {
     let alive = true;
     setLoading(true);
     setError(null);
+    setRestricted(false);
     setHasMore(false);
     setNextCursor(null);
 
     provider
-      .listThreads({ side, limit: PAGE_SIZE })
+      .listThreads({ side: side, limit: PAGE_SIZE })
       .then((page) => {
         if (!alive) return;
+
+        const p: any = page as any;
+        if (p && (p.restricted || p.error === "restricted" || (p.ok === false && p.error === "restricted"))) {
+          setThreads([]);
+          setHasMore(false);
+          setNextCursor(null);
+          setRestricted(true);
+          return;
+        }
+
         const items = (page?.items || []) as InboxThreadItem[];
         setThreads(items);
         setHasMore(Boolean(page?.hasMore));
         setNextCursor(page?.nextCursor ?? null);
       })
-      .catch(() => {
+      .catch((e) => {
         if (!alive) return;
         setThreads([]);
         setHasMore(false);
         setNextCursor(null);
+
+        if (isRestrictedError(e)) {
+          setRestricted(true);
+          setError(null);
+          return;
+        }
+
         setError("Failed to load inbox.");
         toast?.error?.("Inbox failed to load");
       })
@@ -185,9 +254,15 @@ function SiddesInboxPageInner() {
       alive = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [provider, side]);
+  }, [provider, side, viewer]);
 
   const filtered = useMemo(() => {
+
+  const counts = useMemo(() => {
+    const unread = threads.reduce((acc, t) => acc + (Number((t as any).unread || 0) > 0 ? 1 : 0), 0);
+    return { unread };
+  }, [threads]);
+
     if (!advanced) return threads;
     const q = query.trim().toLowerCase();
     if (!q) return threads;
@@ -199,13 +274,14 @@ function SiddesInboxPageInner() {
   }, [threads, query, advanced]);
 
   const loadMore = async () => {
+    if (restricted) return;
     if (provider.name !== "backend_stub") return;
     if (!hasMore || !nextCursor) return;
     if (loadingMore) return;
 
     setLoadingMore(true);
     try {
-      const page = await provider.listThreads({ side, limit: PAGE_SIZE, cursor: nextCursor });
+      const page = await provider.listThreads({ viewer, side: side, limit: PAGE_SIZE, cursor: nextCursor });
       const items = (page?.items || []) as InboxThreadItem[];
 
       setThreads((prev) => {
@@ -215,7 +291,12 @@ function SiddesInboxPageInner() {
 
       setHasMore(Boolean(page?.hasMore));
       setNextCursor(page?.nextCursor ?? null);
-    } catch {
+    } catch (e) {
+      if (isRestrictedError(e)) {
+        setRestricted(true);
+        setError(null);
+        return;
+      }
       toast?.error?.("Failed to load more");
     } finally {
       setLoadingMore(false);
@@ -224,6 +305,7 @@ function SiddesInboxPageInner() {
 
   return (
     <div className="p-4">
+      <InboxStubDebugPanel viewer="" onViewer={() => {}} />
       <div className="mb-4 px-1">
         <p className="text-xs font-medium text-gray-400 flex items-center gap-1.5">
           <Lock size={12} className="text-gray-400" />
@@ -267,6 +349,20 @@ function SiddesInboxPageInner() {
         </div>
       ) : null}
 
+      {restricted ? (
+        <InboxBanner tone="warn" title="Restricted inbox">
+          <div className="space-y-2">
+            <div>{restrictedMessage(null)}</div>
+            <div className="flex gap-2 flex-wrap">
+              <Link href="/login" className="px-3 py-1.5 rounded-full bg-white border border-amber-200 text-amber-900 text-xs font-bold hover:bg-amber-100">
+                Sign in
+              </Link>
+            </div>
+          </div>
+        </InboxBanner>
+      ) : null}
+
+
       {error ? (
         <div className="mb-3 p-3 rounded-2xl border border-red-200 bg-red-50 text-red-700 text-sm">
           <div className="font-bold">Inbox error</div>
@@ -276,9 +372,72 @@ function SiddesInboxPageInner() {
 
       {loading ? <div className="text-xs text-gray-500 mb-2">Loading inbox…</div> : null}
 
-      <div role="listbox" aria-label="Inbox threads" className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
+      
+      <div data-testid="inbox-filter-chips" className="mb-3 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          data-testid="chip-all"
+          onClick={() => setFilter("all")}
+          className={cn(
+            "px-3 py-1 rounded-full border text-[11px] font-extrabold",
+            filter === "all" ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-800 border-gray-200 hover:bg-gray-50"
+          )}
+          aria-pressed={filter === "all"}
+        >
+          All
+        </button>
+
+        <button
+          type="button"
+          data-testid="chip-this"
+          onClick={() => setFilter("this")}
+          className={cn(
+            "px-3 py-1 rounded-full border text-[11px] font-extrabold",
+            filter === "this" ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-800 border-gray-200 hover:bg-gray-50"
+          )}
+          aria-pressed={filter === "this"}
+        >
+          This Side
+        </button>
+
+        <button
+          type="button"
+          data-testid="chip-mismatch"
+          onClick={() => setFilter("mismatch")}
+          className={cn(
+            "px-3 py-1 rounded-full border text-[11px] font-extrabold",
+            filter === "mismatch" ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-800 border-gray-200 hover:bg-gray-50"
+          )}
+          aria-pressed={filter === "mismatch"}
+        >
+          Mismatched
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setFilter("unread")}
+          className={cn(
+            "px-3 py-1 rounded-full border text-[11px] font-extrabold",
+            filter === "unread" ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-800 border-gray-200 hover:bg-gray-50"
+          )}
+          aria-pressed={filter === "unread"}
+        >
+          <span label="Unread">Unread</span>
+          <span className="ml-2 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-gray-100 text-gray-700 border border-gray-200 text-[10px] font-black">
+            {counts.unread}
+          </span>
+        </button>
+      </div>
+<div role="listbox" aria-label="Inbox threads" className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
         {filtered.map((t) => {
-          const initials = String((t.title || "??").slice(0, 2));
+    const meta = ensureThreadLockedSide(t.id, t.lockedSide);
+    const lockedSide = meta.lockedSide;
+    const isPrivate = lockedSide !== "public";
+
+          const participant = (t as any)?.participant as any;
+          const initials = String(participant?.initials || (t.title || "??")).slice(0, 2);
+          const sideId = ((t as any)?.lockedSide as SideId) || side;
+          const seed = String(participant?.avatarSeed || t.id || "").trim() || null;
           return (
             <Link
               key={t.id}
@@ -292,13 +451,15 @@ function SiddesInboxPageInner() {
               className="block px-4 py-3 border-b border-gray-100 last:border-0 hover:bg-gray-50 active:bg-gray-50/60 transition-colors"
             >
               <div className="flex items-center gap-3 min-w-0">
-                <AvatarBubble initials={initials} sideId={side} seed={String(t.id)} />
+                <AvatarBubble initials={initials} sideId={(t.lockedSide || side) as any} seed={String((t as any)?.participant?.avatarSeed || t.id || "").trim() || String(t.id)} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline justify-between gap-3">
                     <span className="truncate text-[15px] font-black text-gray-900">{t.title}</span>
                     <span className="text-[11px] font-bold text-gray-400 flex-shrink-0">{t.time}</span>
+                    {showContextRisk ? <ContextRiskBadge isPrivate={isPrivate} /> : null}
                   </div>
                   <div className="text-[13px] font-medium text-gray-600 truncate">{t.last}</div>
+                  <div className="mt-2 flex items-center gap-2"><SidePill side={lockedSide} /><ContextRiskBadge isPrivate={isPrivate} /></div>
                 </div>
                 {t.unread > 0 ? <span className="w-2 h-2 rounded-full bg-red-500" aria-label="Unread" /> : null}
               </div>
@@ -331,3 +492,5 @@ function SiddesInboxPageInner() {
     </div>
   );
 }
+
+// counts.unread

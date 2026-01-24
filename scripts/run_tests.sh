@@ -104,7 +104,7 @@ if [[ -d "backend" ]]; then
   PY="${PYTHON:-python3}"
 
   if command -v "${PY}" >/dev/null 2>&1; then
-    "${PY}" -m compileall -q backend || warn "python compileall failed"
+    "${PY}" -m compileall -q backend
 
     if [[ -f "backend/manage.py" ]]; then
       # Prefer local Django if it is installed in the active Python.

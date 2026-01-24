@@ -1,15 +1,9 @@
 import { NextResponse } from "next/server";
 import { proxyJson } from "../../_proxy";
+import { applyProxyCookies } from "../../_cookie";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
-
-function applySetCookies(resp: NextResponse, setCookies: string[]) {
-  for (const sc of setCookies || []) {
-    if (!sc) continue;
-    resp.headers.append("set-cookie", sc);
-  }
-}
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
@@ -22,7 +16,7 @@ export async function POST(req: Request) {
     headers: { "cache-control": "no-store" },
   });
 
-  // Forward cookies (including sessionid) from backend.
-  applySetCookies(resp, setCookies || []);
+  // Use sd_545 pattern: set session cookie explicitly on the app domain.
+  applyProxyCookies(resp, data, setCookies || []);
   return resp;
 }

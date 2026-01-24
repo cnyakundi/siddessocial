@@ -25,6 +25,9 @@ SKIP = {
 # Use triple-quoted RAW regex so quotes don't break parsing.
 STRING_RE = re.compile(r"""(["'`])((?:\.|(?!\1).)*?)\1""", re.DOTALL)
 
+
+SIDER_RE = re.compile(r"\bsiders?\b", re.IGNORECASE)
+
 FORBIDDEN = [
     "followers",
     "following",
@@ -55,6 +58,19 @@ for p in SRC.rglob("*"):
     for m in STRING_RE.finditer(txt):
         s = m.group(2)
         low = s.lower()
+
+        # For "sider(s)", only enforce on human-visible strings (not module specifiers or paths)
+        s_stripped = s.strip()
+        if not (
+            s_stripped.startswith("/")
+            or s_stripped.startswith("./")
+            or s_stripped.startswith("../")
+            or s_stripped.startswith("@/")
+        ):
+            if SIDER_RE.search(s):
+                bad.append((rel, "sider(s)", (s[:140].replace("\n", " ").replace("\r", " "))))
+                continue
+
         for w in FORBIDDEN:
             if w in low:
                 bad.append((rel, w, (s[:140].replace("\n", " ").replace("\r", " "))))

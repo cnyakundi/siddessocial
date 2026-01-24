@@ -106,7 +106,7 @@ export function DesktopRightRail() {
         {/* Footer (no dead links) */}
         <div className="mt-auto pt-6 border-t border-gray-50 text-xs text-gray-400 flex flex-wrap gap-x-4 gap-y-2">
           <Link href="/siddes-profile/account" className="hover:text-gray-600">
-            Settings
+            Account
           </Link>
         </div>
       </div>

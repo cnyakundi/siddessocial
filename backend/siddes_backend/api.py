@@ -12,16 +12,21 @@ Note:
 
 from __future__ import annotations
 
+import os
+
 from django.urls import include, path
 
 from .views import readyz
+
+
+def _truthy(v: str | None) -> bool:
+    return str(v or "").strip().lower() in ("1", "true", "yes", "y", "on")
 
 urlpatterns = [
     path("health", readyz),
     path("inbox/", include("siddes_inbox.urls")),
     path("auth/", include("siddes_auth.urls")),
     path("contacts/", include("siddes_contacts.urls")),
-    path("", include("siddes_broadcasts.urls")),
     path("", include("siddes_sets.urls")),
     path("", include("siddes_invites.urls")),
     path("", include("siddes_safety.urls")),
@@ -37,3 +42,8 @@ urlpatterns = [
     path("", include("siddes_media.urls")),
     path("telemetry/", include("siddes_telemetry.urls")),
 ]
+
+
+# Broadcasts are disabled for MVP unless explicitly enabled.
+if _truthy(os.environ.get("SIDDES_BROADCASTS_ENABLED", "0")):
+    urlpatterns.append(path("", include("siddes_broadcasts.urls")))

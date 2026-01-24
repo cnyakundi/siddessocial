@@ -2,8 +2,8 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { ChevronDown, Check } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { ChevronDown, Check, Search as SearchIcon } from "lucide-react";
 
 import { useSide } from "@/src/components/SideProvider";
 import { SIDES, SIDE_ORDER, SIDE_THEMES, type SideId } from "@/src/lib/sides";
@@ -28,6 +28,7 @@ function titleFor(pathname: string): string {
   if (pathname.startsWith("/siddes-profile/people")) return "People";
 if (pathname.startsWith("/siddes-profile")) return "Me";
   if (pathname.startsWith("/siddes-compose")) return "Create";
+  if (pathname.startsWith("/siddes-search") || pathname.startsWith("/search")) return "Search";
   return "";
 }
 
@@ -56,7 +57,7 @@ function SidePopover({
         }}
       />
       <div className="absolute top-12 left-0 w-48 bg-white rounded-xl shadow-xl border border-gray-100 z-[100] py-2 animate-in fade-in zoom-in-95 duration-100">
-        <div className="px-4 py-2 text-[11px] font-black text-gray-400 uppercase tracking-widest">Mode</div>
+        <div className="px-4 py-2 text-[11px] font-black text-gray-400 uppercase tracking-widest">Side</div>
         {SIDE_ORDER.map((id) => {
           const t = SIDE_THEMES[id];
           const isActive = currentSide === id;
@@ -107,7 +108,7 @@ function SetPopover({
         }}
       />
       <div className="absolute top-12 right-0 w-60 bg-white rounded-xl shadow-xl border border-gray-100 z-[100] py-2 animate-in fade-in zoom-in-95 duration-100">
-        <div className="px-4 py-2 text-[11px] font-black text-gray-400 uppercase tracking-widest">Scope</div>
+        <div className="px-4 py-2 text-[11px] font-black text-gray-400 uppercase tracking-widest">Set</div>
 
         {/* All */}
         <button
@@ -153,13 +154,14 @@ function SetPopover({
 
 /**
  * DesktopTopBar (MVP Utility Header)
- * - Left: Side chip (Mode) → small popover.
- * - Right: Set popover only on /siddes-feed (Scope) — private sides only.
+ * - Left: Side chip → small popover.
+ * - Right: Set popover only on /siddes-feed (Set) — private sides only.
  * - Else: page title.
  * - No search/bell/inbox shortcuts/user menu (MVP: rail owns navigation).
  */
 export function DesktopTopBar() {
   const pathname = usePathname() || "/";
+  const router = useRouter();
   const { side, setSide } = useSide();
   const theme = SIDE_THEMES[side];
 
@@ -171,6 +173,19 @@ export function DesktopTopBar() {
 
   const [sets, setSets] = useState<SetDef[]>([]);
   const [activeSet, setActiveSet] = useState<SetId | null>(null);
+
+  // Cmd/Ctrl+K opens Search
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const k = String((e as any).key || "").toLowerCase();
+      if ((e.metaKey || e.ctrlKey) && k === "k") {
+        e.preventDefault();
+        router.push("/siddes-search");
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [router]);
 
   // Close popovers on Escape
   useEffect(() => {
@@ -284,8 +299,18 @@ export function DesktopTopBar() {
           />
         </div>
 
-        {/* Right: Scope on Now, else title */}
-        <div className="relative flex items-center justify-end min-w-0">
+        {/* Right: Set on Now, else title */}
+        <div className="relative flex items-center justify-end min-w-0 gap-2">
+          {/* Search entrypoint */}
+          <Link
+            href="/siddes-search"
+            className="p-2 rounded-full hover:bg-gray-100 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900/20"
+            aria-label="Search"
+            title="Search"
+          >
+            <SearchIcon size={18} className="text-gray-500" aria-hidden />
+          </Link>
+
           {isNow ? (
             canPickSet ? (
               <>

@@ -4,10 +4,25 @@
 
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import {
+  useRouter, useSearchParams } from "next/navigation";
 
 import {
-  AlertTriangle, Globe, Loader2, Trash2, X, FileText, Link2, Sparkles, MapPin, Mic, CheckSquare, ImagePlus
+  AlertTriangle,
+  Globe,
+  Loader2,
+  Trash2,
+  X,
+  FileText,
+  Link2,
+  Sparkles,
+  MapPin,
+  Mic,
+  CheckSquare,
+  ImagePlus,
+  Play,
+  ChevronDown,
+  Lock
 } from "lucide-react";
 import { useSide } from "@/src/components/SideProvider";
 import { enqueuePost, removeQueuedItem } from "@/src/lib/offlineQueue";
@@ -21,6 +36,7 @@ import { DEFAULT_SETS } from "@/src/lib/sets";
 import { getSetsProvider } from "@/src/lib/setsProvider";
 import { SetPickerSheet } from "@/src/components/SetPickerSheet";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
+import { usePrismAvatar } from "@/src/hooks/usePrismAvatar";
 import { toast } from "@/src/lib/toast";
 import { getStoredLastPublicTopic, getStoredLastSetForSide } from "@/src/lib/audienceStore";
 import { signUpload, uploadToSignedUrl } from "@/src/lib/mediaClient";
@@ -29,18 +45,41 @@ function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
 }
 
-function AvatarMe({ sideLabel }: { sideLabel: string }) {
-  const seed = sideLabel.slice(0, 1).toUpperCase();
+function formatDurationMs(ms?: number): string {
+  const n = typeof ms === "number" ? Math.floor(ms) : 0;
+  if (!n || n <= 0) return "";
+  const total = Math.max(0, Math.round(n / 1000));
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+
+function AvatarMe({ side }: { side: SideId }) {
+  const t = SIDE_THEMES[side];
+  const { img, initials } = usePrismAvatar(side);
+
   return (
     <div
-      className="w-12 h-12 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center font-extrabold text-gray-700 shrink-0"
+      className={cn(
+        "w-12 h-12 rounded-full overflow-hidden border-2 flex items-center justify-center font-extrabold shrink-0 select-none",
+        t.border,
+        img ? "bg-gray-100" : cn(t.lightBg, t.text)
+      )}
       aria-hidden="true"
       title="You"
     >
-      {seed}
+      {img ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={img} alt="" className="w-full h-full object-cover" />
+      ) : (
+        initials
+      )}
     </div>
   );
 }
+
+
 
 function TopicPickerSheet({
   open,
@@ -84,8 +123,7 @@ function TopicPickerSheet({
       <div className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
         <div className="flex items-center justify-between gap-3 mb-4">
           <div>
-            <h3 className="text-lg font-bold text-gray-900">Choose Topic</h3>
-            <div className="text-xs text-gray-500 mt-1">Public posts land in a topic stream.</div>
+            <h3 className="text-lg font-bold text-gray-900">Topic</h3>
           </div>
           <button
             type="button"
@@ -364,6 +402,12 @@ export default function SiddesComposePage() {
   }, [searchParams]);
   const isPulse = requestedMode === "pulse";
 
+  const isAdvanced = useMemo(() => {
+    const raw = String(searchParams?.get("advanced") || "").trim().toLowerCase();
+    return raw === "1" || raw === "true" || raw === "yes";
+  }, [searchParams]);
+
+
 
 
   // Best-effort focus: some mobile browsers ignore autoFocus; try again after mount.
@@ -540,6 +584,9 @@ export default function SiddesComposePage() {
     kind: "image" | "video";
     previewUrl: string;
     status: "uploading" | "ready" | "failed";
+    width?: number;
+    height?: number;
+    durationMs?: number;
     r2Key?: string;
   };
 
@@ -551,6 +598,20 @@ export default function SiddesComposePage() {
   const mediaKeys = mediaItems
     .map((m) => (m.status === "ready" ? m.r2Key : null))
     .filter((x): x is string => Boolean(x));
+
+  // sd_555_media_meta: carry width/height/durationMs to backend so feed can render premium media
+  const mediaMeta = useMemo(() => {
+    const out: Record<string, any> = {};
+    for (const m of mediaItems) {
+      if (m.status !== "ready" || !m.r2Key) continue;
+      const meta: any = {};
+      if (typeof m.width === "number" && m.width > 0) meta.w = m.width;
+      if (typeof m.height === "number" && m.height > 0) meta.h = m.height;
+      if (typeof m.durationMs === "number" && m.durationMs > 0) meta.durationMs = m.durationMs;
+      if (Object.keys(meta).length) out[m.r2Key] = meta;
+    }
+    return out;
+  }, [mediaItems]);
 
   const clearMedia = () => {
     setMediaItems((cur) => {
@@ -630,6 +691,55 @@ export default function SiddesComposePage() {
       const name = String((file as any).name || (kind === "video" ? "video" : "photo"));
 
       setMediaItems((cur) => [...cur, { id, name, kind, previewUrl, status: "uploading" }]);
+
+      // sd_555_media_meta: sniff width/height (+ duration for videos) for nicer layouts + overlays
+      (async () => {
+        try {
+          if (kind === "image") {
+            const dims = await new Promise<{ w: number; h: number }>((resolve, reject) => {
+              const img = new Image();
+              img.onload = () => resolve({ w: (img as any).naturalWidth || 0, h: (img as any).naturalHeight || 0 });
+              img.onerror = () => reject(new Error("img_meta_failed"));
+              img.src = previewUrl;
+            });
+            if (dims.w > 0 && dims.h > 0) {
+              setMediaItems((cur) => cur.map((m) => (m.id === id ? { ...m, width: dims.w, height: dims.h } : m)));
+            }
+          } else {
+            const meta = await new Promise<{ w: number; h: number; d: number }>((resolve, reject) => {
+              const v = document.createElement("video");
+              v.preload = "metadata";
+              v.muted = true;
+              (v as any).playsInline = true;
+              v.onloadedmetadata = () => {
+                const w = (v as any).videoWidth || 0;
+                const h = (v as any).videoHeight || 0;
+                const d = Number((v as any).duration || 0);
+                resolve({ w, h, d });
+              };
+              v.onerror = () => reject(new Error("video_meta_failed"));
+              v.src = previewUrl;
+              try {
+                v.load();
+              } catch {
+                // ignore
+              }
+            });
+            const durationMs = Number.isFinite(meta.d) && meta.d > 0 ? Math.round(meta.d * 1000) : undefined;
+            if (meta.w > 0 && meta.h > 0) {
+              setMediaItems((cur) =>
+                cur.map((m) =>
+                  m.id === id ? { ...m, width: meta.w, height: meta.h, durationMs } : m
+                )
+              );
+            } else if (durationMs) {
+              setMediaItems((cur) => cur.map((m) => (m.id === id ? { ...m, durationMs } : m)));
+            }
+          }
+        } catch {
+          // ignore
+        }
+      })();
 
       try {
         const signed = await signUpload(file, kind);
@@ -735,6 +845,8 @@ export default function SiddesComposePage() {
       ? `Public • ${FLAGS.publicChannels ? labelForPublicChannel(publicChannel) : "All Topics"}`
       : `${SIDES[side].label} • ${selectedSet ? selectedSet.label : `All ${SIDES[side].label}`}`;
 
+  const lockTextSimple = side === "public" ? "Everyone" : `${SIDES[side].label} only`;
+
   function shouldConfirmPublic(): boolean {
     if (side !== "public") return false;
     if (typeof window === "undefined") return false;
@@ -750,7 +862,11 @@ export default function SiddesComposePage() {
   const overLimit = charCount > maxChars;
 
   
-const canPost = hasDraft(text) && !posting && !overLimit;
+const canPost = hasDraft(text) && !posting && !overLimit && !mediaBusy;
+
+  const remaining = maxChars - charCount;
+  const showCount = isAdvanced || overLimit || remaining <= 100;
+
 
   // sd_398: Quick tools dock (templates + toggles). No mock post types.
   type QuickTool = {
@@ -895,6 +1011,7 @@ const quickTools = useMemo<QuickTool[]>(() => {
           publicChannel: side === "public" && FLAGS.publicChannels ? publicChannel : null,
           client_key: clientKey,
           mediaKeys,
+          mediaMeta: Object.keys(mediaMeta || {}).length ? mediaMeta : undefined,
         }),
       });
 
@@ -1057,52 +1174,56 @@ const quickTools = useMemo<QuickTool[]>(() => {
           )}
           style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
         >
-          {/* 1) Safety header */}
-          <div className={cn("px-6 py-4 border-b flex items-center justify-between", theme.lightBg, theme.border)}>
-            <div className="flex flex-col gap-2 min-w-0">
-              <div className="flex items-center gap-2 min-w-0">
-                <button
-                  type="button"
-                  onClick={openAudience}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-extrabold transition-colors",
-                    "bg-white/70 hover:bg-white/90 min-w-0",
-                    theme.border,
-                    theme.text
-                  )}
-                  aria-label={`Posting to ${lockLabel}`}
-                  title={SIDES[side].privacyHint}
-                >
-                  <span className={cn("w-2 h-2 rounded-full", theme.primaryBg)} aria-hidden="true" />
-                  <span className="truncate max-w-[260px]">{lockLabel}</span>
-                </button>
-
-                {urgent ? (
-                  <button
-                    type="button"
-                    onClick={() => setUrgent(false)}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-full border text-xs font-extrabold bg-red-50 text-red-700 border-red-100 hover:opacity-90"
-                    aria-label="Urgent on"
-                    title="Click to remove Urgent"
-                  >
-                    Urgent ✕
-                  </button>
-                ) : null}
-              </div>
-            </div>
-
+                    {/* Header (MVP) */}
+          <div className="px-6 md:px-8 py-4 border-b border-gray-100 bg-white flex items-center justify-between">
             <button
               type="button"
               onClick={() => close()}
-              className="p-2 rounded-full hover:bg-white/60"
-              aria-label="Close"
-              title="Close"
+              className="text-sm font-bold text-gray-700 hover:text-gray-900"
             >
-              <X size={18} className="text-gray-600" />
+              Cancel
+            </button>
+
+            <div className={cn("text-sm font-extrabold", theme.text)}>{SIDES[side].label}</div>
+
+            <button
+              type="button"
+              onClick={submit}
+              disabled={!canPost}
+              className={cn(
+                "px-4 py-2 rounded-full text-sm font-extrabold text-white inline-flex items-center gap-2 transition-all",
+                canPost ? cn(theme.primaryBg, "hover:opacity-90 active:scale-95") : "bg-gray-300 cursor-not-allowed"
+              )}
+              aria-label="Post"
+              title={!canPost ? (overLimit ? `Too long (max ${maxChars})` : posting ? "Posting…" : mediaBusy ? "Wait for uploads" : "Write something first") : "Post"}
+            >
+              {posting ? <Loader2 size={16} className="animate-spin" /> : null}
+              {posting ? "Posting…" : "Post"}
             </button>
           </div>
 
-          {reqBanner}
+          {/* Audience row (MVP) */}
+          <div className="px-6 md:px-8 pt-3 pb-2 flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={openAudience}
+              disabled={side === "public" && !FLAGS.publicChannels}
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors min-w-0 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label={side === "public" ? "Choose topic" : "Choose set"}
+              title={side === "public" ? "Topic" : "Set"}
+            >
+              <span className={cn("w-2 h-2 rounded-full", theme.primaryBg)} aria-hidden="true" />
+              <span className="text-sm font-bold text-gray-900 truncate max-w-[260px]">{audienceLabel}</span>
+              <ChevronDown size={16} className="text-gray-400 shrink-0" />
+            </button>
+
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 shrink-0">
+              <Lock size={12} />
+              <span>{lockTextSimple}</span>
+            </div>
+          </div>
+
+{reqBanner}
 
           {/* Public warning (dismissible per session) */}
           {side === "public" && showPublicWarn ? (
@@ -1146,10 +1267,10 @@ const quickTools = useMemo<QuickTool[]>(() => {
 
           {/* 2) Main editor */}
           <div className="p-6 md:p-8 min-h-[320px] flex flex-col">
-            <div className="text-sm font-bold text-gray-900 mb-4">{title}</div>
+            <div className="sr-only">{title}</div>
 
             <div className="flex gap-5">
-              <AvatarMe sideLabel={SIDES[side].label} />
+              <AvatarMe side={side} />
 
               <div className="flex-1 min-w-0">
                 <textarea
@@ -1159,12 +1280,20 @@ const quickTools = useMemo<QuickTool[]>(() => {
                     setText(e.target.value);
                     if (error?.kind === "validation") setError(null);
                   }}
-                  placeholder={isPulse ? ("Quick check‑in to " + SIDES[side].label + "…") : (side === "work" ? "Log update, blocker, or task…" : "What’s happening?")}
+                  placeholder={isPulse ? (`Quick check‑in to ${SIDES[side].label}…`) : (side === "public" ? "Share to Public…" : side === "friends" ? "Say something to Friends…" : side === "close" ? "Talk to Close…" : "Note for Work…")}
                   className="w-full h-40 resize-none outline-none text-xl text-gray-900 placeholder:text-gray-300 bg-transparent leading-relaxed"
                   autoFocus
                 />
 
-                {/* Suggestions (confidence gated, reversible) */}
+                {/* sd_544b_inline_error */}
+                {error ? (
+                  <div className="mt-3 text-xs font-bold text-rose-700 bg-rose-50 border border-rose-100 px-3 py-2 rounded-2xl inline-flex items-center gap-2 max-w-full">
+                    <AlertTriangle size={12} />
+                    <span className="truncate">{error.message}</span>
+                  </div>
+                ) : null}
+
+                                {/* Suggestions (confidence gated, reversible) */}
                 <div className="mt-4 hidden">
                   <ComposeSuggestionBar
                     text={text}
@@ -1213,7 +1342,7 @@ const quickTools = useMemo<QuickTool[]>(() => {
                 </div>
 
                                 {/* Selected context chips (clear fast) */}
-                {selectedSetId && selectedSet && (
+                {isAdvanced && selectedSetId && selectedSet && (
                   <div className="flex gap-2 flex-wrap mt-2">
                     <button
                       type="button"
@@ -1226,128 +1355,137 @@ const quickTools = useMemo<QuickTool[]>(() => {
                   </div>
                 )}
 
-                {/* sd_384_media: selected uploads */}
+                                {/* sd_384_media: selected uploads */}
                 {mediaItems.length > 0 ? (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {mediaItems.slice(0, 4).map((m) => {
-                      const failed = m.status === "failed";
-                      const uploading = m.status === "uploading";
-                      return (
-                        <div
-                          key={m.id}
-                          className={cn(
-                            "relative w-20 h-20 rounded-2xl overflow-hidden border bg-gray-50",
-                            failed ? "border-red-200" : "border-gray-200"
-                          )}
-                          title={m.name}
-                        >
-                          {m.previewUrl ? (
-                            m.kind === "video" ? (
-                              <video
-                                src={m.previewUrl}
-                                className="w-full h-full object-cover"
-                                muted
-                                playsInline
-                                preload="metadata"
-                              />
-                            ) : (
-                              <img src={m.previewUrl} alt="" className="w-full h-full object-cover" />
-                            )
-                          ) : null}
-
-                          <button
-                            type="button"
-                            onClick={() => removeMedia(m.id)}
-                            className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/60"
-                            aria-label="Remove media"
-                            title="Remove"
+                  <div className="mt-3">
+                    <div className="flex gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-2">
+                      {mediaItems.slice(0, 4).map((m) => {
+                        const failed = m.status === "failed";
+                        const uploading = m.status === "uploading";
+                        return (
+                          <div
+                            key={m.id}
+                            className={cn(
+                              "relative snap-start shrink-0 w-[78%] max-w-[360px] rounded-3xl overflow-hidden border-2 bg-gray-50",
+                              failed ? "border-red-200" : "border-gray-100"
+                            )}
+                            title={m.name}
                           >
-                            <span className="text-sm leading-none">&times;</span>
-                          </button>
+                            {m.previewUrl ? (
+                              m.kind === "video" ? (
+                                <div className="relative w-full h-56 lg:h-64">
+                                  <video
+                                    src={m.previewUrl}
+                                    className="w-full h-full object-cover"
+                                    muted
+                                    playsInline
+                                    preload="metadata"
+                                  />
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    <div className="w-14 h-14 rounded-full bg-black/35 backdrop-blur flex items-center justify-center">
+                                      <Play size={26} className="text-white" />
+                    {typeof m.durationMs === "number" && m.durationMs > 0 ? (
+                      <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-black/45 text-white text-xs font-semibold">
+                        {formatDurationMs(m.durationMs)}
+                      </div>
+                    ) : null}
+                                    </div>
+                                  </div>
+                                </div>
+                              ) : (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={m.previewUrl} alt="" className="w-full h-56 lg:h-64 object-cover" />
+                              )
+                            ) : (
+                              <div className="w-full h-56 lg:h-64 flex items-center justify-center text-xs font-bold text-gray-400">
+                                Media
+                              </div>
+                            )}
 
-                          {(uploading || failed) && (
-                            <div
-                              className={cn(
-                                "absolute inset-0 flex items-center justify-center text-[11px] font-bold",
-                                failed ? "bg-red-500/40 text-white" : "bg-black/35 text-white"
-                              )}
+                            <button
+                              type="button"
+                              onClick={() => removeMedia(m.id)}
+                              className="absolute top-2 right-2 w-10 h-10 rounded-full bg-black/45 text-white flex items-center justify-center hover:bg-black/60"
+                              aria-label="Remove media"
+                              title="Remove"
                             >
-                              {uploading ? "Uploading..." : "Failed"}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                              <X size={18} />
+                            </button>
+
+                            {(uploading || failed) && (
+                              <div
+                                className={cn(
+                                  "absolute inset-0 flex items-center justify-center text-sm font-extrabold",
+                                  failed ? "bg-red-500/40 text-white" : "bg-black/35 text-white"
+                                )}
+                              >
+                                {uploading ? "Uploading…" : "Failed"}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 ) : null}
 
-              </div>
+</div>
             </div>
           </div>
 
-{/* 3) Footer */}
-          <div className="px-6 md:px-8 py-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
-            <div className="flex items-center gap-4 min-w-0">
-              <span className={cn("text-[10px] font-mono", overLimit ? "text-red-600 font-bold" : "text-gray-400")}>{charCount} / {maxChars}</span>
-
-              <span className="hidden sm:inline text-[10px] font-bold text-gray-400">{isOnline ? "Online" : "Offline (queue)"}</span>
-
-              {error ? (
-                <span className="flex items-center gap-1.5 text-xs font-bold text-red-600 bg-red-50 px-2 py-1 rounded max-w-[360px] truncate">
-                  <AlertTriangle size={12} />
-                  <span className="truncate">{error.message}</span>
-                </span>
-              ) : null}
-            </div>
-
+          {/* 3) Footer (MVP) */}
+          <div className="px-6 md:px-8 py-4 bg-white border-t border-gray-100 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="hidden md:flex text-[10px] font-bold text-gray-400 items-center gap-1.5">
-                <span className={cn("w-1.5 h-1.5 rounded-full", theme.primaryBg)} aria-hidden="true" />
-                <span className="truncate max-w-[240px]">Posting to {lockLabel}</span>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setDraftsOpen(true)}
-                className="text-xs font-bold text-gray-500 hover:text-gray-900 transition-colors"
-              >
-                Drafts
-              </button>
-
               <button
                 type="button"
                 onClick={pickMedia}
                 disabled={posting || mediaBusy || !isOnline || mediaItems.length >= 4}
                 className={cn(
-                  "inline-flex items-center gap-2 px-3 py-2 rounded-full border text-xs font-extrabold transition-colors",
+                  "w-10 h-10 rounded-full border flex items-center justify-center transition-colors",
                   posting || mediaBusy || !isOnline || mediaItems.length >= 4
                     ? "border-gray-200 text-gray-300 bg-white cursor-not-allowed"
                     : "border-gray-200 text-gray-700 bg-white hover:bg-gray-50"
                 )}
-                aria-label="Add media"
+                aria-label="Add photo"
                 title={!isOnline ? "Go online to upload" : mediaItems.length >= 4 ? "Max 4 media" : "Add photo"}
               >
-                <ImagePlus size={16} />
-                <span className="hidden sm:inline">Media</span>
+                <ImagePlus size={18} />
               </button>
 
+              {isAdvanced ? (
+                <button
+                  type="button"
+                  onClick={() => setDraftsOpen(true)}
+                  className="text-xs font-bold text-gray-500 hover:text-gray-900 transition-colors"
+                >
+                  Drafts
+                </button>
+              ) : null}
 
-              <button
-                type="button"
-                onClick={submit}
-                disabled={!canPost}
-                className={cn(
-                  "px-8 py-3 rounded-full text-white text-sm font-extrabold shadow-lg shadow-gray-200 transition-all inline-flex items-center gap-2",
-                  canPost ? cn(theme.primaryBg, "hover:opacity-90 active:scale-95") : "bg-gray-300 cursor-not-allowed"
-                )}
-                aria-label="Post"
-                title={!canPost ? (overLimit ? `Too long (max ${maxChars})` : posting ? "Posting…" : "Write something first") : "Post"}
-              >
-                {posting ? <Loader2 size={16} className="animate-spin" /> : null}
-                {posting ? "Posting…" : "Post"}
-              </button>
+              {isAdvanced ? (
+                <button
+                  type="button"
+                  onClick={() => setUrgent((u) => !u)}
+                  aria-pressed={urgent}
+                  className={cn(
+                    "text-xs font-extrabold px-3 py-1.5 rounded-full border transition-colors",
+                    urgent
+                      ? "bg-red-50 text-red-700 border-red-100 hover:opacity-90"
+                      : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+                  )}
+                >
+                  {urgent ? "Urgent on" : "Urgent"}
+                </button>
+              ) : null}
             </div>
+
+            {showCount ? (
+              <span className={cn("text-[10px] font-mono", overLimit ? "text-red-600 font-bold" : "text-gray-400")}>
+                {charCount} / {maxChars}
+              </span>
+            ) : null}
           </div>
+
 
         </div>
       </div>
@@ -1399,7 +1537,7 @@ const quickTools = useMemo<QuickTool[]>(() => {
         activeSet={selectedSetId}
         onPick={(next) => setSelectedSetId(next)}
         onNewSet={() => router.push("/siddes-sets?create=1")}
-        title="Choose Audience"
+        title="Set"
         allLabel={`All ${SIDES[side].label}`}
       />
 
@@ -1488,3 +1626,6 @@ const quickTools = useMemo<QuickTool[]>(() => {
     </>
   );
 }
+
+
+// sd_555_media_meta: applied

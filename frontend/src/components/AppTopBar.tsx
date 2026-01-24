@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown , Search as SearchIcon } from "lucide-react";
 
 import { SideSwitcherSheet } from "@/src/components/SideSwitcherSheet";
 import { SetPickerSheet } from "@/src/components/SetPickerSheet";
@@ -26,8 +27,8 @@ function cn(...parts: Array<string | undefined | false | null>) {
 /**
  * AppTopBar (Mobile) — MVP Utility Header
  * - One header layer only (no stacked bars).
- * - Left: Side (Mode) chip → opens SideSwitcherSheet.
- * - Right: Scope chip (Set) only on /siddes-feed; otherwise a calm page title.
+ * - Left: Side chip → opens SideSwitcherSheet.
+ * - Right: Set chip only on /siddes-feed; otherwise a calm page title.
  * - No Search/Bell/Avatar here (MVP: Now/Sets/Inbox/Me + Create).
  */
 export function AppTopBar(_props: { onOpenNotificationsDrawer?: () => void } = {}) {
@@ -48,6 +49,7 @@ export function AppTopBar(_props: { onOpenNotificationsDrawer?: () => void } = {
     if (pathname.startsWith("/siddes-profile/prism")) return "Identity";
     if (pathname.startsWith("/siddes-profile/account")) return "Account";
     if (pathname.startsWith("/siddes-profile/people")) return "People";
+    if (pathname.startsWith("/siddes-search") || pathname.startsWith("/search")) return "Search";
 if (pathname.startsWith("/siddes-profile")) return "Me";
     if (pathname.startsWith("/siddes-compose")) return "Create";
     if (pathname.startsWith("/siddes-notifications")) return "Inbox";
@@ -113,7 +115,7 @@ if (pathname.startsWith("/siddes-profile")) return "Me";
   return (
     <div className="sticky top-0 z-[90] bg-white/90 backdrop-blur border-b border-gray-50 pt-[env(safe-area-inset-top)]">
       <div className="max-w-[430px] mx-auto px-4 h-14 flex items-center justify-between gap-3">
-        {/* Left: Side (Mode) */}
+        {/* Left: Side */}
         <div className="relative">
           <button
             type="button"
@@ -136,8 +138,8 @@ if (pathname.startsWith("/siddes-profile")) return "Me";
           </button>
         </div>
 
-        {/* Right: Scope (Set) on Now, else Title */}
-        <div className="flex items-center justify-end min-w-0">
+        {/* Right: Set (Set) on Now, else Title */}
+        <div className="flex items-center justify-end min-w-0 gap-2">
           {showSetScope ? (
             canPickSet ? (
               <button
@@ -165,6 +167,14 @@ if (pathname.startsWith("/siddes-profile")) return "Me";
           ) : (
             <div />
           )}
+                  <Link
+            href="/siddes-search"
+            className="p-2 rounded-full hover:bg-gray-100 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900/20"
+            aria-label="Search"
+            title="Search"
+          >
+            <SearchIcon size={18} className="text-gray-500" aria-hidden />
+          </Link>
         </div>
       </div>
 

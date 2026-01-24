@@ -1,9 +1,11 @@
 "use client";
 
+
+/* eslint-disable @next/next/no-img-element */
+
 import React, { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
-  Image as ImageIcon,
+  useRouter } from "next/navigation"; import { Image as ImageIcon,
   Link as LinkIcon,
   MessageCircle,
   Repeat,
@@ -13,6 +15,12 @@ import {
   Megaphone,
   Share2,
   Copy,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Play,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import type { SideId } from "@/src/lib/sides";
 import { SIDE_THEMES, SIDES } from "@/src/lib/sides";
@@ -27,6 +35,7 @@ import { PostActionsSheet } from "@/src/components/PostActionsSheet";
 import { EditPostSheet } from "@/src/components/EditPostSheet";
 import { toast } from "@/src/lib/toast";
 import { saveReturnScroll } from "@/src/hooks/returnScroll";
+import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 
 // Tailwind-safe hover text tokens (static strings)
 const HOVER_TEXT: Record<SideId, string> = {
@@ -36,7 +45,6 @@ const HOVER_TEXT: Record<SideId, string> = {
   work: "hover:text-slate-700",
 };
 
-
 // 44x44 action hit targets + focus rings (mobile ergonomics)
 const ACTION_BASE =
   "min-w-[44px] min-h-[44px] p-2 rounded-full inline-flex items-center justify-center transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-900/20 active:scale-[0.98]";
@@ -45,40 +53,435 @@ function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
 }
 
+function formatDurationMs(ms?: number): string {
+  const n = typeof ms === "number" ? Math.floor(ms) : 0;
+  if (!n || n <= 0) return "";
+  const total = Math.max(0, Math.round(n / 1000));
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
 // sd_384_media: render attachments (R2 served via /m/* redirects)
-type MediaItem = { id: string; url: string; kind: "image" | "video" };
+type MediaItem = { id: string; url: string; kind: "image" | "video"; width?: number; height?: number; durationMs?: number };
 
-function MediaGrid({ items }: { items: MediaItem[] }) {
-  const it = Array.isArray(items) ? items.slice(0, 4) : [];
-  if (it.length === 0) return null;
+function MediaViewerModal({
+  open,
+  items,
+  index,
+  onClose,
+  onIndexChange,
+}: {
+  open: boolean;
+  items: MediaItem[];
+  index: number;
+  onClose: () => void;
+  onIndexChange: React.Dispatch<React.SetStateAction<number>>;
+}) {
+  useLockBodyScroll(open);
 
-  const isSingle = it.length === 1;
+  const count = Array.isArray(items) ? items.length : 0;
+const safeIndex = Math.max(0, Math.min(count - 1, Math.floor(index || 0)));
+  const active = items[safeIndex];
+
+  const [muted, setMuted] = useState(true);
+  const videoRef = React.useRef<HTMLVideoElement | null>(null);
+
+  React.useEffect(() => {
+    if (!open) return;
+    // Reset to muted whenever the viewer opens or the active item changes.
+    setMuted(true);
+  }, [open, safeIndex]);
+
+  React.useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = muted;
+  }, [muted, safeIndex, open]);
+
+
+  const goPrev = React.useCallback(() => {
+    if (count < 2) return;
+    onIndexChange((prev) => (prev - 1 + count) % count);
+  }, [count, onIndexChange]);
+  const goNext = React.useCallback(() => {
+    if (count < 2) return;
+    onIndexChange((prev) => (prev + 1) % count);
+  }, [count, onIndexChange]);
+
+  const touchRef = React.useRef<{ x: number; y: number } | null>(null);
+
+  React.useEffect(() => {
+    if (!open || count === 0) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        goPrev();
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        goNext();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, count, onClose, goPrev, goNext]);
+
+  if (!open || count === 0) return null;
+
+
 
   return (
-    <div className={cn("w-full mb-3 lg:mb-4 overflow-hidden", isSingle ? "rounded-3xl border-2 border-gray-100 bg-gray-50" : "")}>
-      {isSingle ? (
-        it[0].kind === "video" ? (
-          <video className="w-full max-h-[420px] object-cover" controls preload="metadata" src={it[0].url} />
-        ) : (
-          <img className="w-full max-h-[420px] object-cover" src={it[0].url} alt="" loading="lazy" />
-        )
-      ) : (
-        <div className="grid grid-cols-2 gap-2">
-          {it.map((m) => (
-            <div key={m.id || m.url} className="rounded-3xl border-2 border-gray-100 bg-gray-50 overflow-hidden">
-              {m.kind === "video" ? (
-                <video className="w-full h-44 object-cover" controls preload="metadata" src={m.url} />
-              ) : (
-                <img className="w-full h-44 object-cover" src={m.url} alt="" loading="lazy" />
-              )}
-            </div>
-          ))}
+    <div
+      className="fixed inset-0 z-[220] bg-black/95"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Media viewer"
+      onMouseDown={(e) => {
+        e.stopPropagation();
+        if (e.target === e.currentTarget) onClose();
+      }}
+      onClick={(e) => e.stopPropagation()}
+      onTouchStart={(e) => {
+        e.stopPropagation();
+        const t = e.touches?.[0];
+        if (!t) return;
+        touchRef.current = { x: t.clientX, y: t.clientY };
+      }}
+      onTouchEnd={(e) => {
+        e.stopPropagation();
+        const start = touchRef.current;
+        touchRef.current = null;
+        if (!start) return;
+        const t = e.changedTouches?.[0];
+        if (!t) return;
+        const dx = t.clientX - start.x;
+        const dy = t.clientY - start.y;
+        if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) {
+          dx > 0 ? goPrev() : goNext();
+        }
+      }}
+    >
+      {/* Close */}
+      <button
+        type="button"
+        className="absolute top-4 left-4 z-[230] w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white inline-flex items-center justify-center transition-colors"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onClose();
+        }}
+        aria-label="Close"
+        title="Close"
+      >
+        <X size={22} />
+      </button>
+
+      {/* Counter */}
+      {count > 1 ? (
+        <div className="absolute top-5 left-1/2 -translate-x-1/2 text-white/70 text-sm font-semibold">
+          {safeIndex + 1} / {count}
         </div>
-      )}
+      ) : null}
+
+      {/* Arrows */}
+      {count > 1 ? (
+        <>
+          <button
+            type="button"
+            className="hidden md:inline-flex absolute left-3 top-1/2 -translate-y-1/2 z-[230] w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white items-center justify-center transition-colors"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              goPrev();
+            }}
+            aria-label="Previous"
+            title="Previous"
+          >
+            <ChevronLeft size={24} />
+          </button>
+          <button
+            type="button"
+            className="hidden md:inline-flex absolute right-3 top-1/2 -translate-y-1/2 z-[230] w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white items-center justify-center transition-colors"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              goNext();
+            }}
+            aria-label="Next"
+            title="Next"
+          >
+            <ChevronRight size={24} />
+          </button>
+        </>
+      ) : null}
+
+      {/* Media */}
+      <div
+        className="absolute inset-0 flex items-center justify-center px-4 py-16"
+        onMouseDown={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="max-w-[min(1200px,calc(100vw-32px))] max-h-[calc(100dvh-120px)]">
+          {active.kind === 'video' ? (
+            <div className="relative">
+              <video
+                ref={videoRef}
+                className="max-w-full max-h-[calc(100dvh-120px)] rounded-xl bg-black"
+                src={active.url}
+                controls
+                playsInline
+                preload="metadata"
+                muted={muted}
+              />
+              <button
+                type="button"
+                className="absolute bottom-4 right-4 z-[240] w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white inline-flex items-center justify-center transition-colors"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setMuted((v) => !v);
+                }}
+                aria-label="Toggle mute"
+                title={muted ? 'Unmute' : 'Mute'}
+              >
+                {muted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+              </button>
+            </div>
+          ) : (
+            <img
+              className="max-w-full max-h-[calc(100dvh-120px)] object-contain rounded-xl"
+              src={active.url}
+              alt=""
+              draggable={false}
+            />
+          )}
+        </div>
+      </div>
     </div>
   );
 }
 
+function MediaGrid({ items }: { items: MediaItem[] }) {
+  const [open, setOpen] = useState(false);
+  const [index, setIndex] = useState(0);
+
+  const all = Array.isArray(items) ? items.filter((m) => Boolean(m?.url)) : [];
+  if (all.length === 0) return null;
+
+  const shown = all.slice(0, 4);
+  const more = Math.max(0, all.length - shown.length);
+  const isSingle = shown.length === 1;
+  const openAt = (i: number) => {
+    setIndex(Math.max(0, Math.min(all.length - 1, i)));
+    setOpen(true);
+  };
+
+  const onKey = (e: React.KeyboardEvent, i: number) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      e.stopPropagation();
+      openAt(i);
+    }
+  };
+
+  const cardBase = "rounded-3xl border-2 border-gray-100 bg-gray-50 overflow-hidden";
+
+  return (
+    <>
+      <div
+        className={cn('w-full mb-3 lg:mb-4', isSingle ? '' : '')}
+        onMouseDown={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {isSingle ? (
+          <div
+            className={cn(cardBase, 'w-full cursor-zoom-in sm:max-w-[520px] sm:mx-auto')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => onKey(e, 0)}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              openAt(0);
+            }}
+            aria-label="Open media"
+          >
+            {shown[0].kind === 'video' ? (
+              <div className="relative w-full h-[min(520px,65vh)]">
+                <video
+                  className="absolute inset-0 w-full h-full object-cover"
+                  src={shown[0].url}
+                  muted
+                  playsInline
+                  preload="metadata"
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-14 h-14 rounded-full bg-black/35 backdrop-blur flex items-center justify-center">
+                    <Play size={26} className="text-white" />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="relative w-full h-[min(520px,65vh)]">
+                <img
+                  className="absolute inset-0 w-full h-full object-cover"
+                  src={shown[0].url}
+                  alt=""
+                  loading="lazy"
+                  draggable={false}
+                />
+              </div>
+            )}
+          </div>
+        ) : (
+                    <>\n                    <div className="md:hidden flex gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-2">
+            {shown.map((m, i) => (
+              <div
+                key={m.id || m.url}
+                className={cn(
+                  'snap-start shrink-0 w-[78%] max-w-[420px] cursor-zoom-in',
+                  cardBase
+                )}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => onKey(e, i)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  openAt(i);
+                }}
+                aria-label={m.kind === 'video' ? 'Open video' : 'Open image'}
+              >
+                {m.kind === 'video' ? (
+                  <div className="relative w-full h-64">
+                    <video
+                      className="w-full h-full object-cover"
+                      src={m.url}
+                      muted
+                      playsInline
+                      preload="metadata"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-full bg-black/35 backdrop-blur flex items-center justify-center">
+                        <Play size={22} className="text-white" />
+                      </div>
+                    </div>
+                    {typeof m.durationMs === 'number' && m.durationMs > 0 ? (
+                      <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-black/45 text-white text-xs font-semibold">
+                        {formatDurationMs(m.durationMs)}
+                      </div>
+                    ) : null}
+                    {more > 0 && i === shown.length - 1 ? (
+                      <div className="absolute inset-0 bg-black/35 flex items-center justify-center">
+                        <div className="px-3 py-1.5 rounded-full bg-black/45 text-white text-sm font-extrabold">
+                          +{more}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : (
+                  <div className="relative w-full h-64">
+                    <img
+                      className="w-full h-full object-cover"
+                      src={m.url}
+                      alt=""
+                      loading="lazy"
+                      draggable={false}
+                    />
+                    {more > 0 && i === shown.length - 1 ? (
+                      <div className="absolute inset-0 bg-black/35 flex items-center justify-center">
+                        <div className="px-3 py-1.5 rounded-full bg-black/45 text-white text-sm font-extrabold">
+                          +{more}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div
+            className={cn(
+              'hidden md:grid gap-2',
+              shown.length === 2 ? 'md:grid-cols-2' : shown.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'
+            )}
+          >
+            {shown.map((m, i) => (
+              <div
+                key={m.id || m.url}
+                className={cn(
+                  cardBase,
+                  'relative cursor-zoom-in',
+                  shown.length >= 4 ? 'aspect-square' : 'aspect-[4/5]'
+                )}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => onKey(e, i)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  openAt(i);
+                }}
+                aria-label={m.kind === 'video' ? 'Open video' : 'Open image'}
+              >
+                {m.kind === 'video' ? (
+                  <>
+                    <video
+                      className="absolute inset-0 w-full h-full object-cover"
+                      src={m.url}
+                      muted
+                      playsInline
+                      preload="metadata"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-full bg-black/35 backdrop-blur flex items-center justify-center">
+                        <Play size={22} className="text-white" />
+                      </div>
+                    </div>
+                    {typeof m.durationMs === 'number' && m.durationMs > 0 ? (
+                      <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-black/45 text-white text-xs font-semibold">
+                        {formatDurationMs(m.durationMs)}
+                      </div>
+                    ) : null}
+                  </>
+                ) : (
+                  <img
+                    className="absolute inset-0 w-full h-full object-cover"
+                    src={m.url}
+                    alt=""
+                    loading="lazy"
+                    draggable={false}
+                  />
+                )}
+
+                {more > 0 && i === shown.length - 1 ? (
+                  <div className="absolute inset-0 bg-black/35 flex items-center justify-center">
+                    <div className="px-3 py-1.5 rounded-full bg-black/45 text-white text-sm font-extrabold">
+                      +{more}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            ))}
+          </div>
+          </>
+        )}
+      </div>
+
+      <MediaViewerModal
+        open={open}
+        items={all}
+        index={index}
+        onClose={() => setOpen(false)}
+        onIndexChange={setIndex}
+      />
+    </>
+  );
+}
 
 // ---- Link preview helpers (no external fetch) ----
 type LinkInfo = { href: string; domain: string; display: string };
@@ -137,7 +540,6 @@ async function copyToClipboard(text: string): Promise<boolean> {
   }
 }
 
-
 const AVATAR_STYLES = [
   // Non-Side palette (Chameleon law: Side colors are reserved for Side meaning)
   "bg-amber-100 text-amber-800 border-amber-200",
@@ -167,10 +569,27 @@ function initialsFrom(name?: string, handle?: string) {
   return (a + b).toUpperCase();
 }
 
-function Avatar({ name, handle }: { name?: string; handle?: string }) {
+function Avatar({ name, handle, avatarUrl }: { name?: string; handle?: string; avatarUrl?: string | null }) {
   const seed = String((handle || name || "siddes").toLowerCase());
   const idx = hashToIndex(seed, AVATAR_STYLES.length);
   const initials = initialsFrom(name, handle);
+  const url = String(avatarUrl || "").trim();
+
+  if (url) {
+    return (
+      <div
+        className={cn(
+          "w-11 h-11 lg:w-14 lg:h-14 rounded-full border flex items-center justify-center font-extrabold text-sm flex-shrink-0 select-none overflow-hidden bg-gray-100",
+          "border-gray-200"
+        )}
+        aria-hidden="true"
+        title={name || handle || "User"}
+      >
+        <img src={url} alt="" className="w-full h-full object-cover" />
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(
@@ -215,18 +634,20 @@ export function PostCard({
   onMore,
   calmHideCounts,
   variant = "card",
+  avatarUrl,
 }: {
   post: FeedPost;
   side: SideId;
   onMore?: (post: FeedPost) => void;
   calmHideCounts?: boolean;
   variant?: "card" | "row";
+  avatarUrl?: string | null;
 }) {
   const router = useRouter();
   const theme = SIDE_THEMES[side];
   const isRow = variant === "row";
 
-  const hideCounts = isRow ? true : (side === "public" && FLAGS.publicCalmUi && !!calmHideCounts);
+  const hideCounts = calmHideCounts !== false;
 
   const allChips: Chip[] = useMemo(() => buildChips(chipsFromPost(post), { side }), [post, side]);
 
@@ -267,7 +688,17 @@ export function PostCard({
         const url = String(m?.url || "");
         const id = String(m?.id || url);
         const k = String(m?.kind || "image").toLowerCase() === "video" ? "video" : "image";
-        return { id, url, kind: k as any };
+        const w = Number(m?.width ?? m?.w ?? 0);
+        const h = Number(m?.height ?? m?.h ?? 0);
+        const d = Number(m?.durationMs ?? m?.duration_ms ?? m?.duration ?? 0);
+        return {
+          id,
+          url,
+          kind: k as any,
+          width: Number.isFinite(w) && w > 0 ? w : undefined,
+          height: Number.isFinite(h) && h > 0 ? h : undefined,
+          durationMs: Number.isFinite(d) && d > 0 ? d : undefined,
+        };
       })
       .filter((m) => Boolean(m.url));
   }, [post]);
@@ -303,7 +734,6 @@ export function PostCard({
     const n = Number((post as any)?.echoCount ?? 0);
     return Number.isFinite(n) ? n : 0;
   });
-
 
   // sd_180b: real Like toggle (optimistic, backed by /api/post/:id/like)
   // Final Polish (6): Chameleon sweep
@@ -516,7 +946,6 @@ export function PostCard({
       return;
     }
 
-
     // Prefer the native share menu if available
     try {
       if (typeof navigator !== "undefined" && (navigator as any).share) {
@@ -569,7 +998,7 @@ export function PostCard({
         isRow
           ? "group py-5 border-b border-gray-100 hover:bg-gray-50/40 transition-colors"
           : cn(
-              "bg-white p-6 sm:p-8 lg:p-10 rounded-[2.5rem] shadow-sm border border-gray-100 border-l-4 transition-all hover:shadow-[0_40px_80px_rgba(0,0,0,0.08)]",
+              isRow ? "px-4 sm:px-0 py-5 border-b border-slate-100 hover:bg-slate-50/40 transition-colors" : "bg-white p-6 sm:p-8 lg:p-10 rounded-[2.5rem] shadow-sm border border-gray-100 border-l-4 transition-all hover:shadow-[0_40px_80px_rgba(0,0,0,0.08)]",
               theme.accentBorder
             )
       )}
@@ -614,7 +1043,7 @@ export function PostCard({
             aria-label={"Open profile " + String(post.handle || post.author || "user")}
             title="View profile"
           >
-            <Avatar name={post.author} handle={post.handle} />
+            <Avatar name={post.author} handle={post.handle} avatarUrl={avatarUrl} />
           </button>
           <div className="min-w-0">
             <button
@@ -797,7 +1226,6 @@ export function PostCard({
             <MediaGrid items={mediaItems} />
           ) : null}
 
-
           {linkInfo ? (
             <div
               className="w-full rounded-3xl border-2 border-gray-100 bg-gray-50 mb-4 overflow-hidden"
@@ -905,108 +1333,73 @@ export function PostCard({
             </button>
           </div>
         ) : (
-        <div className="flex items-center justify-between pt-6 border-t border-gray-100">
-          <div className="flex items-center gap-5">
-            <button
-              className={cn(ACTION_BASE, "text-gray-500", HOVER_TEXT[side])}
-              aria-label="Reply"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                openReply();
-              }}
-              title={replyCount ? `${replyCount} repl${replyCount === 1 ? "y" : "ies"}` : "Reply"}
-            >
-              <span className="inline-flex items-center gap-1">
-                <MessageCircle size={22} strokeWidth={2} />
-                {!hideCounts && replyCount ? (
-                  <span className="text-xs font-extrabold tabular-nums text-gray-500">{replyCount}</span>
-                ) : null}
-              </span>
-            </button>
-
-            {canEcho ? (
+          <div className="flex items-center justify-between pt-6 border-t border-gray-100">
+            <div className="flex items-center gap-5">
               <button
-                className={cn(
-                  ACTION_BASE,
-                  "transition-colors disabled:opacity-60",
-                  echoed ? theme.text : cn("text-gray-500", HOVER_TEXT[side])
-                )}
-                aria-label={echoed ? "Echoed" : "Echo"}
+                type="button"
+                className={cn(ACTION_BASE, "text-gray-500", HOVER_TEXT[side])}
+                aria-label="Reply"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  setOpenEcho(true);
+                  openReply();
                 }}
-                disabled={echoBusy}
-                title={echoCount ? `${echoCount} echo${echoCount === 1 ? "" : "es"}` : echoed ? "Echoed" : "Echo"}
+                title="Reply"
               >
                 <span className="inline-flex items-center gap-1">
-                  <Repeat size={22} strokeWidth={2} />
-                  {!hideCounts && echoCount ? (
-                    <span className={cn("text-xs font-extrabold tabular-nums", echoed ? theme.text : "text-gray-500")}>{echoCount}</span>
+                  <MessageCircle size={22} strokeWidth={2} />
+                  {!hideCounts && replyCount ? (
+                    <span className="text-xs font-extrabold tabular-nums text-gray-500">{replyCount}</span>
                   ) : null}
                 </span>
               </button>
-            ) : null}
+
+              <button
+                type="button"
+                className={cn(
+                  ACTION_BASE,
+                  "transition-colors disabled:opacity-60",
+                  liked ? theme.text : cn("text-gray-400", side === "work" ? HOVER_TEXT[side] : "hover:text-red-500")
+                )}
+                aria-label="React"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleLike();
+                }}
+                disabled={likeBusy}
+                title="React"
+              >
+                <span className="inline-flex items-center gap-1">
+                  {side === "work" ? (
+                    <CheckCircle2 size={22} strokeWidth={2} />
+                  ) : (
+                    <Heart size={22} strokeWidth={2} fill={liked ? "currentColor" : "none"} />
+                  )}
+                  {!hideCounts && likeCount ? (
+                    <span className="text-xs font-extrabold tabular-nums text-gray-500">{likeCount}</span>
+                  ) : null}
+                </span>
+              </button>
+            </div>
 
             <button
-              className={cn(
-                ACTION_BASE,
-                "transition-colors disabled:opacity-60",
-                liked ? theme.text : cn("text-gray-400", side === "work" ? HOVER_TEXT[side] : "hover:text-red-500")
-              )}
-              aria-label={side === "work" ? (liked ? "Unack" : "Ack") : (liked ? "Unlike" : "Like")}
+              type="button"
+              className={cn(ACTION_BASE, "text-gray-400 hover:text-gray-700 hover:bg-gray-50")}
+              aria-label="More"
+              title="More"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                toggleLike();
+                if (onMore) onMore(post);
+                else setOpenActions(true);
               }}
-              disabled={likeBusy}
-              title={likeCount ? (String(likeCount) + " " + (side === "work" ? "ack" : "like") + (likeCount === 1 ? "" : "s")) : side === "work" ? (liked ? "Acked" : "Ack") : (liked ? "Liked" : "Like")}
             >
-              <span className="inline-flex items-center gap-1">
-                {side === "work" ? <CheckCircle2 size={22} strokeWidth={2} /> : <Heart size={22} strokeWidth={2} fill={liked ? "currentColor" : "none"} />}
-                {!hideCounts && likeCount ? (
-                  <span className="text-xs font-extrabold tabular-nums text-gray-500">{likeCount}</span>
-                ) : null}
-              </span>
+              <MoreHorizontal size={22} strokeWidth={2} />
             </button>
-
-            {side === "public" ? (
-              <button
-                className={cn(ACTION_BASE, "text-gray-500 hover:text-gray-900")}
-                aria-label="Share externally"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  doShare();
-                }}
-                title="Share externally"
-              >
-                <Share2 size={22} strokeWidth={2} />
-              </button>
-            ) : (
-              <button
-                className={cn(ACTION_BASE, "text-gray-500 hover:text-gray-900")}
-                aria-label="Copy link"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  doShare();
-                }}
-                title="Copy link (access required)"
-              >
-                <LinkIcon size={22} strokeWidth={2} />
-              </button>
-            )}
           </div>
-
-          {/* Calm UI: keep a subtle engagement hint without numbers */}
-          {hideCounts ? <div className="text-[11px] font-bold text-gray-400">Calm</div> : null}
-        </div>
         )}
-      </div>
+</div>
 
       <ChipOverflowSheet
         open={openOverflow}
@@ -1014,7 +1407,6 @@ export function PostCard({
         chips={overflow}
         title="More context"
       />
-
 
       {!isRow && canEcho ? (
         <>
@@ -1025,7 +1417,6 @@ export function PostCard({
         side={side}
         onEcho={doEcho}
         onQuoteEcho={doQuote}
-        onShareExternal={doShare}
         echoed={echoed}
         echoBusy={echoBusy}
       />
@@ -1040,8 +1431,6 @@ export function PostCard({
       />
         </>
       ) : null}
-
-
 
 <EditPostSheet
         open={openEdit}
@@ -1136,3 +1525,6 @@ export function PostCard({
     </div>
   );
 }
+
+
+// sd_555_video_duration_pill: applied

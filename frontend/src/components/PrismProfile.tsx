@@ -1,4 +1,7 @@
 "use client";
+
+/* eslint-disable @next/next/no-img-element */
+
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
@@ -22,6 +25,7 @@ Globe,
 } from "lucide-react";
 import type { SideId } from "@/src/lib/sides";
 import { SIDES, SIDE_THEMES } from "@/src/lib/sides";
+import type { FeedPost } from "@/src/lib/feedTypes";
 import { signUpload, uploadToSignedUrl, commitUpload } from "@/src/lib/mediaClient";
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -63,11 +67,18 @@ export type ProfileViewPayload = {
   allowedSides?: SideId[];
   viewerAuthed?: boolean;
   isOwner?: boolean;
-  viewerFollows?: boolean;
 facet?: PrismFacet;
   siders?: number | string | null;
   viewerSidedAs?: SideId | null;
   sharedSets?: string[];
+  posts?: {
+    side: SideId;
+    count: number;
+    items: FeedPost[];
+    nextCursor?: string | null;
+    hasMore?: boolean;
+    serverTs?: number;
+  };
   error?: string;
 };
 const SIDE_ICON: Record<SideId, React.ComponentType<React.SVGProps<SVGSVGElement> & { size?: string | number }>> = {
@@ -159,132 +170,251 @@ export function SideWithSheet(props: {
   current: SideId | null;
   busy?: boolean;
   onPick: (side: SideId | "public") => Promise<void> | void;
-  follow?: {
-    following: boolean;
-busy?: boolean;
-    onToggle: () => Promise<void> | void;
-  };
 }) {
   const { open, onClose, current, busy, onPick } = props;
+
+  const [confirmSide, setConfirmSide] = useState<SideId | null>(null);
+
+  useEffect(() => {
+    if (!open) {
+      setConfirmSide(null);
+      return;
+    }
+    setConfirmSide(null);
+  }, [open]);
+
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+      if (e.key !== "Escape") return;
+      if (confirmSide) {
+        setConfirmSide(null);
+        return;
+      }
+      onClose();
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  }, [open, onClose, confirmSide]);
+
   if (!open) return null;
-  const choices: Array<{ side: SideId; title: string; desc: string }> = [
-    { side: "friends", title: "Friends", desc: "Casual, private." },
-    { side: "close", title: "Close", desc: "Close vault." },
-    { side: "work", title: "Work", desc: "Professional context." },
-  ];
+
   const closeUpgradeLocked = !(current === "friends" || current === "close");
+
+  const choices: Array<{ side: SideId; title: string; desc: string; requiresConfirm?: boolean }> = [
+    { side: "friends", title: "Friends", desc: "They can view your Friends identity + Friends posts." },
+    {
+      side: "close",
+      title: "Close",
+      desc: "They can view your Close identity + Close posts.",
+      requiresConfirm: true,
+    },
+    {
+      side: "work",
+      title: "Work",
+      desc: "They can view your Work identity + Work posts.",
+      requiresConfirm: true,
+    },
+  ];
+
+  const confirmCopy: Record<
+    SideId,
+    { title: string; body: string; confirmLabel: string }
+  > = {
+    public: {
+      title: "Confirm",
+      body: "",
+      confirmLabel: "Confirm",
+    },
+    friends: {
+      title: "Confirm",
+      body: "",
+      confirmLabel: "Confirm",
+    },
+    close: {
+      title: "Confirm Close access",
+      body:
+        "You are about to place this person into your Close Side. This grants them access to your Close identity and Close posts. This does not change what you can see of them.",
+      confirmLabel: "Grant Close access",
+    },
+    work: {
+      title: "Confirm Work access",
+      body:
+        "You are about to place this person into your Work Side. This grants them access to your Work identity and Work posts. This does not change what you can see of them.",
+      confirmLabel: "Grant Work access",
+    },
+  };
+
+  async function commitPick(side: SideId) {
+    await onPick(side);
+    onClose();
+  }
+
   return (
     <div className="fixed inset-0 z-[98] flex items-end justify-center md:items-center">
-      <button type="button" className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} aria-label="Close" />
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+        onClick={() => {
+          if (confirmSide) {
+            setConfirmSide(null);
+            return;
+          }
+          onClose();
+        }}
+        aria-label="Close"
+      />
       <div className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
         <div className="flex items-center justify-between mb-5">
           <div>
-            <div className="text-lg font-black text-gray-900">Side</div>
-            <div className="text-xs text-gray-500 mt-1">Place this person into a private context.</div>
+            <div className="text-lg font-black text-gray-900">{confirmSide ? confirmCopy[confirmSide].title : "Side"}</div>
+            <div className="text-xs text-gray-500 mt-1">
+              {confirmSide
+                ? "Double-check the direction."
+                : "You are choosing what they can access of you. This does not change what you can access of them."}
+            </div>
           </div>
-          <button type="button" onClick={onClose} className="p-2 rounded-full hover:bg-gray-100" aria-label="Close">
+          <button
+            type="button"
+            onClick={() => {
+              if (confirmSide) {
+                setConfirmSide(null);
+                return;
+              }
+              onClose();
+            }}
+            className="p-2 rounded-full hover:bg-gray-100"
+            aria-label="Close"
+          >
             <X size={18} className="text-gray-500" />
           </button>
         </div>
-        
-        {/* Public subscribe is separate from Sides */}
-        {props.follow ? (
-          <button
-            type="button"
-            disabled={!!busy || !!props.follow.busy}
-            onClick={async () => {
-              try {
-                await props.follow?.onToggle();
-              } catch {}
-            }}
-            className={cn(
-              "w-full p-4 rounded-2xl bg-white hover:bg-gray-50 flex items-center gap-4 text-left border border-gray-200",
-              props.follow.following ? "shadow-sm" : ""
-            )}
-          >
-            <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-700 shadow-sm">
-              <Globe size={18} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="font-extrabold text-gray-900 flex items-center gap-2">
-                {props.follow.following ? "Unsubscribe" : "Subscribe"}
-                {props.follow.following ? <Check size={16} className="text-blue-600" strokeWidth={3} /> : null}
-              </div>
-              <div className="text-xs text-gray-500">
-                {props.follow.following ? "Subscribed to Public updates." : "Subscribe to Public updates."}
-                
-              </div>
-            </div>
-          </button>
-        ) : null}
 
-        <div className="space-y-2">
-          {choices.map((c) => {
-            const t = SIDE_THEMES[c.side];
-            const Icon = SIDE_ICON[c.side];
-            const active = current === c.side;
-            const closeLockedByUpgrade = c.side === "close" && closeUpgradeLocked;
-            return (
+        {confirmSide ? (
+          <div className="space-y-4">
+            <div className="p-4 rounded-2xl border border-gray-200 bg-gray-50">
+              <div className="flex items-start gap-3">
+                <div className={cn("w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm", SIDE_THEMES[confirmSide].text)}>
+                  {React.createElement(SIDE_ICON[confirmSide], { size: 18 })}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="font-extrabold text-gray-900">{SIDES[confirmSide].label}</div>
+                  <div className="text-xs text-gray-600 mt-1">{confirmCopy[confirmSide].body}</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
               <button
-                key={c.side}
                 type="button"
-                disabled={!!busy || closeLockedByUpgrade}
+                disabled={!!busy}
                 onClick={async () => {
                   try {
-                    await onPick(c.side);
-                    onClose();
+                    await commitPick(confirmSide);
                   } catch {}
                 }}
                 className={cn(
-                  "w-full p-4 rounded-2xl bg-gray-50 hover:bg-gray-100 flex items-center gap-4 text-left border",
-                  active ? cn("border-gray-200", t.lightBg) : "border-gray-100",
-                  closeLockedByUpgrade ? "opacity-60 cursor-not-allowed hover:bg-gray-50" : ""
+                  "flex-1 py-3 rounded-xl font-extrabold text-sm text-white shadow-md active:scale-95 transition-all",
+                  SIDE_THEMES[confirmSide].primaryBg,
+                  busy ? "opacity-80 cursor-not-allowed" : ""
                 )}
               >
-                <div className={cn("w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm", t.text)}>
-                  <Icon size={18} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="font-extrabold text-gray-900 flex items-center gap-2">
-                    {c.title}
-                    {active ? <Check size={16} className={t.text} strokeWidth={3} /> : null}
-                  </div>
-                  <div className="text-xs text-gray-500">{c.desc}{closeLockedByUpgrade ? " (Friends first)" : ""}</div>
-                </div>
+                {confirmCopy[confirmSide].confirmLabel}
               </button>
-            );
-          })}
+              <button
+                type="button"
+                onClick={() => setConfirmSide(null)}
+                className="px-4 py-3 rounded-xl bg-white border border-gray-200 text-gray-800 font-extrabold text-sm hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+            </div>
+
+            <div className="text-[11px] text-gray-500">
+              Tip: You can undo anytime using <span className="font-bold">Un-side</span>.
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {choices.map((c) => {
+              const t = SIDE_THEMES[c.side];
+              const Icon = SIDE_ICON[c.side];
+              const active = current === c.side;
+              const closeLockedByUpgrade = c.side === "close" && closeUpgradeLocked;
+              return (
+                <button
+                  key={c.side}
+                  type="button"
+                  disabled={!!busy || closeLockedByUpgrade}
+                  onClick={async () => {
+                    if (closeLockedByUpgrade) return;
+                    if (c.requiresConfirm) {
+                      setConfirmSide(c.side);
+                      return;
+                    }
+                    try {
+                      await commitPick(c.side);
+                    } catch {}
+                  }}
+                  className={cn(
+                    "w-full p-4 rounded-2xl bg-gray-50 hover:bg-gray-100 flex items-center gap-4 text-left border",
+                    active ? cn("border-gray-200", t.lightBg) : "border-gray-100",
+                    closeLockedByUpgrade ? "opacity-60 cursor-not-allowed hover:bg-gray-50" : ""
+                  )}
+                >
+                  <div className={cn("w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm", t.text)}>
+                    <Icon size={18} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-extrabold text-gray-900 flex items-center gap-2">
+                      {c.title}
+                      {active ? <Check size={16} className={t.text} strokeWidth={3} /> : null}
+                      {c.requiresConfirm ? (
+                        <span className="ml-auto text-[10px] px-2 py-1 rounded-full bg-white border border-gray-200 text-gray-700 font-black">
+                          Confirm
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {c.desc}
+                      {closeLockedByUpgrade ? " (Friends first)" : ""}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+
+            <button
+              type="button"
+              disabled={!!busy}
+              onClick={async () => {
+                try {
+                  await onPick("public");
+                  onClose();
+                } catch {}
+              }}
+              className="w-full p-4 rounded-2xl bg-white hover:bg-gray-50 flex items-center gap-4 text-left border border-gray-200"
+            >
+              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-700 shadow-sm">
+                <X size={18} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="font-extrabold text-gray-900">Un-side</div>
+                <div className="text-xs text-gray-500">Remove the edge. They only see your Public identity.</div>
+              </div>
+            </button>
+          </div>
+        )}
+
+        {!confirmSide ? (
           <button
             type="button"
-            disabled={!!busy}
-            onClick={async () => {
-                  try {
-                    await onPick("public");
-                    onClose();
-                  } catch {}
-                }}
-            className="w-full p-4 rounded-2xl bg-white hover:bg-gray-50 flex items-center gap-4 text-left border border-gray-200"
+            onClick={onClose}
+            className="w-full mt-6 py-3 font-semibold text-gray-500 hover:bg-gray-50 rounded-xl"
           >
-            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-700 shadow-sm">
-              <X size={18} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="font-extrabold text-gray-900">Un-side</div>
-              <div className="text-xs text-gray-500">Return to Public (remove the relationship edge).</div>
-            </div>
+            Cancel
           </button>
-        </div>
-        <button type="button" onClick={onClose} className="w-full mt-6 py-3 font-semibold text-gray-500 hover:bg-gray-50 rounded-xl">
-          Cancel
-        </button>
+        ) : null}
       </div>
     </div>
   );
@@ -572,7 +702,7 @@ export function PrismIdentityCard(props: {
   sharedSets?: string[];
   actions?: React.ReactNode;
 }) {
-  const { viewSide, handle, facet, siders, sharedSets, actions } = props;
+  const { viewSide, handle, facet, sharedSets, actions } = props;
   const theme = SIDE_THEMES[viewSide];
   const Icon = SIDE_ICON[viewSide];
   const name = facet.displayName || handle || "User";
@@ -587,7 +717,7 @@ export function PrismIdentityCard(props: {
   const pulse = facet.pulse;
   const truth = privacyTruth(viewSide);
   const isClose = viewSide === "close";
-  const showSiders = isClose || (typeof siders !== "undefined" && siders !== null);
+  const showAccessStat = isClose;
 return (
     <div className={cn("w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden border", theme.border)}>
       {/* Cover */}
@@ -683,13 +813,13 @@ return (
             </div>
           </div>
         ) : null}
-        {/* Siders + Shared Sets */}
-        {(showSiders || (sharedSets && sharedSets.length > 0)) ? (
+        {/* Access + Shared Sets */}
+        {(showAccessStat || (sharedSets && sharedSets.length > 0)) ? (
           <div className="py-4 border-t border-gray-100 flex items-start justify-between gap-4">
-            {showSiders ? (
+            {showAccessStat ? (
               <div className="flex flex-col">
-                <span className="text-lg font-black text-gray-900">{isClose ? "Close Vault" : String(siders ?? "")}</span>
-                <span className="text-xs text-gray-500 font-medium">{isClose ? "Private Set" : "Siders"}</span>
+                <span className="text-lg font-black text-gray-900">Close Vault</span>
+                <span className="text-xs text-gray-500 font-medium">Private Set</span>
               </div>
             ) : (
               <div />

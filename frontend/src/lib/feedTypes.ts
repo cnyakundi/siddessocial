@@ -14,6 +14,9 @@ export type MediaAttachment = {
   kind: "image" | "video";
   contentType?: string;
   url: string; // /m/<r2_key>
+  width?: number;
+  height?: number;
+  durationMs?: number;
 };
 
 

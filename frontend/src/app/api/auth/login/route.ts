@@ -1,16 +1,9 @@
 import { NextResponse } from "next/server";
 import { proxyJson } from "../_proxy";
+import { applyProxyCookies } from "../_cookie";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
-
-function applySetCookies(resp: NextResponse, setCookies: string[]) {
-  for (const sc of setCookies || []) {
-    if (!sc) continue;
-    resp.headers.append("set-cookie", sc);
-  }
-}
-
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
@@ -23,8 +16,6 @@ export async function POST(req: Request) {
     headers: { "cache-control": "no-store" },
   });
 
-  // Forward non-session cookies only (e.g. csrftoken), but NOT sessionid.
-  applySetCookies(resp, setCookies || []);
-  // sd_232: Do NOT set sd_viewer here. Dev viewer is opt-in via StubViewerCookie only.
+  applyProxyCookies(resp, data, setCookies || []);
   return resp;
 }

@@ -4,7 +4,7 @@ import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 
-import { Ban, ExternalLink, EyeOff, Flag, Link2, Share2, X, Pencil, Trash2, Copy, VolumeX, User } from "lucide-react";
+import { Ban, ExternalLink, EyeOff, Flag, Link2, Share2, X, Pencil, Trash2, Copy, VolumeX, User, Repeat } from "lucide-react";
 import type { FeedPost } from "@/src/lib/feedTypes";
 import type { SideId } from "@/src/lib/sides";
 import { toast } from "@/src/lib/toast";
@@ -37,6 +37,7 @@ export function PostActionsSheet({
   post,
   side,
   onOpen,
+  onEcho,
   onHide,
   onEdit,
   onDelete,
@@ -46,6 +47,7 @@ export function PostActionsSheet({
   post: FeedPost | null;
   side?: SideId;
   onOpen: () => void;
+  onEcho?: () => void;
   onHide: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
@@ -75,6 +77,15 @@ export function PostActionsSheet({
   const doOpen = () => {
     onOpen();
     onClose();
+  };
+
+  const doEcho = () => {
+    if (!onEcho) return;
+    onClose();
+    // Open the Echo sheet after the actions sheet closes (avoids overlay stacking).
+    setTimeout(() => {
+      try { onEcho(); } catch {}
+    }, 0);
   };
 
   const doViewProfile = () => {
@@ -281,6 +292,23 @@ const doBlock = async () => {
               <div className="text-xs text-gray-500">View the full conversation</div>
             </div>
           </button>
+
+          {/* sd_544c_echo_entry */}
+          {isPublic && onEcho ? (
+            <button
+              type="button"
+              onClick={doEcho}
+              className="w-full p-4 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center gap-4 text-left"
+            >
+              <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-800 shadow-sm">
+                <Repeat size={18} />
+              </div>
+              <div>
+                <div className="font-bold text-gray-900">Echo</div>
+                <div className="text-xs text-gray-500">Echo or Quote Echo</div>
+              </div>
+            </button>
+          ) : null}
 
 
           <button

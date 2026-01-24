@@ -57,6 +57,44 @@ def _ensure_profile(user) -> SiddesProfile:
     prof, _ = SiddesProfile.objects.get_or_create(user=user)
     return prof
 
+
+def _session_payload(request) -> Dict[str, Any]:
+    """Return session cookie name+value (+expiry hints) for proxy layers.
+
+    Why: In a Next.js proxy setup, relying on forwarded Set-Cookie can be brittle
+    (Domain/Secure attributes). Returning the session key lets Next set the cookie
+    on the app domain in an industry-standard way.
+    """
+    try:
+        request.session.save()
+    except Exception:
+        pass
+
+    name = "sessionid"
+    value = ""
+    max_age = None
+    expires = None
+
+    try:
+        sess = getattr(request, "session", None)
+        if sess is not None:
+            name = str(getattr(sess, "cookie_name", "") or name)
+            value = str(getattr(sess, "session_key", "") or value)
+            try:
+                max_age = int(sess.get_expiry_age())
+            except Exception:
+                max_age = None
+            try:
+                dt = sess.get_expiry_date()
+                expires = dt.isoformat() if dt is not None else None
+            except Exception:
+                expires = None
+    except Exception:
+        pass
+
+    return {"name": name, "value": value, "maxAge": max_age, "expires": expires}
+
+
 # sd_399: locality helpers (coarse, privacy-respecting)
 # Country is used for defaults only (localization/safety/perf). Never a hard lock.
 _GEO_HEADER_CANDIDATES = (
@@ -253,6 +291,7 @@ class SignupView(APIView):
             "locality": _locality_payload(user.siddes_profile),
                 "isStaff": bool(getattr(user, "is_staff", False) or getattr(user, "is_superuser", False)),
             "onboarding": {"completed": user.siddes_profile.onboarding_completed, "step": user.siddes_profile.onboarding_step, "contact_sync_done": user.siddes_profile.contact_sync_done},
+            "session": _session_payload(request),
         }
         return Response(out, status=status.HTTP_200_OK)
 
@@ -306,6 +345,7 @@ class LoginView(APIView):
             "locality": _locality_payload(user.siddes_profile),
             "isStaff": bool(getattr(user, "is_staff", False) or getattr(user, "is_superuser", False)),
             "onboarding": {"completed": user.siddes_profile.onboarding_completed, "step": user.siddes_profile.onboarding_step, "contact_sync_done": user.siddes_profile.contact_sync_done},
+            "session": _session_payload(request),
         }
         return Response(out, status=status.HTTP_200_OK)
 
@@ -499,6 +539,7 @@ class GoogleAuthView(APIView):
             "locality": _locality_payload(user.siddes_profile),
             "isStaff": bool(getattr(user, "is_staff", False) or getattr(user, "is_superuser", False)),
             "onboarding": {"completed": user.siddes_profile.onboarding_completed, "step": user.siddes_profile.onboarding_step, "contact_sync_done": user.siddes_profile.contact_sync_done},
+            "session": _session_payload(request),
         }
         return Response(out, status=status.HTTP_200_OK)
 

@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Loader2, Plus, Send } from "lucide-react";
 import type { SideId } from "@/src/lib/sides";
 import { SIDE_THEMES } from "@/src/lib/sides";
+import { usePrismAvatar } from "@/src/hooks/usePrismAvatar";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -20,6 +21,8 @@ export function FeedComposerRow(props: {
 }) {
   const { side, prompt, subtitle, onOpen, onSubmit } = props;
   const theme = SIDE_THEMES[side];
+
+  const { img: meImg, initials: meInitials } = usePrismAvatar(side);
 
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -62,13 +65,22 @@ export function FeedComposerRow(props: {
     <div className="px-4 pt-3 pb-3 bg-white border-b border-gray-50 lg:px-0 lg:pt-6 lg:pb-4">
       <div className="max-w-[760px] mx-auto">
         <div className="flex items-end gap-2">
-          {/* Avatar stub (future: real Prism avatar) */}
+          {/* Your Prism avatar (per Side) */}
           <div
-            className="w-10 h-10 rounded-full border border-gray-200 bg-gray-100 text-gray-700 flex items-center justify-center text-[11px] font-black shrink-0"
+            className={cn(
+              "w-10 h-10 rounded-full overflow-hidden border-2 flex items-center justify-center text-[10px] font-black shrink-0 select-none",
+              theme.border,
+              meImg ? "bg-gray-100" : cn(theme.lightBg, theme.text)
+            )}
             aria-hidden="true"
             title="You"
           >
-            ME
+            {meImg ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={meImg} alt="" className="w-full h-full object-cover" />
+            ) : (
+              meInitials
+            )}
           </div>
 
           <div className="flex-1 min-w-0">

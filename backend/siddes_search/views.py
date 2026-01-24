@@ -123,6 +123,14 @@ class SearchPostsView(APIView):
         q = _clean_q(str(getattr(request, "query_params", {}).get("q") or ""))
         qt = q.strip()
 
+        side = str(getattr(request, "query_params", {}).get("side") or "public").strip().lower()
+        if side not in _ALLOWED_SIDES:
+            side = "public"
+
+        set_id = str(getattr(request, "query_params", {}).get("set") or "").strip() or None
+        topic = str(getattr(request, "query_params", {}).get("topic") or "").strip() or None
+
+
         lim_raw = str(getattr(request, "query_params", {}).get("limit") or "").strip()
         try:
             lim = int(lim_raw) if lim_raw else 50
@@ -136,15 +144,30 @@ class SearchPostsView(APIView):
         if len(qt) < 2:
             return Response({"ok": True, "restricted": False, "q": q, "count": 0, "items": [], "serverTs": time.time()}, status=status.HTTP_200_OK)
 
-        qs = Post.objects.filter(side="public", is_hidden=False, text__icontains=qt).order_by("-created_at")
+        qs = Post.objects.filter(side=side, text__icontains=qt).order_by("-created_at")
+        if side == "public":
+            qs = qs.filter(is_hidden=False)
+        if set_id:
+            qs = qs.filter(set_id=set_id)
+        if side == "public" and topic:
+            qs = qs.filter(public_channel=topic)
         # sd_422_user_hide: exclude posts the viewer hid
         try:
             from siddes_safety.models import UserHiddenPost  # type: ignore
             qs = qs.exclude(id__in=UserHiddenPost.objects.filter(viewer_id=viewer).values("post_id"))
         except Exception:
             pass
-        qs = qs[:lim]
-        recs = list(qs)
+        cand = list(qs[: max(lim * 5, lim)])
+        try:
+            from siddes_feed.feed_stub import _can_view_record  # type: ignore
+            recs = []
+            for r in cand:
+                if _can_view_record(viewer, r):
+                    recs.append(r)
+                    if len(recs) >= lim:
+                        break
+        except Exception:
+            recs = cand[:lim]
 
         # sd_423_mute: exclude muted authors
         try:
@@ -160,7 +183,7 @@ class SearchPostsView(APIView):
             from siddes_feed.feed_stub import _bulk_engagement, _bulk_echo, _hydrate_from_record
 
             like_counts, reply_counts, liked_ids = _bulk_engagement(viewer, post_ids)
-            echo_counts, echoed_ids = _bulk_echo(viewer, post_ids, "public", recs)
+            echo_counts, echoed_ids = _bulk_echo(viewer, post_ids, side, recs)
 
             items = []
             for r in recs:
@@ -198,7 +221,7 @@ class SearchPostsView(APIView):
                     }
                 )
 
-        return Response({"ok": True, "restricted": False, "q": q, "count": len(items), "items": items, "serverTs": time.time()}, status=status.HTTP_200_OK)
+        return Response({"ok": True, "restricted": False, "q": q, "side": side, "count": len(items), "filters": {"side": side, "set": set_id, "topic": topic}, "items": items, "serverTs": time.time()}, status=status.HTTP_200_OK)
 
 
 class UserProfileView(APIView):

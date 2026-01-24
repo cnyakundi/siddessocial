@@ -79,7 +79,7 @@ export async function assertBackendReady(page: Page) {
   if (!me.ok()) {
     throw new Error(
       `Backend not ready: /api/auth/me -> ${me.status()}. ` +
-        `Start backend (docker compose dev) and ensure it listens on 127.0.0.1:8000. ` +
+        `Start backend from repo root: ./scripts/dev/start_backend_docker.sh (or: docker compose -f ops/docker/docker-compose.dev.yml up -d backend). ` +
         `Body: ${fmtJson(j)}`
     );
   }
@@ -144,3 +144,44 @@ export async function me(page: Page): Promise<any> {
   const j = await r.json().catch(() => ({}));
   return j;
 }
+
+export async function requestMagicLink(page: Page, email: string, next?: string | null): Promise<any> {
+  const payload: any = { email: String(email || "").trim() };
+  const n = String(next || "").trim();
+  if (n) payload.next = n;
+
+  const r = await page.request.post("/api/auth/magic/request", { data: payload, timeout: 15_000 });
+  const j: any = await r.json().catch(() => ({}));
+  if (!r.ok() || !j?.ok) {
+    throw new Error(`magic/request failed (${r.status()}): ${fmtJson(j)}`);
+  }
+  return j;
+}
+
+export async function consumeMagicLink(page: Page, token: string): Promise<any> {
+  const r = await page.request.post("/api/auth/magic/consume", { data: { token }, timeout: 15_000 });
+  const j: any = await r.json().catch(() => ({}));
+  if (!r.ok() || !j?.ok) {
+    throw new Error(`magic/consume failed (${r.status()}): ${fmtJson(j)}`);
+  }
+  return j;
+}
+
+export async function requestPhoneOtp(page: Page, phone: string, region: string = "KE"): Promise<any> {
+  const r = await page.request.post("/api/auth/phone/request", { data: { phone, region }, timeout: 15_000 });
+  const j: any = await r.json().catch(() => ({}));
+  if (!r.ok() || !j?.ok) {
+    throw new Error(`phone/request failed (${r.status()}): ${fmtJson(j)}`);
+  }
+  return j;
+}
+
+export async function confirmPhoneOtp(page: Page, phone: string, code: string, region: string = "KE"): Promise<any> {
+  const r = await page.request.post("/api/auth/phone/confirm", { data: { phone, code, region }, timeout: 15_000 });
+  const j: any = await r.json().catch(() => ({}));
+  if (!r.ok() || !j?.ok) {
+    throw new Error(`phone/confirm failed (${r.status()}): ${fmtJson(j)}`);
+  }
+  return j;
+}
+

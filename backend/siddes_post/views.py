@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+
 import time
 
 from typing import Any, Dict, Optional, Tuple, Set
@@ -23,6 +25,15 @@ from .models import Post, PostLike
 from .trust_gates import enabled as trust_gates_enabled, enforce_public_write_gates, normalize_trust_level
 
 _ALLOWED_SIDES = {"public", "friends", "close", "work"}
+
+
+# --- Feature flags (MVP hardening) ---
+def _truthy(v: str | None) -> bool:
+    return str(v or "").strip().lower() in ("1", "true", "yes", "y", "on")
+
+def _broadcasts_enabled() -> bool:
+    # Broadcasts are not MVP. Enable explicitly.
+    return _truthy(os.environ.get("SIDDES_BROADCASTS_ENABLED", "0"))
 
 
 def _can_view_set_post(*, viewer_id: str, set_id: Optional[str]) -> bool:
@@ -411,6 +422,9 @@ def _media_for_post(post_id: str) -> list[Dict[str, Any]]:
                     "kind": str(getattr(m, "kind", "") or "image"),
                     "contentType": str(getattr(m, "content_type", "") or ""),
                     "url": build_media_url(key, is_public=bool(getattr(m, "is_public", False))),
+                    "width": int(getattr(m, "width", 0) or 0) or None,
+                    "height": int(getattr(m, "height", 0) or 0) or None,
+                    "durationMs": int(getattr(m, "duration_ms", 0) or 0) or None,
                 }
             )
         return out
@@ -539,6 +553,8 @@ class PostCreateView(APIView):
 
         # Broadcasts are Public-only channels addressed via set_id=b_*
         if set_id and str(set_id).startswith("b_"):
+            if not _broadcasts_enabled():
+                return Response({"ok": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
             # Force broadcast posts into Public side (default-safe)
             side = "public"
             try:
@@ -568,6 +584,24 @@ class PostCreateView(APIView):
 
         # sd_384_media: optional media attachments (R2 keys)
         media_keys = _parse_media_keys(body)
+
+        # sd_555_media_meta: optional width/height/durationMs sent by client for premium media rendering
+        media_meta_raw = body.get("mediaMeta") or body.get("media_meta")
+        media_meta: Dict[str, Any] = {}
+        if isinstance(media_meta_raw, dict):
+            for k, v in media_meta_raw.items():
+                if isinstance(v, dict):
+                    kk = str(k or "").strip()
+                    if kk:
+                        media_meta[kk] = v
+        elif isinstance(media_meta_raw, list):
+            for it in media_meta_raw:
+                if not isinstance(it, dict):
+                    continue
+                kk = str(it.get("r2Key") or it.get("r2_key") or it.get("key") or "").strip()
+                if kk:
+                    media_meta[kk] = it
+
         if len(media_keys) > 4:
             return Response({"ok": False, "error": "too_many_media"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -615,17 +649,44 @@ class PostCreateView(APIView):
             try:
                 from siddes_media.models import MediaObject  # type: ignore
 
+                pid = str(getattr(rec, "id", "") or "")
                 MediaObject.objects.filter(r2_key__in=media_keys, owner_id=viewer, post_id__isnull=True).update(
                     status="committed",
-                    post_id=str(getattr(rec, "id", "") or ""),
+                    post_id=pid,
                     is_public=(side == "public"),
                 )
+
+                # sd_555_media_meta: persist width/height/durationMs when provided (max 4; safe to loop)
+                if media_meta:
+                    def _int(v: Any) -> Optional[int]:
+                        try:
+                            n = int(float(v))
+                            return n if n > 0 else None
+                        except Exception:
+                            return None
+
+                    for k in media_keys:
+                        meta = media_meta.get(k)
+                        if not isinstance(meta, dict):
+                            continue
+                        w = _int(meta.get("w") or meta.get("width"))
+                        h = _int(meta.get("h") or meta.get("height"))
+                        d = _int(meta.get("durationMs") or meta.get("duration_ms") or meta.get("duration"))
+                        upd: Dict[str, Any] = {}
+                        if w is not None:
+                            upd["width"] = w
+                        if h is not None:
+                            upd["height"] = h
+                        if d is not None:
+                            upd["duration_ms"] = d
+                        if upd:
+                            MediaObject.objects.filter(r2_key=k, owner_id=viewer).update(**upd)
             except Exception:
                 pass
 
 
         # Touch broadcast last_post_at when posting into a broadcast
-        if set_id and str(set_id).startswith("b_"):
+        if _broadcasts_enabled() and set_id and str(set_id).startswith("b_"):
             try:
                 from siddes_broadcasts.store_db import STORE as _BC_STORE
 
@@ -1272,3 +1333,6 @@ class PostQuoteEchoView(APIView):
             pass
 
         return Response({"ok": True, "status": 201, "post": _feed_post_from_record(rec, viewer_id=viewer), "side": tgt}, status=status.HTTP_201_CREATED)
+
+
+# sd_555_media_meta: applied

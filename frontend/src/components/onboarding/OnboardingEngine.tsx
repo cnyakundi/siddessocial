@@ -317,6 +317,7 @@ export function OnboardingEngine() {
           <AddPeopleStep
             setName={setInfo.name}
             sideId={setInfo.side}
+            myHandle={handle}
             onContinue={(payload: { handles: string[]; contactSyncDone: boolean }) => applyMembersAndNext(payload)}
             onSkip={() => setStepId("prism_people")}
           />

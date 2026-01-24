@@ -242,4 +242,4 @@ These are the overlays applied/created during the current session (evidence: ter
 - Some helper scripts assume `python` exists; on macOS you often have `python3` only.
 - If your shell prompt shows you are inside `frontend/`, then `cd frontend` will fail; run `npm ...` directly.
 - When Django asks for a one-off default during migrations, it expects valid Python: use `'legacy'` not `legacy`.
-
+| 2026-01-24 10:31:56 | sd_540_graph_docs_and_safety_checks_v0.1.0.zip | Docs: add GRAPH.md (directional Side graph); Checks: guard against legacy follow + Public broadcasts UI |

@@ -40,6 +40,25 @@ function shouldOpenReply(search: URLSearchParams | null): boolean {
 
 function Badge({ n }: { n: number }) {
   if (n <= 0) return null;
+
+  const backToSearchHref = useMemo(() => {
+    const from = sp?.get("from") || "";
+    if (from !== "search") return null;
+
+    const back = sp?.get("back") || "";
+    if (!back) return "/siddes-search";
+
+    try {
+      const qs = decodeURIComponent(back);
+      return qs ? "/siddes-search?" + qs : "/siddes-search";
+    } catch {
+      return "/siddes-search";
+    }
+  }, [sp]);
+
+  const backHref = backToSearchHref || "/siddes-feed";
+  const backLabel = backToSearchHref ? "Search" : "Feed";
+
   return (
     <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
       Queued reply{n === 1 ? "" : "ies"}: {n}
@@ -597,8 +616,8 @@ useEffect(() => {
       <ContentColumn>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">
-            <Link href="/siddes-feed" className="text-sm font-extrabold text-gray-700 hover:underline">
-              ← Feed
+            <Link href={backHref} className="text-sm font-extrabold text-gray-700 hover:underline">
+              ← {backLabel}
             </Link>
             <Badge n={queuedCount} />
           </div>

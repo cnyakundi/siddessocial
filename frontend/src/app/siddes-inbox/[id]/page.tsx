@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { AlertTriangle, CheckCircle2, ChevronRight, Send, X } from "lucide-react";
 import { InboxBanner } from "@/src/components/InboxBanner";
+import { InboxStubDebugPanel, useInboxStubViewer } from "@/src/components/InboxStubDebugPanel";
 import { toast } from "@/src/lib/toastBus";
 import { MentionPicker } from "@/src/components/MentionPicker";
 import { useSide } from "@/src/components/SideProvider";
@@ -27,6 +28,8 @@ import { loadRecentMoveSides, pushRecentMoveSide } from "@/src/lib/inboxMoveRece
 import type { MentionCandidate } from "@/src/lib/mentions";
 
 
+
+import { useInboxStubViewer } from "@/src/lib/useInboxStubViewer";
 
 function hashSeed(s: string): number {
   let x = 2166136261;
@@ -112,6 +115,7 @@ function AvatarBubble({
       aria-label="Avatar"
       title={sideId ? `Locked Side: ${SIDES[sideId].label}` : "Avatar"}
     >
+      <InboxStubDebugPanel viewer="" onViewer={() => {}} />
       {overlayStyle ? (
         <div aria-hidden className="absolute inset-0 opacity-50 pointer-events-none" style={overlayStyle} />
       ) : null}
@@ -388,6 +392,9 @@ function SiddesThreadPageInner() {
 
   const provider = useMemo(() => getInboxProvider(), []);
 
+  const [viewerInput, setViewerInput] = useInboxStubViewer();
+  const viewer = (viewerInput || "").trim() || undefined;
+  const sp = useSearchParams();
   const MSG_PAGE = 30;
 
   const [title, setTitle] = useState("Thread");
@@ -467,7 +474,7 @@ function SiddesThreadPageInner() {
 
     (async () => {
       try {
-        const view = await provider.getThread(id, { limit: MSG_PAGE });
+        const view = await provider.getThread(id, { viewer, limit: MSG_PAGE });
         if (!alive) return;
 
         if (!view?.thread) {
@@ -528,7 +535,7 @@ function SiddesThreadPageInner() {
       alive = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, provider]);
+  }, [id, provider, viewer]);
 
   const loadEarlier = async () => {
     if (provider.name !== "backend_stub") return;
@@ -537,7 +544,7 @@ function SiddesThreadPageInner() {
 
     setLoadingEarlier(true);
     try {
-      const view = await provider.getThread(id, { limit: MSG_PAGE, cursor: msgCursor });
+      const view = await provider.getThread(id, { viewer, limit: MSG_PAGE, cursor: msgCursor });
       const older = (view?.messages ?? []) as ThreadMessage[];
 
       setMsgs((prev) => {
@@ -593,7 +600,7 @@ function SiddesThreadPageInner() {
     }
 
     try {
-      const meta = await provider.setLockedSide(id, to);
+      const meta = await provider.setLockedSide(id, to, { viewer });
       setLockedSide(meta.lockedSide);
       saveThreadMeta(id, meta);
       setRecentMoveSides(pushRecentMoveSide(to));
@@ -619,7 +626,7 @@ function SiddesThreadPageInner() {
     }
 
     try {
-      const meta = await provider.setLockedSide(id, moveConfirmTo);
+      const meta = await provider.setLockedSide(id, moveConfirmTo, { viewer });
       setLockedSide(meta.lockedSide);
       saveThreadMeta(id, meta);
       setRecentMoveSides(pushRecentMoveSide(moveConfirmTo));
@@ -689,7 +696,7 @@ function SiddesThreadPageInner() {
     }
 
     try {
-      const item = await provider.sendMessage(id, v, "me");
+      const item = await provider.sendMessage(id, v, "me", { viewer });
       if (!(item as any)?.id) {
         setRestricted(true);
         if (toast?.warning) toast.warning("Thread became restricted");
@@ -716,6 +723,7 @@ function SiddesThreadPageInner() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <InboxStubDebugPanel viewer={viewer} onViewer={setViewer} />
       <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
         <Link href="/siddes-inbox" className="text-sm font-bold text-gray-700 hover:underline">
           ← Inbox
@@ -727,7 +735,7 @@ function SiddesThreadPageInner() {
 
       <div className="max-w-2xl mx-auto px-4 pb-28">
         {restricted ? (
-          <InboxBanner tone="warn" title="Thread unavailable">
+          <InboxBanner tone="warn" title="Restricted thread">
             <div data-testid="restricted-thread-banner" className="space-y-2">
               <div>This thread is unavailable (restricted or not found).</div>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { Repeat, PenLine, Share2, X, Copy } from "lucide-react";
+import { Repeat, PenLine, X } from "lucide-react";
 import type { FeedPost } from "@/src/lib/feedTypes";
 import type { SideId } from "@/src/lib/sides";
 import { SIDE_THEMES } from "@/src/lib/sides";
@@ -17,7 +17,6 @@ export function EchoSheet({
   side,
   onEcho,
   onQuoteEcho,
-  onShareExternal,
   echoed = false,
   echoBusy = false,
 }: {
@@ -27,7 +26,6 @@ export function EchoSheet({
   side: SideId;
   onEcho: () => void;
   onQuoteEcho: () => void;
-  onShareExternal: () => void;
   echoed?: boolean;
   echoBusy?: boolean;
 }) {
@@ -73,7 +71,7 @@ export function EchoSheet({
           </button>
         </div>
 
-        <div className="space-y-2">
+                <div className="space-y-2">
           <button
             type="button"
             onClick={onEcho}
@@ -116,94 +114,8 @@ export function EchoSheet({
               </div>
             </button>
           ) : null}
-
-
-          {side === "public" ? (
-
-
-            <button
-
-
-              type="button"
-
-
-              onClick={onShareExternal}
-
-
-              className="w-full p-4 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center gap-4 text-left"
-
-
-            >
-
-
-              <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-700 shadow-sm">
-
-
-                <Share2 size={20} />
-
-
-              </div>
-
-
-              <div>
-
-
-                <div className="font-bold text-gray-900">Share externally</div>
-
-
-                <div className="text-xs text-gray-500">Copy link or share to other apps</div>
-
-
-              </div>
-
-
-            </button>
-
-
-          ) : (
-
-
-            <button
-
-
-              type="button"
-
-
-              onClick={onShareExternal}
-
-
-              className="w-full p-4 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center gap-4 text-left"
-
-
-            >
-
-
-              <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-700 shadow-sm">
-
-
-                <Copy size={20} />
-
-
-              </div>
-
-
-              <div>
-
-
-                <div className="font-bold text-gray-900">Copy link</div>
-
-
-                <div className="text-xs text-gray-500">Only people with access can open</div>
-
-
-              </div>
-
-
-            </button>
-
-
-          )}
         </div>
+
 
         <button
           type="button"
