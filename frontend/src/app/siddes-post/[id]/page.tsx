@@ -41,25 +41,7 @@ function shouldOpenReply(search: URLSearchParams | null): boolean {
 function Badge({ n }: { n: number }) {
   if (n <= 0) return null;
 
-  const backToSearchHref = useMemo(() => {
-    const from = sp?.get("from") || "";
-    if (from !== "search") return null;
-
-    const back = sp?.get("back") || "";
-    if (!back) return "/siddes-search";
-
-    try {
-      const qs = decodeURIComponent(back);
-      return qs ? "/siddes-search?" + qs : "/siddes-search";
-    } catch {
-      return "/siddes-search";
-    }
-  }, [sp]);
-
-  const backHref = backToSearchHref || "/siddes-feed";
-  const backLabel = backToSearchHref ? "Search" : "Feed";
-
-  return (
+    return (
     <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
       Queued reply{n === 1 ? "" : "ies"}: {n}
     </span>
@@ -288,6 +270,23 @@ function SideMismatchBanner({
 function PostDetailInner() {
   const params = useParams();
   const sp = useSearchParams();
+
+  // If this post was opened from Search, provide a clean back-link.
+  const backToSearchHref = (() => {
+    const from = sp?.get("from") || "";
+    if (from !== "search") return null;
+    const back = sp?.get("back") || "";
+    if (!back) return "/siddes-search";
+    try {
+      const qs = decodeURIComponent(back);
+      return qs ? "/siddes-search?" + qs : "/siddes-search";
+    } catch {
+      return "/siddes-search";
+    }
+  })();
+  const backHref = backToSearchHref || "/siddes-feed";
+  const backLabel = backToSearchHref ? "Search" : "Feed";
+
   const id = (params?.id as string) || "";
 
   const { side: activeSide, setSide, setSideLock, clearSideLock } = useSide();
@@ -591,7 +590,7 @@ useEffect(() => {
             <p className="text-sm text-gray-500 mt-2">
               It may have been deleted, or you might not have access in your current Side.
             </p>
-            <Link href="/siddes-feed" className="inline-block mt-4 text-sm font-extrabold text-gray-700 hover:underline">
+            <Link href={backHref} className="inline-block mt-4 text-sm font-extrabold text-gray-700 hover:underline">
               ← Back to feed
             </Link>
           </div>

@@ -6,13 +6,14 @@ import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { AlertTriangle, CheckCircle2, ChevronRight, Send, X } from "lucide-react";
 import { InboxBanner } from "@/src/components/InboxBanner";
-import { InboxStubDebugPanel, useInboxStubViewer } from "@/src/components/InboxStubDebugPanel";
+import { InboxStubDebugPanel } from "@/src/components/InboxStubDebugPanel";
 import { toast } from "@/src/lib/toastBus";
 import { MentionPicker } from "@/src/components/MentionPicker";
 import { useSide } from "@/src/components/SideProvider";
 import type { SideId } from "@/src/lib/sides";
 import { SIDE_THEMES, SIDES } from "@/src/lib/sides";
 import { getInboxProvider } from "@/src/lib/inboxProvider";
+import { useInboxStubViewer } from "@/src/lib/useInboxStubViewer";
 import {
   appendMessage,
   ensureThreadLockedSide,
@@ -110,7 +111,6 @@ function AvatarBubble({
       aria-label="Avatar"
       title={sideId ? `Locked Side: ${SIDES[sideId].label}` : "Avatar"}
     >
-      <InboxStubDebugPanel viewer="" onViewer={() => {}} />
       {overlayStyle ? (
         <div aria-hidden className="absolute inset-0 opacity-50 pointer-events-none" style={overlayStyle} />
       ) : null}
@@ -384,12 +384,13 @@ function SiddesThreadPageInner() {
 
   const { side, setSide } = useSide();
   const theme = SIDE_THEMES[side];
-
   const provider = useMemo(() => getInboxProvider(), []);
 
+  const sp = useSearchParams();
+  const debug = sp.get("debug") === "1";
+
   const [viewerInput, setViewerInput] = useInboxStubViewer();
-  const [viewerInput, setViewer] = useInboxStubViewer();
-  const viewer = (viewerInput || "").trim() || undefined;const sp = useSearchParams();
+  const viewer = (viewerInput || "").trim() || undefined;
   const MSG_PAGE = 30;
 
   const [title, setTitle] = useState("Thread");
@@ -718,7 +719,7 @@ function SiddesThreadPageInner() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <InboxStubDebugPanel viewer={viewerInput} onViewer={setViewerInput} />
+      {debug ? <InboxStubDebugPanel viewer={viewerInput} onViewer={setViewerInput} /> : null}
       <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
         <Link href="/siddes-inbox" className="text-sm font-bold text-gray-700 hover:underline">
           ← Inbox

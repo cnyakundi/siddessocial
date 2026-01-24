@@ -15,7 +15,8 @@ import { getInboxProvider } from "@/src/lib/inboxProvider";
 import { ensureThreadLockedSide } from "@/src/lib/threadStore";
 import { InboxBanner } from "@/src/components/InboxBanner";
 import { isRestrictedError, restrictedMessage } from "@/src/lib/restricted";
-import { InboxStubDebugPanel, useInboxStubViewer } from "@/src/components/InboxStubDebugPanel";
+import { InboxStubDebugPanel } from "@/src/components/InboxStubDebugPanel";
+import { useInboxStubViewer } from "@/src/lib/useInboxStubViewer";
 type InboxFilter = "all" | "this" | "mismatch" | "unread";
 
 function cn(...parts: Array<string | undefined | false | null>) {
@@ -173,7 +174,9 @@ function SiddesInboxPageInner() {
   const params = useSearchParams();
 
   // sd_543b: unlock power tools only when explicitly requested
+
   const advanced = params.get("advanced") === "1";
+  const debug = params.get("debug") === "1";
   // sd_464d1: restore scroll when returning from thread detail
   useReturnScrollRestore();
 
@@ -194,6 +197,7 @@ function SiddesInboxPageInner() {
   const [nextCursor, setNextCursor] = useState<string | null>(null);
 
   const [query, setQuery] = useState("");
+  const [activeIndex, setActiveIndex] = useState(0);
 
   const [filter, setFilter] = useState<InboxFilter>("this");
 
@@ -202,6 +206,7 @@ function SiddesInboxPageInner() {
     if (!advanced) setQuery("");
   }, [advanced, side]);
 
+  
   useEffect(() => {
     let alive = true;
     setLoading(true);
@@ -211,12 +216,11 @@ function SiddesInboxPageInner() {
     setNextCursor(null);
 
     provider
-      .listThreads({ side: side, limit: PAGE_SIZE })
+      .listThreads({ viewer, side: side, limit: PAGE_SIZE })
       .then((page) => {
         if (!alive) return;
 
-        const p: any = page as any;
-        if (p && (p.restricted || p.error === "restricted" || (p.ok === false && p.error === "restricted"))) {
+        if (page?.restricted) {
           setThreads([]);
           setHasMore(false);
           setNextCursor(null);
@@ -224,7 +228,7 @@ function SiddesInboxPageInner() {
           return;
         }
 
-        const items = (page?.items || []) as InboxThreadItem[];
+        const items = (page?.items || []);
         setThreads(items);
         setHasMore(Boolean(page?.hasMore));
         setNextCursor(page?.nextCursor ?? null);
@@ -255,22 +259,88 @@ function SiddesInboxPageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [provider, side, viewer]);
 
-  const filtered = useMemo(() => {
-
   const counts = useMemo(() => {
-    const unread = threads.reduce((acc, t) => acc + (Number((t as any).unread || 0) > 0 ? 1 : 0), 0);
+    const unread = threads.reduce((acc, t) => acc + (Number((t as any)?.unread || 0) > 0 ? 1 : 0), 0);
     return { unread };
   }, [threads]);
 
-    if (!advanced) return threads;
-    const q = query.trim().toLowerCase();
-    if (!q) return threads;
-    return threads.filter((t) => {
-      const title = (t.title || "").toLowerCase();
-      const last = (t.last || "").toLowerCase();
-      return title.includes(q) || last.includes(q);
+  const filtered = useMemo(() => {
+    let items = threads;
+
+    const lockedSideOf = (t: any) => (t?.lockedSide || t?.side || side);
+
+    if (filter === "this") {
+      items = items.filter((t) => lockedSideOf(t) === side);
+    } else if (filter === "mismatch") {
+      items = items.filter((t) => lockedSideOf(t) !== side);
+    } else if (filter === "unread") {
+      items = items.filter((t) => Number((t as any)?.unread || 0) > 0);
+    }
+
+    if (advanced) {
+      const q = query.trim().toLowerCase();
+      if (q) {
+        items = items.filter((t) => {
+          const title = String(t?.title || "").toLowerCase();
+          const last = String(t?.last || "").toLowerCase();
+          return title.includes(q) || last.includes(q);
+        });
+      }
+    }
+
+    return items;
+  }, [threads, query, advanced, filter, side]);
+
+  useEffect(() => {
+    setActiveIndex((prev) => {
+      const max = Math.max(0, filtered.length - 1);
+      return Math.min(max, Math.max(0, prev));
     });
-  }, [threads, query, advanced]);
+  }, [filtered.length]);
+
+  // Keyboard nav: j/k to move selection, Enter to open.
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      const key = e.key;
+
+      // Ignore when typing in an input/textarea or contenteditable
+      const target = e.target as HTMLElement | null;
+      const tag = target && (target as any).tagName ? String((target as any).tagName).toLowerCase() : "";
+      const isTyping =
+        tag === "input" ||
+        tag === "textarea" ||
+        (target && (target as any).isContentEditable);
+
+      if (isTyping) return;
+
+      if (key === "j") {
+        e.preventDefault();
+        setActiveIndex((prev) => {
+          const max = Math.max(0, filtered.length - 1);
+          return Math.min(max, prev + 1);
+        });
+        return;
+      }
+
+      if (key === "k") {
+        e.preventDefault();
+        setActiveIndex((prev) => Math.max(0, prev - 1));
+        return;
+      }
+
+      if (key === "Enter") {
+        const t = filtered[activeIndex];
+        if (t && (t as any).id) {
+          e.preventDefault();
+          saveReturnScroll();
+          router.push("/siddes-inbox/" + (t as any).id);
+        }
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [activeIndex, filtered, router]);
 
   const loadMore = async () => {
     if (restricted) return;
@@ -304,7 +374,7 @@ function SiddesInboxPageInner() {
 
   return (
     <div className="p-4">
-      <InboxStubDebugPanel viewer="" onViewer={() => {}} />
+      {debug ? <InboxStubDebugPanel viewer={viewerInput} onViewer={setViewerInput} /> : null}
       <div className="mb-4 px-1">
         <p className="text-xs font-medium text-gray-400 flex items-center gap-1.5">
           <Lock size={12} className="text-gray-400" />
@@ -338,7 +408,7 @@ function SiddesInboxPageInner() {
 
           <Link
             href="/siddes-invites"
-            className="inline-flex items-center gap-2 text-xs font-extrabold px-3 py-2 rounded-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
+            className={cn("inline-flex items-center gap-2 text-xs font-extrabold px-3 py-2 rounded-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-50")}
             aria-label="Open invites"
             title="Invites"
           >
@@ -421,14 +491,14 @@ function SiddesInboxPageInner() {
           )}
           aria-pressed={filter === "unread"}
         >
-          <span label="Unread">Unread</span>
+          <span>Unread</span>
           <span className="ml-2 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-gray-100 text-gray-700 border border-gray-200 text-[10px] font-black">
             {counts.unread}
           </span>
         </button>
       </div>
 <div role="listbox" aria-label="Inbox threads" className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
-        {filtered.map((t) => {
+        {filtered.map((t, i) => {
     const meta = ensureThreadLockedSide(t.id, t.lockedSide);
     const lockedSide = meta.lockedSide;
     const isPrivate = lockedSide !== "public";
@@ -442,6 +512,7 @@ function SiddesInboxPageInner() {
               key={t.id}
               href={"/siddes-inbox/" + t.id}
               role="option"
+              aria-selected={i === activeIndex}
               onClick={(e) => {
                 e.preventDefault();
                 saveReturnScroll();
