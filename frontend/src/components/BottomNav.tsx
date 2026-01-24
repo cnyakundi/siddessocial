@@ -164,7 +164,7 @@ export function BottomNav() {
   const isCompose = pathname.startsWith("/siddes-compose");
   const isSets = pathname.startsWith("/siddes-sets");
   const isInbox = pathname.startsWith("/siddes-inbox") || pathname.startsWith("/siddes-notifications");
-  const isMe = pathname.startsWith("/siddes-profile") || pathname.startsWith("/siddes-settings");
+  const isMe = pathname.startsWith("/siddes-profile");
 
   return (
     <nav

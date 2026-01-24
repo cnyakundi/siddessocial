@@ -67,7 +67,7 @@ function BroadcastUpdates({ onClose }: { onClose: () => void }) {
           Broadcast updates
         </div>
         <Link
-          href="/siddes-broadcasts"
+          href="/siddes-feed"
           onClick={onClose}
           className="text-xs font-bold text-gray-900 hover:underline"
         >
@@ -79,7 +79,7 @@ function BroadcastUpdates({ onClose }: { onClose: () => void }) {
         {items.slice(0, 6).map((b) => (
           <Link
             key={b.id}
-            href={`/siddes-broadcasts/${b.id}`}
+            href={`/siddes-feed/${b.id}`}
             onClick={onClose}
             className="flex items-center justify-between p-3 rounded-xl border border-gray-100 hover:bg-gray-50"
           >
@@ -126,7 +126,7 @@ function ContextCard() {
           icon: Users,
           title: "Broadcasts",
           desc: "Follow calm channels you trust.",
-          href: "/siddes-broadcasts",
+          href: "/siddes-feed",
         },
       ];
     }

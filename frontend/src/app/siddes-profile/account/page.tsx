@@ -91,15 +91,6 @@ export default function SiddesAccountPage() {
             <div className="text-sm font-extrabold text-gray-900">{prismEnabled ? "Prism Identity" : "Profile"}</div>
             <div className="text-xs text-gray-500 mt-1">{prismEnabled ? "How you appear in each Side" : "Your identity & account"}</div>
           </Link>
-
-          <Link
-            href="/siddes-settings"
-            className="rounded-2xl border border-gray-200 bg-white hover:bg-gray-50 p-4"
-          >
-            <div className="text-sm font-extrabold text-gray-900">Settings</div>
-            <div className="text-xs text-gray-500 mt-1">Alerts & preferences</div>
-          </Link>
-
           <Link
             href="/siddes-profile/account/password"
             className="rounded-2xl border border-gray-200 bg-white hover:bg-gray-50 p-4"
@@ -216,15 +207,6 @@ export default function SiddesAccountPage() {
             <div className="text-sm font-extrabold text-gray-900">Sets</div>
             <div className="text-xs text-gray-500 mt-1">Groups inside each Side</div>
           </Link>
-
-          <Link
-            href="/siddes-broadcasts"
-            className="rounded-2xl border border-gray-200 bg-white hover:bg-gray-50 p-4"
-          >
-            <div className="text-sm font-extrabold text-gray-900">Broadcasts</div>
-            <div className="text-xs text-gray-500 mt-1">Follow channels (Public)</div>
-          </Link>
-
           {!onboarded ? (
             <Link
               href="/onboarding"

@@ -22,13 +22,13 @@ class MediaApiSmokeTests(APITestCase):
             created_at=time.time(),
             post_id=post_id,
         )
-
     def test_sign_upload_default_safe_without_viewer(self):
-        r = self.client.post("/api/media/sign-upload", {"kind": "image", "contentType": "image/png"}, format="json")
-        assert r.status_code == 200
-        d = r.json()
-        assert d.get("ok") is True
-        assert d.get("restricted") is True
+            # Write-guard middleware blocks unauthenticated POSTs (server-truth).
+            r = self.client.post("/api/media/sign-upload", {"kind": "image", "contentType": "image/png"}, format="json")
+            assert r.status_code == 401
+            d = r.json()
+            assert d.get("restricted") is True
+
 
     def test_sign_upload_requires_me_role(self):
         r = self.client.post(

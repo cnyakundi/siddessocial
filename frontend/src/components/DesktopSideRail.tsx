@@ -158,7 +158,7 @@ export function DesktopSideRail() {
           </Link>
 
           <Link
-            href="/siddes-settings"
+            href="/siddes-profile/account"
             aria-label="More"
             title="More"
             className="w-12 h-12 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-colors"
@@ -287,7 +287,7 @@ export function DesktopSideRail() {
           </Link>
 
           <Link
-            href="/siddes-settings"
+            href="/siddes-profile/account"
             className="px-3 py-2 rounded-xl text-sm font-extrabold text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors"
           >
             More

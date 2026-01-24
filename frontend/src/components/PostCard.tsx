@@ -214,16 +214,19 @@ export function PostCard({
   side,
   onMore,
   calmHideCounts,
+  variant = "card",
 }: {
   post: FeedPost;
   side: SideId;
   onMore?: (post: FeedPost) => void;
   calmHideCounts?: boolean;
+  variant?: "card" | "row";
 }) {
   const router = useRouter();
   const theme = SIDE_THEMES[side];
+  const isRow = variant === "row";
 
-  const hideCounts = side === "public" && FLAGS.publicCalmUi && !!calmHideCounts;
+  const hideCounts = isRow ? true : (side === "public" && FLAGS.publicCalmUi && !!calmHideCounts);
 
   const allChips: Chip[] = useMemo(() => buildChips(chipsFromPost(post), { side }), [post, side]);
 
@@ -563,13 +566,17 @@ export function PostCard({
   return (
     <div
       className={cn(
-        "bg-white p-6 sm:p-8 lg:p-10 rounded-[2.5rem] shadow-sm border border-gray-100 border-l-4 transition-all hover:shadow-[0_40px_80px_rgba(0,0,0,0.08)]",
-        theme.accentBorder
+        isRow
+          ? "group py-5 border-b border-gray-100 hover:bg-gray-50/40 transition-colors"
+          : cn(
+              "bg-white p-6 sm:p-8 lg:p-10 rounded-[2.5rem] shadow-sm border border-gray-100 border-l-4 transition-all hover:shadow-[0_40px_80px_rgba(0,0,0,0.08)]",
+              theme.accentBorder
+            )
       )}
       data-post-id={post.id}
     >
       {/* Header */}
-      <div className="flex justify-between items-start mb-6">
+      <div className={cn("flex justify-between items-start", isRow ? "mb-2" : "mb-6")}>
         <div
           role="button"
           tabIndex={0}
@@ -621,7 +628,7 @@ export function PostCard({
               aria-label={"Open profile " + String(post.handle || post.author || "user")}
               title="View profile"
             >
-              <span className="font-black text-gray-900 truncate hover:underline text-[15px] lg:text-[20px]">{post.author}</span>
+              <span className={cn("font-black text-gray-900 truncate hover:underline", isRow ? "text-[15px]" : "text-[15px] lg:text-[20px]")}>{post.author}</span>
               <span className="text-gray-400 truncate hover:underline text-[12px] font-bold">{post.handle}</span>
             </button>
 
@@ -679,7 +686,10 @@ export function PostCard({
             e.preventDefault();
             onMore ? onMore(post) : setOpenActions(true);
           }}
-          className="text-gray-400 hover:text-gray-600 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-900/20 -mr-2"
+          className={cn(
+            "text-gray-400 hover:text-gray-600 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-900/20",
+            isRow ? "opacity-100 lg:opacity-0 lg:group-hover:opacity-100" : "-mr-2"
+          )}
           aria-label="Post options"
         >
           <MoreHorizontal size={20} />
@@ -740,7 +750,7 @@ export function PostCard({
           ) : null}
 
           {!isEchoPost || isQuoteEcho || hasText ? (
-            <p className="text-gray-800 text-[15px] lg:text-[20px] leading-relaxed mb-4 whitespace-pre-wrap">
+            <p className={cn("text-gray-800 leading-relaxed mb-4 whitespace-pre-wrap", isRow ? "text-[15px]" : "text-[15px] lg:text-[20px]")}>
               {shownText}
               {isLongText ? (
                 <button
@@ -848,7 +858,53 @@ export function PostCard({
           </div>
         ) : null}
 
-        {/* Footer: actions (counts inline) */}
+        {/* Footer: actions (feed: Reply + React only; detail: full) */}
+        {isRow ? (
+          <div
+            className={cn(
+              "mt-2 flex items-center gap-6 transition-opacity duration-200",
+              "opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+            )}
+          >
+            <button
+              type="button"
+              className="min-w-[44px] min-h-[44px] px-2 rounded-full inline-flex items-center gap-2 text-xs font-extrabold text-gray-400 hover:text-gray-900 hover:bg-gray-50 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-900/20"
+              aria-label="Reply"
+              title="Reply"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                openReply();
+              }}
+            >
+              <MessageCircle size={18} strokeWidth={2.5} />
+              Reply
+            </button>
+
+            <button
+              type="button"
+              className={cn(
+                "min-w-[44px] min-h-[44px] px-2 rounded-full inline-flex items-center gap-2 text-xs font-extrabold hover:bg-gray-50 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-900/20 disabled:opacity-60",
+                liked ? theme.text : "text-gray-400 hover:text-gray-900"
+              )}
+              aria-label="React"
+              title="React"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleLike();
+              }}
+              disabled={likeBusy}
+            >
+              {side === "work" ? (
+                <CheckCircle2 size={18} strokeWidth={2.5} />
+              ) : (
+                <Heart size={18} strokeWidth={2.5} fill={liked ? "currentColor" : "none"} />
+              )}
+              React
+            </button>
+          </div>
+        ) : (
         <div className="flex items-center justify-between pt-6 border-t border-gray-100">
           <div className="flex items-center gap-5">
             <button
@@ -949,6 +1005,7 @@ export function PostCard({
           {/* Calm UI: keep a subtle engagement hint without numbers */}
           {hideCounts ? <div className="text-[11px] font-bold text-gray-400">Calm</div> : null}
         </div>
+        )}
       </div>
 
       <ChipOverflowSheet
@@ -958,6 +1015,9 @@ export function PostCard({
         title="More context"
       />
 
+
+      {!isRow && canEcho ? (
+        <>
       <EchoSheet
         open={openEcho}
         onClose={() => setOpenEcho(false)}
@@ -978,6 +1038,10 @@ export function PostCard({
         busy={echoBusy}
         onSubmit={submitQuoteEcho}
       />
+        </>
+      ) : null}
+
+
 
 <EditPostSheet
         open={openEdit}

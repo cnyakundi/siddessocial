@@ -158,7 +158,7 @@ export function DesktopContextInspectorRail({ expanded, onExpandedChange }: Prop
           <div className="text-sm font-bold text-gray-900">Context sealed</div>
           <div className="mt-3 flex items-center justify-between pt-3 border-t border-gray-50">
             <div className="text-xs text-gray-500">{queued > 0 ? `${queued} queued` : "No queued items"}</div>
-            <Link href="/siddes-settings" className="text-xs font-bold text-gray-600 hover:underline">
+            <Link href="/siddes-profile/account" className="text-xs font-bold text-gray-600 hover:underline">
               Settings
             </Link>
           </div>
@@ -178,7 +178,7 @@ export function DesktopContextInspectorRail({ expanded, onExpandedChange }: Prop
               Items are queued for encryption/sync in this Side.
             </div>
             <Link
-              href="/siddes-outbox"
+              href="/siddes-profile"
               className="block text-center w-full py-2.5 bg-white border border-orange-200 text-orange-700 rounded-xl text-[10px] font-black uppercase tracking-widest hover:shadow-md transition-all"
             >
               Open Outbox

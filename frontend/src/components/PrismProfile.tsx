@@ -777,8 +777,8 @@ export function OwnerTopRow(props: { username: string; previewSide: SideId; setP
     <div className="rounded-2xl border border-gray-200 bg-white p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-sm font-black text-gray-900">Preview identities</div>
-          <div className="text-xs text-gray-500 mt-1">Only you can toggle. Everyone else sees one identity chosen by relationship.</div>
+          <div className="text-sm font-black text-gray-900">Preview Side identities</div>
+          <div className="text-xs text-gray-500 mt-1">Only you can toggle. Everyone else sees the identity your relationship grants.</div>
         </div>
         <Link href={`/u/${encodeURIComponent(username)}`} className="px-3 py-2 rounded-xl text-sm font-extrabold border border-gray-200 bg-white hover:bg-gray-50">
           View as others

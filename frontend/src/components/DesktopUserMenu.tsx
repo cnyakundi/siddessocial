@@ -68,7 +68,7 @@ export function DesktopUserMenu({
           <Link href="/siddes-invites" className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-gray-50 text-sm font-bold text-gray-700">
             <LinkIcon size={16} className="text-gray-500" /> Invites
           </Link>
-          <Link href="/siddes-settings" className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-gray-50 text-sm font-bold text-gray-700">
+          <Link href="/siddes-profile/account" className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-gray-50 text-sm font-bold text-gray-700">
             <Settings size={16} className="text-gray-500" /> Settings
           </Link>
         </div>

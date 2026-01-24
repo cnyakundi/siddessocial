@@ -20,6 +20,7 @@ import type { SetDef, SetId } from "@/src/lib/sets";
 import { DEFAULT_SETS } from "@/src/lib/sets";
 import { getSetsProvider } from "@/src/lib/setsProvider";
 import { SetPickerSheet } from "@/src/components/SetPickerSheet";
+import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { toast } from "@/src/lib/toast";
 import { getStoredLastPublicTopic, getStoredLastSetForSide } from "@/src/lib/audienceStore";
 import { signUpload, uploadToSignedUrl } from "@/src/lib/mediaClient";
@@ -52,6 +53,18 @@ function TopicPickerSheet({
   value: PublicChannelId;
   onPick: (next: PublicChannelId) => void;
 }) {
+  useLockBodyScroll(open);
+
+  // sd_543g_topic_picker_escape
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-[125] flex items-end justify-center md:items-center">
@@ -59,7 +72,14 @@ function TopicPickerSheet({
         type="button"
         aria-label="Close topic picker"
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-        onClick={onClose}
+        onPointerDown={(e) => {
+          e.preventDefault();
+          onClose();
+        }}
+        onClick={(e) => {
+          e.preventDefault();
+          onClose();
+        }}
       />
       <div className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
         <div className="flex items-center justify-between gap-3 mb-4">
@@ -174,6 +194,18 @@ function DraftsSheet({
 }) {
   const [store, setStore] = useState<DraftStore>({});
 
+  useLockBodyScroll(open);
+
+  // sd_543g_drafts_sheet_escape
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
   useEffect(() => {
     if (!open) return;
     setStore(loadDraftStore());
@@ -186,7 +218,19 @@ function DraftsSheet({
 
   return (
     <div className="fixed inset-0 z-[140] flex items-end justify-center md:items-center">
-      <button type="button" className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} aria-label="Close drafts" />
+      <button
+        type="button"
+        aria-label="Close drafts"
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onPointerDown={(e) => {
+          e.preventDefault();
+          onClose();
+        }}
+        onClick={(e) => {
+          e.preventDefault();
+          onClose();
+        }}
+      />
       <div className="relative w-full max-w-lg bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
         <div className="flex items-center justify-between gap-3 mb-4">
           <div>

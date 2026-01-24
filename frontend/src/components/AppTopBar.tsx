@@ -45,7 +45,10 @@ export function AppTopBar(_props: { onOpenNotificationsDrawer?: () => void } = {
     if (isNow) return "";
     if (pathname.startsWith("/siddes-sets")) return "Sets";
     if (pathname.startsWith("/siddes-inbox")) return "Inbox";
-    if (pathname.startsWith("/siddes-profile")) return "Me";
+    if (pathname.startsWith("/siddes-profile/prism")) return "Identity";
+    if (pathname.startsWith("/siddes-profile/account")) return "Account";
+    if (pathname.startsWith("/siddes-profile/people")) return "People";
+if (pathname.startsWith("/siddes-profile")) return "Me";
     if (pathname.startsWith("/siddes-compose")) return "Create";
     if (pathname.startsWith("/siddes-notifications")) return "Inbox";
     return "";

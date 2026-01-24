@@ -73,7 +73,7 @@ export function SetPickerSheet({
   activeSet,
   onPick,
   onNewSet,
-  title = "Choose Set",
+  title = "Set",
   allLabel = "All",
 }: {
   open: boolean;
@@ -119,9 +119,6 @@ export function SetPickerSheet({
         <div className="flex items-center justify-between gap-3 mb-4">
           <div>
             <h3 className="text-lg font-bold text-gray-900">{title}</h3>
-            <div className="text-xs text-gray-500 mt-1">
-              Safety: Sets are rooms. You’re posting to the people inside.
-            </div>
           </div>
           <button
             type="button"

@@ -106,19 +106,53 @@ class InMemoryApiSetsStore:
         ]
 
     def get(self, *, owner_id: str, set_id: str) -> Optional[Dict[str, Any]]:
-        st = _ensure(owner_id)
+        viewer_id = (owner_id or "").strip() or "anon"
+        st = _ensure(viewer_id)
+
+        # Owner read (fast path)
         s = st["sets"].get(set_id)
-        if not s:
-            return None
-        return {
-            "id": s["id"],
-            "side": clean_side(s.get("side")),
-            "label": str(s.get("label") or ""),
-            "color": clean_color(s.get("color")),
-            "members": list(s.get("members") or []),
-            "count": int(s.get("count") or 0),
-            "isOwner": True,
-        }
+        if s:
+            return {
+                "id": s["id"],
+                "side": clean_side(s.get("side")),
+                "label": str(s.get("label") or ""),
+                "color": clean_color(s.get("color")),
+                "members": list(s.get("members") or []),
+                "count": int(s.get("count") or 0),
+                "isOwner": True,
+            }
+
+        # Membership-based read (dev-safe): allow viewing a Set if the viewer is explicitly in members.
+        # Default-safe: if viewer isn't a member, behave like not found (no leakage).
+        try:
+            from siddes_backend.identity import viewer_aliases  # type: ignore
+            aliases = viewer_aliases(viewer_id)
+        except Exception:
+            aliases = {viewer_id}
+
+        for owner, ost in _BY_OWNER.items():
+            if owner == viewer_id:
+                continue
+            sets = (ost or {}).get("sets") or {}
+            ss = sets.get(set_id)
+            if not ss:
+                continue
+
+            members_raw = list(ss.get("members") or [])
+            members_v = set(clean_members(members_raw))
+            if members_v.intersection(aliases):
+                return {
+                    "id": ss["id"],
+                    "side": clean_side(ss.get("side")),
+                    "label": str(ss.get("label") or ""),
+                    "color": clean_color(ss.get("color")),
+                    "members": list(ss.get("members") or []),
+                    "count": int(ss.get("count") or 0),
+                    "isOwner": False,
+                }
+
+        return None
+
 
     def create(self, *, owner_id: str, side: str, label: str, members: List[str], color: Optional[str] = None) -> Dict[str, Any]:
         st = _ensure(owner_id)

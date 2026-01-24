@@ -92,23 +92,14 @@ function EmptyState({ side, onCreateSet, composeHref }: { side: SideId; onCreate
           New Post
         </Link>
 
-        {side === "public" ? (
-          <Link
-            href="/siddes-broadcasts"
-            className="px-4 py-2 rounded-full text-sm font-extrabold bg-white border border-gray-200 text-gray-800 shadow-sm hover:bg-gray-100 transition"
-          >
-            Explore Broadcasts
-          </Link>
-        ) : (
-          <button
+        {side !== "public" ? (<button
             type="button"
             onClick={onCreateSet}
             className="px-4 py-2 rounded-full text-sm font-extrabold bg-white border border-gray-200 text-gray-800 shadow-sm hover:bg-gray-100 transition"
           >
             Create Set
-          </button>
-        )}
-      </div>
+          </button>) : null}
+</div>
     </div>
   );
 }
@@ -699,7 +690,7 @@ const submitQuick = useCallback(
 
   const rowVirtualizer = useWindowVirtualizer({
     count: rows.length,
-    estimateSize: () => 260,
+    estimateSize: () => 200,
     overscan: 8,
     scrollMargin,
   });
@@ -793,7 +784,7 @@ const submitQuick = useCallback(
         onTrustMode={applyTrustMode}
         countsShown={countsShown}
         onToggleCounts={toggleCounts}
-        showMode={side === "public"}
+        showMode={false}
         publicMode={publicMode}
         onPublicMode={setPublicMode}
       />
@@ -824,7 +815,7 @@ const submitQuick = useCallback(
       />
 
 {/* Feed content */}
-      <div className="p-4">
+      <div className="pt-2 px-4 lg:px-0">
         {restricted ? (
           <div className="p-6 rounded-2xl border border-amber-200 bg-amber-50 text-amber-900 space-y-2" data-testid="feed-restricted">
             <div className="text-sm font-extrabold">This feed is restricted.</div>
@@ -881,7 +872,7 @@ const submitQuick = useCallback(
                     key={row.key}
                     data-index={vr.index}
                     ref={rowVirtualizer.measureElement}
-                    className={row.kind === "divider" ? "" : "pb-4 lg:pb-8"}
+                    className={row.kind === "divider" ? "" : ""}
                     style={{
                       position: "absolute",
                       top: 0,
@@ -893,7 +884,7 @@ const submitQuick = useCallback(
                     {row.kind === "divider" ? (
                       <Divider />
                     ) : row.kind === "post" ? (
-                      <MemoPostCard post={row.post as any} side={side} calmHideCounts={calmHideCounts} />
+                      <MemoPostCard post={row.post as any} side={side} calmHideCounts={calmHideCounts} variant="row" />
                     ) : (
                       <FeedModuleCard module={row.module} />
                     )}

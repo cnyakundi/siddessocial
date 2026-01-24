@@ -92,7 +92,7 @@ export function DesktopWorkspaceNav() {
 
         <WorkspaceNavItem href="/siddes-feed" label="Feed" icon={Home} active={pathname.startsWith("/siddes-feed")} theme={theme} />
         <WorkspaceNavItem href="/siddes-inbox" label="Inbox" icon={Mail} active={pathname.startsWith("/siddes-inbox")} theme={theme} />
-        <WorkspaceNavItem href="/siddes-outbox" label="Outbox" icon={CloudOff} active={pathname.startsWith("/siddes-outbox")} theme={theme} />
+        <WorkspaceNavItem href="/siddes-profile" label="Outbox" icon={CloudOff} active={pathname.startsWith("/siddes-profile")} theme={theme} />
         <WorkspaceNavItem href="/siddes-profile" label="Prism" icon={User} active={pathname.startsWith("/siddes-profile")} theme={theme} />
         <WorkspaceNavItem href="/siddes-sets" label="Sets" icon={Layers} active={pathname.startsWith("/siddes-sets")} theme={theme} />
 

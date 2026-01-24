@@ -58,8 +58,7 @@ export function AuthBootstrap() {
       "/siddes-compose",
       "/invite",
       "/siddes-profile",
-      "/siddes-settings",
-    ];
+];
 
     const isProtected = protectedPrefixes.some((pre) => p.startsWith(pre));
 

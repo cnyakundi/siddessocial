@@ -23,7 +23,10 @@ function cn(...parts: Array<string | undefined | false | null>) {
 function titleFor(pathname: string): string {
   if (pathname.startsWith("/siddes-sets")) return "Sets";
   if (pathname.startsWith("/siddes-inbox") || pathname.startsWith("/siddes-notifications")) return "Inbox";
-  if (pathname.startsWith("/siddes-profile")) return "Me";
+  if (pathname.startsWith("/siddes-profile/prism")) return "Identity";
+  if (pathname.startsWith("/siddes-profile/account")) return "Account";
+  if (pathname.startsWith("/siddes-profile/people")) return "People";
+if (pathname.startsWith("/siddes-profile")) return "Me";
   if (pathname.startsWith("/siddes-compose")) return "Create";
   return "";
 }
@@ -168,6 +171,19 @@ export function DesktopTopBar() {
 
   const [sets, setSets] = useState<SetDef[]>([]);
   const [activeSet, setActiveSet] = useState<SetId | null>(null);
+
+  // Close popovers on Escape
+  useEffect(() => {
+    if (!sideOpen && !setOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setSideOpen(false);
+        setSetOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [sideOpen, setOpen]);
 
   // Load sets (private sides)
   useEffect(() => {

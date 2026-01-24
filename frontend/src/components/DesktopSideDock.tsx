@@ -60,6 +60,7 @@ function RailLink({ href, label, Icon, active }: { href: string; label: string; 
       title={label}
       className={cn(
         "relative w-12 h-12 rounded-xl flex items-center justify-center transition-colors group",
+        "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900/20",
         active ? "text-gray-900" : "text-gray-300 hover:text-gray-900 hover:bg-gray-50"
       )}
     >
@@ -118,6 +119,7 @@ export function DesktopSideDock() {
                 title={`${meta.label} Side`}
                 className={cn(
                   "w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-200 relative group",
+                  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900/20",
                   !allowed ? "opacity-40 cursor-not-allowed" : null,
                   isActive ? cn(t.primaryBg, "text-white shadow-lg scale-110") : "bg-white text-gray-400 hover:bg-gray-50"
                 )}
@@ -151,7 +153,7 @@ export function DesktopSideDock() {
       <div className="mt-auto pb-8 flex flex-col items-center">
         <Link
           href={`/siddes-compose?side=${encodeURIComponent(side)}`}
-          className="relative w-12 h-12 rounded-full bg-gray-900 text-white flex items-center justify-center shadow-lg hover:scale-105 transition-transform active:scale-95 group"
+          className="relative w-12 h-12 rounded-full bg-gray-900 text-white flex items-center justify-center shadow-lg hover:scale-105 transition-transform active:scale-95 group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900/20"
           aria-label="Create"
           title="Create"
         >
