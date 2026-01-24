@@ -2,7 +2,8 @@
 
 import React from "react";
 import Link from "next/link";
-import { Globe, Users, Lock, Briefcase, Settings } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Globe, Users, Lock, Briefcase, Zap, Layers, MessageSquare, User as UserIcon, Plus } from "lucide-react";
 import { useSide } from "@/src/components/SideProvider";
 import { SIDES, SIDE_ORDER, SIDE_THEMES, type SideId } from "@/src/lib/sides";
 
@@ -10,51 +11,101 @@ function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
 }
 
-const ICONS: Record<SideId, React.ComponentType<any>> = {
+const SIDE_ICONS: Record<SideId, React.ComponentType<any>> = {
   public: Globe,
   friends: Users,
   close: Lock,
   work: Briefcase,
 };
 
+type NavItem = {
+  href: string;
+  label: string;
+  icon: React.ComponentType<any>;
+  active: (pathname: string) => boolean;
+};
+
+const NAV: NavItem[] = [
+  {
+    href: "/siddes-feed",
+    label: "Now",
+    icon: Zap,
+    active: (p) => p === "/siddes-feed" || p.startsWith("/siddes-feed/"),
+  },
+  {
+    href: "/siddes-sets",
+    label: "Sets",
+    icon: Layers,
+    active: (p) => p.startsWith("/siddes-sets"),
+  },
+  {
+    href: "/siddes-inbox",
+    label: "Inbox",
+    icon: MessageSquare,
+    active: (p) => p.startsWith("/siddes-inbox") || p.startsWith("/siddes-notifications"),
+  },
+  {
+    href: "/siddes-profile",
+    label: "Me",
+    icon: UserIcon,
+    active: (p) => p.startsWith("/siddes-profile"),
+  },
+];
+
+function RailLink({ href, label, Icon, active }: { href: string; label: string; Icon: any; active: boolean }) {
+  return (
+    <Link
+      href={href}
+      aria-label={label}
+      title={label}
+      className={cn(
+        "relative w-12 h-12 rounded-xl flex items-center justify-center transition-colors group",
+        active ? "text-gray-900" : "text-gray-300 hover:text-gray-900 hover:bg-gray-50"
+      )}
+    >
+      {active ? <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[1.5px] h-8 bg-gray-900 rounded-r-full" /> : null}
+      <Icon size={22} strokeWidth={active ? 2.5 : 2} />
+      <div className="absolute left-14 px-3 py-1.5 bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all pointer-events-none whitespace-nowrap z-50 shadow-xl">
+        {label}
+      </div>
+    </Link>
+  );
+}
+
 /**
- * DesktopSideDock (Lane 1: Threshold Rail — 80px)
- * Measurement Protocol v1.2:
- * - Header baseline: 80px (h-20)
- * - Brand box: 44x44 (w-11 h-11) radius 12 (rounded-xl)
- * - Side tabs: 56x56 (w-14 h-14) radius 16 (rounded-2xl)
- * - Gap between tabs: 24px (gap-6)
- * - Active indicator: 1.5px bar on far-left edge of rail
+ * DesktopSideDock (MVP skeleton rail)
+ * - Top: brand mark
+ * - Hero: Side switcher (Mode)
+ * - Nav: Now / Sets / Inbox / Me
+ * - Bottom: Create
  */
 export function DesktopSideDock() {
+  const pathname = usePathname() || "/";
   const { side, setSide, sideLock } = useSide();
   const lockedSide = sideLock?.enabled ? sideLock.side : null;
   const lockReason = sideLock?.enabled ? sideLock.reason : null;
 
   return (
-    <aside className="h-screen sticky top-0 bg-white border-r border-gray-100 flex flex-col items-center">
-      {/* Baseline header (80px) */}
+    <aside className="w-[84px] h-screen sticky top-0 bg-white border-r border-gray-100 flex flex-col items-center">
+      {/* Brand (matches Measurement Protocol baseline: 80px header) */}
       <div className="h-20 flex items-center justify-center">
         <div className="w-11 h-11 bg-gray-900 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg select-none">
           S
         </div>
       </div>
 
-      {/* Side switcher */}
-      <nav aria-label="Context switcher" className="flex flex-col items-center gap-6 py-8 w-full">
+      {/* Side switcher (Mode) */}
+      <nav aria-label="Side" className="flex flex-col items-center gap-6 py-8 w-full">
         {SIDE_ORDER.map((id) => {
           const meta = SIDES[id];
           const t = SIDE_THEMES[id];
-          const Icon = ICONS[id];
+          const Icon = SIDE_ICONS[id];
           const isActive = id === side;
           const allowed = !lockedSide || id === lockedSide;
 
           return (
             <div key={id} className="relative w-full flex justify-center">
-              {isActive ? (
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[1.5px] h-8 bg-gray-900 rounded-r-full" />
-              ) : null}
-
+              {isActive ? <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[1.5px] h-8 bg-gray-900 rounded-r-full" /> : null}
               <button
                 type="button"
                 disabled={!allowed}
@@ -73,13 +124,15 @@ export function DesktopSideDock() {
               >
                 <Icon size={24} strokeWidth={2.5} fill={isActive ? "currentColor" : "none"} />
                 {!allowed ? (
-                  <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-white border border-gray-100 flex items-center justify-center shadow-sm" title={lockReason || "Locked"}>
+                  <span
+                    className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-white border border-gray-100 flex items-center justify-center shadow-sm"
+                    title={lockReason || "Locked"}
+                  >
                     <Lock size={10} className="text-gray-400" />
                   </span>
                 ) : null}
-                {/* Tooltip */}
                 <div className="absolute left-16 px-3 py-1.5 bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all pointer-events-none whitespace-nowrap z-50 shadow-xl">
-                  {meta.label} Side
+                  {meta.label}
                 </div>
               </button>
             </div>
@@ -87,15 +140,25 @@ export function DesktopSideDock() {
         })}
       </nav>
 
-      {/* Bottom utilities */}
-      <div className="mt-auto pb-8 flex flex-col items-center gap-6 text-gray-300">
+      {/* Primary navigation */}
+      <div className="flex flex-col items-center gap-2 w-full pb-6">
+        {NAV.map((it) => (
+          <RailLink key={it.href} href={it.href} label={it.label} Icon={it.icon} active={it.active(pathname)} />
+        ))}
+      </div>
+
+      {/* Create */}
+      <div className="mt-auto pb-8 flex flex-col items-center">
         <Link
-          href="/siddes-settings"
-          aria-label="Settings"
-          title="Settings"
-          className="w-12 h-12 rounded-xl flex items-center justify-center hover:bg-gray-50 hover:text-gray-900 transition-colors"
+          href={`/siddes-compose?side=${encodeURIComponent(side)}`}
+          className="relative w-12 h-12 rounded-full bg-gray-900 text-white flex items-center justify-center shadow-lg hover:scale-105 transition-transform active:scale-95 group"
+          aria-label="Create"
+          title="Create"
         >
-          <Settings size={24} strokeWidth={2.5} />
+          <Plus size={22} strokeWidth={2.5} />
+          <div className="absolute left-14 px-3 py-1.5 bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all pointer-events-none whitespace-nowrap z-50 shadow-xl">
+            Create
+          </div>
         </Link>
       </div>
     </aside>

@@ -29,6 +29,8 @@ import { PUBLIC_CHANNELS } from "@/src/lib/publicChannels";
 import type { PublicSidingState } from "@/src/lib/publicSiding";
 import { EVT_PUBLIC_SIDING_CHANGED, loadPublicSiding } from "@/src/lib/publicSiding";
 import { toast } from "@/src/lib/toast";
+
+import { enqueuePost } from "@/src/lib/offlineQueue";
 import { isRestrictedError, isRestrictedPayload, restrictedMessage } from "@/src/lib/restricted";
 import { FeedModuleCard } from "@/src/components/feedModules/FeedModuleCard";
 import type { FeedModulePlanEntry } from "@/src/lib/feedModules";
@@ -40,7 +42,7 @@ import {
   savePublicTrustMode,
   type PublicTrustMode,
 } from "@/src/lib/publicTrustDial";
-import { setStoredLastPublicTopic, setStoredLastSetForSide } from "@/src/lib/audienceStore";
+import { getStoredLastPublicTopic, getStoredLastSetForSide, setStoredLastPublicTopic, setStoredLastSetForSide, emitAudienceChanged, subscribeAudienceChanged } from "@/src/lib/audienceStore";
 
 // sd_465c: reduce feed jank by memoizing PostCard (avoids rerenders on overlay/state toggles)
 const MemoPostCard = React.memo(PostCard);
@@ -174,34 +176,154 @@ export function SideFeed() {
   const [restricted, setRestricted] = useState(false);
   const [loadErr, setLoadErr] = useState<string | null>(null);
 
-  // Reset side-scoped UI state when side changes
+  // Reset side-scoped UI state when side changes (and restore last audience)
+  // sd_540a: restore last audience so Mode switches feel instant + consistent across surfaces
   useEffect(() => {
-    setActiveSet(null);
-    if (side !== "public") {
-      setPublicChannel("all");
-      setPublicTuneOpen(false);
+    // Close any open pickers when switching Modes.
+    setSetPickerOpen(false);
+    setPublicTuneOpen(false);
+    setImportOpen(false);
+
+    if (side === "public") {
+      // Public: restore last Topic (if enabled), otherwise default to All.
+      if (FLAGS.publicChannels) {
+        const last = getStoredLastPublicTopic();
+        const ok = last && PUBLIC_CHANNELS.some((c) => c.id === last) ? (last as any) : null;
+        setPublicChannel(ok ? (ok as any) : "all");
+      } else {
+        setPublicChannel("all");
+      }
       setPublicMode("following");
+      setActiveSet(null);
+      return;
     }
+
+    // Private sides: restore last Set (default: All).
+    const lastSet = getStoredLastSetForSide(side);
+    setActiveSet(lastSet || null);
   }, [side]);
 
   // sd_403: persist active audience selection so composer can default safely
+  // sd_540a: also emit a tiny bus event so headers/other surfaces can follow along
   useEffect(() => {
     if (side !== "public") {
       setStoredLastSetForSide(side, activeSet);
+      emitAudienceChanged({ side, setId: activeSet, topic: null, source: "SideFeed" });
     }
   }, [side, activeSet]);
 
   useEffect(() => {
     if (side === "public" && FLAGS.publicChannels) {
-      setStoredLastPublicTopic(publicChannel !== "all" ? String(publicChannel) : null);
+      const topic = publicChannel !== "all" ? String(publicChannel) : null;
+      setStoredLastPublicTopic(topic);
+      emitAudienceChanged({ side: "public", setId: null, topic, source: "SideFeed" });
     }
   }, [side, publicChannel]);
+
+  // sd_540a: listen for global audience changes (e.g., header scope pickers)
+  useEffect(() => {
+    return subscribeAudienceChanged((evt) => {
+      if (!evt || evt.side !== side) return;
+
+      // If another surface changes scope, close any open pickers here.
+      setSetPickerOpen(false);
+      setPublicTuneOpen(false);
+
+      if (side === "public") {
+        if (!FLAGS.publicChannels) return;
+        const next = evt.topic && String(evt.topic).trim() ? String(evt.topic) : null;
+        const ok = next && PUBLIC_CHANNELS.some((c) => c.id === next) ? (next as any) : null;
+        setPublicChannel(ok ? (ok as any) : "all");
+        return;
+      }
+
+      setActiveSet((evt.setId as any) || null);
+    });
+  }, [side]);
 
 
   // sd_362: Cursor paging + infinite scroll (supersonic step).
   // sd_365: True list virtualization keeps mounted cards ~O(30); cap remains a memory guard.
   const PAGE_LIMIT = 30;
   const MAX_RAW_POSTS = 180;
+// sd_538: inline quick composer (WhatsApp-style)
+const reloadTop = useCallback(async () => {
+  // Broadcast explore feed is separate; don’t pretend it updates.
+  if (side === "public" && publicMode === "broadcasts") return;
+
+  const topic = side === "public" && FLAGS.publicChannels && publicChannel !== "all" ? publicChannel : null;
+
+  try {
+    const page = await provider.listPage(side, {
+      topic,
+      set: side !== "public" ? (activeSet || null) : null,
+      limit: PAGE_LIMIT,
+      cursor: null,
+    });
+    setRawPosts(page.items || []);
+    setNextCursor(page.nextCursor);
+    setHasMore(page.hasMore);
+    setLoadErr(null);
+    setRestricted(false);
+    setLoadMoreErr(null);
+  } catch (e: any) {
+    if (isRestrictedError(e)) {
+      setRestricted(true);
+      setRawPosts([]);
+      setNextCursor(null);
+      setHasMore(false);
+      setLoadErr(null);
+    } else {
+      setLoadErr(String(e?.message || "Feed failed"));
+    }
+  }
+}, [side, publicMode, publicChannel, activeSet, provider]);
+
+const submitQuick = useCallback(
+  async (text: string) => {
+    const t = (text || "").trim();
+    if (!t) return { ok: false, message: "Write something first." };
+
+    const topic = side === "public" && FLAGS.publicChannels && publicChannel !== "all" ? publicChannel : null;
+    const setId = side !== "public" ? (activeSet || null) : null;
+    const client_key = `qpost_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+
+    try {
+      const res = await fetch("/api/post", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          side,
+          text: t,
+          setId,
+          urgent: false,
+          publicChannel: topic,
+          client_key,
+        }),
+        cache: "no-store",
+      });
+      const d = await res.json().catch(() => null);
+      if (!res.ok) {
+        return { ok: false, message: String(d?.error || d?.detail || `Could not post (${res.status})`) };
+      }
+
+      toast.success("Posted");
+      void reloadTop();
+      try {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } catch {}
+      return { ok: true };
+    } catch {
+      try {
+        enqueuePost(side as any, t, { setId, urgent: false, publicChannel: topic as any });
+      } catch {}
+      toast.info("Offline — queued to send.");
+      return { ok: true };
+    }
+  },
+  [side, publicChannel, activeSet, reloadTop]
+);
+
 
   const mergeUnique = useCallback((prev: FeedItem[], next: FeedItem[]) => {
     if (!next || !next.length) return prev;
@@ -334,7 +456,7 @@ export function SideFeed() {
     return () => {
       mounted = false;
     };
-  }, [side, provider, publicMode, publicChannel]);
+  }, [side, provider, publicMode, publicChannel, activeSet]);
 
   useEffect(() => {
     // Infinite scroll sentinel (normal feed only; broadcasts are separate)
@@ -613,7 +735,7 @@ export function SideFeed() {
   return (
     <div className="w-full min-h-full bg-white">
             {/* Feed header: audience pill */}
-      <div className="p-4 border-b border-gray-100 flex items-center justify-between sticky top-14 lg:top-20 bg-white/95 backdrop-blur z-10">
+      <div className="hidden">
         <div className="flex items-center gap-3 min-w-0">
           {showPublicTune ? (
             <button
@@ -688,6 +810,7 @@ export function SideFeed() {
             : (activeSet ? `Post to ${activeSetLabel}…` : `Post to ${SIDES[side].label}…`)
         }
         subtitle={side === "public" ? SIDES[side].privacyHint : (activeSet ? `In ${activeSetLabel}` : undefined)}
+        onSubmit={submitQuick}
         onOpen={() => {
           try {
             window.sessionStorage.setItem("sd.compose.opened", "1");

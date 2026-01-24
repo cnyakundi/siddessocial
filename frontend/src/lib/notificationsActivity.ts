@@ -43,7 +43,7 @@ export function subscribeNotificationsActivity(fn: Listener): () => void {
   } catch {
     // ignore
   }
-  return () => LISTENERS.delete(fn);
+  return () => { LISTENERS.delete(fn); };
 }
 
 export function getNotificationsActivity(): NotificationsActivity {

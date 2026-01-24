@@ -54,5 +54,5 @@ export const toast = {
 
 export function subscribeToasts(fn: (t: ToastEvent) => void) {
   listeners.add(fn);
-  return () => listeners.delete(fn);
+  return () => { listeners.delete(fn); };
 }

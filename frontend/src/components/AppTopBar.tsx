@@ -1,192 +1,206 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import Link from "next/link";
-import { Bell, Search } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
+import { ChevronDown } from "lucide-react";
 
-import { SideBadge } from "@/src/components/SideBadge";
 import { SideSwitcherSheet } from "@/src/components/SideSwitcherSheet";
-import { PeekSheet } from "@/src/components/PeekSheet";
-import { DesktopUserMenu } from "@/src/components/DesktopUserMenu";
-import { DesktopSearchOverlay } from "@/src/components/DesktopSearchOverlay";
+import { SetPickerSheet } from "@/src/components/SetPickerSheet";
 
 import { useSide } from "@/src/components/SideProvider";
 import { useSideActivity } from "@/src/hooks/useSideActivity";
-import { useNotificationsActivity } from "@/src/hooks/useNotificationsActivity";
-import { SIDES } from "@/src/lib/sides";
-import { SIDE_UX } from "@/src/lib/sideUx";
-import { getStubViewerCookie } from "@/src/lib/stubViewerClient";
-import { fetchMe } from "@/src/lib/authMe";
+import { SIDES, SIDE_THEMES } from "@/src/lib/sides";
+import type { SetDef, SetId } from "@/src/lib/sets";
+import { getSetsProvider } from "@/src/lib/setsProvider";
+import {
+  emitAudienceChanged,
+  getStoredLastSetForSide,
+  setStoredLastSetForSide,
+  subscribeAudienceChanged,
+} from "@/src/lib/audienceStore";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
 }
 
-function avatarLetter(viewer: string | null): string {
-  const v = String(viewer || "");
-  if (!v) return "ME";
-  return v[0].toUpperCase();
-}
-
-type MeResp = { viewerId?: string | null };
-
 /**
- * AppTopBar (Mobile) — Measurement Protocol v1.3
- * - Header: h-16 + safe-area top
- * - SideBadge pill: h-11
- * - Utilities: 44x44 targets, icons 22px stroke 2
- * - Bell dot: deterministic unread notifications (neutral red)
- * - No fake meters
+ * AppTopBar (Mobile) — MVP Utility Header
+ * - One header layer only (no stacked bars).
+ * - Left: Side (Mode) chip → opens SideSwitcherSheet.
+ * - Right: Scope chip (Set) only on /siddes-feed; otherwise a calm page title.
+ * - No Search/Bell/Avatar here (MVP: Now/Sets/Inbox/Me + Create).
  */
-export function AppTopBar(props: { onOpenNotificationsDrawer?: () => void } = {}) {
-  const { onOpenNotificationsDrawer } = props;
-
+export function AppTopBar(_props: { onOpenNotificationsDrawer?: () => void } = {}) {
+  const pathname = usePathname() || "/";
   const { side, setSide } = useSide();
-
-  const [open, setOpen] = useState(false);
-  const [peekOpen, setPeekOpen] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-
-  // Peek is DB-backed and safe in prod (sheet is optional affordance)
-  const peekEnabled = true;
-  const searchEnabled = true;
-
+  const theme = SIDE_THEMES[side];
   const activity = useSideActivity(side);
-  const notifs = useNotificationsActivity();
-  const unreadAlerts = notifs?.unread || 0;
 
-  const [viewer, setViewer] = useState<string | null>(null);
+  const isSiddes = pathname.startsWith("/siddes-");
+  const isNow = pathname === "/siddes-feed" || pathname.startsWith("/siddes-feed/");
+  const showSetScope = isNow; // MVP: Set scope only on Now
 
+  const pageTitle = useMemo(() => {
+    if (!isSiddes) return "";
+    if (isNow) return "";
+    if (pathname.startsWith("/siddes-sets")) return "Sets";
+    if (pathname.startsWith("/siddes-inbox")) return "Inbox";
+    if (pathname.startsWith("/siddes-profile")) return "Me";
+    if (pathname.startsWith("/siddes-compose")) return "Create";
+    if (pathname.startsWith("/siddes-notifications")) return "Inbox";
+    return "";
+  }, [isSiddes, isNow, pathname]);
+
+  const [sideSheetOpen, setSideSheetOpen] = useState(false);
+
+  // Set scope (private sides only)
+  const [setSheetOpen, setSetSheetOpen] = useState(false);
+  const [sets, setSets] = useState<SetDef[]>([]);
+  const [activeSet, setActiveSet] = useState<SetId | null>(null);
+
+  // Load sets for current side (best-effort)
   useEffect(() => {
-    try {
-      fetchMe()
-        .then((d: MeResp | null) => {
-          const vid = d?.viewerId ? String(d.viewerId) : (getStubViewerCookie() || null);
-          setViewer(vid);
-        })
-        .catch(() => setViewer(getStubViewerCookie() || null));
-    } catch {
-      setViewer(null);
-    }
-  }, []);
+    let cancelled = false;
 
-  const meaning = (SIDE_UX as any)?.[side]?.meaning || (SIDE_UX as any)?.[side]?.meaningShort || SIDES[side].desc;
+    if (side === "public") {
+      setSets([]);
+      setActiveSet(null);
+      return;
+    }
+
+    // Restore last scope immediately (fast)
+    const last = getStoredLastSetForSide(side);
+    setActiveSet(last || null);
+
+    getSetsProvider()
+      .list({ side })
+      .then((list) => {
+        if (cancelled) return;
+        const filtered = Array.isArray(list) ? list.filter((s) => s.side === side) : [];
+        setSets(filtered);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setSets([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [side]);
+
+  // Follow along with global scope changes (e.g., other surfaces)
+  useEffect(() => {
+    return subscribeAudienceChanged((evt) => {
+      if (!evt || evt.side !== side) return;
+      if (side === "public") return;
+      setActiveSet((evt.setId as any) || null);
+    });
+  }, [side]);
+
+  const activeSetLabel = useMemo(() => {
+    if (side === "public") return "All";
+    if (!activeSet) return "All";
+    const s = sets.find((x) => x.id === activeSet);
+    return s ? s.label : "Set";
+  }, [activeSet, sets, side]);
+
+  const canPickSet = showSetScope && side !== "public";
 
   return (
     <div className="sticky top-0 z-[90] bg-white/90 backdrop-blur border-b border-gray-50 pt-[env(safe-area-inset-top)]">
-      <div className="max-w-[430px] mx-auto px-4 h-16 flex items-center justify-between gap-3">
-        {/* Brand */}
-        <Link
-          href="/siddes-feed"
-          className={cn(
-            "w-9 h-9 rounded-xl text-white font-black text-lg flex items-center justify-center shrink-0 shadow-sm",
-            "bg-gray-900"
-          )}
-          aria-label="Siddes Home"
-          title="Siddes"
-        >
-          S
-        </Link>
-
-        {/* Airlock (Side) */}
-        <div className="flex-1 min-w-0 flex flex-col items-center justify-center leading-none">
-          <SideBadge
-            onClick={() => setOpen(true)}
-            onLongPress={
-              peekEnabled
-                ? () => {
-                    setOpen(false);
-                    setPeekOpen(true);
-                  }
-                : undefined
-            }
-            className="shadow-sm"
-          />
-          <div className="mt-0.5 text-[9px] font-black uppercase tracking-[0.25em] text-gray-300 truncate max-w-[220px]">
-            {meaning}
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="relative flex items-center gap-1 shrink-0">
-          {searchEnabled ? (
-            <button
-              type="button"
-              onClick={() => setSearchOpen(true)}
-              className="w-11 h-11 rounded-xl inline-flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-gray-900"
-              aria-label="Search"
-              title="Search"
-            >
-              <Search size={22} strokeWidth={2} />
-            </button>
-          ) : null}
-
-          {/* Notifications (Bell) — opens drawer when available, otherwise links */}
-          {onOpenNotificationsDrawer ? (
-            <button
-              type="button"
-              onClick={onOpenNotificationsDrawer}
-              className="relative w-11 h-11 rounded-xl inline-flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-gray-900"
-              aria-label="Notifications"
-              title="Notifications"
-            >
-              <Bell size={22} strokeWidth={2} />
-              {unreadAlerts > 0 ? (
-                <span className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full border-2 border-white bg-red-500" />
-              ) : null}
-            </button>
-          ) : (
-            <Link
-              href="/siddes-notifications"
-              className="relative w-11 h-11 rounded-xl inline-flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-gray-900"
-              aria-label="Notifications"
-              title="Notifications"
-            >
-              <Bell size={22} strokeWidth={2} />
-              {unreadAlerts > 0 ? (
-                <span className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full border-2 border-white bg-red-500" />
-              ) : null}
-            </Link>
-          )}
-
-          {/* Identity Mirror */}
+      <div className="max-w-[430px] mx-auto px-4 h-14 flex items-center justify-between gap-3">
+        {/* Left: Side (Mode) */}
+        <div className="relative">
           <button
             type="button"
-            onClick={() => setMenuOpen((v) => !v)}
+            onClick={() => {
+              // Opening Side closes Set (avoid double sheets)
+              setSetSheetOpen(false);
+              setSideSheetOpen(true);
+            }}
             className={cn(
-              "w-10 h-10 rounded-full border flex items-center justify-center font-black text-sm shadow-sm transition-all",
-              "bg-gray-100 text-gray-700 border-gray-200",
-              menuOpen ? "ring-2 ring-gray-200" : "hover:border-gray-300"
+              "flex items-center gap-2 px-3 py-2 rounded-full",
+              "bg-gray-50 hover:bg-gray-100 transition-colors",
+              "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900/20"
             )}
-            aria-label="Account"
-            title="Account"
+            aria-label="Change Side"
+            title="Change Side"
           >
-            {avatarLetter(viewer)}
+            <span className={cn("w-2.5 h-2.5 rounded-full", theme.primaryBg)} aria-hidden />
+            <span className="text-sm font-black tracking-tight text-gray-900">{SIDES[side].label}</span>
+            <ChevronDown size={14} className="text-gray-400" aria-hidden />
           </button>
+        </div>
 
-          <DesktopUserMenu open={menuOpen} onClose={() => setMenuOpen(false)} align="right" />
+        {/* Right: Scope (Set) on Now, else Title */}
+        <div className="flex items-center justify-end min-w-0">
+          {showSetScope ? (
+            canPickSet ? (
+              <button
+                type="button"
+                onClick={() => setSetSheetOpen(true)}
+                className={cn(
+                  "flex items-center gap-2 px-3 py-2 rounded-full",
+                  "bg-gray-50 hover:bg-gray-100 transition-colors",
+                  "text-sm font-extrabold text-gray-700",
+                  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900/20"
+                )}
+                aria-label="Choose set"
+                title="Choose set"
+              >
+                <span className="truncate max-w-[180px]">{activeSetLabel}</span>
+                <ChevronDown size={14} className="text-gray-400" aria-hidden />
+              </button>
+            ) : (
+              <div className="px-3 py-2 rounded-full bg-gray-50 text-sm font-extrabold text-gray-400 select-none">
+                All
+              </div>
+            )
+          ) : pageTitle ? (
+            <div className="text-sm font-semibold text-gray-400 pr-1 select-none">{pageTitle}</div>
+          ) : (
+            <div />
+          )}
         </div>
       </div>
 
+      {/* Side picker */}
       <SideSwitcherSheet
-        open={open}
-        onClose={() => setOpen(false)}
+        open={sideSheetOpen}
+        onClose={() => setSideSheetOpen(false)}
         currentSide={side}
         activity={activity}
         onSwitch={(nextSide) => {
+          // Mode switch resets scope to All (new Side)
           setSide(nextSide);
-          setOpen(false);
+          setSideSheetOpen(false);
+
+          if (nextSide !== "public") {
+            const last = getStoredLastSetForSide(nextSide);
+            setActiveSet(last || null);
+            emitAudienceChanged({ side: nextSide, setId: last || null, topic: null, source: "AppTopBar" });
+          } else {
+            setActiveSet(null);
+            emitAudienceChanged({ side: nextSide, setId: null, topic: null, source: "AppTopBar" });
+          }
         }}
       />
 
-      {peekEnabled ? <PeekSheet open={peekOpen} onClose={() => setPeekOpen(false)} sideId={side} /> : null}
-
-      {searchEnabled ? (
-        <DesktopSearchOverlay
-          open={searchOpen}
-          onClose={() => setSearchOpen(false)}
-          placeholder={`Search in ${SIDES[side].label}…`}
+      {/* Set picker (private sides only) */}
+      {canPickSet ? (
+        <SetPickerSheet
+          open={setSheetOpen}
+          onClose={() => setSetSheetOpen(false)}
+          sets={sets}
+          activeSet={activeSet}
+          onPick={(next) => {
+            setActiveSet(next);
+            setStoredLastSetForSide(side, next);
+            emitAudienceChanged({ side, setId: next, topic: null, source: "AppTopBar" });
+          }}
+          title="Set"
+          allLabel="All"
         />
       ) : null}
     </div>

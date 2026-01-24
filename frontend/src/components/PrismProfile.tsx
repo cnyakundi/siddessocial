@@ -82,8 +82,9 @@ export function PrismSideTabs(props: {
   active: SideId;
   allowedSides: SideId[];
   onPick: (side: SideId) => void;
+  onLockedPick?: (side: SideId) => void;
 }) {
-  const { active, allowedSides, onPick } = props;
+  const { active, allowedSides, onPick, onLockedPick } = props;
   const items: SideId[] = ["public", "friends", "close", "work"];
   return (
     <div className="mt-4">
@@ -93,30 +94,35 @@ export function PrismSideTabs(props: {
           const Icon = SIDE_ICON[side];
           const isActive = active === side;
           const isAllowed = Array.isArray(allowedSides) ? allowedSides.includes(side) : side === "public";
-          const disabled = !isAllowed && !isActive;
+          const locked = !isAllowed && !isActive;
+
           return (
             <button
               key={side}
               type="button"
-              disabled={disabled}
               onClick={() => {
-                if (disabled) return;
+                if (locked) {
+                  onLockedPick?.(side);
+                  return;
+                }
                 onPick(side);
               }}
               className={cn(
                 "relative px-4 py-2 rounded-full font-extrabold text-sm whitespace-nowrap border transition-all flex items-center gap-2",
                 isActive ? cn(t.lightBg, "border-gray-200") : "bg-white border-gray-200 hover:bg-gray-50",
-                disabled ? "opacity-60 cursor-not-allowed" : ""
+                locked ? "opacity-70" : ""
               )}
-              aria-disabled={disabled}
+              aria-disabled={locked}
             >
-              <Icon size={16} className={isActive ? t.text : "text-gray-600"} />
+              <span className="relative">
+                <Icon size={16} className={isActive ? t.text : "text-gray-600"} />
+                {locked ? (
+                  <span className="absolute -top-2 -right-2 bg-white rounded-full p-0.5 shadow-sm border border-gray-200">
+                    <Lock size={12} className="text-gray-500" />
+                  </span>
+                ) : null}
+              </span>
               <span className={isActive ? "text-gray-900" : "text-gray-700"}>{SIDES[side].label}</span>
-              {!isAllowed ? (
-                <span className="absolute -top-1 -right-1 bg-white rounded-full p-0.5 shadow-sm border border-gray-200">
-                  <Lock size={12} className="text-gray-500" />
-                </span>
-              ) : null}
             </button>
           );
         })}

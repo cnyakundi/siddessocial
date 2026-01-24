@@ -186,17 +186,12 @@ export default function UserProfilePage() {
             <PrismSideTabs
               active={displaySide}
               allowedSides={allowedSides}
-              onPick={(side) => {
-                if (!allowedSides.includes(side)) {
-                  toast.error("Locked.");
-                  return;
-                }
-                setActiveIdentitySide(side);
-              }}
+              onPick={(side) => setActiveIdentitySide(side)}
+              onLockedPick={() => setSideSheet(true)}
             />
 
 
-            /* sd_537: relationship clarity */
+            {/* sd_537: relationship clarity */}
             {!isOwner ? (
               <div className="mt-3 mb-4 flex flex-wrap gap-2 text-xs font-extrabold">
                 <div className="px-3 py-1.5 rounded-full bg-white border border-gray-200 text-gray-700">

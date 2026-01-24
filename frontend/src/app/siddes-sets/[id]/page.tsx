@@ -207,7 +207,7 @@ export default function SiddesSetHubPage({ params }: { params: { id: string } })
     } finally {
       setLoading(false);
     }
-  }, [invitesProvider, setId, setsProvider]);
+  }, [invitesProvider, setId, setsProvider, setAppSide, setSideLock]);
 
   // Initial load
   useEffect(() => {
@@ -304,7 +304,7 @@ export default function SiddesSetHubPage({ params }: { params: { id: string } })
     if (tab !== "feed") return;
     if (!item) return;
     void loadFeedFirst();
-  }, [tab, item?.id, item?.side, loadFeedFirst]);
+  }, [tab, item, loadFeedFirst]);
 
   const saveSettings = async () => {
     if (!item) return;

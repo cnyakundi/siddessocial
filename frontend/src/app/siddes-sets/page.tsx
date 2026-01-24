@@ -3,7 +3,7 @@
 import Link from "next/link";
 import React, { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { DownloadCloud, Plus, RefreshCcw, Search } from "lucide-react";
+import { ChevronRight, DownloadCloud, Plus, RefreshCcw, Search } from "lucide-react";
 
 import { ImportSetSheet } from "@/src/components/ImportSetSheet";
 import { SuggestedSetsTray } from "@/src/components/SuggestedSetsTray";
@@ -61,6 +61,10 @@ function SiddesSetsPageInner() {
   useReturnScrollRestore();
   const sp = useSearchParams();
   const { side: ctxSide } = useSide();
+
+  // sd_543a: MVP default — keep Sets calm; unlock power tools via ?advanced=1
+  const advanced = sp.get("advanced") === "1";
+  const activeTheme = SIDE_THEMES[ctxSide];
   const router = useRouter();
 
   // sd_465d1: prefetch Set hub route on intent (hover/touch) for instant open feel
@@ -90,7 +94,12 @@ function SiddesSetsPageInner() {
   const [err, setErr] = useState<string | null>(null);
 
   const [newLabel, setNewLabel] = useState("");
-  const [newSide, setNewSide] = useState<SideId>("friends");
+  const [newSide, setNewSide] = useState<SideId>(ctxSide);
+
+  useEffect(() => {
+    setNewSide(ctxSide);
+  }, [ctxSide]);
+
   const [newColor, setNewColor] = useState<SetColor>("emerald");
   const [newMembersRaw, setNewMembersRaw] = useState("");
   const [creating, setCreating] = useState(false);
@@ -179,44 +188,6 @@ function SiddesSetsPageInner() {
   return (
     <>
       <div className="p-4">
-        <div className="flex items-center justify-between md:justify-end gap-3 mb-3">
-          <div className="md:hidden hidden">
-            <div className="text-sm font-extrabold text-gray-900">Sets</div>
-            <div className="text-xs text-gray-500">
-              Sets inside a Side.
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => void refresh()}
-              className="px-3 py-2 rounded-full bg-white border border-gray-200 text-gray-700 font-bold text-sm hover:bg-gray-50 flex items-center gap-2"
-              aria-label="Refresh"
-            >
-              <RefreshCcw size={16} />
-              Refresh
-            </button>
-
-            {process.env.NODE_ENV !== "production" ? (
-            <button
-              type="button"
-              disabled={!canWrite}
-              onClick={() => setImportOpen(true)}
-              className={cn(
-                "px-3 py-2 rounded-full border font-bold text-sm flex items-center gap-2",
-                !canWrite
-                  ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                  : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
-              )}
-              aria-label="Import"
-            >
-              <DownloadCloud size={16} />
-              Import
-            </button>            ) : null}
-
-          </div>
-        </div>
         {err ? (
           <div className="mb-3 p-3 rounded-2xl border border-red-200 bg-red-50 text-red-700 text-sm">
             <div className="font-bold">Error</div>
@@ -224,74 +195,77 @@ function SiddesSetsPageInner() {
           </div>
         ) : null}
 
-        <SuggestedSetsTray onCreated={() => void refresh()} />
-
-        {canWrite ? (
-          <div className="mb-3 p-3 rounded-2xl bg-white border border-gray-200">
-            <div className="font-bold text-gray-900 mb-2 flex items-center gap-2">
-              <Plus size={16} />
-              Create a Set
-            </div>
-            <div className="text-xs text-gray-600 leading-relaxed">
-              Guided flow: <span className="font-semibold">Name → Side → Theme → Members → Create</span>
-            </div>
+        {/* MVP: one obvious action */}
+        <div className="flex items-center justify-end gap-2 mb-4">
+          {canWrite ? (
             <button
               type="button"
               onClick={() => setCreateOpen(true)}
-              disabled={!canWrite}
               className={cn(
-                "mt-3 w-full py-2.5 rounded-xl font-bold text-sm border flex items-center justify-center gap-2",
-                !canWrite
-                  ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                  : "bg-gray-900 text-white border-gray-900 hover:opacity-95"
+                "px-4 py-2.5 rounded-full font-extrabold text-sm text-white shadow-sm active:scale-95 transition-all flex items-center gap-2",
+                activeTheme.primaryBg
               )}
+              aria-label="Create new set"
             >
               <Plus size={16} />
-              Start guided creator
+              Create new set
             </button>
+          ) : null}
+
+          {/* Power tools stay hidden unless explicitly requested */}
+          {advanced ? (
+            <>
+              <button
+                type="button"
+                onClick={() => void refresh()}
+                className="px-3 py-2 rounded-full bg-white border border-gray-200 text-gray-700 font-bold text-sm hover:bg-gray-50 flex items-center gap-2"
+                aria-label="Refresh"
+              >
+                <RefreshCcw size={16} />
+                Refresh
+              </button>
+
+              {process.env.NODE_ENV !== "production" ? (
+                <button
+                  type="button"
+                  disabled={!canWrite}
+                  onClick={() => setImportOpen(true)}
+                  className={cn(
+                    "px-3 py-2 rounded-full border font-bold text-sm flex items-center gap-2",
+                    !canWrite
+                      ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                      : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+                  )}
+                  aria-label="Import"
+                >
+                  <DownloadCloud size={16} />
+                  Import
+                </button>
+              ) : null}
+            </>
+          ) : null}
+        </div>
+
+        {advanced ? (
+          <div className="mb-4">
+            <SuggestedSetsTray onCreated={() => void refresh()} />
           </div>
         ) : null}
 
-
-        {/* Final Polish (5): Sets list */}
-        <div className="mb-3">
-          <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search sets or people"
-              className="w-full pl-9 pr-3 py-2 rounded-full bg-white border border-gray-200 text-sm font-semibold text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
-              aria-label="Search Sets"
-            />
+        {advanced ? (
+          <div className="mb-3">
+            <div className="relative">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search sets or people"
+                className="w-full pl-9 pr-3 py-2 rounded-full bg-white border border-gray-200 text-sm font-semibold text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                aria-label="Search Sets"
+              />
+            </div>
           </div>
-
-          <div className="mt-2 flex items-center gap-2 overflow-x-auto hidden">
-            {SIDE_FILTERS.map((f) => {
-              const selected = sideFilter === f.id;
-              const theme = f.id !== "all" ? SIDE_THEMES[f.id] : null;
-
-              return (
-                <button
-                  key={f.id}
-                  type="button"
-                  onClick={() => setSideFilter(f.id)}
-                  className={cn(
-                    "px-3 py-1.5 rounded-full text-xs font-black border whitespace-nowrap",
-                    selected
-                      ? theme
-                        ? cn(theme.lightBg, theme.text, theme.border)
-                        : "bg-gray-900 text-white border-gray-900"
-                      : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
-                  )}
-                  aria-label={`Filter: ${f.label}`}
-                >
-                  {f.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        ) : null}
 
         <div className="space-y-2">
           {loading ? (
@@ -299,76 +273,73 @@ function SiddesSetsPageInner() {
               Loading Sets…
             </div>
           ) : filtered.length === 0 ? (
-            <div className="p-4 rounded-2xl bg-white border border-gray-200">
+            <div className="p-5 rounded-2xl bg-white border border-gray-200">
               <div className="font-extrabold text-gray-900">No Sets yet</div>
               <div className="text-sm text-gray-600 mt-1">
-                Create a Set to group people inside a Side, or import from contacts.
+                Create a Set to group people inside <span className={cn("font-bold", activeTheme.text)}>{SIDES[ctxSide].label}</span>.
               </div>
-              {q.trim() ? (
+              {canWrite ? (
                 <button
                   type="button"
-                  onClick={() => setQ("")}
-                  className="mt-3 px-3 py-2 rounded-full bg-gray-900 text-white font-bold text-sm"
+                  onClick={() => setCreateOpen(true)}
+                  className={cn(
+                    "mt-4 px-4 py-2.5 rounded-full font-extrabold text-sm text-white",
+                    activeTheme.primaryBg
+                  )}
                 >
-                  Clear search
+                  <Plus size={16} className="inline-block mr-2 -mt-0.5" />
+                  Create new set
                 </button>
               ) : null}
+              {advanced ? (
+                <div className="mt-4 text-xs text-gray-400">
+                  Tip: remove <span className="font-bold">?advanced=1</span> for MVP mode.
+                </div>
+              ) : (
+                <div className="mt-4 text-xs text-gray-400">
+                  Tip: add <span className="font-bold">?advanced=1</span> for import + suggestions.
+                </div>
+              )}
             </div>
           ) : (
             filtered.map((s) => {
               const theme = SIDE_THEMES[s.side];
-              const pill = getSetTheme(s.color);
               const membersCount = Array.isArray(s.members) ? s.members.length : 0;
-              const shown = (s.members || []).slice(0, 3);
-              const extra = Math.max(0, membersCount - shown.length);
 
               return (
-                <Link key={s.id} href={`/siddes-sets/${encodeURIComponent(s.id)}`} onMouseEnter={() => prefetchSetHub(s.id)} onTouchStart={() => prefetchSetHub(s.id)} className="block">
+                <Link
+                  key={s.id}
+                  href={"/siddes-sets/" + encodeURIComponent(s.id)}
+                  onMouseEnter={() => prefetchSetHub(s.id)}
+                  onTouchStart={() => prefetchSetHub(s.id)}
+                  className="block"
+                >
                   <div
                     className={cn(
-                      "p-3 rounded-2xl bg-white border border-gray-200 transition-colors",
+                      "p-4 rounded-2xl bg-white border border-gray-200 transition-colors flex items-center justify-between gap-3",
                       theme.hoverBg
                     )}
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <div className={cn("px-2 py-0.5 rounded-full text-[11px] font-black border", pill.bg, pill.text, pill.border)}>
-                            {s.color}
-                          </div>
-                          <div className={cn("px-2 py-0.5 rounded-full text-[11px] font-black border", theme.lightBg, theme.text, theme.border)}>
-                            {SIDES[s.side].label}
-                          </div>
-                          <div className="text-[11px] text-gray-500 font-semibold">
-                            {membersCount} member{membersCount === 1 ? "" : "s"}
-                          </div>
-                        </div>
-
-                        <div className="mt-1 font-extrabold text-gray-900 truncate">{s.label}</div>
-
-                        {shown.length ? (
-                          <div className="mt-2 flex flex-wrap gap-1">
-                            {shown.map((m) => (
-                              <span key={m} className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs font-bold">
-                                {m}
-                              </span>
-                            ))}
-                            {extra ? (
-                              <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs font-bold">+{extra}</span>
-                            ) : null}
-                          </div>
-                        ) : (
-                          <div className="mt-2 text-xs text-gray-500">No members yet.</div>
-                        )}
+                    <div className="min-w-0">
+                      <div className="font-extrabold text-gray-900 truncate">{s.label}</div>
+                      <div className="mt-1 text-xs text-gray-500 font-semibold">
+                        {membersCount} member{membersCount === 1 ? "" : "s"}
                       </div>
-</div>
+                    </div>
+                    <ChevronRight size={18} className="text-gray-300 flex-shrink-0" />
                   </div>
                 </Link>
               );
             })
           )}
+        </div>
+
+        {advanced ? (
+          <div className="mt-6 text-xs text-gray-400">
+            Advanced mode is on. (Remove <span className="font-bold">?advanced=1</span> for MVP mode.)
+          </div>
+        ) : null}
       </div>
-    </div>
       <CreateSetSheet
         open={createOpen}
         onClose={() => setCreateOpen(false)}

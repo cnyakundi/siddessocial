@@ -201,7 +201,7 @@ export function NotificationsView({ embedded = false }: { embedded?: boolean }) 
     return () => {
       alive = false;
     };
-  }, []);
+  }, [side]);
 
   const filtered = useMemo(() => {
     const all = itemsRaw;

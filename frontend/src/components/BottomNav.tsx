@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Inbox, Plus, Layers, User, Users, type LucideIcon } from "lucide-react";
+import { Zap, Inbox, Plus, Layers, User, type LucideIcon } from "lucide-react";
 import { useSide } from "@/src/components/SideProvider";
 import { SIDE_THEMES, type SideId } from "@/src/lib/sides";
 import { getStoredLastPublicTopic, getStoredLastSetForSide } from "@/src/lib/audienceStore";
@@ -84,24 +84,7 @@ function MeTabLink({ active, side }: { active: boolean; side: SideId }) {
           Me
         </span>
       </Link>
-
-      {/* Quick: People (1-tap) */}
-      <Link
-        href="/siddes-profile/people"
-        aria-label="People"
-        title="People"
-        className={cn("absolute -top-2 right-0 p-3 active:scale-90 transition-transform", active ? "opacity-100" : "opacity-70")}
-      >
-        <span
-          className={cn(
-            "w-5 h-5 rounded-full flex items-center justify-center bg-white border shadow-sm",
-            active ? "border-gray-900" : "border-gray-200"
-          )}
-        >
-          <Users size={12} strokeWidth={3} className="text-gray-700" />
-        </span>
-      </Link>
-    </div>
+</div>
   );
 }
 
@@ -136,7 +119,7 @@ function TabLink({
 
 /**
  * sd_494: Mobile Measurement Protocol v1.3 Toolbelt
- * Order: [Home] [Sets] [MAGIC PLUS] [Inbox] [Me]
+ * Order: [Now] [Sets] [MAGIC PLUS] [Inbox] [Me]
  * - Tabs are neutral (black/gray). Only MAGIC PLUS uses Side color.
  * - Baseline height: 88px + safe-area padding.
  */
@@ -177,7 +160,7 @@ export function BottomNav() {
     setCreateHref(href);
   }, [side, pathname]);
 
-  const isHome = pathname === "/siddes-feed" || pathname.startsWith("/siddes-broadcasts");
+  const isHome = pathname === "/siddes-feed";
   const isCompose = pathname.startsWith("/siddes-compose");
   const isSets = pathname.startsWith("/siddes-sets");
   const isInbox = pathname.startsWith("/siddes-inbox") || pathname.startsWith("/siddes-notifications");
@@ -191,7 +174,7 @@ export function BottomNav() {
     >
       <div className="max-w-[430px] mx-auto px-4">
         <div className="h-[88px] grid grid-cols-5 items-start pt-2">
-          <TabLink href="/siddes-feed" label="Home" Icon={Home} active={isHome} />
+          <TabLink href="/siddes-feed" label="Now" Icon={Zap} active={isHome} />
 
           {/* Sets are "Sets" in mobile UX language */}
           <TabLink href="/siddes-sets" label="Sets" Icon={Layers} active={isSets} />
