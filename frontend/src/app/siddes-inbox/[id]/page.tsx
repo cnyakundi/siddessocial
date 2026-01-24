@@ -2,7 +2,7 @@
 export const dynamic = "force-dynamic";
 
 import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { AlertTriangle, CheckCircle2, ChevronRight, Send, X } from "lucide-react";
 import { InboxBanner } from "@/src/components/InboxBanner";
@@ -26,11 +26,6 @@ import {
 import { clearThreadUnread } from "@/src/lib/inboxState";
 import { loadRecentMoveSides, pushRecentMoveSide } from "@/src/lib/inboxMoveRecents";
 import type { MentionCandidate } from "@/src/lib/mentions";
-
-
-
-import { useInboxStubViewer } from "@/src/lib/useInboxStubViewer";
-
 function hashSeed(s: string): number {
   let x = 2166136261;
   for (let i = 0; i < s.length; i++) {
@@ -393,8 +388,8 @@ function SiddesThreadPageInner() {
   const provider = useMemo(() => getInboxProvider(), []);
 
   const [viewerInput, setViewerInput] = useInboxStubViewer();
-  const viewer = (viewerInput || "").trim() || undefined;
-  const sp = useSearchParams();
+  const [viewerInput, setViewer] = useInboxStubViewer();
+  const viewer = (viewerInput || "").trim() || undefined;const sp = useSearchParams();
   const MSG_PAGE = 30;
 
   const [title, setTitle] = useState("Thread");
@@ -723,7 +718,7 @@ function SiddesThreadPageInner() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <InboxStubDebugPanel viewer={viewer} onViewer={setViewer} />
+      <InboxStubDebugPanel viewer={viewerInput} onViewer={setViewerInput} />
       <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
         <Link href="/siddes-inbox" className="text-sm font-bold text-gray-700 hover:underline">
           ← Inbox

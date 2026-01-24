@@ -16,9 +16,6 @@ import { ensureThreadLockedSide } from "@/src/lib/threadStore";
 import { InboxBanner } from "@/src/components/InboxBanner";
 import { isRestrictedError, restrictedMessage } from "@/src/lib/restricted";
 import { InboxStubDebugPanel, useInboxStubViewer } from "@/src/components/InboxStubDebugPanel";
-
-import { useInboxStubViewer } from "@/src/lib/useInboxStubViewer";
-
 type InboxFilter = "all" | "this" | "mismatch" | "unread";
 
 function cn(...parts: Array<string | undefined | false | null>) {
@@ -183,6 +180,8 @@ function SiddesInboxPageInner() {
   const provider = useMemo(() => getInboxProvider(), []);
   const [viewerInput, setViewerInput] = useInboxStubViewer();
   const viewer = (viewerInput || "").trim() || undefined;
+  const showContextRisk = true;
+
   const PAGE_SIZE = 25;
 
   const [loading, setLoading] = useState(false);
