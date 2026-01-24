@@ -4,8 +4,9 @@
 /* eslint-disable @next/next/no-img-element */
 
 import React, { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
-  useRouter } from "next/navigation"; import { Image as ImageIcon,
+  Image as ImageIcon,
   Link as LinkIcon,
   MessageCircle,
   Repeat,
@@ -337,7 +338,7 @@ function MediaGrid({ items }: { items: MediaItem[] }) {
             )}
           </div>
         ) : (
-                    <>\n                    <div className="md:hidden flex gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-2">
+                    <>                    <div className="md:hidden flex gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-2">
             {shown.map((m, i) => (
               <div
                 key={m.id || m.url}
@@ -644,6 +645,15 @@ export function PostCard({
   avatarUrl?: string | null;
 }) {
   const router = useRouter();
+
+  // sd_568: prefetch post routes on intent (instant tap feel)
+  const prefetchPost = () => {
+    try {
+      router.prefetch("/siddes-post/" + post.id);
+      router.prefetch("/siddes-post/" + post.id + "?reply=1");
+    } catch {}
+  };
+
   const theme = SIDE_THEMES[side];
   const isRow = variant === "row";
 
@@ -912,14 +922,6 @@ export function PostCard({
   };
   const openReply = () => {
     saveReturnScroll();
-
-  // sd_465a: prefetch post routes on intent (instant tap feel)
-  const prefetchPost = () => {
-    try {
-      router.prefetch("/siddes-post/" + post.id);
-      router.prefetch("/siddes-post/" + post.id + "?reply=1");
-    } catch {}
-  };
     router.push(`/siddes-post/${post.id}?reply=1`);
   };
 
@@ -998,19 +1000,19 @@ export function PostCard({
         isRow
           ? "group py-5 border-b border-gray-100 hover:bg-gray-50/40 transition-colors"
           : cn(
-              isRow ? "px-4 sm:px-0 py-5 border-b border-slate-100 hover:bg-slate-50/40 transition-colors" : "bg-white p-6 sm:p-8 lg:p-10 rounded-[2.5rem] shadow-sm border border-gray-100 border-l-4 transition-all hover:shadow-[0_40px_80px_rgba(0,0,0,0.08)]",
+              isRow ? "px-4 sm:px-0 py-5 border-b border-slate-100 hover:bg-slate-50/40 transition-colors" : "bg-white p-5 sm:p-6 rounded-3xl shadow-sm border border-gray-100 border-l-4 transition-shadow hover:shadow-md",
               theme.accentBorder
             )
       )}
       data-post-id={post.id}
     >
       {/* Header */}
-      <div className={cn("flex justify-between items-start", isRow ? "mb-2" : "mb-6")}>
+      <div className={cn("flex justify-between items-start", isRow ? "mb-2" : "mb-4")}>
         <div
           role="button"
           tabIndex={0}
-          onMouseEnter={() => { try { router.prefetch('/siddes-post/' + post.id); } catch {} }}
-          onTouchStart={() => { try { router.prefetch('/siddes-post/' + post.id); } catch {} }}
+          onMouseEnter={prefetchPost}
+          onTouchStart={prefetchPost}
           onClick={
           (e) => {
             // sd_483_action_event_bleed: child actions may call preventDefault/stopPropagation
