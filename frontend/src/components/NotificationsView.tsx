@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useSide } from "@/src/components/SideProvider";
 import { SIDES, SIDE_THEMES } from "@/src/lib/sides";
 import { toast } from "@/src/lib/toast";
+import { saveReturnScroll } from "@/src/hooks/returnScroll";
 import { setNotificationsUnread } from "@/src/lib/notificationsActivity";
 
 type NotifType = "reply" | "like" | "mention" | "echo";
@@ -87,8 +88,10 @@ function Section({
             <button
               key={n.id}
               type="button"
+              data-post-id={postId ? String(postId) : undefined}
               onClick={() => {
                 if (!postId) return toast("No post attached yet.");
+                try { saveReturnScroll(String(postId)); } catch {}
                 router.push(`/siddes-post/${encodeURIComponent(postId)}`);
               }}
               className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-start gap-3 border-b border-gray-50 last:border-b-0"

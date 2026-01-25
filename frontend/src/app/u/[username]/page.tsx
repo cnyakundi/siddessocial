@@ -9,14 +9,19 @@ import { MoreHorizontal } from "lucide-react";
 import { SIDES, type SideId } from "@/src/lib/sides";
 import {
   CopyLinkButton,
-  PrismIdentityCard,
   PrismSideTabs,
   SideActionButtons,
   SideWithSheet,
   type ProfileViewPayload,
 } from "@/src/components/PrismProfile";
 
+import { ProfileV2Header } from "@/src/components/ProfileV2Header";
+import { ProfileV2Tabs, type ProfileV2TabId } from "@/src/components/ProfileV2Tabs";
+
+
 import { PostCard } from "@/src/components/PostCard";
+
+import { useReturnScrollRestore } from "@/src/hooks/returnScroll";
 
 import { ProfileActionsSheet } from "@/src/components/ProfileActionsSheet";
 import { toast } from "@/src/lib/toast";
@@ -28,6 +33,8 @@ function cn(...parts: Array<string | undefined | false | null>) {
 export default function UserProfilePage() {
   const params = useParams() as { username?: string };
   const raw = String(params?.username || "");
+
+  useReturnScrollRestore();
 
   const username = useMemo(() => {
     const s = decodeURIComponent(raw || "").trim();
@@ -53,6 +60,9 @@ export default function UserProfilePage() {
 
   const [actionsOpen, setActionsOpen] = useState(false); // sd_424_profile_actions
   const [lockedSide, setLockedSide] = useState<SideId | null>(null); // sd_529_locked_tab_explainer
+
+  const [contentTab, setContentTab] = useState<ProfileV2TabId>("posts"); // sd_717_profile_v2_shell
+
 
   useEffect(() => {
     let mounted = true;
@@ -120,7 +130,17 @@ export default function UserProfilePage() {
   const postsPayload = data?.posts || null;
   const posts = postsPayload?.items || [];
 
+  const postsCount = typeof postsPayload?.count === "number" ? postsPayload.count : posts.length;
+
+
   const avatarUrl = String((facet as any)?.avatarImage || "").trim() || null;
+
+
+  // sd_717_profile_v2_shell: reset content tab when identity side changes
+  useEffect(() => {
+    setContentTab("posts");
+  }, [displaySide]);
+
 
 
   const doPickSide = async (side: SideId | "public", opts?: { silent?: boolean }) => {
@@ -336,117 +356,117 @@ export default function UserProfilePage() {
             ) : null}
 
 
-            {/* sd_528: relationship clarity (directional) */}
-
-            {!isOwner ? (
-              <div className="mt-3 mb-5 flex items-center justify-center gap-2 text-xs font-semibold text-gray-500">
-                <span>
-                  They show you <span className="font-black text-gray-900">{SIDES[viewSide]?.label || viewSide}</span>
-                </span>
-                <span className="text-gray-300">•</span>
-                <span>
-                  You show them{" "}
-                  <span className="font-black text-gray-900">
-                    {viewerSidedAs ? (SIDES[viewerSidedAs]?.label || viewerSidedAs) : "Public"}
-                  </span>
-                </span>
-              </div>
-            ) : null}
-
-            <PrismIdentityCard
-              variant="clean"
-              viewSide={displaySide}
-              handle={user.handle}
-              facet={facet}
-              siders={data?.siders ?? null}
-              sharedSets={sharedSets}
-actions={
-                isOwner ? (
-                  <div className="flex flex-col gap-3">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        try {
-                          window.location.href = "/siddes-profile/prism";
-                        } catch {}
-                      }}
-                      className="w-full py-2.5 rounded-xl font-extrabold text-sm text-white shadow-md active:scale-95 transition-all bg-slate-800 hover:bg-slate-900"
-                    >
-                      Edit identities
-                    </button>
-                    <div className="flex gap-3">
-                      <CopyLinkButton href={href} />
+            
+            {/* sd_717_profile_v2_shell_header_tabs */}
+            <div className="mt-4">
+              <ProfileV2Header
+                displaySide={displaySide}
+                viewSide={viewSide}
+                handle={user.handle}
+                facet={facet}
+                siders={data?.siders ?? null}
+                postsCount={postsCount}
+                sharedSets={sharedSets}
+                isOwner={isOwner}
+                viewerSidedAs={viewerSidedAs}
+                actions={
+                  isOwner ? (
+                    <div className="flex flex-col gap-3">
                       <button
                         type="button"
-                        onClick={() => setActionsOpen(true)}
-                        className="px-4 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-extrabold text-sm hover:bg-gray-200 transition-all flex items-center gap-2"
-                        aria-label="More actions"
+                        onClick={() => {
+                          try {
+                            window.location.href = "/siddes-profile/prism";
+                          } catch {}
+                        }}
+                        className="w-full py-3 rounded-2xl font-extrabold text-sm text-white shadow-md active:scale-95 transition-all bg-slate-800 hover:bg-slate-900"
                       >
-                        <MoreHorizontal size={18} />
+                        Edit identities
                       </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-3">
-                    <div className="flex gap-3">
-                      <SideActionButtons viewerSidedAs={viewerSidedAs} onOpenSheet={() => setSideSheet(true)} />
-                    </div>
-                    <div className="flex gap-3">
-                      <CopyLinkButton href={href} />
-                      <button
-                        type="button"
-                        onClick={() => setActionsOpen(true)}
-                        className="px-4 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-extrabold text-sm hover:bg-gray-200 transition-all flex items-center gap-2"
-                        aria-label="More actions"
-                      >
-                        <MoreHorizontal size={18} />
-                      </button>
-                    </div>
-                  </div>
-                )
-              }
-            />
-
-            {/* Profile feed (side-aware) */}
-            <div className="mt-6">
-              <div className="flex items-end justify-between mb-2 px-1">
-                <div className="text-xs font-extrabold text-gray-500 uppercase tracking-wider">Posts</div>
-                {postsPayload ? (
-                  <div className="text-xs text-gray-400 font-semibold tabular-nums">{posts.length}</div>
-                ) : null}
-              </div>
-
-              <div className="bg-white">
-                {posts.length ? (
-                  <>
-                    {posts.map((post) => (
-                      <PostCard key={post.id} post={post} side={displaySide} variant="row" avatarUrl={avatarUrl} />
-                    ))}
-                    {postsPayload?.hasMore ? (
-                      <div className="py-4 flex justify-center border-t border-gray-100 bg-white">
+                      <div className="flex gap-3">
+                        <CopyLinkButton href={href} />
                         <button
                           type="button"
-                          onClick={loadMore}
-                          disabled={loadingMore}
-                          className="px-4 py-2.5 rounded-xl bg-gray-900 text-white font-extrabold text-sm shadow-sm hover:opacity-90 disabled:opacity-50"
+                          onClick={() => setActionsOpen(true)}
+                          className="px-4 py-3 rounded-2xl bg-gray-100 text-gray-700 font-extrabold text-sm hover:bg-gray-200 transition-all flex items-center justify-center gap-2"
+                          aria-label="More actions"
                         >
-                          {loadingMore ? "Loading…" : "Load more"}
+                          <MoreHorizontal size={18} />
                         </button>
                       </div>
-                    ) : null}
-                  </>
-                ) : (
-                  <div className="py-14 text-center px-6">
-                    <div className="text-sm font-extrabold text-gray-900">No posts visible</div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      Nothing visible in {SIDES[displaySide]?.label || displaySide}.
                     </div>
+                  ) : (
+                    <div className="flex flex-col gap-3">
+                      <div className="flex gap-3">
+                        <SideActionButtons viewerSidedAs={viewerSidedAs} onOpenSheet={() => setSideSheet(true)} />
+                      </div>
+                      <div className="flex gap-3">
+                        <CopyLinkButton href={href} />
+                        <button
+                          type="button"
+                          onClick={() => setActionsOpen(true)}
+                          className="px-4 py-3 rounded-2xl bg-gray-100 text-gray-700 font-extrabold text-sm hover:bg-gray-200 transition-all flex items-center justify-center gap-2"
+                          aria-label="More actions"
+                        >
+                          <MoreHorizontal size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  )
+                }
+              />
+
+              <ProfileV2Tabs side={displaySide} active={contentTab} onPick={setContentTab} />
+
+              {/* Content */}
+              <div className="mt-4">
+                {contentTab === "posts" ? (
+                  <div className="bg-white">
+                    {posts.length ? (
+                      <>
+                        {posts.map((post) => (
+                          <PostCard key={post.id} post={post} side={displaySide} variant="row" avatarUrl={avatarUrl} />
+                        ))}
+                        {postsPayload?.hasMore ? (
+                          <div className="py-4 flex justify-center border-t border-gray-100 bg-white">
+                            <button
+                              type="button"
+                              onClick={loadMore}
+                              disabled={loadingMore}
+                              className="px-4 py-2.5 rounded-xl bg-gray-900 text-white font-extrabold text-sm shadow-sm hover:opacity-90 disabled:opacity-50"
+                            >
+                              {loadingMore ? "Loading…" : "Load more"}
+                            </button>
+                          </div>
+                        ) : null}
+                      </>
+                    ) : (
+                      <div className="py-14 text-center px-6 rounded-3xl border border-gray-200 bg-white">
+                        <div className="text-sm font-extrabold text-gray-900">No posts visible</div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          Nothing visible in {SIDES[displaySide]?.label || displaySide}.
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : contentTab === "media" ? (
+                  <div className="py-14 text-center px-6 rounded-3xl border border-gray-200 bg-white">
+                    <div className="text-sm font-extrabold text-gray-900">Media</div>
+                    <div className="text-xs text-gray-500 mt-1">Media grid ships in the next overlay.</div>
+                  </div>
+                ) : (
+                  <div className="py-14 text-center px-6 rounded-3xl border border-gray-200 bg-white">
+                    <div className="text-sm font-extrabold text-gray-900">Sets</div>
+                    <div className="text-xs text-gray-500 mt-1">Sets tab ships in the next overlay.</div>
                   </div>
                 )}
               </div>
             </div>
 
-            {!isOwner ? (
+
+            {/* sd_718: removed legacy PrismIdentityCard + duplicate profile feed (Profile V2 handles header/tabs/content) */}
+
+{!isOwner ? (
             <SideWithSheet
               open={sideSheet}
               onClose={() => setSideSheet(false)}

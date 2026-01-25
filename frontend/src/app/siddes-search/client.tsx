@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+
+// sd_719_fix_search_p_undefined: remove stray data-post-id={p.id} in search results
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search as SearchIcon, Users as UsersIcon, Layers as LayersIcon, FileText, X, Lock } from "lucide-react";
@@ -8,6 +10,8 @@ import { Search as SearchIcon, Users as UsersIcon, Layers as LayersIcon, FileTex
 import { useSide } from "@/src/components/SideProvider";
 import { SIDE_THEMES, SIDES } from "@/src/lib/sides";
 import { PUBLIC_CHANNELS } from "@/src/lib/publicChannels";
+
+import { saveReturnScroll, useReturnScrollRestore } from "@/src/hooks/returnScroll";
 
 type TabId = "all" | "people" | "sets" | "posts";
 
@@ -84,6 +88,8 @@ export default function SearchClient() {
   const { side } = useSide();
   const theme = SIDE_THEMES[side];
 
+
+  useReturnScrollRestore();
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const initialQ = useMemo(() => String(sp?.get("q") || ""), [sp]);
@@ -622,6 +628,7 @@ const qs = params.toString();
                             key={u.id}
                             data-result-idx={idx >= 0 ? idx : undefined}
                             href={"/u/" + u.username}
+                            onClick={() => { try { saveReturnScroll(); } catch {} }}
                             className={
                               "block p-3 rounded-xl border transition-all outline-none " +
                               (active
@@ -715,6 +722,7 @@ const qs = params.toString();
                             key={p.id}
                             data-result-idx={idx >= 0 ? idx : undefined}
                             href={"/siddes-post/" + p.id + "?from=search" + (backQS ? "&back=" + encodeURIComponent(backQS) : "")}
+                            onClick={() => { try { saveReturnScroll(String(p.id)); } catch {} }}
                             className={
                               "block p-3 rounded-xl border transition-all outline-none " +
                               (active
