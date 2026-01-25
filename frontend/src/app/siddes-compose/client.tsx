@@ -40,6 +40,8 @@ import { usePrismAvatar } from "@/src/hooks/usePrismAvatar";
 import { toast } from "@/src/lib/toast";
 import { getStoredLastPublicTopic, getStoredLastSetForSide } from "@/src/lib/audienceStore";
 import { signUpload, uploadToSignedUrl } from "@/src/lib/mediaClient";
+import { MentionPicker } from "@/src/components/MentionPicker";
+import type { MentionCandidate } from "@/src/lib/mentions";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -365,6 +367,15 @@ export default function SiddesComposePage() {
   const [text, setText] = useState("");
   const textRef = useRef<HTMLTextAreaElement | null>(null);
 
+  // sd_717c: Side-scoped @mentions (No Leaks)
+  const [caretPos, setCaretPos] = useState<number>(0);
+  const [mentionOpen, setMentionOpen] = useState(false);
+  const [mentionQuery, setMentionQuery] = useState("");
+  const [mentionStart, setMentionStart] = useState<number | null>(null);
+  const [mentionEnd, setMentionEnd] = useState<number | null>(null);
+  const [mentionCandidates, setMentionCandidates] = useState<MentionCandidate[]>([]);
+  const [mentionCandidatesLoading, setMentionCandidatesLoading] = useState(false);
+
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState<ComposeError | null>(null);
   const [draftsOpen, setDraftsOpen] = useState(false);
@@ -410,7 +421,187 @@ export default function SiddesComposePage() {
 
 
 
-  // Best-effort focus: some mobile browsers ignore autoFocus; try again after mount.
+  
+
+  // sd_717c: @mention trigger under caret (replaces only the active token)
+  useEffect(() => {
+    const raw = typeof caretPos === "number" ? caretPos : 0;
+    const pos = Math.max(0, Math.min(raw, (text || "").length));
+
+    // Find the nearest '@' before the caret.
+    const idx = (text || "").lastIndexOf("@", Math.max(0, pos - 1));
+    if (idx === -1) {
+      setMentionOpen(false);
+      setMentionQuery("");
+      setMentionStart(null);
+      setMentionEnd(null);
+      return;
+    }
+
+    // Boundary check: don't treat emails/words as mentions (e.g. 'a@b.com')
+    const prev = idx > 0 ? (text || "")[idx - 1] : " ";
+    if (prev && /[A-Za-z0-9_]/.test(prev)) {
+      setMentionOpen(false);
+      setMentionQuery("");
+      setMentionStart(null);
+      setMentionEnd(null);
+      return;
+    }
+
+    const token = (text || "").slice(idx + 1, pos);
+    if (/\s/.test(token)) {
+      setMentionOpen(false);
+      setMentionQuery("");
+      setMentionStart(null);
+      setMentionEnd(null);
+      return;
+    }
+
+    // Keep it sane.
+    if (token.length > 30) {
+      setMentionOpen(false);
+      setMentionQuery("");
+      setMentionStart(null);
+      setMentionEnd(null);
+      return;
+    }
+
+    setMentionOpen(true);
+    setMentionQuery(token);
+    setMentionStart(idx);
+    setMentionEnd(pos);
+  }, [text, caretPos]);
+
+  // sd_717c: Side-scoped mention candidates (No Leaks)
+  useEffect(() => {
+    let alive = true;
+    const ac = new AbortController();
+
+    if (!mentionOpen) {
+      return () => {
+        alive = false;
+        try { ac.abort(); } catch {}
+      };
+    }
+
+    setMentionCandidatesLoading(true);
+
+    const s = String(side || "").trim().toLowerCase();
+    const isPrivateSide = s === "friends" || s === "close" || s === "work";
+
+    const finish = (items: MentionCandidate[]) => {
+      if (!alive) return;
+
+      const seen = new Set<string>();
+      const uniq = items.filter((m) => {
+        const h = String((m as any)?.handle || "").trim();
+        if (!h) return false;
+        if (seen.has(h)) return false;
+        seen.add(h);
+        return true;
+      });
+
+      setMentionCandidates(uniq.slice(0, 80));
+    };
+
+    (async () => {
+      try {
+        if (isPrivateSide) {
+          const r = await fetch("/api/siders", { cache: "no-store", signal: ac.signal });
+          const j = await r.json().catch(() => ({} as any));
+          const sides = (j as any)?.sides || {};
+
+          const friendsArr = Array.isArray((sides as any)?.friends) ? (sides as any).friends : [];
+          const closeArr = Array.isArray((sides as any)?.close) ? (sides as any).close : [];
+          const workArr = Array.isArray((sides as any)?.work) ? (sides as any).work : [];
+
+          const bucket =
+            s === "friends"
+              ? ([] as any[]).concat(friendsArr, closeArr) // close can view friends posts
+              : s === "close"
+                ? closeArr
+                : s === "work"
+                  ? workArr
+                  : [];
+
+          const mapped = (bucket as any[])
+            .map((x: any) => {
+              const name = String(x?.displayName || x?.handle || "").trim();
+              let handle = String(x?.handle || "").trim();
+              if (!handle && name) handle = name.startsWith("@") ? name : `@${name}`;
+              handle = String(handle || "").trim();
+              if (!handle) return null;
+              if (!handle.startsWith("@")) handle = `@${handle.replace(/^@+/, "")}`;
+              return { name: name || handle, handle } as MentionCandidate;
+            })
+            .filter(Boolean) as MentionCandidate[];
+
+          finish(mapped);
+          return;
+        }
+
+        // Public fallback: viewer-scoped suggestions (no global directory)
+        const r = await fetch("/api/contacts/suggestions", { cache: "no-store", signal: ac.signal });
+        const j = await r.json().catch(() => ({} as any));
+        const items = Array.isArray((j as any)?.items) ? (j as any).items : [];
+        const mapped = items
+          .map((x: any) => {
+            const name = String(x?.name || x?.handle || "").trim();
+            let handle = String(x?.handle || "").trim();
+            if (!handle && name) handle = name.startsWith("@") ? name : `@${name}`;
+            handle = String(handle || "").trim();
+            if (!handle) return null;
+            if (!handle.startsWith("@")) handle = `@${handle.replace(/^@+/, "")}`;
+            return { name: name || handle, handle } as MentionCandidate;
+          })
+          .filter(Boolean) as MentionCandidate[];
+
+        finish(mapped);
+      } catch {
+        if (!alive) return;
+        setMentionCandidates([]);
+      } finally {
+        if (!alive) return;
+        setMentionCandidatesLoading(false);
+      }
+    })();
+
+    return () => {
+      alive = false;
+      try { ac.abort(); } catch {}
+    };
+  }, [mentionOpen, side]);
+
+  const insertMention = (handle: string) => {
+    const s = mentionStart;
+    const e = mentionEnd;
+    if (typeof s !== "number" || typeof e !== "number") return;
+
+    const before = (text || "").slice(0, s);
+    const after = (text || "").slice(e);
+    const next = `${before}${handle} ${after}`;
+    const newPos = (before + handle + " ").length;
+
+    setText(next);
+    setMentionOpen(false);
+    setMentionQuery("");
+    setMentionStart(null);
+    setMentionEnd(null);
+    setCaretPos(newPos);
+
+    setTimeout(() => {
+      const el = textRef.current;
+      if (!el) return;
+      try {
+        el.focus();
+        el.setSelectionRange(newPos, newPos);
+      } catch {
+        try { el.focus(); } catch {}
+      }
+    }, 0);
+  };
+
+// Best-effort focus: some mobile browsers ignore autoFocus; try again after mount.
   useEffect(() => {
     const focus = () => {
       const el = textRef.current;
@@ -1272,18 +1463,24 @@ const quickTools = useMemo<QuickTool[]>(() => {
             <div className="flex gap-5">
               <AvatarMe side={side} />
 
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 relative">
                 <textarea
                   ref={textRef}
                   value={text}
                   onChange={(e) => {
                     setText(e.target.value);
+                    setCaretPos(e.target.selectionStart ?? e.target.value.length);
                     if (error?.kind === "validation") setError(null);
                   }}
+                  onKeyUp={(e) => setCaretPos((e.currentTarget as HTMLTextAreaElement).selectionStart ?? 0)}
+                  onClick={(e) => setCaretPos((e.currentTarget as HTMLTextAreaElement).selectionStart ?? 0)}
+                  onSelect={(e) => setCaretPos((e.currentTarget as HTMLTextAreaElement).selectionStart ?? 0)}
                   placeholder={isPulse ? (`Quick check‑in to ${SIDES[side].label}…`) : (side === "public" ? "Share to Public…" : side === "friends" ? "Say something to Friends…" : side === "close" ? "Talk to Close…" : "Note for Work…")}
                   className="w-full h-40 resize-none outline-none text-xl text-gray-900 placeholder:text-gray-300 bg-transparent leading-relaxed"
                   autoFocus
                 />
+
+                <MentionPicker open={mentionOpen} query={mentionQuery} items={mentionCandidates} onPick={insertMention} />
 
                 {/* sd_544b_inline_error */}
                 {error ? (

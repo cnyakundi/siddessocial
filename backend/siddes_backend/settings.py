@@ -81,7 +81,7 @@ ALLOWED_HOSTS = [h.strip() for h in allowed.split(",") if h.strip()] if allowed 
 # SD_166_ALLOWED_HOSTS_DEV_PATCH
 # Allow docker service-name hosts in DEBUG.
 if DEBUG and "*" not in ALLOWED_HOSTS:
-    for _h in ("backend", "localhost", "127.0.0.1", "host.docker.internal", "0.0.0.0"):
+    for _h in ("backend", "localhost", "127.0.0.1"):
         if _h not in ALLOWED_HOSTS:
             ALLOWED_HOSTS.append(_h)
 
