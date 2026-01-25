@@ -177,3 +177,92 @@ class InviteDetailView(APIView):
 
         item.pop("_forbidden", None)
         return Response({"ok": True, "restricted": False, "viewer": viewer, "role": role, "item": item}, status=status.HTTP_200_OK)
+
+
+# --- Invite Links (sd_708) ---
+from .store_links_db import DbInviteLinksStore  # noqa: E402
+
+_links_store = DbInviteLinksStore()
+
+
+@method_decorator(dev_csrf_exempt, name="dispatch")
+class SetInviteLinksView(APIView):
+    """GET/POST /api/sets/<id>/invite-links (owner-only)."""
+
+    throttle_scope = "invites_links"
+
+    def get(self, request, set_id: str):
+        has_viewer, viewer, role = _viewer_ctx(request)
+        if not has_viewer:
+            return Response(_restricted_payload(has_viewer, viewer, role, extra={"items": []}), status=status.HTTP_200_OK)
+        if role != "me":
+            return Response({"ok": False, "restricted": True, "error": "restricted"}, status=status.HTTP_403_FORBIDDEN)
+
+        items = _links_store.list_for_set(owner_id=viewer, set_id=set_id)
+        return Response({"ok": True, "restricted": False, "viewer": viewer, "role": role, "items": items}, status=status.HTTP_200_OK)
+
+    def post(self, request, set_id: str):
+        has_viewer, viewer, role = _viewer_ctx(request)
+        if not has_viewer:
+            return Response({"ok": False, "restricted": True, "error": "restricted"}, status=status.HTTP_401_UNAUTHORIZED)
+        if role != "me":
+            return Response({"ok": False, "restricted": True, "error": "restricted"}, status=status.HTTP_403_FORBIDDEN)
+
+        body: Dict[str, Any] = request.data if isinstance(request.data, dict) else {}
+        max_uses = body.get("maxUses") if "maxUses" in body else body.get("max_uses")
+        expires_days = body.get("expiresDays") if "expiresDays" in body else body.get("expires_days")
+
+        item = _links_store.create_for_set(owner_id=viewer, set_id=set_id, max_uses=max_uses, expires_days=expires_days)
+        if not item:
+            return Response({"ok": False, "restricted": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response({"ok": True, "restricted": False, "viewer": viewer, "role": role, "item": item}, status=status.HTTP_200_OK)
+
+
+@method_decorator(dev_csrf_exempt, name="dispatch")
+class SetInviteLinkRevokeView(APIView):
+    """POST /api/sets/<id>/invite-links/<token>/revoke (owner-only)."""
+
+    throttle_scope = "invites_links_revoke"
+
+    def post(self, request, set_id: str, token: str):
+        has_viewer, viewer, role = _viewer_ctx(request)
+        if not has_viewer:
+            return Response({"ok": False, "restricted": True, "error": "restricted"}, status=status.HTTP_401_UNAUTHORIZED)
+        if role != "me":
+            return Response({"ok": False, "restricted": True, "error": "restricted"}, status=status.HTTP_403_FORBIDDEN)
+
+        item = _links_store.revoke(owner_id=viewer, set_id=set_id, token=token)
+        if not item:
+            return Response({"ok": False, "restricted": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response({"ok": True, "restricted": False, "viewer": viewer, "role": role, "item": item}, status=status.HTTP_200_OK)
+
+
+@method_decorator(dev_csrf_exempt, name="dispatch")
+class InviteLinkPublicView(APIView):
+    """GET /api/invite-links/<token> (public)."""
+
+    throttle_scope = "invites_links_public"
+
+    def get(self, request, token: str):
+        valid, item, reason = _links_store.public_get(token=token)
+        return Response({"ok": True, "valid": bool(valid), "reason": reason, "item": item}, status=status.HTTP_200_OK)
+
+
+@method_decorator(dev_csrf_exempt, name="dispatch")
+class InviteLinkAcceptView(APIView):
+    """POST /api/invite-links/<token>/accept (auth required)."""
+
+    throttle_scope = "invites_links_accept"
+
+    def post(self, request, token: str):
+        has_viewer, viewer, role = _viewer_ctx(request)
+        if not has_viewer:
+            return Response({"ok": False, "restricted": True, "error": "restricted"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        ok, payload, reason = _links_store.accept(token=token, viewer_id=viewer)
+        if not ok or not payload:
+            return Response({"ok": False, "restricted": False, "error": reason}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response({"ok": True, "restricted": False, "viewer": viewer, "role": role, **payload}, status=status.HTTP_200_OK)

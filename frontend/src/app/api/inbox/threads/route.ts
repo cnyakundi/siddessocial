@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { resolveStubViewer } from "@/src/lib/server/inboxViewer";
 import { participantForThread } from "@/src/lib/server/inboxParticipant";
+import { getThreadUnread } from "@/src/lib/server/inboxStore";
+import { viewerAllowed, roleForViewer, type ViewerRole } from "@/src/lib/server/inboxVisibility";
 import { proxyJson } from "../../auth/_proxy";
 
 function isGenericTitle(title: string): boolean {
@@ -24,6 +26,31 @@ function _truncate(s: string, n = 32): string {
   if (t.length <= n) return t;
   return t.slice(0, Math.max(0, n - 1)).trimEnd() + "…";
 }
+
+
+function _sd_728_hashSeed(x: string): number {
+  let h = 0;
+  for (let i = 0; i < x.length; i++) h = (h + x.charCodeAt(i)) % 97;
+  return h;
+}
+
+function _sd_728_lastFrom(it: any): "me" | "them" | null {
+  const lf = String((it as any)?.lastFrom || (it as any)?.last_from || "").trim().toLowerCase();
+  if (lf === "me" || lf === "them") return lf as any;
+  const last = String((it as any)?.last || (it as any)?.preview || "").trim();
+  if (!last) return null;
+  if (/^you:\s+/i.test(last)) return "me";
+  return "them";
+}
+
+function unreadHint(args: { role: ViewerRole; threadId: string; lockedSide: string; lastFrom: string | null }): number {
+  if (args.role === "anon") return 0;
+  if (!args.lastFrom || args.lastFrom !== "them") return 0;
+  const seed = _sd_728_hashSeed(`${args.role}|${args.threadId}|${args.lockedSide}`);
+  const n = 1 + (seed % 2); // 1-2, deterministic
+  return Math.min(5, Math.max(0, n));
+}
+
 
 // deriveThreadTitle: used for BOTH list + detail payloads.
 function deriveThreadTitle(threadOrItem: any, messages?: any[]): string {
@@ -177,9 +204,39 @@ export async function GET(req: Request) {
   }
 
 
+
+  // sd_730_visibility_filter: enforce stub visibility shim (defense-in-depth)
+  if (data && typeof data === "object" && Array.isArray((data as any).items)) {
+    const v = viewerId || "anon";
+    (data as any).items = (data as any).items.filter((it: any) => {
+      const lockedSide = String((it as any)?.lockedSide || (it as any)?.side || "public");
+      return viewerAllowed(v, lockedSide);
+    });
+  }
+
   // Ensure deterministic participant fields for stable avatar variation.
   if (data && typeof data === "object" && Array.isArray((data as any).items)) {
     (data as any).items = (data as any).items.map((t: any) => fillParticipant(t));
+
+    // sd_728_apply_server_unread: server unread counters + deterministic hints (backend_stub)
+    const viewerRole = roleForViewer(viewerId || "anon");
+    (data as any).items = (data as any).items.map((it: any) => {
+      const tid = String(it?.id || "").trim();
+      if (!tid) return it;
+
+      const lockedSide = String((it as any)?.lockedSide || (it as any)?.side || "public");
+      const lastFrom = _sd_728_lastFrom(it);
+
+      const serverUnread = getThreadUnread(tid, viewerRole);
+      const hinted = unreadHint({ role: viewerRole, threadId: tid, lockedSide, lastFrom });
+
+      const base0 = Number((it as any)?.unread ?? (it as any)?.unreadCount ?? (it as any)?.unread_count ?? 0);
+      const base = Number.isFinite(base0) && base0 > 0 ? Math.floor(base0) : 0;
+
+      const unread = serverUnread !== null && serverUnread !== undefined ? serverUnread : (base || hinted);
+      return { ...it, unread };
+    });
+
   }
 
   const r = sd_558b_json(data, { status: res.status });

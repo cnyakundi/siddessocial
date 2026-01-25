@@ -46,3 +46,42 @@ class SiddesInvite(models.Model):
 
     def __str__(self) -> str:  # pragma: no cover
         return f"SiddesInvite({self.id})"
+
+
+class SiddesInviteLink(models.Model):
+    """A shareable Set invite link (/i/<token>).
+
+    Properties:
+    - token is unguessable (uuid-based) and is the URL key.
+    - Default-safe: only Set owner can create/revoke/list.
+    - Public GET exposes only the minimal info needed for landing/preview.
+    """
+
+    token = models.CharField(primary_key=True, max_length=64)
+
+    # Owner viewer id (e.g. "me_1"). We keep a string to avoid hard FK coupling.
+    owner_id = models.CharField(max_length=64)
+    set_id = models.CharField(max_length=96)
+
+    # Snapshot for landing page / previews.
+    set_label = models.CharField(max_length=255, blank=True, default="")
+    side = models.CharField(max_length=16, default="friends")
+
+    max_uses = models.IntegerField(default=10)
+    uses = models.IntegerField(default=0)
+
+    # Expiry / revoke controls
+    expires_at = models.DateTimeField(null=True, blank=True)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["owner_id", "set_id", "updated_at"], name="invlink_owner_set_upd"),
+            models.Index(fields=["set_id", "updated_at"], name="invlink_set_upd"),
+        ]
+
+    def __str__(self) -> str:  # pragma: no cover
+        return f"SiddesInviteLink({self.token})"

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { resolveStubViewer } from "@/src/lib/server/inboxViewer";
 import { participantForThread } from "@/src/lib/server/inboxParticipant";
+import { clearThreadUnreadRole } from "@/src/lib/server/inboxStore";
+import { viewerAllowed, roleForViewer } from "@/src/lib/server/inboxVisibility";
 import { proxyJson } from "../../../auth/_proxy";
 
 function _cleanSnippet(s: string): string {
@@ -136,6 +138,10 @@ export async function GET(req: Request, ctx: { params: { id: string } }) {
     return sd_558b_json(restrictedThreadPayload(), { status: 200 });
   }
 
+  // sd_728_clear_unread_on_open: opening a thread marks it read (server counters)
+  const viewerRole = roleForViewer(viewerId || "anon");
+  clearThreadUnreadRole(id, viewerRole);
+
   const qs = new URLSearchParams();
   if (limit) qs.set("limit", limit);
   if (cursor) qs.set("cursor", cursor);
@@ -147,6 +153,20 @@ export async function GET(req: Request, ctx: { params: { id: string } }) {
   if (out instanceof NextResponse) return out;
 
   const { res, data, setCookies } = out;
+
+  // sd_730_visibility_gate: enforce stub visibility shim (defense-in-depth)
+  try {
+    const v = viewerId || "anon";
+    const th = data && typeof data === "object" ? (data as any).thread : null;
+    const meta = data && typeof data === "object" ? (data as any).meta : null;
+    const lockedSide = String((meta as any)?.locked_side || (th as any)?.lockedSide || (th as any)?.locked_side || "public");
+    if (lockedSide && !viewerAllowed(v, lockedSide)) {
+      return sd_558b_json(restrictedThreadPayload(), { status: 200 });
+    }
+  } catch {
+    // ignore
+  }
+
   if (data && typeof data === "object" && (data as any).thread) {
     (data as any).thread = fillThreadParticipant((data as any).thread);
   }

@@ -18,6 +18,7 @@ import { InboxBanner } from "@/src/components/InboxBanner";
 import { isRestrictedError, restrictedMessage } from "@/src/lib/restricted";
 import { InboxStubDebugPanel } from "@/src/components/InboxStubDebugPanel";
 import { useInboxStubViewer } from "@/src/lib/useInboxStubViewer";
+import { loadUnreadMap } from "@/src/lib/inboxState";
 type InboxFilter = "all" | "this" | "mismatch" | "unread";
 
 // sd_573: sort threads by most recent activity (server updatedAt + local threadStore meta)
@@ -299,12 +300,23 @@ function SiddesInboxPageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [provider, side, viewer]);
 
-  const counts = useMemo(() => {
-    const unread = threads.reduce((acc, t) => acc + (Number((t as any)?.unread || 0) > 0 ? 1 : 0), 0);
-    return { unread };
+  const unreadMap = useMemo(() => {
+    const ids = threads.map((t) => String((t as any)?.id || ""));
+    const fallback: Record<string, number> = {};
+    for (const t of threads as any[]) {
+      const id = String((t as any)?.id || "");
+      if (!id) continue;
+      const u0 = Number((t as any)?.unread ?? 0);
+      fallback[id] = Number.isFinite(u0) && u0 > 0 ? Math.floor(u0) : 0;
+    }
+    return loadUnreadMap(ids, fallback);
   }, [threads]);
 
-  const filtered = useMemo(() => {
+  const counts = useMemo(() => {
+    const unread = Object.values(unreadMap).reduce((acc, n) => acc + (Number(n) > 0 ? 1 : 0), 0);
+    return { unread };
+  }, [unreadMap]);
+const filtered = useMemo(() => {
     let items = threads;
 
     const lockedSideOf = (t: any) => (t?.lockedSide || t?.side || side);
@@ -314,8 +326,8 @@ function SiddesInboxPageInner() {
     } else if (filter === "mismatch") {
       items = items.filter((t) => lockedSideOf(t) !== side);
     } else if (filter === "unread") {
-      items = items.filter((t) => Number((t as any)?.unread || 0) > 0);
-    }
+            items = items.filter((t) => Number((unreadMap as any)[String((t as any).id)] ?? (t as any)?.unread ?? 0) > 0);
+}
 
     if (advanced) {
       const q = query.trim().toLowerCase();
@@ -603,7 +615,7 @@ function SiddesInboxPageInner() {
                 >
                   <Pin size={16} />
                 </button>
-                {t.unread > 0 ? <span className="w-2 h-2 rounded-full bg-red-500" aria-label="Unread" /> : null}
+                {(Number((unreadMap as any)[String(t.id)] ?? (t as any).unread ?? 0) > 0) ? <span className="w-2 h-2 rounded-full bg-red-500" aria-label="Unread" /> : null}
               </div>
             </Link>
           );

@@ -23,6 +23,7 @@ import type { SetInvite } from "@/src/lib/inviteProvider";
 import { getInviteProvider } from "@/src/lib/inviteProvider";
 import { InviteActionSheet } from "@/src/components/Invites/InviteActionSheet";
 import { InviteList } from "@/src/components/Invites/InviteList";
+import { InviteLinksPanel } from "@/src/components/Invites/InviteLinksPanel";
 
 import { fetchInviteSuggestionHandles } from "@/src/lib/inviteSuggestions";
 import { emitSetsChanged, onSetsChanged } from "@/src/lib/setsSignals";
@@ -796,15 +797,7 @@ export default function SiddesSetHubPage({ params }: { params: { id: string } })
                 ) : null}
               </div>
 
-
-
-              
-              <div className="p-4 rounded-2xl bg-white border border-gray-200">
-                <div className="font-black text-gray-900">Invite links</div>
-                <div className="text-xs text-gray-500 mt-1">
-                  Coming soon. (Temporarily disabled in this build to avoid broken navigation.)
-                </div>
-              </div>
+              {item ? <InviteLinksPanel setId={item.id} setLabel={item.label} canManage={isOwner} /> : null}
 
               <InviteActionSheet
                 open={inviteOpen}
