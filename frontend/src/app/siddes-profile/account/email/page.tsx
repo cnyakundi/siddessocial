@@ -94,24 +94,30 @@ export default function AccountEmailPage() {
               </div>
 
               <div className="mt-4 space-y-3">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">New email</label>
+                <label htmlFor="acct-new-email" className="text-xs font-bold text-gray-500 uppercase tracking-wider">New email</label>
                 <input
+                  id="acct-new-email"
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value.trim())}
                   placeholder="new@email.com"
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none focus:bg-white"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:bg-white focus:border-gray-300 focus-visible:ring-2 focus-visible:ring-gray-900/20 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
                 />
 
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Password (may be required)</label>
+                <label htmlFor="acct-email-password" className="text-xs font-bold text-gray-500 uppercase tracking-wider">Password (may be required)</label>
                 <input
+                  id="acct-email-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   type="password"
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none focus:bg-white"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:bg-white focus:border-gray-300 focus-visible:ring-2 focus-visible:ring-gray-900/20 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
                 />
 
-                {msg ? <div className="text-sm text-gray-700 font-semibold">{msg}</div> : null}
+                {msg ? (
+                  <div id="acct-email-msg" aria-live="polite" className="text-sm text-gray-700 font-semibold">
+                    {msg}
+                  </div>
+                ) : null}
 
                 <button
                   type="button"

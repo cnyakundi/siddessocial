@@ -128,19 +128,25 @@ export default function LoginPage() {
           submit();
         }}
       >
-        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Email or username</label>
+        <label htmlFor="login-identifier" className="text-xs font-bold text-gray-500 uppercase tracking-wider">Email or username</label>
         <input
-          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none focus:bg-white focus:border-gray-300"
+          id="login-identifier"
+          aria-invalid={!!msg}
+          aria-describedby={msg ? "login-error" : undefined}
+          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:bg-white focus:border-gray-300 focus-visible:ring-2 focus-visible:ring-gray-900/20 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
           value={identifier}
           onChange={(e) => setIdentifier(e.target.value)}
           placeholder="you@email.com or username"
           autoComplete="username"
         />
 
-        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mt-3 block">Password</label>
+        <label htmlFor="login-password" className="text-xs font-bold text-gray-500 uppercase tracking-wider mt-3 block">Password</label>
         <input
           type="password"
-          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none focus:bg-white focus:border-gray-300"
+          id="login-password"
+          aria-invalid={!!msg}
+          aria-describedby={msg ? "login-error" : undefined}
+          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:bg-white focus:border-gray-300 focus-visible:ring-2 focus-visible:ring-gray-900/20 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="••••••••"
@@ -153,7 +159,11 @@ export default function LoginPage() {
           </Link>
         </div>
 
-        {msg ? <div className="text-sm text-rose-600 font-medium">{msg}</div> : null}
+        {msg ? (
+          <div id="login-error" role="alert" className="text-sm text-rose-600 font-medium">
+            {msg}
+          </div>
+        ) : null}
 
         {process.env.NODE_ENV !== "production" && debug ? (
           <div className="text-[11px] text-gray-500">{debug}</div>

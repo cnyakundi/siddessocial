@@ -111,30 +111,35 @@ export default function AccountPasswordPage() {
               submit();
             }}
           >
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Current password (optional)</label>
+            <label htmlFor="acct-old-password" className="text-xs font-bold text-gray-500 uppercase tracking-wider">Current password (optional)</label>
             <input
               type="password"
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none focus:bg-white focus:border-gray-300"
+              id="acct-old-password"
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:bg-white focus:border-gray-300 focus-visible:ring-2 focus-visible:ring-gray-900/20 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
               value={oldPassword}
               onChange={(e) => setOldPassword(e.target.value)}
               placeholder="••••••••"
               autoComplete="current-password"
             />
 
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">New password</label>
+            <label htmlFor="acct-new-password" className="text-xs font-bold text-gray-500 uppercase tracking-wider">New password</label>
             <input
               type="password"
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none focus:bg-white focus:border-gray-300"
+              id="acct-new-password"
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:bg-white focus:border-gray-300 focus-visible:ring-2 focus-visible:ring-gray-900/20 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder="••••••••"
               autoComplete="new-password"
             />
 
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Confirm new password</label>
+            <label htmlFor="acct-confirm-password" className="text-xs font-bold text-gray-500 uppercase tracking-wider">Confirm new password</label>
             <input
               type="password"
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none focus:bg-white focus:border-gray-300"
+              id="acct-confirm-password"
+              aria-invalid={(!match && confirm.length > 0) || !!msg}
+              aria-describedby={!match && confirm.length > 0 ? "acct-pw-mismatch" : undefined}
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:bg-white focus:border-gray-300 focus-visible:ring-2 focus-visible:ring-gray-900/20 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               placeholder="••••••••"
@@ -142,10 +147,14 @@ export default function AccountPasswordPage() {
             />
 
             {!match && confirm.length > 0 ? (
-              <div className="text-xs text-rose-600 font-semibold">Passwords do not match.</div>
+              <div id="acct-pw-mismatch" role="alert" className="text-xs text-rose-600 font-semibold">Passwords do not match.</div>
             ) : null}
 
-            {msg ? <div className="text-sm text-gray-700 font-semibold">{msg}</div> : null}
+            {msg ? (
+              <div id="acct-pw-msg" aria-live="polite" className="text-sm text-gray-700 font-semibold">
+                {msg}
+              </div>
+            ) : null}
 
             <button
               type="submit"

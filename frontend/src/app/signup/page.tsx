@@ -117,28 +117,37 @@ export default function SignupPage() {
           submit();
         }}
       >
-        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Email</label>
+        <label htmlFor="signup-email" className="text-xs font-bold text-gray-500 uppercase tracking-wider">Email</label>
         <input
-          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none focus:bg-white focus:border-gray-300"
+          id="signup-email"
+          aria-invalid={!!msg}
+          aria-describedby={msg ? "signup-error" : undefined}
+          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:bg-white focus:border-gray-300 focus-visible:ring-2 focus-visible:ring-gray-900/20 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@email.com"
           autoComplete="email"
         />
 
-        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mt-3 block">Username</label>
+        <label htmlFor="signup-username" className="text-xs font-bold text-gray-500 uppercase tracking-wider mt-3 block">Username</label>
         <input
-          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none focus:bg-white focus:border-gray-300"
+          id="signup-username"
+          aria-invalid={!!msg}
+          aria-describedby={msg ? "signup-error" : undefined}
+          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:bg-white focus:border-gray-300 focus-visible:ring-2 focus-visible:ring-gray-900/20 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
           value={username}
           onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 24))}
           placeholder="3–24 chars, lowercase a-z / 0-9 / _"
           autoComplete="username"
         />
 
-        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mt-3 block">Password</label>
+        <label htmlFor="signup-password" className="text-xs font-bold text-gray-500 uppercase tracking-wider mt-3 block">Password</label>
         <input
           type="password"
-          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none focus:bg-white focus:border-gray-300"
+          id="signup-password"
+          aria-invalid={!!msg}
+          aria-describedby={msg ? "signup-error" : undefined}
+          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:bg-white focus:border-gray-300 focus-visible:ring-2 focus-visible:ring-gray-900/20 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="min 8 characters"
@@ -146,11 +155,15 @@ export default function SignupPage() {
         />
 
         <label className="flex items-start gap-2 text-xs text-gray-600">
-          <input type="checkbox" className="mt-0.5" checked={ageOk} onChange={(e) => setAgeOk(e.target.checked)} />
+          <input id="signup-age-ok" type="checkbox" className="mt-0.5" checked={ageOk} onChange={(e) => setAgeOk(e.target.checked)} />
           <span>I confirm I'm at least 13 years old (or the minimum age required in my country).</span>
         </label>
 
-        {msg ? <div className="text-sm text-rose-600 font-medium">{msg}</div> : null}
+        {msg ? (
+          <div id="signup-error" role="alert" className="text-sm text-rose-600 font-medium">
+            {msg}
+          </div>
+        ) : null}
 
         {process.env.NODE_ENV !== "production" && debug ? (
           <div className="text-[11px] text-gray-500">{debug}</div>

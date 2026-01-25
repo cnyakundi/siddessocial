@@ -56,16 +56,21 @@ export default function ForgotPasswordPage() {
             submit();
           }}
         >
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Email or username</label>
+          <label htmlFor="forgot-identifier" className="text-xs font-bold text-gray-500 uppercase tracking-wider">Email or username</label>
           <input
-            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none focus:bg-white focus:border-gray-300"
+            id="forgot-identifier"
+            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:bg-white focus:border-gray-300 focus-visible:ring-2 focus-visible:ring-gray-900/20 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
             placeholder="you@email.com or username"
             autoComplete="username"
           />
 
-          {msg ? <div className="text-sm text-gray-700 font-medium">{msg}</div> : null}
+          {msg ? (
+            <div id="forgot-msg" aria-live="polite" className="text-sm text-gray-700 font-medium">
+              {msg}
+            </div>
+          ) : null}
 
           <button
             type="submit"
