@@ -523,8 +523,20 @@ class DailyQuotaMiddleware:
                 cache.set(key, new_val, timeout=ttl)
 
             if new_val > limit:
+                rid = (
+                    getattr(request, "siddes_request_id", None)
+                    or request.headers.get("X-Request-ID")
+                    or request.META.get("HTTP_X_REQUEST_ID")
+                )
+                rid = str(rid or "").strip()[:64] or None
                 return JsonResponse(
-                    {"ok": False, "error": "quota_exceeded", "action": action, "limit": limit},
+                    {
+                        "ok": False,
+                        "error": "quota_exceeded",
+                        "action": action,
+                        "limit": limit,
+                        **({"requestId": rid} if rid else {}),
+                    },
                     status=429,
                 )
 

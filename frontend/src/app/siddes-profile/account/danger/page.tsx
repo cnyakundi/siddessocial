@@ -3,6 +3,16 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+function humanizeErr(err: string): string {
+  const e = String(err || "").trim().toLowerCase();
+  if (e === "restricted") return "You must be logged in.";
+  if (e === "email_not_verified") return "Verify your email first, then try again.";
+  if (e === "missing_email") return "Your account has no email address on file.";
+  if (e === "email_send_failed") return "Email could not be sent. Try again later.";
+  if (e === "proxy_fetch_failed") return "Server connection failed — is the backend running?";
+  return err ? err.replace(/_/g, " ") : "Request failed";
+}
+
 export default function DangerZonePage() {
   const [authed, setAuthed] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -27,12 +37,12 @@ export default function DangerZonePage() {
     setMsg(null);
     try {
       const res = await fetch("/api/auth/account/deactivate", { method: "POST" });
-      const data = await res.json().catch(() => ({}));
+      const data = await res.json().catch(() => ({} as any));
       if (res.ok && data?.ok) {
         window.location.href = "/login";
         return;
       }
-      setMsg(data?.error ? String(data.error) : "Deactivate failed");
+      setMsg(humanizeErr(String(data?.error || "")));
     } catch {
       setMsg("Network error");
     } finally {
@@ -46,11 +56,11 @@ export default function DangerZonePage() {
     setMsg(null);
     try {
       const res = await fetch("/api/auth/account/delete/request", { method: "POST" });
-      const data = await res.json().catch(() => ({}));
+      const data = await res.json().catch(() => ({} as any));
       if (res.ok && data?.ok) {
         setMsg("Deletion confirmation sent. Check your email.");
       } else {
-        setMsg(data?.error ? String(data.error) : "Request failed");
+        setMsg(humanizeErr(String(data?.error || "")));
       }
     } catch {
       setMsg("Network error");
@@ -91,8 +101,18 @@ export default function DangerZonePage() {
         <div className="mt-3 rounded-2xl border border-rose-200 bg-white p-4">
           <div className="text-sm font-extrabold text-rose-700">Delete</div>
           <div className="text-xs text-gray-500 mt-1">
-            Requires verified email. We send a confirmation link to your email.
+            Irreversible. Requires verified email. We send a confirmation link to your email.
           </div>
+
+          <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50 p-3 text-xs text-gray-700">
+            Before you delete: download your data export.
+            <span className="ml-1">
+              <Link href="/siddes-profile/account/export" className="font-bold text-gray-900 hover:underline">
+                Export data
+              </Link>
+            </span>
+          </div>
+
           <button
             type="button"
             onClick={requestDelete}
@@ -103,8 +123,17 @@ export default function DangerZonePage() {
           </button>
 
           {msg ? <div className="mt-3 text-sm text-gray-700 font-semibold">{msg}</div> : null}
+
+          <div className="mt-3 text-xs text-gray-500">
+            Can’t access the app? See{" "}
+            <Link href="/legal/account-deletion" className="font-bold text-gray-900 hover:underline">
+              account deletion help
+            </Link>
+            .
+          </div>
         </div>
       </div>
     </div>
   );
 }
+

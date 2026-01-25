@@ -7,6 +7,12 @@ import re
 import time
 from typing import Dict, Optional
 
+# sd_605: use Django cache for rate limiting in production (multi-worker safe).
+try:  # pragma: no cover
+    from django.core.cache import cache  # type: ignore
+except Exception:  # pragma: no cover
+    cache = None
+
 
 def _truthy(v: str | None) -> bool:
     return str(v or "").strip().lower() in ("1", "true", "yes", "y", "on")
@@ -46,11 +52,29 @@ def _check_min_interval(key: str, min_interval_ms: int, now_ms: Optional[int] = 
     if min_interval_ms <= 0:
         return {"ok": True}
     now = int(now_ms if now_ms is not None else time.time() * 1000)
-    last = int(_last_action.get(key) or 0)
+
+    last = 0
+    ck = f"sd:trustgate:last:{key}"
+    if cache is not None:
+        try:
+            last = int(cache.get(ck) or 0)
+        except Exception:
+            last = 0
+    if not last:
+        last = int(_last_action.get(key) or 0)
+
     delta = now - last
     if delta >= min_interval_ms:
-        _last_action[key] = now
+        ttl = max(3600, int((min_interval_ms / 1000) * 12) + 60)
+        if cache is not None:
+            try:
+                cache.set(ck, now, timeout=ttl)
+            except Exception:
+                _last_action[key] = now
+        else:
+            _last_action[key] = now
         return {"ok": True}
+
     return {"ok": False, "status": 429, "error": "rate_limited", "retry_after_ms": max(250, min_interval_ms - delta)}
 
 

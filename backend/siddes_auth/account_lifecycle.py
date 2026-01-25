@@ -38,9 +38,43 @@ def viewer_id_for_user(user) -> str:
     return f"me_{getattr(user, 'id', '')}"
 
 
-def _session_payload(request) -> Dict[str, str]:
-    request.session.save()
-    return {"name": "sessionid", "value": request.session.session_key or ""}
+def _session_payload(request) -> Dict[str, Any]:
+    """Return session cookie name+value (+expiry hints) for proxy layers."""
+    try:
+        request.session.save()
+    except Exception:
+        pass
+
+    name = "sessionid"
+    value = ""
+    max_age = None
+    expires = None
+
+    try:
+        sess = getattr(request, "session", None)
+        if sess is not None:
+            name = str(getattr(sess, "cookie_name", "") or name)
+            value = str(getattr(sess, "session_key", "") or value)
+            try:
+                max_age = int(sess.get_expiry_age())
+            except Exception:
+                max_age = None
+            try:
+                dt = sess.get_expiry_date()
+                expires = dt.isoformat() if dt is not None else None
+            except Exception:
+                expires = None
+    except Exception:
+        pass
+
+    out: Dict[str, Any] = {"name": name, "value": value}
+    if max_age is not None:
+        out["maxAge"] = max_age
+    if expires is not None:
+        out["expiresAt"] = expires
+    return out
+
+
 
 
 def _public_app_base() -> str:
@@ -614,3 +648,4 @@ class ExportDataView(APIView):
         except Exception:
             pass
         return resp
+

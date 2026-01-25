@@ -16,6 +16,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from siddes_backend.throttles import SiddesScopedRateThrottle, SiddesPasswordResetIdentifierThrottle
 from siddes_backend.csrf import dev_csrf_exempt
 from siddes_backend.emailing import send_email
 from siddes_contacts.normalize import normalize_email
@@ -221,6 +222,7 @@ class PasswordResetRequestView(APIView):
     """
 
     throttle_scope = "auth_pw_reset_request"
+    throttle_classes = (SiddesScopedRateThrottle, SiddesPasswordResetIdentifierThrottle)
 
     def post(self, request):
         body: Dict[str, Any] = request.data or {}
@@ -295,6 +297,11 @@ class PasswordResetConfirmView(APIView):
 
         user = rec.user
 
+        # Do not allow resetting passwords for inactive accounts (deactivated/deleted).
+        if not bool(getattr(user, "is_active", True)):
+            return Response({"ok": False, "error": "account_inactive"}, status=status.HTTP_403_FORBIDDEN)
+
+
         try:
             validate_password(password, user=user)
         except ValidationError as e:
@@ -361,12 +368,36 @@ class PasswordResetConfirmView(APIView):
             "user": {"id": user.id, "username": user.get_username(), "email": getattr(user, "email", "")},
             "viewerId": _viewer_id_for_user(user),
             "emailVerified": bool(getattr(prof, "email_verified", False)),
-"onboarding": {
+            "onboarding": {
                 "completed": bool(getattr(prof, "onboarding_completed", False)),
                 "step": getattr(prof, "onboarding_step", "welcome"),
                 "contact_sync_done": bool(getattr(prof, "contact_sync_done", False)),
             },
+            "session": _session_payload(request),
         }
+
+
+        # Security notice (best-effort): let the user know their password was changed.
+        try:
+            rid = str(request.headers.get("x-request-id") or "").strip()[:64] or None
+        except Exception:
+            rid = None
+        try:
+            email_notice = normalize_email(str(getattr(user, "email", "") or ""))
+            if email_notice and "@" in email_notice:
+                send_email(
+                    to=email_notice,
+                    subject="Siddes security alert: password changed",
+                    text=(
+                        "Your Siddes password was just changed.\n\n"
+                        "If this wasn't you, request another password reset immediately and log out other devices.\n"
+                    ),
+                    html=None,
+                    request_id=rid,
+                )
+        except Exception:
+            pass
+
         return Response(out, status=status.HTTP_200_OK)
 
     def post(self, request):
@@ -455,3 +486,4 @@ class PasswordChangeView(APIView):
             except Exception:
                 pass
         return Response({"ok": True, "changed": True}, status=status.HTTP_200_OK)
+

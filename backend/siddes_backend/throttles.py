@@ -80,3 +80,57 @@ class SiddesLoginIdentifierThrottle(ScopedRateThrottle):
 
         return self.cache_format % {"scope": self.get_scope(view), "ident": h}
 
+
+
+class _SiddesHashedFieldThrottle(ScopedRateThrottle):
+    """Generic per-field throttling keyed by a hashed identifier.
+
+    Used for email-based flows (reset/magic) to defend against distributed abuse
+    without storing raw identifiers in cache keys.
+    """
+
+    scope = ""
+    field_name = "identifier"
+
+    def get_scope(self, view):  # type: ignore[override]
+        return self.scope or super().get_scope(view)
+
+    def get_cache_key(self, request, view):  # type: ignore[override]
+        try:
+            data = getattr(request, "data", None) or {}
+        except Exception:
+            data = {}
+
+        raw = str(data.get(self.field_name) or "").strip()
+        if not raw:
+            return None
+
+        ident = raw.lower()
+        if len(ident) > 256:
+            ident = ident[:256]
+
+        try:
+            from django.conf import settings  # type: ignore
+            import hashlib
+
+            salt = str(getattr(settings, "SECRET_KEY", ""))
+            h = hashlib.sha256((salt + "|" + ident).encode("utf-8")).hexdigest()[:32]
+        except Exception:
+            h = ident[:32]
+
+        return self.cache_format % {"scope": self.get_scope(view), "ident": h}
+
+
+class SiddesPasswordResetIdentifierThrottle(_SiddesHashedFieldThrottle):
+    """Per-identifier password reset throttling."""
+
+    scope = "auth_pw_reset_ident"
+    field_name = "identifier"
+
+
+class SiddesMagicEmailIdentifierThrottle(_SiddesHashedFieldThrottle):
+    """Per-email magic-link request throttling."""
+
+    scope = "auth_magic_ident"
+    field_name = "email"
+

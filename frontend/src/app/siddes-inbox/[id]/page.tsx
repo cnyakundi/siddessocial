@@ -10,8 +10,7 @@ import { InboxStubDebugPanel } from "@/src/components/InboxStubDebugPanel";
 import { toast } from "@/src/lib/toastBus";
 import { MentionPicker } from "@/src/components/MentionPicker";
 import { useSide } from "@/src/components/SideProvider";
-import type { SideId } from "@/src/lib/sides";
-import { SIDE_THEMES, SIDES } from "@/src/lib/sides";
+import { type SideId, SIDE_THEMES, SIDES } from "@/src/lib/sides";
 import { getInboxProvider } from "@/src/lib/inboxProvider";
 import { useInboxStubViewer } from "@/src/lib/useInboxStubViewer";
 import {

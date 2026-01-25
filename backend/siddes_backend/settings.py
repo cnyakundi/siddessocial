@@ -301,9 +301,11 @@ REST_FRAMEWORK = {
         "auth_signup": _env("SIDDES_THROTTLE_AUTH_SIGNUP", "10/hour"),
         "auth_google": _env("SIDDES_THROTTLE_AUTH_GOOGLE", "30/min"),
         "auth_magic_request": _env("SIDDES_THROTTLE_AUTH_MAGIC_REQUEST", "10/hour"),
+        "auth_magic_ident": _env("SIDDES_THROTTLE_AUTH_MAGIC_IDENT", "10/hour"),
         "auth_magic_consume": _env("SIDDES_THROTTLE_AUTH_MAGIC_CONSUME", "30/min"),
 
         "auth_pw_reset_request": _env("SIDDES_THROTTLE_AUTH_PW_RESET_REQUEST", "5/hour"),
+        "auth_pw_reset_ident": _env("SIDDES_THROTTLE_AUTH_PW_RESET_IDENT", "10/hour"),
         "auth_pw_reset_confirm": _env("SIDDES_THROTTLE_AUTH_PW_RESET_CONFIRM", "30/min"),
         "auth_pw_change": _env("SIDDES_THROTTLE_AUTH_PW_CHANGE", "10/min"),
 
@@ -430,3 +432,4 @@ if not DEBUG:
     STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 else:
     STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+

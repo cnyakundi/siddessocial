@@ -15,6 +15,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from siddes_backend.throttles import SiddesScopedRateThrottle, SiddesMagicEmailIdentifierThrottle
 from siddes_backend.csrf import dev_csrf_exempt
 from siddes_backend.emailing import send_email
 from siddes_contacts.normalize import normalize_email
@@ -147,6 +148,7 @@ class MagicLinkRequestView(APIView):
     """
 
     throttle_scope = "auth_magic_request"
+    throttle_classes = (SiddesScopedRateThrottle, SiddesMagicEmailIdentifierThrottle)
 
     def post(self, request):
         body: Dict[str, Any] = request.data or {}
@@ -323,3 +325,4 @@ class MagicLinkConsumeView(APIView):
             "session": _session_payload(request),
         }
         return Response(out, status=status.HTTP_200_OK)
+

@@ -349,6 +349,34 @@ class InboxThreadView(APIView):
         if len(text) > max_len:
             return Response({"ok": False, "error": "too_long", "max": max_len}, status=status.HTTP_400_BAD_REQUEST)
 
+        # sd_605: per-recipient DM throttles (anti-harassment / burst spam).
+        try:
+            import os
+            from siddes_backend.abuse_limits import enforce_pair_limits  # type: ignore
+
+            other = _counterparty_token_for_thread_id(thread_id)
+            per_min = int(os.getenv("SIDDES_RL_INBOX_SEND_TO_PER_MIN", "6"))
+            per_hr = int(os.getenv("SIDDES_RL_INBOX_SEND_TO_PER_HOUR", "30"))
+            rl = enforce_pair_limits(
+                scope="inbox_send_recipient",
+                actor_id=str(viewer),
+                target_token=str(other or ""),
+                per_minute=per_min,
+                per_hour=per_hr,
+            )
+            if not rl.ok:
+                return Response(
+                    {
+                        "ok": False,
+                        "error": "rate_limited",
+                        "scope": "inbox_send_recipient",
+                        "retry_after_ms": int(rl.retry_after_ms or 1000),
+                    },
+                    status=status.HTTP_429_TOO_MANY_REQUESTS,
+                )
+        except Exception:
+            pass
+
         client_key = body.get("clientKey") or body.get("client_key")
 
         try:

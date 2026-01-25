@@ -203,6 +203,15 @@ class VerifyConfirmView(APIView):
         user = rec.user
         prof, _ = SiddesProfile.objects.get_or_create(user=user)
 
+        # Do not allow verifying/logging in inactive accounts (deactivated/deleted).
+        if not bool(getattr(user, "is_active", True)):
+            try:
+                rec.used_at = now
+                rec.save(update_fields=["used_at"])
+            except Exception:
+                pass
+            return Response({"ok": False, "error": "account_inactive"}, status=status.HTTP_403_FORBIDDEN)
+
         if not bool(getattr(prof, "email_verified", False)):
             prof.email_verified = True
             prof.email_verified_at = now
@@ -243,12 +252,14 @@ class VerifyConfirmView(APIView):
             "user": {"id": user.id, "username": user.get_username(), "email": getattr(user, "email", "")},
             "viewerId": _viewer_id_for_user(user),
             "emailVerified": True,
-"onboarding": {
+            "onboarding": {
                 "completed": bool(getattr(prof, "onboarding_completed", False)),
                 "step": getattr(prof, "onboarding_step", "welcome"),
                 "contact_sync_done": bool(getattr(prof, "contact_sync_done", False)),
             },
+            "session": _session_payload(request),
         }
+
         return Response(out, status=status.HTTP_200_OK)
 
     def post(self, request):
@@ -278,3 +289,4 @@ class VerifyResendView(APIView):
         res = create_and_send_email_verification(user, request_id=rid, force=False)
         status_code = status.HTTP_200_OK if bool(res.get("ok")) else status.HTTP_400_BAD_REQUEST
         return Response(res, status=status_code)
+
