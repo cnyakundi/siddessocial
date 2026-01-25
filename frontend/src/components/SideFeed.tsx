@@ -61,7 +61,7 @@ function EmptyState({ side, onCreateSet, composeHref }: { side: SideId; onCreate
   const meta = SIDES[side];
   const theme = SIDE_THEMES[side];
 
-  // sd_464a: restore scroll when returning from post detail
+  // sd_573: restore scroll when returning from post detail (virtualized list).
   useReturnScrollRestore();
 
   // sd_210_desktop_breathing

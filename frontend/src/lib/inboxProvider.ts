@@ -27,6 +27,10 @@ export type InboxThreadsPage = {
 export type InboxProviderListOpts = {
   viewer?: string;
 
+  // sd_609: allow callers to abort in-flight inbox requests
+  signal?: AbortSignal;
+  timeoutMs?: number;
+
   side?: SideId;
   limit?: number;
   cursor?: string;
@@ -34,6 +38,10 @@ export type InboxProviderListOpts = {
 
 export type InboxProviderThreadOpts = {
   viewer?: string;
+
+  // sd_609: allow callers to abort in-flight inbox requests
+  signal?: AbortSignal;
+  timeoutMs?: number;
 
   limit?: number;
   cursor?: string;
@@ -67,3 +75,5 @@ export function getInboxProvider(): InboxProvider {
   // Fail-closed: unknown provider still uses backend_stub.
   return backendStubProvider;
 }
+
+// sd_609_inbox_abort_signal

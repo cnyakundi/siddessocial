@@ -63,13 +63,60 @@ function buildUrl(path: string, opts?: InboxProviderListOpts | InboxProviderThre
 // - Browser: same-origin Next API routes (/api/inbox/*) so session cookies are truth.
 // - SSR/tests: falls back to NEXT_PUBLIC_API_BASE origin resolution.
 // - Dev-only: forwards x-sd-viewer from opts.viewer or sd_viewer cookie.
+// sd_609_backendstub_timeout: add AbortSignal + hard timeout to inbox fetches (prevents flaky hangs)
+function resolveInboxTimeoutMs(opts?: any): number {
+  const fromOpts = Number((opts as any)?.timeoutMs ?? 0);
+  if (Number.isFinite(fromOpts) && fromOpts > 0) {
+    const v = Math.floor(fromOpts);
+    return Math.max(1000, Math.min(60000, v));
+  }
+
+  const envRaw = String(process.env.NEXT_PUBLIC_INBOX_TIMEOUT_MS || "").trim();
+  const env = Number(envRaw);
+  const def = process.env.NODE_ENV === "production" ? 8000 : 15000;
+  const v = Number.isFinite(env) && env > 0 ? Math.floor(env) : def;
+  return Math.max(1000, Math.min(60000, v));
+}
+
+// sd_300 parity: safe fetch helper for the DB-backed inbox provider.
+// - Browser: same-origin Next API routes (/api/inbox/*) so session cookies are truth.
+// - SSR/tests: falls back to NEXT_PUBLIC_API_BASE origin resolution.
+// - Dev-only: forwards x-sd-viewer from opts.viewer or sd_viewer cookie.
+// - sd_609: supports AbortSignal and hard timeouts.
 async function fetchWithFallback(
   path: string,
   opts: InboxProviderListOpts | InboxProviderThreadOpts | undefined,
   init: RequestInit
 ): Promise<Response> {
   const url = buildUrl(path, opts);
+  const timeoutMs = resolveInboxTimeoutMs(opts as any);
+
+  const outerSignal: AbortSignal | undefined = (opts as any)?.signal;
+  const ac = new AbortController();
+  const t = setTimeout(() => {
+    try {
+      ac.abort();
+    } catch {
+      // ignore
+    }
+  }, timeoutMs);
+
   try {
+    // Pipe caller abort -> our controller
+    if (outerSignal) {
+      if (outerSignal.aborted) {
+        try { ac.abort(); } catch {}
+      } else {
+        outerSignal.addEventListener(
+          "abort",
+          () => {
+            try { ac.abort(); } catch {}
+          },
+          { once: true }
+        );
+      }
+    }
+
     const headers = new Headers(init.headers || {});
     if (!headers.has("accept")) headers.set("accept", "application/json");
 
@@ -85,15 +132,22 @@ async function fetchWithFallback(
       headers,
       credentials: "include",
       cache: "no-store",
+      signal: ac.signal,
     });
   } catch (e: any) {
-    const detail = String(e?.message || "network_error");
-    return new Response(JSON.stringify({ ok: false, error: "network_error", detail }), {
-      status: 503,
+    const msg = String(e?.name || e?.message || "").toLowerCase();
+    const isAbort = msg.includes("abort") || msg.includes("timeout");
+    const detail = String(e?.message || (isAbort ? "timeout" : "network_error"));
+    return new Response(JSON.stringify({ ok: false, error: isAbort ? "timeout" : "network_error", detail }), {
+      status: isAbort ? 504 : 503,
       headers: { "content-type": "application/json" },
     });
+  } finally {
+    clearTimeout(t);
   }
 }
+
+
 
 type ThreadsResp = {
   ok?: boolean;
@@ -244,3 +298,5 @@ export const backendStubProvider: InboxProvider = {
     return data.meta as ThreadMeta;
   },
 };
+
+// sd_609_backendstub_timeout: end

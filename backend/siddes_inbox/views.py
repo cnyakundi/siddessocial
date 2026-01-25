@@ -99,7 +99,205 @@ def _counterparty_token_for_thread_id(thread_id: str) -> Optional[str]:
         return None
 
 
+# sd_609_bulk_blocks: bulk block filtering for inbox threads list (avoid N+1 is_blocked_pair calls)
+
+
+def _sd_609_norm(raw: str | None) -> Optional[str]:
+    try:
+        from siddes_safety.policy import normalize_target_token
+
+        return normalize_target_token(str(raw or "")) or None
+    except Exception:
+        s = str(raw or "").strip()
+        return s or None
+
+
+def _sd_609_counterparty_tokens(item: Any) -> list[str]:
+    try:
+        if not isinstance(item, dict):
+            return []
+        p = item.get("participant")
+        if not isinstance(p, dict):
+            return []
+        out: list[str] = []
+        for k in ("handle", "userId"):
+            v = str(p.get(k) or "").strip()
+            if v:
+                out.append(v)
+        return out
+    except Exception:
+        return []
+
+
+def _sd_609_viewer_blocker_ids(viewer_id: str) -> list[str]:
+    v = str(viewer_id or "").strip()
+    if not v:
+        return []
+    try:
+        from siddes_backend.identity import viewer_aliases
+
+        out = set(viewer_aliases(v) or set())
+        # Include legacy dev owner token for safety parity (seeded content uses owner_id="me").
+        if v.startswith("me_"):
+            out.add("me")
+        out.add(v)
+        return [str(x).strip() for x in out if str(x).strip()]
+    except Exception:
+        return [v]
+
+
+def _sd_609_handle_maps(handles: set[str]) -> tuple[dict[str, str], dict[str, str]]:
+    """Return (handle->me_<id>, me_<id>->handle) best-effort."""
+
+    try:
+        from django.contrib.auth import get_user_model
+        from django.db.models import Q
+
+        User = get_user_model()
+
+        names: list[str] = []
+        for h in handles:
+            hh = str(h or "").strip()
+            if not hh:
+                continue
+            if hh.startswith("@"):  # strip leading @
+                hh = hh[1:]
+            hh = hh.strip()
+            if hh:
+                names.append(hh)
+
+        if not names:
+            return {}, {}
+
+        q = Q()
+        for n in sorted({x.lower() for x in names if x}):
+            q |= Q(username__iexact=n)
+
+        if not q:
+            return {}, {}
+
+        rows = list(User.objects.filter(q).values_list("id", "username"))
+        h2m: dict[str, str] = {}
+        m2h: dict[str, str] = {}
+        for uid, uname in rows:
+            u = str(uname or "").strip()
+            if not u:
+                continue
+            h = "@" + u.lower()
+            mid = f"me_{uid}"
+            h2m[h] = mid
+            m2h[mid] = h
+        return h2m, m2h
+    except Exception:
+        return {}, {}
+
+
+def _sd_609_bulk_blocked_counterparty_norms(viewer_id: str, items: list[Any]) -> set[str]:
+    """Return normalized counterparty tokens blocked either direction.
+
+    Output contains both forms when possible:
+      - @handle
+      - me_<id>
+
+    This is a best-effort optimization and must never break inbox endpoints.
+    """
+
+    try:
+        v = str(viewer_id or "").strip()
+        if not v:
+            return set()
+
+        # Gather counterparty tokens
+        raw: set[str] = set()
+        handles: set[str] = set()
+        for it in items:
+            for tok in _sd_609_counterparty_tokens(it):
+                t = str(tok or "").strip()
+                if not t:
+                    continue
+                raw.add(t)
+                if t.startswith("@"):  # normalize handles for mapping
+                    handles.add(t.lower())
+
+        handle_to_me, me_to_handle = _sd_609_handle_maps(handles)
+
+        other_norm: set[str] = set()
+        other_blocker_ids: set[str] = set()
+
+        for t in raw:
+            other_blocker_ids.add(t)
+            nt = _sd_609_norm(t)
+            if nt:
+                other_norm.add(nt)
+                if nt.startswith("@") and nt in handle_to_me:
+                    other_blocker_ids.add(handle_to_me[nt])
+
+        # Expand known handle<->me mappings
+        for h, mid in handle_to_me.items():
+            other_norm.add(h)
+            other_blocker_ids.add(mid)
+
+        v_blocker_ids = _sd_609_viewer_blocker_ids(v)
+        v_targets: set[str] = set()
+        for x in v_blocker_ids:
+            nt = _sd_609_norm(x)
+            if nt:
+                v_targets.add(nt)
+
+        if not other_norm or not v_targets or not v_blocker_ids:
+            return set()
+
+        from siddes_safety.models import UserBlock
+
+        blocked: set[str] = set()
+
+        # viewer -> other
+        rows1 = UserBlock.objects.filter(
+            blocker_id__in=v_blocker_ids,
+            blocked_token__in=list(other_norm),
+        ).values_list("blocked_token", flat=True)
+
+        for x in rows1:
+            tok = str(x or "").strip()
+            if not tok:
+                continue
+            blocked.add(tok)
+            if tok.startswith("@") and tok in handle_to_me:
+                blocked.add(handle_to_me[tok])
+            if tok.startswith("me_") and tok in me_to_handle:
+                blocked.add(me_to_handle[tok])
+
+        # other -> viewer
+        rows2 = UserBlock.objects.filter(
+            blocker_id__in=list(other_blocker_ids),
+            blocked_token__in=list(v_targets),
+        ).values_list("blocker_id", flat=True)
+
+        for x in rows2:
+            bid = str(x or "").strip()
+            if not bid:
+                continue
+            # include raw blocker id
+            blocked.add(bid)
+            nb = _sd_609_norm(bid)
+            if nb:
+                blocked.add(nb)
+                if nb.startswith("@") and nb in handle_to_me:
+                    blocked.add(handle_to_me[nb])
+            if bid.startswith("me_") and bid in me_to_handle:
+                blocked.add(me_to_handle[bid])
+
+        return {str(b).strip() for b in blocked if str(b).strip()}
+    except Exception:
+        return set()
+
+
 def _filter_blocked_threads_payload(viewer_id: Optional[str], payload: Any) -> Any:
+    """Filter blocked threads in bulk (sd_609).
+
+    Previous behavior called `is_blocked_pair` per item (N+1 queries).
+    """
+
     try:
         if not viewer_id or not isinstance(payload, dict) or payload.get("restricted"):
             return payload
@@ -107,18 +305,22 @@ def _filter_blocked_threads_payload(viewer_id: Optional[str], payload: Any) -> A
         if not isinstance(items, list) or not items:
             return payload
 
+        blocked = _sd_609_bulk_blocked_counterparty_norms(str(viewer_id), items)
+        if not blocked:
+            return payload
+
         kept = []
         for it in items:
-            tok = None
-            try:
-                if isinstance(it, dict):
-                    p = it.get("participant")
-                    if isinstance(p, dict):
-                        tok = str(p.get("handle") or p.get("userId") or "").strip() or None
-            except Exception:
-                tok = None
+            toks = _sd_609_counterparty_tokens(it)
+            norms: set[str] = set()
+            for t in toks:
+                nt = _sd_609_norm(t)
+                if nt:
+                    norms.add(nt)
+                if str(t).startswith("@"):  # raw handle form
+                    norms.add(str(t).lower())
 
-            if tok and is_blocked_pair(str(viewer_id), str(tok)):
+            if norms and any(n in blocked for n in norms):
                 continue
             kept.append(it)
 
@@ -139,6 +341,8 @@ def _restrict_blocked_thread_payload(viewer_id: Optional[str], payload: Any) -> 
         return payload
     except Exception:
         return payload
+
+# sd_609_bulk_blocks: end
 
 
 def _db_ready() -> bool:

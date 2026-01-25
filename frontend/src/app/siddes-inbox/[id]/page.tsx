@@ -1,7 +1,9 @@
 "use client";
 export const dynamic = "force-dynamic";
 
+import { type SideId, SIDES, SIDE_THEMES } from "@/src/lib/sides";
 import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
+
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { AlertTriangle, CheckCircle2, ChevronRight, Send, X } from "lucide-react";
@@ -10,7 +12,7 @@ import { InboxStubDebugPanel } from "@/src/components/InboxStubDebugPanel";
 import { toast } from "@/src/lib/toastBus";
 import { MentionPicker } from "@/src/components/MentionPicker";
 import { useSide } from "@/src/components/SideProvider";
-import { type SideId, SIDE_THEMES, SIDES } from "@/src/lib/sides";
+
 import { getInboxProvider } from "@/src/lib/inboxProvider";
 import { useInboxStubViewer } from "@/src/lib/useInboxStubViewer";
 import {
@@ -415,6 +417,8 @@ function SiddesThreadPageInner() {
 
   useEffect(() => {
     let alive = true;
+
+    const ac = new AbortController();
     if (!mentionOpen) return () => { alive = false; };
 
     setMentionCandidatesLoading(true);
@@ -449,6 +453,7 @@ function SiddesThreadPageInner() {
 
     return () => {
       alive = false;
+      try { ac.abort(); } catch {}
     };
   }, [mentionOpen]);
 
@@ -469,7 +474,7 @@ function SiddesThreadPageInner() {
 
     (async () => {
       try {
-        const view = await provider.getThread(id, { viewer, limit: MSG_PAGE });
+        const view = await provider.getThread(id, { viewer, limit: MSG_PAGE, signal: ac.signal });
         if (!alive) return;
 
         if (!view?.thread) {
@@ -845,3 +850,6 @@ function SiddesThreadPageInner() {
     </div>
   );
 }
+
+
+// sd_609_inbox_thread_abort

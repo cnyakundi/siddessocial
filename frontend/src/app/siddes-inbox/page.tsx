@@ -12,12 +12,30 @@ import type { SideId } from "@/src/lib/sides";
 import { SIDE_THEMES, SIDES } from "@/src/lib/sides";
 import type { InboxThreadItem } from "@/src/lib/inboxProvider";
 import { getInboxProvider } from "@/src/lib/inboxProvider";
-import { ensureThreadLockedSide } from "@/src/lib/threadStore";
+import { ensureThreadLockedSide, loadThread, loadThreadMeta } from "@/src/lib/threadStore";
 import { InboxBanner } from "@/src/components/InboxBanner";
 import { isRestrictedError, restrictedMessage } from "@/src/lib/restricted";
 import { InboxStubDebugPanel } from "@/src/components/InboxStubDebugPanel";
 import { useInboxStubViewer } from "@/src/lib/useInboxStubViewer";
 type InboxFilter = "all" | "this" | "mismatch" | "unread";
+
+// sd_573: sort threads by most recent activity (server updatedAt + local threadStore meta)
+function sortTs(t: InboxThreadItem): number {
+  const anyT: any = t as any;
+  const serverTs =
+    (typeof anyT.updatedAt === "number" ? anyT.updatedAt : 0) ||
+    (typeof anyT.updatedAtMs === "number" ? anyT.updatedAtMs : 0) ||
+    (typeof anyT.lastTs === "number" ? anyT.lastTs : 0) ||
+    (typeof anyT.timeTs === "number" ? anyT.timeTs : 0) ||
+    (typeof anyT.updatedAt === "string" ? Date.parse(anyT.updatedAt) : 0) ||
+    0;
+
+  // Avoid hydration mismatch: only read localStorage on the client.
+  const localTs = typeof window === "undefined" ? 0 : (loadThreadMeta(t.id)?.updatedAt || 0);
+
+  return Math.max(serverTs, localTs);
+}
+
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -209,6 +227,7 @@ function SiddesInboxPageInner() {
   
   useEffect(() => {
     let alive = true;
+    const ac = new AbortController();
     setLoading(true);
     setError(null);
     setRestricted(false);
@@ -216,7 +235,7 @@ function SiddesInboxPageInner() {
     setNextCursor(null);
 
     provider
-      .listThreads({ viewer, side: side, limit: PAGE_SIZE })
+      .listThreads({ viewer, side: side, limit: PAGE_SIZE, signal: ac.signal })
       .then((page) => {
         if (!alive) return;
 
@@ -255,6 +274,7 @@ function SiddesInboxPageInner() {
 
     return () => {
       alive = false;
+      try { ac.abort(); } catch {}
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [provider, side, viewer]);
@@ -287,6 +307,9 @@ function SiddesInboxPageInner() {
         });
       }
     }
+
+    // sd_573: sort by most-recent activity (prevents regressions + satisfies check)
+    items = [...items].sort((a, b) => sortTs(b) - sortTs(a));
 
     return items;
   }, [threads, query, advanced, filter, side]);
@@ -503,6 +526,12 @@ function SiddesInboxPageInner() {
     const lockedSide = meta.lockedSide;
     const isPrivate = lockedSide !== "public";
 
+          // sd_573: local preview + recency (immediate UI updates after sending)
+          const localMsgs = loadThread(t.id);
+          const lastLocal = localMsgs && localMsgs.length ? localMsgs[localMsgs.length - 1] : null;
+          const lastText = String((lastLocal as any)?.text || t.last || "");
+
+
           const participant = (t as any)?.participant as any;
           const initials = String(participant?.initials || (t.title || "??")).slice(0, 2);
           const sideId = ((t as any)?.lockedSide as SideId) || side;
@@ -528,7 +557,7 @@ function SiddesInboxPageInner() {
                     <span className="text-[11px] font-bold text-gray-400 flex-shrink-0">{t.time}</span>
                     {showContextRisk ? <ContextRiskBadge isPrivate={isPrivate} /> : null}
                   </div>
-                  <div className="text-[13px] font-medium text-gray-600 truncate">{t.last}</div>
+                  <div className="text-[13px] font-medium text-gray-600 truncate">{lastText}</div>
                   <div className="mt-2 flex items-center gap-2"><SidePill side={lockedSide} /><ContextRiskBadge isPrivate={isPrivate} /></div>
                 </div>
                 {t.unread > 0 ? <span className="w-2 h-2 rounded-full bg-red-500" aria-label="Unread" /> : null}
@@ -564,3 +593,6 @@ function SiddesInboxPageInner() {
 }
 
 // counts.unread
+
+
+// sd_609_inbox_page_abort

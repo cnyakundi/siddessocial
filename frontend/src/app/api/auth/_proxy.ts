@@ -190,14 +190,39 @@ function buildProxyHeaders(req: Request, requestId: string): Record<string, stri
   return headers;
 }
 
-async function doFetch(url: string, method: string, headers: Record<string, string>, body?: any): Promise<Response> {
-  return await fetch(url, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-    cache: "no-store",
-  });
+// sd_609_proxy_timeout: hard timeout for upstream proxy fetches (prevents hanging requests)
+function resolveProxyTimeoutMs(): number {
+  const raw = String(process.env.SD_PROXY_TIMEOUT_MS || process.env.NEXT_PUBLIC_PROXY_TIMEOUT_MS || "").trim();
+  const n = Number(raw);
+  const def = process.env.NODE_ENV === "production" ? 8000 : 15000;
+  const v = Number.isFinite(n) && n > 0 ? Math.floor(n) : def;
+  return Math.max(1000, Math.min(60000, v));
 }
+
+async function doFetch(url: string, method: string, headers: Record<string, string>, body?: any): Promise<Response> {
+  const timeoutMs = resolveProxyTimeoutMs();
+  const ac = new AbortController();
+  const t = setTimeout(() => {
+    try {
+      ac.abort();
+    } catch {
+      // ignore
+    }
+  }, timeoutMs);
+
+  try {
+    return await fetch(url, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+      cache: "no-store",
+      signal: ac.signal,
+    });
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 
 export async function proxyJson(
   req: Request,
@@ -283,3 +308,5 @@ export async function proxyJson(
 
   return { res, data, setCookies };
 }
+
+// sd_609_proxy_timeout: end

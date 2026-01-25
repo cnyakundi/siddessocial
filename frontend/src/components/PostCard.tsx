@@ -905,7 +905,7 @@ export function PostCard({
   };
 
   const openPost = () => {
-    saveReturnScroll();
+    saveReturnScroll(post.id);
     router.push(`/siddes-post/${post.id}`);
   };
 
@@ -917,11 +917,11 @@ export function PostCard({
       toast.error("Profile not available.");
       return;
     }
-    saveReturnScroll();
+    saveReturnScroll(post.id);
     router.push(`/u/${encodeURIComponent(u)}`);
   };
   const openReply = () => {
-    saveReturnScroll();
+    saveReturnScroll(post.id);
     router.push(`/siddes-post/${post.id}?reply=1`);
   };
 
