@@ -242,8 +242,8 @@ export default function UserProfilePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-2xl mx-auto px-4 py-6">
+    <div className="min-h-screen bg-white">
+      <div className="max-w-xl mx-auto px-4 py-6">
         {loading ? (
           <div className="rounded-3xl border border-gray-200 bg-white p-6">
             <div className="h-5 w-40 bg-gray-100 rounded" />
@@ -337,21 +337,24 @@ export default function UserProfilePage() {
 
 
             {/* sd_528: relationship clarity (directional) */}
+
             {!isOwner ? (
-              <div className="mt-3 mb-4 flex flex-wrap gap-2 text-xs font-extrabold">
-                <div className="px-3 py-1.5 rounded-full bg-white border border-gray-200 text-gray-700">
-                  They show you: <span className="text-gray-900">{SIDES[viewSide]?.label || viewSide}</span>
-                </div>
-                <div className="px-3 py-1.5 rounded-full bg-white border border-gray-200 text-gray-700">
-                  You show them:{" "}
-                  <span className="text-gray-900">
+              <div className="mt-3 mb-5 flex items-center justify-center gap-2 text-xs font-semibold text-gray-500">
+                <span>
+                  They show you <span className="font-black text-gray-900">{SIDES[viewSide]?.label || viewSide}</span>
+                </span>
+                <span className="text-gray-300">•</span>
+                <span>
+                  You show them{" "}
+                  <span className="font-black text-gray-900">
                     {viewerSidedAs ? (SIDES[viewerSidedAs]?.label || viewerSidedAs) : "Public"}
                   </span>
-                </div>
+                </span>
               </div>
             ) : null}
 
             <PrismIdentityCard
+              variant="clean"
               viewSide={displaySide}
               handle={user.handle}
               facet={facet}
@@ -413,7 +416,7 @@ actions={
                 ) : null}
               </div>
 
-              <div className="rounded-3xl border border-gray-200 bg-white overflow-hidden">
+              <div className="bg-white">
                 {posts.length ? (
                   <>
                     {posts.map((post) => (

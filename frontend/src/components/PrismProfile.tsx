@@ -701,8 +701,9 @@ export function PrismIdentityCard(props: {
   siders?: number | string | null;
   sharedSets?: string[];
   actions?: React.ReactNode;
+  variant?: "hero" | "clean";
 }) {
-  const { viewSide, handle, facet, sharedSets, actions } = props;
+  const { viewSide, handle, facet, sharedSets, actions, variant = "hero" } = props;
   const theme = SIDE_THEMES[viewSide];
   const Icon = SIDE_ICON[viewSide];
   const name = facet.displayName || handle || "User";
@@ -718,7 +719,92 @@ export function PrismIdentityCard(props: {
   const truth = privacyTruth(viewSide);
   const isClose = viewSide === "close";
   const showAccessStat = isClose;
-return (
+
+  if (variant === "clean") {
+    return (
+      <div className="w-full">
+        <div className="flex flex-col items-center text-center pt-8 pb-6">
+          <div
+            className={cn(
+              "w-28 h-28 rounded-full bg-gray-100 overflow-hidden shadow-sm flex items-center justify-center font-black text-2xl select-none ring-2",
+              theme.ring
+            )}
+            aria-hidden="true"
+            title={name}
+          >
+            {avatarImage ? <img src={avatarImage} alt="" className="w-full h-full object-cover" /> : initialsFrom(name)}
+          </div>
+
+          <h1 className="mt-5 text-2xl font-black text-gray-900 tracking-tight">{name}</h1>
+          <div className="text-sm text-gray-500 font-semibold mt-1">{handle}</div>
+
+          <div
+            className={cn(
+              "mt-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-extrabold uppercase tracking-wider",
+              theme.lightBg,
+              theme.border,
+              theme.text
+            )}
+          >
+            <Icon size={12} />
+            {SIDES[viewSide].label} identity
+          </div>
+
+          {headline ? <div className="mt-3 text-sm font-semibold text-gray-700">{headline}</div> : null}
+
+          <p className={cn("mt-4 text-[15px] leading-relaxed max-w-md", bio ? "text-gray-700" : "text-gray-400")}>
+            {bio || "No bio yet."}
+          </p>
+
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 mt-4 text-xs text-gray-500 font-medium">
+            {location ? (
+              <div className="flex items-center gap-1">
+                <MapPin size={14} /> {location}
+              </div>
+            ) : null}
+            {website ? (
+              <a
+                href={safeWebsiteHref(website)}
+                target="_blank"
+                rel="noreferrer"
+                className={cn("flex items-center gap-1 font-extrabold hover:underline", theme.text)}
+              >
+                <LinkIcon size={14} /> {website}
+              </a>
+            ) : null}
+            <div className="flex items-center gap-1 text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
+              <Shield size={10} /> {truth}
+            </div>
+          </div>
+
+          {actions ? <div className="mt-6 w-full max-w-sm">{actions}</div> : null}
+
+          {sharedSets && sharedSets.length > 0 ? (
+            <div className="mt-6 w-full max-w-md">
+              <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-2">Shared Sets</div>
+              <div className="flex flex-wrap gap-1.5 justify-center">
+                {sharedSets.slice(0, 8).map((s) => (
+                  <span
+                    key={s}
+                    className="px-2 py-1 rounded-full bg-gray-100 text-[10px] font-extrabold text-gray-700 border border-gray-200"
+                  >
+                    {s}
+                  </span>
+                ))}
+                {sharedSets.length > 8 ? (
+                  <span className="px-2 py-1 rounded-full bg-gray-50 text-[10px] font-extrabold text-gray-500 border border-gray-200">
+                    +{sharedSets.length - 8}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+
+  return (
     <div className={cn("w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden border", theme.border)}>
       {/* Cover */}
       <div

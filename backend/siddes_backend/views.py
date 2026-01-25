@@ -12,7 +12,9 @@ from django.http import JsonResponse, HttpRequest
 
 def healthz(request: HttpRequest):
     """Liveness probe."""
-    return JsonResponse({"ok": True, "service": "siddes-backend"})
+    resp = JsonResponse({"ok": True, "service": "siddes-backend"})
+    resp["Cache-Control"] = "no-store"
+    return resp
 
 
 def _err(e: Exception) -> str:
@@ -144,5 +146,6 @@ def readyz(request: HttpRequest):
                 (payload["checks"]).pop(k, None)
         # Remove migration list.
         (payload["checks"]).pop("pending_migrations", None)
-
-    return JsonResponse(payload, status=status)
+    resp = JsonResponse(payload, status=status)
+    resp["Cache-Control"] = "no-store"
+    return resp

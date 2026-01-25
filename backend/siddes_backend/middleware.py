@@ -674,3 +674,53 @@ class ApiRequestLogMiddleware:
             return self.get_response(request)
 
 # --- end sd_391_api_request_log_hardening_force_override --------------------------
+# --- sd_584: Cache safety headers for /api/* (prevents edge/shared caching) --------
+        class ApiCacheSafetyHeadersMiddleware:
+            """Force safe cache headers on /api/* responses.
+
+            Why:
+            - CDN/edge caches must never store personalized responses.
+            - Makes intent explicit even if a proxy/CDN rule is misconfigured.
+            - PRIVATE BY DEFAULT; public endpoints must explicitly opt in.
+
+            Public allowlist prefixes (comma-separated):
+              SIDDES_PUBLIC_API_PREFIXES="/api/slate,/api/health"
+            """
+
+            def __init__(self, get_response):
+                self.get_response = get_response
+                raw = os.environ.get("SIDDES_PUBLIC_API_PREFIXES", "/api/slate,/api/health")
+                self.public_prefixes = [p.strip() for p in str(raw).split(",") if p.strip()]
+
+            def __call__(self, request: HttpRequest):
+                response: HttpResponse = self.get_response(request)
+
+                if not str(getattr(request, "path", "") or "").startswith("/api/"):
+                    return response
+
+                path = str(getattr(request, "path", "") or "")
+                is_public = any(path.startswith(p) for p in self.public_prefixes)
+
+                cc = response.get("Cache-Control") or response.get("cache-control")
+
+                if is_public:
+                    # Public endpoints: default to revalidate-only (safe).
+                    if not cc:
+                        response["Cache-Control"] = "public, max-age=0, must-revalidate"
+                else:
+                    # Private by default: never store in shared caches.
+                    response["Cache-Control"] = "private, no-store"
+                    response["Pragma"] = "no-cache"
+                    response["Expires"] = "0"
+
+                    # Vary is a belt: protects caches that ignore private/no-store.
+                    vary = response.get("Vary") or ""
+                    parts = [p.strip() for p in str(vary).split(",") if p.strip()] if vary else []
+                    lower = {p.lower() for p in parts}
+                    for need in ("Cookie", "Authorization"):
+                        if need.lower() not in lower:
+                            parts.append(need)
+                            lower.add(need.lower())
+                    response["Vary"] = ", ".join(parts)
+
+                return response

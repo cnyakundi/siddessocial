@@ -52,7 +52,7 @@ export function AppTopBar(_props: { onOpenNotificationsDrawer?: () => void } = {
     if (pathname.startsWith("/siddes-search") || pathname.startsWith("/search")) return "Search";
 if (pathname.startsWith("/siddes-profile")) return "Me";
     if (pathname.startsWith("/siddes-compose")) return "Create";
-    if (pathname.startsWith("/siddes-notifications")) return "Inbox";
+    if (pathname.startsWith("/siddes-notifications")) return "Alerts";
     return "";
   }, [isSiddes, isNow, pathname]);
 

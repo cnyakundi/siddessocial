@@ -35,6 +35,9 @@ type SideContextValue = {
 
 const SideContext = createContext<SideContextValue | null>(null);
 
+// sd_714_public_enter_confirm_once: reduce repeated Public-entry friction (confirm once per session).
+const PUBLIC_ENTER_CONFIRM_MARK = "__sd_public_enter_confirm_v1";
+
 export function SideProvider({ children }: { children: React.ReactNode }) {
   const [side, setSideState] = useState<SideId>("friends");
   const [sideLock, setSideLockState] = useState<SideLock>({ enabled: false, side: null, reason: null });
@@ -79,6 +82,15 @@ export function SideProvider({ children }: { children: React.ReactNode }) {
 
     // Threshold moment: entering Public must be deliberate.
     if (next === "public" && side !== "public") {
+      // sd_714_public_enter_confirm_once: confirm only once per session to reduce dangerous friction.
+      try {
+        const marked = window.sessionStorage.getItem(PUBLIC_ENTER_CONFIRM_MARK);
+        if (marked === "1") {
+          setSideImmediate(next);
+          if (afterConfirm) afterConfirm();
+          return;
+        }
+      } catch {}
       setPublicFromSide(side);
       setPendingAfterConfirm(() => afterConfirm || null);
       setPendingAfterCancel(() => afterCancel || null);
@@ -97,6 +109,9 @@ export function SideProvider({ children }: { children: React.ReactNode }) {
   const confirmEnterPublic = () => {
     setConfirmPublic(false);
     setSideImmediate("public");
+    try {
+      window.sessionStorage.setItem(PUBLIC_ENTER_CONFIRM_MARK, "1");
+    } catch {}
     const fn = pendingAfterConfirm;
     setPendingAfterConfirm(null);
     setPendingAfterCancel(null);

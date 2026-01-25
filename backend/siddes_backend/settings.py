@@ -154,6 +154,7 @@ MIDDLEWARE = [
     "siddes_backend.middleware.AccountStateMiddleware",
     "siddes_backend.middleware.ApiWriteAuthGuardMiddleware",
 
+    "siddes_backend.middleware.ApiCacheSafetyHeadersMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]

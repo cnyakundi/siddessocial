@@ -1496,7 +1496,11 @@ export function PostCard({
             try {
               const p = typeof window !== "undefined" ? window.location.pathname : "";
               if (p && p.startsWith("/siddes-post/")) {
-                window.location.href = "/siddes-feed";
+                try {
+                  router.replace("/siddes-feed");
+                } catch {
+                  window.location.href = "/siddes-feed";
+                }
                 return;
               }
             } catch {}

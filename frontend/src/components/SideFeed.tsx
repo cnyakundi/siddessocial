@@ -268,6 +268,7 @@ export function SideFeed() {
   const [hasMore, setHasMore] = useState(false);
   const [loadingInitial, setLoadingInitial] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [retryTick, setRetryTick] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadMoreErr, setLoadMoreErr] = useState<string | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -435,7 +436,7 @@ export function SideFeed() {
     return () => {
       mounted = false;
     };
-  }, [side, provider, publicChannel, activeSet]);
+  }, [side, provider, publicChannel, activeSet, retryTick]);
 
   useEffect(() => {
     if (!hasMore || !nextCursor) return;
@@ -816,7 +817,7 @@ export function SideFeed() {
               </Link>
               <button
                 type="button"
-                onClick={() => window.location.reload()}
+                onClick={() => setRetryTick((x) => x + 1)}
                 className="px-3 py-2 rounded-full bg-white border border-amber-200 text-amber-900 text-xs font-extrabold"
               >
                 Retry
@@ -830,7 +831,7 @@ export function SideFeed() {
             <div className="pt-2">
               <button
                 type="button"
-                onClick={() => window.location.reload()}
+                onClick={() => setRetryTick((x) => x + 1)}
                 className="px-3 py-2 rounded-full bg-gray-900 text-white text-xs font-extrabold"
               >
                 Retry
