@@ -937,17 +937,17 @@ export function PostCard({
 
   const doShare = async () => {
     setOpenEcho(false);
-
-    const relUrl = `/siddes-post/${post.id}`;
+    const shareablePublic = side === "public" && (!post.setId || String(post.setId).startsWith("b_"));
+    const relUrl = shareablePublic ? `/p/${post.id}` : `/siddes-post/${post.id}`;
     const absUrl = typeof window !== "undefined" ? `${window.location.origin}${relUrl}` : relUrl;
 
-    // Context safety: only Public supports external share. Private sides copy an internal link.
-    if (side !== "public") {
+    // Context safety: only true Public posts (non-Set) support external share.
+    if (!shareablePublic) {
       const ok = await copyToClipboard(absUrl);
-      toast[ok ? "success" : "error"](ok ? "Internal link copied (requires access)." : "Could not copy link.");
+      const msg = side === "public" ? "Internal link copied (Set requires access)." : "Internal link copied (requires access).";
+      toast[ok ? "success" : "error"](ok ? msg : "Could not copy link.");
       return;
     }
-
     // Prefer the native share menu if available
     try {
       if (typeof navigator !== "undefined" && (navigator as any).share) {

@@ -32,6 +32,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     "/legal",
     "/community-guidelines",
     "/about",
+    "/p",
   ];
 
   const hideChrome = CHROME_HIDDEN_PREFIXES.some((pre) => pathname.startsWith(pre));

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 import AuthLegal from "@/src/components/auth/AuthLegal";
 import AuthShell from "@/src/components/auth/AuthShell";
@@ -44,6 +45,10 @@ export default function LoginPage() {
   const [debug, setDebug] = useState<string | null>(null);
   const [backendOk, setBackendOk] = useState<boolean | null>(null);
   const gid = googleClientId();
+
+  const sp = useSearchParams();
+  const nextParam = safeNextPath(sp?.get("next"));
+  const signupHref = nextParam ? `/signup?next=${encodeURIComponent(nextParam)}` : "/signup";
 
   const canSubmit = identifier.trim().length > 0 && password.length > 0;
 
@@ -208,7 +213,7 @@ export default function LoginPage() {
 
         <div className="text-sm text-gray-600 mt-4 text-center">
           New here?{" "}
-          <Link href="/signup" className="font-bold text-gray-900 hover:underline">
+          <Link href={signupHref} className="font-bold text-gray-900 hover:underline">
             Create account
           </Link>
         </div>

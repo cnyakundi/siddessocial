@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 import AuthLegal from "@/src/components/auth/AuthLegal";
 import AuthShell from "@/src/components/auth/AuthShell";
@@ -9,6 +10,18 @@ import GoogleGsiButton from "@/src/components/auth/GoogleGsiButton";
 
 function googleClientId(): string {
   return String(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "").trim();
+}
+
+function safeNextPath(raw: string | null): string | null {
+  if (!raw) return null;
+  const next = String(raw).trim();
+  if (!next) return null;
+  // Only allow same-site relative paths (prevents https://evil.com and //evil.com)
+  if (!next.startsWith("/")) return null;
+  if (next.startsWith("//")) return null;
+  // Block backslashes and newlines (edge-case parser tricks)
+  if (next.includes("\\") || /[\r\n]/.test(next)) return null;
+  return next;
 }
 
 function humanizeAuthError(err: string, status: number, kind: "login" | "signup"): string {
@@ -34,6 +47,11 @@ export default function SignupPage() {
   const [debug, setDebug] = useState<string | null>(null);
   const [backendOk, setBackendOk] = useState<boolean | null>(null);
   const gid = googleClientId();
+  const sp = useSearchParams();
+  const nextParam = safeNextPath(sp?.get("next"));
+  const onboardingHref = nextParam ? `/onboarding?next=${encodeURIComponent(nextParam)}` : "/onboarding";
+  const loginHref = nextParam ? `/login?next=${encodeURIComponent(nextParam)}` : "/login";
+
 
   const canSubmit = email.includes("@") && /^[a-z0-9_]{3,24}$/.test(username.trim()) && password.length >= 8 && ageOk;
 
@@ -70,7 +88,7 @@ export default function SignupPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data?.ok) {
-        window.location.href = "/onboarding";
+        window.location.href = onboardingHref;
         return;
       }
 
@@ -193,7 +211,7 @@ export default function SignupPage() {
                 });
                 const d = await r.json().catch(() => ({}));
                 if (r.ok && d?.ok) {
-                  window.location.href = "/onboarding";
+                  window.location.href = onboardingHref;
                   return;
                 }
                 setMsg(d?.error ? String(d.error) : "Google sign-up failed");
@@ -204,7 +222,7 @@ export default function SignupPage() {
 
         <div className="text-sm text-gray-600 mt-4 text-center">
           Already have an account?{" "}
-          <Link href="/login" className="font-bold text-gray-900 hover:underline">
+          <Link href={loginHref} className="font-bold text-gray-900 hover:underline">
             Sign in
           </Link>
         </div>
