@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { fetchMe } from "@/src/lib/authMe";
 import { patchFetchForCsrf } from "@/src/lib/csrf";
+import { updateSessionFromMe } from "@/src/lib/sessionIdentity";
 
 /**
  * AuthBootstrap
@@ -63,6 +64,9 @@ export function AuthBootstrap() {
     const isProtected = protectedPrefixes.some((pre) => p.startsWith(pre));
 
     fetchMe().then((me) => {
+      // Cache a safe in-tab identity for user-scoped client caches.
+      // If the session is not authenticated, this clears identity.
+      updateSessionFromMe(me);
       const authed = !!me?.authenticated;
       const onboarded = !!me?.onboarding?.completed;
 

@@ -55,7 +55,7 @@ export function NotificationsDrawer({
 
         <div className="px-6 pt-6 pb-4 flex items-center justify-between">
           <div>
-            <div id="notifications-drawer-title" id="notifications-drawer-title" className="text-xl font-black tracking-tight text-gray-900">Notifications</div>
+            <div id="notifications-drawer-title" className="text-xl font-black tracking-tight text-gray-900">Notifications</div>
             <div className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mt-1">Deterministic • Server truth</div>
           </div>
           <button

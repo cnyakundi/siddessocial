@@ -43,6 +43,12 @@ export function InviteActionSheet({
 
   useLockBodyScroll(open);
 
+  const close = () => {
+    setErr(null);
+    setBusy(false);
+    onClose();
+  };
+
   const panelRef = useRef<HTMLDivElement | null>(null);
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
   useDialogA11y({ open, containerRef: panelRef, initialFocusRef: closeBtnRef, onClose: close });
@@ -52,12 +58,6 @@ export function InviteActionSheet({
     const p = (prefillTo || "").trim();
     if (p) setToRaw(p);
   }, [open, prefillTo]);
-
-  const close = () => {
-    setErr(null);
-    setBusy(false);
-    onClose();
-  };
 
   const send = async () => {
     const to = normalizeHandle(toRaw);

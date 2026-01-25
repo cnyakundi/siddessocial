@@ -164,9 +164,10 @@ def _revoke_private_access_on_block(*, viewer_token: str, target_token: str) -> 
         viewer_user = User.objects.filter(id=v_uid).first()
         if viewer_user is None:
             return
-
         # Resolve target user.
         t_user = None
+        t_user_viewer_id: Optional[str] = None
+        t_user_handle: Optional[str] = None
         t_uid = parse_viewer_user_id(ttok)
         if t_uid is not None:
             t_user = User.objects.filter(id=t_uid).first()
@@ -176,6 +177,20 @@ def _revoke_private_access_on_block(*, viewer_token: str, target_token: str) -> 
                 uname = h[1:]
                 t_user = User.objects.filter(username__iexact=uname).first()
 
+        # If the target is a handle token, Sets ownership is still commonly stored as "me_<id>".
+        # We need both forms as aliases to reliably revoke membership for Sets owned by the target.
+        try:
+            if t_user is not None:
+                tid = str(getattr(t_user, "id", "") or "").strip()
+                if tid:
+                    t_user_viewer_id = f"me_{tid}"
+                uname2 = str(getattr(t_user, "username", "") or "").strip()
+                if uname2:
+                    t_user_handle = normalize_handle("@" + uname2) or ("@" + uname2.lower())
+        except Exception:
+            t_user_viewer_id = None
+            t_user_handle = None
+
         if t_user is not None:
             SideMembership.objects.filter(owner=viewer_user, member=t_user).delete()
             SideMembership.objects.filter(owner=t_user, member=viewer_user).delete()
@@ -183,6 +198,12 @@ def _revoke_private_access_on_block(*, viewer_token: str, target_token: str) -> 
         # Token-based Set cleanup (both directions)
         v_alias = list(viewer_aliases(vtok) or {vtok})
         t_alias = list(viewer_aliases(ttok) or {ttok})
+
+        # Add resolved target aliases (important when the block target was provided as a handle).
+        if t_user_viewer_id and t_user_viewer_id not in t_alias:
+            t_alias.append(t_user_viewer_id)
+        if t_user_handle and t_user_handle not in t_alias:
+            t_alias.append(t_user_handle)
 
         # Include legacy dev owner token for safety (seeded sets use owner_id="me").
         if vtok.startswith("me_") and "me" not in v_alias:

@@ -19,8 +19,11 @@ import type { SetDef, SetId } from "@/src/lib/sets";
 import { DEFAULT_SETS } from "@/src/lib/sets";
 import { getSetsProvider } from "@/src/lib/setsProvider";
 import { getLastSeenId, setLastSeenId } from "@/src/lib/lastSeen";
+import { fetchMe } from "@/src/lib/authMe";
 import type { FeedItem } from "@/src/lib/feedProvider";
 import { getFeedProvider } from "@/src/lib/feedProvider";
+import { getSessionIdentity, touchSessionConfirmed, updateSessionFromMe } from "@/src/lib/sessionIdentity";
+import { getCachedFeedPage, makeFeedCacheKey, setCachedFeedPage } from "@/src/lib/feedInstantCache";
 import { FLAGS } from "@/src/lib/flags";
 import type { PublicCalmUiState } from "@/src/lib/publicCalmUi";
 import { EVT_PUBLIC_CALM_UI_CHANGED, loadPublicCalmUi, savePublicCalmUi } from "@/src/lib/publicCalmUi";
@@ -60,9 +63,6 @@ function EmptyState({ side, onCreateSet, composeHref }: { side: SideId; onCreate
   // sd_201: actionable empty state (build the graph, ethically)
   const meta = SIDES[side];
   const theme = SIDE_THEMES[side];
-
-  // sd_573: restore scroll when returning from post detail (virtualized list).
-  useReturnScrollRestore();
 
   // sd_210_desktop_breathing
   return (
@@ -123,6 +123,9 @@ export function SideFeed() {
   const router = useRouter();
   const theme = SIDE_THEMES[side];
 
+  // sd_573: restore scroll when returning from post detail.
+  useReturnScrollRestore();
+
   // Audience filter (Sets for private sides; Topics for Public)
   const [activeSet, setActiveSet] = useState<SetId | null>(null);
   const [setPickerOpen, setSetPickerOpen] = useState(false);
@@ -131,6 +134,55 @@ export function SideFeed() {
   const [publicTuneOpen, setPublicTuneOpen] = useState(false);
   const [trustMode, setTrustMode] = useState<PublicTrustMode>("standard");
   const [importOpen, setImportOpen] = useState(false);
+
+
+  // Audience sync (TopBar <-> Feed <-> Compose)
+  useEffect(() => {
+    // Hydration-safe: restore last chosen scope for this Side.
+    try {
+      if (side === "public") {
+        const raw = FLAGS.publicChannels ? getStoredLastPublicTopic() : null;
+        const t = raw && PUBLIC_CHANNELS.some((c) => c.id === raw) ? (raw as PublicChannelId) : null;
+        setPublicChannel(t || "all");
+        setActiveSet(null);
+      } else {
+        const sid = getStoredLastSetForSide(side);
+        setActiveSet(sid || null);
+      }
+    } catch {}
+  }, [side]);
+
+  useEffect(() => {
+    // Keep feed scope synced with the app-wide audience bus (TopBar, BottomNav, etc.)
+    const off = subscribeAudienceChanged((e) => {
+      if (!e || e.side !== side) return;
+      if (side === "public") {
+        const t = e.topic;
+        setPublicChannel(FLAGS.publicChannels && t ? (t as any) : "all");
+      } else {
+        setActiveSet((e.setId as any) || null);
+      }
+    });
+    return () => {
+      try { off(); } catch {}
+    };
+  }, [side]);
+
+  const pickSet = useCallback(
+    (next: SetId | null) => {
+      setActiveSet(next);
+      try { setStoredLastSetForSide(side, next); } catch {}
+      try { emitAudienceChanged({ side, setId: next, topic: null, source: "SideFeed" }); } catch {}
+    },
+    [side]
+  );
+
+  const pickPublicChannel = useCallback((next: "all" | PublicChannelId) => {
+    setPublicChannel(next);
+    const topic = next === "all" ? null : next;
+    try { setStoredLastPublicTopic(topic); } catch {}
+    try { emitAudienceChanged({ side: "public", topic, setId: null, source: "SideFeed" }); } catch {}
+  }, []);
 
   // sd_404: context-safe compose entry (inherit Side + audience)
   const composeHref = useMemo(() => {
@@ -215,6 +267,7 @@ export function SideFeed() {
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [loadingInitial, setLoadingInitial] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadMoreErr, setLoadMoreErr] = useState<string | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -260,42 +313,124 @@ export function SideFeed() {
   }, [activeSet, hasMore, nextCursor, provider, publicChannel, side, loadingMore, loadingInitial]);
 
 
-  // Reset side-scoped UI state when side changes (and restore last audience)
-  // sd_540a: restore last audience so Mode switches feel instant + consistent across surfaces
-    useEffect(() => {
+    // Reset side-scoped UI state when side changes.
+  // Part 2: "instant feel" cache (stale-while-revalidate) scoped by viewer + auth-epoch + side.
+  useEffect(() => {
     let mounted = true;
-    setRestricted(false);
-    setLoadErr(null);
-    setLoadMoreErr(null);
-    setLoadingInitial(true);
-    setLoadingMore(false);
-    setNextCursor(null);
-    setHasMore(false);
 
-    const topic = side === "public" && FLAGS.publicChannels && publicChannel !== "all" ? publicChannel : null;
+    (async () => {
+      setRestricted(false);
+      setLoadErr(null);
+      setLoadMoreErr(null);
+      setLoadingMore(false);
+      setNextCursor(null);
+      setHasMore(false);
+      setRefreshing(false);
 
-    provider
-      .listPage(side, { topic, set: (side !== "public" ? (activeSet || null) : null), limit: PAGE_LIMIT, cursor: null })
-      .then((page) => {
+      const topic = side === "public" && FLAGS.publicChannels && publicChannel !== "all" ? publicChannel : null;
+      const setId = side !== "public" ? (activeSet || null) : null;
+
+      // Ensure we have a user-scoped identity for safe cache keys.
+      let ident = getSessionIdentity();
+      if ((!ident.viewerId || !ident.epoch || !ident.authed) && typeof fetchMe === "function") {
+        try {
+          const me = await fetchMe();
+          updateSessionFromMe(me);
+        } catch {
+          // ignore
+        }
+        ident = getSessionIdentity();
+      }
+
+      if (!mounted) return;
+
+      const viewerAtStart = ident.viewerId;
+      const epochAtStart = ident.epoch;
+      const canUseCache = !!viewerAtStart && !!epochAtStart && ident.authed;
+
+      let usedCache = false;
+      let cacheKey: string | null = null;
+
+      if (canUseCache) {
+        cacheKey = makeFeedCacheKey({
+          epoch: String(epochAtStart),
+          viewerId: String(viewerAtStart),
+          side,
+          topic,
+          setId,
+          cursor: null,
+          limit: PAGE_LIMIT,
+        });
+        const cached = getCachedFeedPage(cacheKey);
+        if (cached) {
+          usedCache = true;
+          setRawPosts(cached.items || []);
+          setNextCursor(cached.nextCursor ?? null);
+          setHasMore(Boolean(cached.hasMore));
+          setLoadingInitial(false);
+          setRefreshing(true);
+        }
+      }
+
+      if (!usedCache) {
+        setRawPosts([]);
+        setLoadingInitial(true);
+      }
+
+      try {
+        const page = await provider.listPage(side, { topic, set: setId, limit: PAGE_LIMIT, cursor: null });
         if (!mounted) return;
+
         setRawPosts(page.items || []);
         setNextCursor(page.nextCursor);
         setHasMore(page.hasMore);
         setLoadingInitial(false);
-      })
-      .catch((e) => {
+        setRefreshing(false);
+
+        // Successful authenticated fetch -> mark session as recently confirmed.
+        touchSessionConfirmed();
+
+        // Only store into the same identity that initiated this load.
+        if (cacheKey && viewerAtStart && epochAtStart) {
+          const identNow = getSessionIdentity();
+          if (identNow.viewerId === viewerAtStart && identNow.epoch === epochAtStart && identNow.authed) {
+            setCachedFeedPage(cacheKey, page);
+          }
+        }
+      } catch (e: any) {
         if (!mounted) return;
+
+        setRefreshing(false);
+
         if (isRestrictedError(e)) {
+          // Fail closed: do not show cached content if the session is restricted.
           setRestricted(true);
           setLoadErr(null);
-        } else {
-          setLoadErr(String(e?.message || "Feed failed"));
+          setRawPosts([]);
+          setNextCursor(null);
+          setHasMore(false);
+          setLoadingInitial(false);
+          return;
         }
+
+        const msg = String(e?.message || "Feed failed");
+        if (usedCache) {
+          // Soft fail: keep the cached view and tell the user gently.
+          try {
+            toast.info("Offline / flaky network — showing last known feed.");
+          } catch {}
+          setLoadErr(null);
+          setLoadingInitial(false);
+          return;
+        }
+
+        setLoadErr(msg);
         setRawPosts([]);
         setNextCursor(null);
         setHasMore(false);
         setLoadingInitial(false);
-      });
+      }
+    })();
 
     return () => {
       mounted = false;
@@ -610,7 +745,7 @@ export function SideFeed() {
           onClose={() => setSetPickerOpen(false)}
           sets={(sets || []).filter((s) => s.side === side)}
           activeSet={activeSet}
-          onPick={(next) => setActiveSet(next)}
+          onPick={pickSet}
           onNewSet={() => {
             if (process.env.NODE_ENV !== "production") setImportOpen(true);
             else router.push("/siddes-sets?create=1");
@@ -628,7 +763,7 @@ export function SideFeed() {
         showTrust={side === "public" && FLAGS.publicTrustDial}
         showCounts={side === "public" && FLAGS.publicCalmUi}
         publicChannel={publicChannel}
-        onPublicChannel={setPublicChannel}
+        onPublicChannel={pickPublicChannel}
         trustMode={trustMode}
         onTrustMode={applyTrustMode}
         countsShown={countsShown}
@@ -662,6 +797,12 @@ export function SideFeed() {
 
 {/* Feed content */}
       <div className="pt-2 px-4 lg:px-0">
+        {refreshing && !restricted && !loadErr ? (
+          <div className="mb-2 flex items-center gap-2 text-[11px] text-gray-400" data-testid="feed-refreshing">
+            <span className="inline-block h-2 w-2 rounded-full bg-gray-300 animate-pulse" aria-hidden="true" />
+            <span>Refreshing…</span>
+          </div>
+        ) : null}
         {restricted ? (
           <div className="p-6 rounded-2xl border border-amber-200 bg-amber-50 text-amber-900 space-y-2" data-testid="feed-restricted">
             <div className="text-sm font-extrabold">This feed is restricted.</div>
@@ -788,7 +929,7 @@ export function SideFeed() {
           void (async () => {
             const s = await setsProvider.create({ side, label: name, members });
             addSetToState(s);
-            setActiveSet(s.id);
+            pickSet(s.id);
             toast.success(`Created Set \"${s.label}\" with ${s.members.length} members.`);
           })();
         }}

@@ -468,6 +468,7 @@ function SiddesThreadPageInner() {
 
   useEffect(() => {
     let alive = true;
+    const ac = new AbortController();
 
     setRestricted(false);
     setError(null);
@@ -533,6 +534,7 @@ function SiddesThreadPageInner() {
 
     return () => {
       alive = false;
+      try { ac.abort(); } catch {}
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, provider, viewer]);

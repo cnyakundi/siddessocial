@@ -33,6 +33,7 @@ export function ImportSetSheet({
   useLockBodyScroll(open);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
+  const close = () => onClose();
   useDialogA11y({ open, containerRef: panelRef, initialFocusRef: closeBtnRef, onClose: close });
 
   const [step, setStep] = useState<Step>("import");
@@ -78,8 +79,6 @@ export function ImportSetSheet({
     setSyncError(null);
     // keep contacts in memory for this open session; user can re-sync if they want
   };
-
-  const close = () => onClose();
 
   async function syncContacts() {
     setSyncError(null);

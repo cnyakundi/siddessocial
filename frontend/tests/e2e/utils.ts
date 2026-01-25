@@ -91,6 +91,29 @@ export async function assertBackendReady(page: Page) {
   }
 }
 
+
+
+async function ensureCsrfToken(page: Page): Promise<string> {
+  // Ensure csrftoken cookie exists on the Next domain.
+  try {
+    await page.request.get("/api/auth/csrf", { timeout: 10_000 });
+  } catch {}
+
+  const cookies = await page.context().cookies();
+  const c = cookies.find((x) => x.name === "csrftoken");
+  const v = String(c?.value || "");
+  if (!v) {
+    throw new Error("csrftoken cookie missing; /api/auth/csrf did not set it");
+  }
+  return v;
+}
+
+export async function csrfPost(page: Page, url: string, opts: any = {}) {
+  const token = await ensureCsrfToken(page);
+  const headers = { ...(opts?.headers || {}), "x-csrftoken": token };
+  return page.request.post(url, { ...opts, headers });
+}
+
 export async function signupAndOnboard(page: Page, prefix = "e2e"): Promise<Creds> {
   let lastErr: any = null;
 

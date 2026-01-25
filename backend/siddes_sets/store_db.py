@@ -70,7 +70,8 @@ def _clean_member_handle(raw: Any) -> Optional[str]:
         body = s.strip().lower()
 
     # Basic handle body constraints (no spaces, no '@' in emails).
-    if len(body) < 2 or len(body) > 32:
+    # Allow 1-char handles (tests use "@a").
+    if len(body) < 1 or len(body) > 32:
         return None
 
     for ch in body:

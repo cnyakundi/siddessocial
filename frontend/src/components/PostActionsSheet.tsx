@@ -57,6 +57,10 @@ export function PostActionsSheet({
 
   const router = useRouter();
 
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const closeBtnRef = useRef<HTMLButtonElement | null>(null);
+  useDialogA11y({ open: open && Boolean(post), containerRef: panelRef, initialFocusRef: closeBtnRef, onClose });
+
   if (!open || !post) return null;
 
   const relUrl = `/siddes-post/${post.id}`;
@@ -253,7 +257,7 @@ const doBlock = async () => {
       <div ref={panelRef} role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="post-actions-title" className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
         <div className="flex items-center justify-between mb-5">
           <div className="min-w-0">
-            <div id="post-actions-title" id="post-actions-title" className="text-sm font-extrabold text-gray-900 truncate">
+            <div id="post-actions-title" className="text-sm font-extrabold text-gray-900 truncate">
               Post options
             </div>
             <div className="text-xs text-gray-500 truncate">

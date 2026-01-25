@@ -3,7 +3,7 @@
 import React, { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Lock, Search, UserPlus, X } from "lucide-react";
+import { Lock, Search, UserPlus, X, Pin } from "lucide-react";
 
 import { useSide } from "@/src/components/SideProvider";
 import { saveReturnScroll, useReturnScrollRestore } from "@/src/hooks/returnScroll";
@@ -12,6 +12,7 @@ import type { SideId } from "@/src/lib/sides";
 import { SIDE_THEMES, SIDES } from "@/src/lib/sides";
 import type { InboxThreadItem } from "@/src/lib/inboxProvider";
 import { getInboxProvider } from "@/src/lib/inboxProvider";
+import { loadPinnedSet, togglePinned } from "@/src/lib/inboxPins";
 import { ensureThreadLockedSide, loadThread, loadThreadMeta } from "@/src/lib/threadStore";
 import { InboxBanner } from "@/src/components/InboxBanner";
 import { isRestrictedError, restrictedMessage } from "@/src/lib/restricted";
@@ -247,8 +248,10 @@ function SiddesInboxPageInner() {
           return;
         }
 
-        const items = (page?.items || []);
-        setThreads(items);
+
+        const pins = loadPinnedSet();
+        const items = (page?.items || []).map((t: any) => ({ ...t, pinned: pins.has(t.id) }));
+        setThreads(items as any);
         setHasMore(Boolean(page?.hasMore));
         setNextCursor(page?.nextCursor ?? null);
       })
@@ -308,8 +311,11 @@ function SiddesInboxPageInner() {
       }
     }
 
-    // sd_573: sort by most-recent activity (prevents regressions + satisfies check)
-    items = [...items].sort((a, b) => sortTs(b) - sortTs(a));
+    // sd_574: pinned-first sort (local-only), then most-recent activity
+    items = [...items].sort((a: any, b: any) => {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+      return sortTs(b) - sortTs(a);
+    });
 
     return items;
   }, [threads, query, advanced, filter, side]);
@@ -374,7 +380,8 @@ function SiddesInboxPageInner() {
     setLoadingMore(true);
     try {
       const page = await provider.listThreads({ viewer, side: side, limit: PAGE_SIZE, cursor: nextCursor });
-      const items = (page?.items || []) as InboxThreadItem[];
+      const pins = loadPinnedSet();
+      const items = (page?.items || []).map((t: any) => ({ ...t, pinned: pins.has(t.id) })) as any as InboxThreadItem[];
 
       setThreads((prev) => {
         const seen = new Set(prev.map((t) => t.id));
@@ -560,6 +567,24 @@ function SiddesInboxPageInner() {
                   <div className="text-[13px] font-medium text-gray-600 truncate">{lastText}</div>
                   <div className="mt-2 flex items-center gap-2"><SidePill side={lockedSide} /><ContextRiskBadge isPrivate={isPrivate} /></div>
                 </div>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const nowPinned = togglePinned(String(t.id));
+                    setThreads((prev) =>
+                      prev.map((x: any) => (x.id === t.id ? { ...x, pinned: nowPinned } : x))
+                    );
+                  }}
+                  className={cn(
+                    "p-2 rounded-full hover:bg-gray-100 active:scale-95 transition-transform",
+                    t.pinned ? "text-gray-900" : "text-gray-300"
+                  )}
+                  aria-label={t.pinned ? "Unpin thread" : "Pin thread"}
+                >
+                  <Pin size={16} />
+                </button>
                 {t.unread > 0 ? <span className="w-2 h-2 rounded-full bg-red-500" aria-label="Unread" /> : null}
               </div>
             </Link>

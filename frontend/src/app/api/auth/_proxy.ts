@@ -153,6 +153,34 @@ function getSetCookies(res: Response): string[] {
   return sc ? [sc] : [];
 }
 
+
+// sd_608: apply backend session payload as app-domain cookie
+// Some auth endpoints return { session: { name, value, maxAge, expires } }
+// so Next can set the cookie on the app origin (more reliable than forwarding Set-Cookie).
+function applyProxyCookies(data: any): string[] {
+  try {
+    const sess = data && typeof data === "object" ? (data as any).session : null;
+    if (!sess || typeof sess !== "object") return [];
+    const name = String((sess as any).name || "sessionid").trim();
+    const value = String((sess as any).value || "").trim();
+    if (!name || !value) return [];
+
+    const parts: string[] = [];
+    parts.push(`${name}=${encodeURIComponent(value)}`);
+    parts.push("Path=/");
+    parts.push("SameSite=Lax");
+    // HttpOnly is important for session cookies.
+    parts.push("HttpOnly");
+    if (process.env.NODE_ENV === "production") parts.push("Secure");
+
+    const maxAge = Number((sess as any).maxAge);
+    if (Number.isFinite(maxAge) && maxAge > 0) parts.push(`Max-Age=${Math.floor(maxAge)}`);
+    return [parts.join("; ")];
+  } catch {
+    return [];
+  }
+}
+
 function buildProxyHeaders(req: Request, requestId: string): Record<string, string> {
   const cookie = req.headers.get("cookie") || "";
   const allowDevViewer = process.env.NODE_ENV !== "production";
@@ -287,7 +315,7 @@ export async function proxyJson(
     return resp;
   }
 
-  const setCookies = getSetCookies(res);
+  let setCookies = getSetCookies(res);
 
   let data: any = null;
   try {
@@ -295,6 +323,13 @@ export async function proxyJson(
   } catch {
     data = { ok: false, error: "bad_response", requestId };
   }
+
+  // sd_608: merge session payload cookies (if present)
+  try {
+    setCookies.push(...applyProxyCookies(data));
+  } catch {}
+  // Deduplicate
+  setCookies = Array.from(new Set(setCookies));
 
   // Attach correlation id to JSON payloads for UI/support.
   try {

@@ -26,6 +26,9 @@ export type InboxThread = {
   time: string;
   unread: number;
   updatedAt: number;
+
+  // Local-only: pinned threads (stored in localStorage)
+  pinned?: boolean;
 };
 
 

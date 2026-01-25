@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { clearPrivateClientCaches } from "@/src/lib/privateClientCaches";
 
 type MePayload = {
   ok?: boolean;
@@ -57,6 +58,8 @@ export default function SiddesAccountPage() {
     } catch {
       // ignore
     }
+    // Paranoia: clear private client caches before leaving the session.
+    clearPrivateClientCaches();
     window.location.href = "/login";
   }
 

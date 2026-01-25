@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from "react";
 import Link from "next/link";
 import { LogOut, User, Link as LinkIcon, Grid3X3, FileText } from "lucide-react";
+import { clearPrivateClientCaches } from "@/src/lib/privateClientCaches";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { useDialogA11y } from "@/src/hooks/useDialogA11y";
 
@@ -33,6 +34,8 @@ export function DesktopUserMenu({
     } catch {
       // ignore
     } finally {
+      // Paranoia: clear private client caches before leaving the session.
+      clearPrivateClientCaches();
       window.location.href = "/login";
     }
   };
