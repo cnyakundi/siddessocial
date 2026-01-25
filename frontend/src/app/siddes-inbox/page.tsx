@@ -347,7 +347,7 @@ const filtered = useMemo(() => {
     });
 
     return items;
-  }, [threads, query, advanced, filter, side]);
+  }, [threads, query, advanced, filter, side, unreadMap]);
 
   useEffect(() => {
     setActiveIndex((prev) => {

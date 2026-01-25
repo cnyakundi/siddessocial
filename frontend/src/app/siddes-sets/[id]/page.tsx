@@ -797,7 +797,7 @@ export default function SiddesSetHubPage({ params }: { params: { id: string } })
                 ) : null}
               </div>
 
-              {item ? <InviteLinksPanel setId={item.id} setLabel={item.label} canManage={isOwner} /> : null}
+              {item ? (<InviteLinksPanel setId={item.id} setLabel={item.label} canManage={isOwner} />) : null}
 
               <InviteActionSheet
                 open={inviteOpen}

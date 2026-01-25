@@ -1,0 +1,35 @@
+import { NextResponse } from "next/server";
+import { proxyJson } from "../../../auth/_proxy";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+function applySetCookies(resp: NextResponse, setCookies: string[]) {
+  for (const sc of setCookies || []) {
+    if (!sc) continue;
+    resp.headers.append("set-cookie", sc);
+  }
+}
+
+export async function POST(req: Request, ctx: { params: { id: string } }) {
+  const id = String(ctx?.params?.id || "").trim();
+  if (!id) return NextResponse.json({ ok: false, error: "missing_id" }, { status: 400 });
+
+  let body: any = null;
+  try {
+    body = await req.json();
+  } catch {
+    body = null;
+  }
+
+  const out = await proxyJson(req, `/api/access-requests/${encodeURIComponent(id)}/respond`, "POST", body);
+  if (out instanceof NextResponse) return out;
+
+  const { res, data, setCookies } = out;
+  const resp = NextResponse.json(data, {
+    status: res.status,
+    headers: { "cache-control": "no-store" },
+  });
+  applySetCookies(resp, setCookies || []);
+  return resp;
+}

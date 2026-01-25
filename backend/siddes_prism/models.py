@@ -80,4 +80,47 @@ class SideMembership(models.Model):
             models.Index(fields=["member", "updated_at"], name="side_member_upd"),
         ]
 
+
+# sd_712_access_requests: permissioned "Request access" (no followers)
+class SideAccessRequest(models.Model):
+    # Requester asks owner to place them into a Side (Friends/Close/Work).
+    # Owner controls access; requester can only ask.
+
+    STATUS_CHOICES = (
+        ("pending", "pending"),
+        ("accepted", "accepted"),
+        ("rejected", "rejected"),
+        ("cancelled", "cancelled"),
+    )
+
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="side_access_requests_in",
+    )
+    requester = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="side_access_requests_out",
+    )
+
+    side = models.CharField(max_length=16, choices=PrismSideId.choices, db_index=True)
+    status = models.CharField(max_length=16, default="pending", choices=STATUS_CHOICES, db_index=True)
+    message = models.CharField(max_length=280, blank=True, default="")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["owner", "requester", "side"], name="side_access_req_uniq"),
+            models.CheckConstraint(check=~models.Q(side=PrismSideId.PUBLIC), name="side_access_req_no_public"),
+            models.CheckConstraint(check=~models.Q(owner=models.F("requester")), name="side_access_req_no_self"),
+        ]
+        indexes = [
+            models.Index(fields=["owner", "status", "-updated_at"], name="side_access_owner_st_upd"),
+            models.Index(fields=["requester", "status", "-updated_at"], name="side_access_req_st_upd"),
+        ]
+
+
 # sd_533: UserFollow removed (Siddes has no followers; graph is SideMembership only).

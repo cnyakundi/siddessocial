@@ -8,6 +8,9 @@ html, body {
 
 body {
   background: #f9fafb; /* gray-50 */
+  /* sd_732: app-like taps */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 /* sd_363: Feed perf - browser-native virtualization via content-visibility */
@@ -57,3 +60,12 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* sd_732: Standalone PWA — reduce browser-y bounce/pull-to-refresh where supported */
+@media (display-mode: standalone) {
+  html, body {
+    overscroll-behavior-y: none;
+    overscroll-behavior-x: none;
+  }
+}
+

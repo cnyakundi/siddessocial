@@ -11,17 +11,27 @@ import {
   ShieldCheck,
   MapPin,
   Link as LinkIcon,
-  Pin,
+  MessageSquare,
+  Mic,
+  Lock,
 } from "lucide-react";
 
 import { SIDES, SIDE_THEMES, type SideId } from "@/src/lib/sides";
 import type { PrismFacet } from "@/src/components/PrismProfile";
 
 // sd_717_profile_v2_header: hero header for /u/[username] (Profile V2)
-// sd_727_fix_profile_v2_header_variant
+// sd_730_profile_v2_header_parity: headline + initials fallback + Close Vault access stat + pulse styling + message button + variant support
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
+}
+
+function initialsFrom(nameOrHandle: string) {
+  const s = (nameOrHandle || "").replace(/^@/, "").trim();
+  if (!s) return "U";
+  const parts = s.split(/\s+/).filter(Boolean);
+  if (parts.length === 1) return (parts[0][0] || "U").toUpperCase();
+  return ((parts[0][0] || "U") + (parts[parts.length - 1][0] || "U")).toUpperCase();
 }
 
 function safeWebsiteHref(website: string) {
@@ -46,24 +56,36 @@ const COVER_V2: Record<SideId, string> = {
   work: "bg-gradient-to-br from-slate-700 via-slate-800 to-black",
 };
 
+export type ProfileV2HeaderVariant = "hero" | "clean";
+
 export function ProfileV2Header(props: {
-  // Optional: allow callers to choose a compact rendering. Default is "hero".
-  variant?: "hero" | "clean";
+  variant?: ProfileV2HeaderVariant;
 
   // The identity being displayed (theme, cover, safety pill)
   displaySide: SideId;
-  // The relationship-granted side you can see of them
+
+  // The relationship-granted side the viewer can see of them
   viewSide: SideId;
+
   handle: string;
   facet: PrismFacet;
+
   isOwner?: boolean;
-  viewerSidedAs?: SideId | null;
-  siders?: number | string | null;
+
+  viewerSidedAs?: SideId | null; // what the viewer shows them
+  siders?: number | string | null; // number or "Close Vault"
   postsCount?: number;
+
   sharedSets?: string[];
+
+  // Action cluster (Side button, copy link, "more" etc)
   actions?: React.ReactNode;
+
+  // Optional message button (viewer only)
+  messageHref?: string | null;
 }) {
   const {
+    variant = "hero",
     displaySide,
     viewSide,
     handle,
@@ -74,12 +96,14 @@ export function ProfileV2Header(props: {
     postsCount,
     sharedSets,
     actions,
+    messageHref,
   } = props;
 
   const theme = SIDE_THEMES[displaySide];
-  const SideIcon = SIDE_ICON[displaySide];
+  const Icon = SIDE_ICON[displaySide];
 
   const name = (facet?.displayName || "").trim() || handle || "User";
+  const headline = (facet?.headline || "").trim();
   const bio = (facet?.bio || "").trim();
   const location = (facet?.location || "").trim();
   const website = (facet?.website || "").trim();
@@ -90,10 +114,156 @@ export function ProfileV2Header(props: {
   const youShow = viewerSidedAs ? (SIDES[viewerSidedAs]?.label || viewerSidedAs) : "Public";
   const theyShow = SIDES[viewSide]?.label || viewSide;
 
-  const viewerTheme = viewerSidedAs ? SIDE_THEMES[viewerSidedAs] : null;
-
+  const showAccessStat = viewSide === "close" || typeof siders === "string";
   const shownPosts = typeof postsCount === "number" ? postsCount : undefined;
-  const shownSiders = siders === null || typeof siders === "undefined" ? null : siders;
+
+  if (variant === "clean") {
+    return (
+      <div className="w-full">
+        <div className="flex flex-col items-center text-center pt-8 pb-6">
+          <div
+            className={cn(
+              "w-28 h-28 rounded-full bg-gray-100 overflow-hidden shadow-sm flex items-center justify-center font-black text-2xl select-none ring-2",
+              theme.ring
+            )}
+            aria-hidden="true"
+            title={name}
+          >
+            {avatarImage ? <img src={avatarImage} alt="" className="w-full h-full object-cover" /> : initialsFrom(name)}
+          </div>
+
+          <h1 className="mt-5 text-2xl font-black text-gray-900 tracking-tight">{name}</h1>
+          <div className="text-sm text-gray-500 font-semibold mt-1">{handle}</div>
+
+          <div
+            className={cn(
+              "mt-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-extrabold uppercase tracking-wider",
+              theme.lightBg,
+              theme.border,
+              theme.text
+            )}
+          >
+            <Icon size={12} />
+            {SIDES[displaySide].label} identity
+          </div>
+
+          {headline ? <div className="mt-3 text-sm font-semibold text-gray-700">{headline}</div> : null}
+
+          <p className={cn("mt-4 text-[15px] leading-relaxed max-w-md", bio ? "text-gray-700" : "text-gray-400")}>
+            {bio || "No bio yet."}
+          </p>
+
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 mt-4 text-xs text-gray-500 font-medium">
+            {location ? (
+              <div className="flex items-center gap-1">
+                <MapPin size={14} /> {location}
+              </div>
+            ) : null}
+            {website ? (
+              <a
+                href={safeWebsiteHref(website)}
+                target="_blank"
+                rel="noreferrer"
+                className={cn("flex items-center gap-1 font-extrabold hover:underline", theme.text)}
+              >
+                <LinkIcon size={14} /> {website}
+              </a>
+            ) : null}
+            <div className="flex items-center gap-1 text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
+              <ShieldCheck size={10} /> {SIDES[displaySide]?.privacyHint || "Visible"}
+            </div>
+          </div>
+
+          {/* Directional clarity */}
+          {!isOwner ? (
+            <div className="mt-4 flex flex-wrap gap-2 justify-center">
+              <div className={cn("inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-extrabold", theme.lightBg, theme.border, theme.text)}>
+                <ShieldCheck className="w-3.5 h-3.5" />
+                They show you {theyShow}
+              </div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-extrabold bg-gray-50 border-gray-200 text-gray-700">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                You show them {youShow}
+              </div>
+            </div>
+          ) : null}
+
+          {/* Stats */}
+          <div className="mt-6 flex gap-8 pb-6 border-b border-gray-100">
+            <div className="flex flex-col items-center">
+              <span className="text-lg font-black text-gray-900 leading-none tabular-nums">{shownPosts ?? "—"}</span>
+              <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-1">Posts</span>
+            </div>
+            {showAccessStat ? (
+              <div className="flex flex-col items-center">
+                <span className="text-lg font-black text-gray-900 leading-none tabular-nums">Close Vault</span>
+                <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-1">Private Set</span>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center">
+                <span className="text-lg font-black text-gray-900 leading-none tabular-nums">{siders ?? "—"}</span>
+                <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-1">Siders</span>
+              </div>
+            )}
+          </div>
+
+          {actions ? (
+            <div className="mt-6 w-full max-w-sm">
+              <div className="flex gap-3">
+                <div className="flex-1">{actions}</div>
+                {messageHref ? (
+                  <a
+                    href={messageHref}
+                    className="w-12 h-11 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-900 inline-flex items-center justify-center font-extrabold transition-colors"
+                    aria-label="Message"
+                    title="Message"
+                  >
+                    <MessageSquare size={18} />
+                  </a>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+
+          {sharedSets && sharedSets.length > 0 ? (
+            <div className="mt-6 w-full max-w-md">
+              <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-2">Shared Sets</div>
+              <div className="flex flex-wrap gap-1.5 justify-center">
+                {sharedSets.slice(0, 8).map((s) => (
+                  <span
+                    key={s}
+                    className="px-2 py-1 rounded-full bg-gray-100 text-[10px] font-extrabold text-gray-700 border border-gray-200"
+                  >
+                    {s}
+                  </span>
+                ))}
+                {sharedSets.length > 8 ? (
+                  <span className="px-2 py-1 rounded-full bg-gray-50 text-[10px] font-extrabold text-gray-500 border border-gray-200">
+                    +{sharedSets.length - 8}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+
+          {/* Pulse */}
+          {pulse && (pulse.label || pulse.text) ? (
+            <div className="mt-6 w-full max-w-md text-left">
+              <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-2">
+                {displaySide === "public" ? "Recent Town Hall" : "Recent Pulse"}
+              </div>
+              <div className={cn("p-4 rounded-2xl bg-gray-50 border-l-4", theme.accentBorder)}>
+                <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                  <Mic size={10} /> {pulse.label || (displaySide === "public" ? "Town Hall" : "Pulse")}
+                </div>
+                <div className="text-sm font-extrabold text-gray-900">{pulse.text ? `“${pulse.text}”` : ""}</div>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full rounded-3xl overflow-hidden border border-gray-200 bg-white shadow-sm">
@@ -127,18 +297,18 @@ export function ProfileV2Header(props: {
             <div className="p-1.5 bg-white rounded-3xl shadow-md">
               <div
                 className={cn(
-                  "w-24 h-24 rounded-[1.6rem] bg-gray-100 overflow-hidden flex items-center justify-center border border-gray-100"
+                  "w-24 h-24 rounded-[1.6rem] bg-gray-100 overflow-hidden flex items-center justify-center border border-gray-100 font-black text-xl select-none"
                 )}
                 aria-hidden="true"
                 title={name}
               >
-                {avatarImage ? <img src={avatarImage} alt="" className="w-full h-full object-cover" /> : null}
+                {avatarImage ? <img src={avatarImage} alt="" className="w-full h-full object-cover" /> : initialsFrom(name)}
               </div>
             </div>
           </div>
           <div className="absolute -bottom-1 -right-1">
-            <div className="w-9 h-9 rounded-full bg-white shadow flex items-center justify-center border-4 border-white">
-              <SideIcon className={cn("w-4 h-4", theme.text)} />
+            <div className={cn("w-9 h-9 rounded-full bg-white shadow flex items-center justify-center border-4 border-white")}>
+              <Icon className={cn("w-4 h-4", theme.text)} />
             </div>
           </div>
         </div>
@@ -148,41 +318,26 @@ export function ProfileV2Header(props: {
           <div className="min-w-0">
             <h1 className="text-2xl font-black text-gray-900 tracking-tight leading-none truncate">{name}</h1>
             <div className="text-sm text-gray-500 font-semibold mt-1">{handle}</div>
+            {headline ? <div className="text-sm text-gray-700 font-semibold mt-2">{headline}</div> : null}
           </div>
 
-          {/* Relationship chip */}
-          {!isOwner ? (
-            <div className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-xl border", theme.lightBg, theme.border)}>
-              <ShieldCheck className={cn("w-4 h-4", theme.text)} />
-              <span className={cn("text-[10px] font-extrabold uppercase tracking-wider", theme.text)}>
-                They show you {theyShow}
-              </span>
-            </div>
-          ) : (
-            <div className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-xl border", theme.lightBg, theme.border)}>
-              <ShieldCheck className={cn("w-4 h-4", theme.text)} />
-              <span className={cn("text-[10px] font-extrabold uppercase tracking-wider", theme.text)}>
-                Your {SIDES[displaySide]?.label || displaySide} identity
-              </span>
-            </div>
-          )}
+          {/* Identity chip */}
+          <div className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-xl border", theme.lightBg, theme.border)}>
+            <Icon size={14} className={cn(theme.text)} />
+            <span className={cn("text-[10px] font-extrabold uppercase tracking-wider", theme.text)}>
+              {SIDES[displaySide]?.label || displaySide} identity
+            </span>
+          </div>
         </div>
 
-        {/* Directional clarity (compact) */}
+        {/* Directional clarity */}
         {!isOwner ? (
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-wrap gap-2">
             <div className={cn("inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-extrabold", theme.lightBg, theme.border, theme.text)}>
               <ShieldCheck className="w-3.5 h-3.5" />
               They show you {theyShow}
             </div>
-            <div
-              className={cn(
-                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-extrabold",
-                viewerTheme ? viewerTheme.lightBg : "bg-gray-50",
-                viewerTheme ? viewerTheme.border : "border-gray-200",
-                viewerTheme ? viewerTheme.text : "text-gray-700"
-              )}
-            >
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-extrabold bg-gray-50 border-gray-200 text-gray-700">
               <ShieldCheck className="w-3.5 h-3.5" />
               You show them {youShow}
             </div>
@@ -212,7 +367,7 @@ export function ProfileV2Header(props: {
             </a>
           ) : null}
           <div className="flex items-center gap-1 text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
-            <ShieldCheck size={10} /> {SIDES[displaySide]?.privacyHint || "Visible"}
+            {SIDES[displaySide]?.isPrivate ? <Lock size={10} /> : <ShieldCheck size={10} />} {SIDES[displaySide]?.privacyHint || "Visible"}
           </div>
         </div>
 
@@ -222,16 +377,40 @@ export function ProfileV2Header(props: {
             <span className="text-lg font-black text-gray-900 leading-none tabular-nums">{shownPosts ?? "—"}</span>
             <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-1">Posts</span>
           </div>
-          <div className="flex flex-col">
-            <span className="text-lg font-black text-gray-900 leading-none tabular-nums">{shownSiders ?? "—"}</span>
-            <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-1">Siders</span>
-          </div>
+
+          {showAccessStat ? (
+            <div className="flex flex-col">
+              <span className="text-lg font-black text-gray-900 leading-none tabular-nums">Close Vault</span>
+              <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-1">Private Set</span>
+            </div>
+          ) : (
+            <div className="flex flex-col">
+              <span className="text-lg font-black text-gray-900 leading-none tabular-nums">{siders ?? "—"}</span>
+              <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-1">Siders</span>
+            </div>
+          )}
         </div>
 
-        {/* Actions */}
-        {actions ? <div className="mt-5">{actions}</div> : null}
+        {/* Actions (+ Message) */}
+        {actions ? (
+          <div className="mt-5">
+            <div className="flex gap-3">
+              <div className="flex-1">{actions}</div>
+              {messageHref ? (
+                <a
+                  href={messageHref}
+                  className="w-12 h-11 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-900 inline-flex items-center justify-center font-extrabold transition-colors"
+                  aria-label="Message"
+                  title="Message"
+                >
+                  <MessageSquare size={18} />
+                </a>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
 
-        {/* Shared Sets (keep feature parity with PrismIdentityCard clean) */}
+        {/* Shared Sets */}
         {sharedSets && sharedSets.length > 0 ? (
           <div className="mt-6">
             <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-2">Shared Sets</div>
@@ -240,6 +419,7 @@ export function ProfileV2Header(props: {
                 <span
                   key={s}
                   className="px-2 py-1 rounded-full bg-gray-100 text-[10px] font-extrabold text-gray-700 border border-gray-200"
+                  title="Shared Set"
                 >
                   {s}
                 </span>
@@ -253,21 +433,17 @@ export function ProfileV2Header(props: {
           </div>
         ) : null}
 
-        {/* Pinned module (uses facet.pulse for now) */}
+        {/* Pulse */}
         {pulse && (pulse.label || pulse.text) ? (
           <div className="mt-6">
-            <div className={cn("p-4 rounded-2xl border flex items-start gap-3", theme.lightBg, theme.border)}>
-              <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm flex-shrink-0">
-                <Pin className={cn("w-4 h-4", theme.text)} fill="currentColor" />
+            <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-2">
+              {displaySide === "public" ? "Recent Town Hall" : "Recent Pulse"}
+            </div>
+            <div className={cn("p-4 rounded-2xl bg-gray-50 border-l-4", theme.accentBorder)}>
+              <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                <Mic size={10} /> {pulse.label || (displaySide === "public" ? "Town Hall" : "Pulse")}
               </div>
-              <div className="min-w-0">
-                <span className={cn("text-[10px] font-black uppercase tracking-widest", theme.text)}>
-                  {pulse.label || "Pinned"}
-                </span>
-                <div className="text-sm font-extrabold text-gray-900 mt-0.5 leading-snug">
-                  {pulse.text}
-                </div>
-              </div>
+              <div className="text-sm font-extrabold text-gray-900">{pulse.text ? `“${pulse.text}”` : ""}</div>
             </div>
           </div>
         ) : null}

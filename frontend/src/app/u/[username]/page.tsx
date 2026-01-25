@@ -27,6 +27,7 @@ import { PostCard } from "@/src/components/PostCard";
 import { useReturnScrollRestore } from "@/src/hooks/returnScroll";
 
 import { ProfileActionsSheet } from "@/src/components/ProfileActionsSheet";
+import { AccessRequestsPanel } from "@/src/components/AccessRequestsPanel";
 import { toast } from "@/src/lib/toast";
 
 function cn(...parts: Array<string | undefined | false | null>) {
@@ -63,6 +64,8 @@ export default function UserProfilePage() {
 
   const [actionsOpen, setActionsOpen] = useState(false); // sd_424_profile_actions
   const [lockedSide, setLockedSide] = useState<SideId | null>(null); // sd_529_locked_tab_explainer
+  const [accessReqBusy, setAccessReqBusy] = useState(false); // sd_712_access_requests
+  const [accessReqSentFor, setAccessReqSentFor] = useState<SideId | null>(null); // sd_712_access_requests
 
   const [contentTab, setContentTab] = useState<ProfileV2TabId>("posts"); // sd_717_profile_v2_shell
 
@@ -230,6 +233,37 @@ export default function UserProfilePage() {
     }
   };
 
+  const doRequestAccess = async (side: SideId) => {
+    if (!user?.handle) return;
+    const s = String(side || "").toLowerCase() as SideId;
+    if (s === "public") return;
+
+    setAccessReqBusy(true);
+    try {
+      const res = await fetch("/api/access-requests", {
+        method: "POST",
+        cache: "no-store",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ username: user.handle, side: s }),
+      });
+      const j = (await res.json().catch(() => null)) as any;
+      if (!res.ok || !j || j.ok !== true) {
+        let msg = res.status === 429 ? "Slow down." : "Could not send request.";
+        if (res.status === 401 || j?.error === "restricted") msg = "Login required.";
+        toast.error(msg);
+        return;
+      }
+      setAccessReqSentFor(s);
+      toast.success("Request sent.");
+      setLockedSide(null);
+    } catch {
+      toast.error("Could not send request.");
+    } finally {
+      setAccessReqBusy(false);
+    }
+  };
+
+
 
 
 
@@ -364,6 +398,19 @@ export default function UserProfilePage() {
                         They currently show you: <span className="font-black text-gray-900">{SIDES[viewSide]?.label || viewSide}</span>
                       </div>
                     </div>
+                    {/* sd_712_access_requests: request access to the locked side */}
+                    {lockedSide && lockedSide !== "public" ? (
+                      <button
+                        type="button"
+                        disabled={accessReqBusy || accessReqSentFor === lockedSide}
+                        onClick={() => void doRequestAccess(lockedSide)}
+                        className="w-full py-3 rounded-xl bg-white border border-gray-200 text-gray-900 font-extrabold text-sm hover:bg-gray-50 disabled:opacity-50"
+                      >
+                        {accessReqSentFor === lockedSide ? "Request sent" : accessReqBusy ? "Sending…" : "Request access"}
+                      </button>
+                    ) : null}
+
+
 
                     <div className="flex gap-3">
                       <button
@@ -395,7 +442,8 @@ export default function UserProfilePage() {
 
 
             
-            {/* sd_717_profile_v2_shell_header_tabs */}
+            {/* sd_717_profile_v2_shell_header_tabs */
+            /* sd_732_fix_profile_messageHref */}
             {/* sd_722_profile_v2_tab_url_sync */}
             <div className="mt-4">
               /* sd_727_fix_profile_v2_variant_and_locked_back */
@@ -409,6 +457,7 @@ export default function UserProfilePage() {
                 sharedSets={sharedSets}
                 isOwner={isOwner}
                 viewerSidedAs={viewerSidedAs}
+                messageHref={!isOwner ? ("/siddes-inbox?to=" + encodeURIComponent(user.handle)) : null} // sd_732_profile_v2_message_href
                 actions={
                   isOwner ? (
                     <div className="flex flex-col gap-3">
@@ -424,7 +473,8 @@ export default function UserProfilePage() {
                         Edit identities
                       </button>
                       <div className="flex gap-3">
-                        <CopyLinkButton href={href} />
+                        <CopyLinkButton href={href}
+              />
                         <button
                           type="button"
                           onClick={() => setActionsOpen(true)}
@@ -534,3 +584,5 @@ onPick={doPickSide}
   );
 }
 
+
+// sd_712_access_requests

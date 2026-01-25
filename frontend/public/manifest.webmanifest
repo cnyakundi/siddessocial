@@ -1,10 +1,17 @@
 {
   "name": "Siddes",
   "short_name": "Siddes",
-  "start_url": "/",
+  "description": "Context-safe social OS. Post to the right Side: Public, Friends, Close, Work.",
+  "start_url": "/siddes-feed?source=pwa",
+  "scope": "/",
+  "id": "/?source=pwa",
   "display": "standalone",
+  "display_override": [
+    "standalone"
+  ],
   "background_color": "#0B1020",
   "theme_color": "#0B1020",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "/icons/icon-192.png",
@@ -27,6 +34,47 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Compose",
+      "short_name": "Compose",
+      "description": "Write a new post",
+      "url": "/siddes-compose",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Inbox",
+      "short_name": "Inbox",
+      "description": "Open your inbox",
+      "url": "/siddes-inbox",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Search",
+      "short_name": "Search",
+      "description": "Search people and public posts",
+      "url": "/search",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ]
 }

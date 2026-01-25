@@ -16,7 +16,7 @@ from rest_framework.views import APIView
 from siddes_backend.csrf import dev_csrf_exempt
 from siddes_safety.policy import is_blocked_pair
 
-from .models import PrismFacet, PrismSideId, SideMembership
+from .models import PrismFacet, PrismSideId, SideMembership, SideAccessRequest
 
 
 VIEW_SIDES = ("public", "friends", "close", "work")
@@ -943,5 +943,148 @@ class SidersLedgerView(APIView):
                 "work": [pack(u, "work", ts) for (u, ts) in buckets["work"]],
             },
         }
+        return Response(out, status=status.HTTP_200_OK)
+
+
+# sd_712_access_requests: request access to locked Sides (no followers)
+@method_decorator(dev_csrf_exempt, name="dispatch")
+class AccessRequestsView(APIView):
+    # GET: list inbound pending requests for the viewer (owner)
+    # POST: create/update a request from viewer -> target owner
+
+    def get(self, request):
+        viewer = _user_from_request(request)
+        if not viewer:
+            return Response({"ok": False, "error": "restricted"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        qs = (
+            SideAccessRequest.objects.filter(owner=viewer, status="pending")
+            .select_related("requester")
+            .order_by("-updated_at")[:200]
+        )
+        items = []
+        for r in qs:
+            ru = getattr(r, "requester", None)
+            handle = "@" + str(getattr(ru, "username", "") or "").lower() if ru else ""
+            items.append(
+                {
+                    "id": str(getattr(r, "id", "")),
+                    "from": {"id": getattr(ru, "id", None), "handle": handle},
+                    "side": str(getattr(r, "side", "")),
+                    "message": str(getattr(r, "message", "") or ""),
+                    "createdAt": getattr(r, "created_at", None).isoformat() if getattr(r, "created_at", None) else None,
+                    "updatedAt": getattr(r, "updated_at", None).isoformat() if getattr(r, "updated_at", None) else None,
+                }
+            )
+
+        return Response({"ok": True, "count": len(items), "items": items}, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        viewer = _user_from_request(request)
+        if not viewer:
+            return Response({"ok": False, "error": "restricted"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        body = request.data if isinstance(getattr(request, "data", None), dict) else {}
+        uname = _normalize_username(body.get("username") or body.get("handle") or "")
+        if not uname:
+            return Response({"ok": False, "error": "missing_username"}, status=status.HTTP_400_BAD_REQUEST)
+
+        side = str(body.get("side") or "").strip().lower()
+        if side not in ("friends", "close", "work"):
+            return Response({"ok": False, "error": "invalid_side"}, status=status.HTTP_400_BAD_REQUEST)
+
+        msg = str(body.get("message") or "").strip()
+        if len(msg) > 280:
+            msg = msg[:280]
+
+        User = get_user_model()
+        target = User.objects.filter(username__iexact=uname).first()
+        if not target:
+            return Response({"ok": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if getattr(target, "id", None) == getattr(viewer, "id", None):
+            return Response({"ok": False, "error": "cannot_request_self"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Respect blocks: if either side has blocked, fail closed.
+        try:
+            viewer_tok = viewer_id_for_user(viewer)
+            target_tok = "@" + str(getattr(target, "username", "") or "").lower()
+            if target_tok and is_blocked_pair(viewer_tok, target_tok):
+                return Response({"ok": False, "error": "restricted"}, status=status.HTTP_403_FORBIDDEN)
+        except Exception:
+            pass
+
+        obj, _ = SideAccessRequest.objects.update_or_create(
+            owner=target,
+            requester=viewer,
+            side=side,
+            defaults={"status": "pending", "message": msg},
+        )
+
+        return Response({"ok": True, "id": str(getattr(obj, "id", "")), "status": str(getattr(obj, "status", "pending"))}, status=status.HTTP_200_OK)
+
+
+@method_decorator(dev_csrf_exempt, name="dispatch")
+class AccessRequestRespondView(APIView):
+    # Owner responds to a request. POST /api/access-requests/<id>/respond
+    # Body: {"action":"accept"|"reject", "side"?: "friends"|"close"|"work"}
+
+    def post(self, request, rid: str):
+        viewer = _user_from_request(request)
+        if not viewer:
+            return Response({"ok": False, "error": "restricted"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        try:
+            pk = int(str(rid).strip())
+        except Exception:
+            return Response({"ok": False, "error": "bad_request"}, status=status.HTTP_400_BAD_REQUEST)
+
+        obj = SideAccessRequest.objects.filter(id=pk).select_related("owner", "requester").first()
+        if not obj:
+            return Response({"ok": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if getattr(obj, "owner_id", None) != getattr(viewer, "id", None):
+            return Response({"ok": False, "error": "restricted"}, status=status.HTTP_403_FORBIDDEN)
+
+        body = request.data if isinstance(getattr(request, "data", None), dict) else {}
+        action = str(body.get("action") or "").strip().lower()
+        if action not in ("accept", "reject"):
+            return Response({"ok": False, "error": "bad_request"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if str(getattr(obj, "status", "")) != "pending":
+            return Response({"ok": False, "error": "already_handled"}, status=status.HTTP_409_CONFLICT)
+
+        requested = str(getattr(obj, "side", "") or "").strip().lower()
+        grant = str(body.get("side") or requested).strip().lower()
+        if grant not in ("friends", "close", "work"):
+            grant = requested
+
+        granted_side = None
+        if action == "accept":
+            member = getattr(obj, "requester", None)
+            if not member:
+                return Response({"ok": False, "error": "bad_request"}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Keep the Close safety step: if not already friends, grant Friends instead of Close.
+            if grant == "close":
+                existing = SideMembership.objects.filter(owner=viewer, member=member).first()
+                if not existing or str(getattr(existing, "side", "")) not in ("friends", "close"):
+                    grant = "friends"
+
+            SideMembership.objects.update_or_create(
+                owner=viewer,
+                member=member,
+                defaults={"side": grant},
+            )
+            obj.status = "accepted"
+            granted_side = grant
+        else:
+            obj.status = "rejected"
+
+        obj.save(update_fields=["status", "updated_at"])
+
+        out = {"ok": True, "status": str(getattr(obj, "status", ""))}
+        if granted_side:
+            out["grantedSide"] = granted_side
         return Response(out, status=status.HTTP_200_OK)
 

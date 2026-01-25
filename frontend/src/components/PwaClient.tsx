@@ -11,18 +11,51 @@ function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
 }
 
+function isIOSPlatform() {
+  if (typeof window === "undefined") return false;
+  const ua = navigator.userAgent || "";
+  const isIPhoneIPadIPod = /iPad|iPhone|iPod/.test(ua);
+
+  // iPadOS 13+ reports as MacIntel, but has touch points.
+  const isIPadOS =
+    (navigator.platform === "MacIntel" || navigator.platform === "MacPPC") &&
+    // @ts-ignore - maxTouchPoints exists in modern browsers
+    // sd_732_fix_pwa_ts_expect: avoid unused @ts-expect-error errors
+    (navigator.maxTouchPoints || 0) > 1;
+
+  return Boolean(isIPhoneIPadIPod || isIPadOS);
+}
+
+function isStandaloneMode() {
+  if (typeof window === "undefined") return false;
+  // iOS Safari supports navigator.standalone when launched from Home Screen.
+  // Other browsers support display-mode media query.
+  // @ts-ignore - standalone is iOS-only
+  const iosStandalone = Boolean(navigator.standalone);
+  const dmStandalone = Boolean(window.matchMedia?.("(display-mode: standalone)").matches);
+  return iosStandalone || dmStandalone;
+}
+
 export function PwaClient() {
   const IS_PROD = process.env.NODE_ENV === "production";
+  const DEV_SW = process.env.NEXT_PUBLIC_PWA_DEV === "1";
+  const ENABLE_SW = IS_PROD || DEV_SW;
 
   const [offline, setOffline] = useState(false);
 
-  // Install prompt
+  // Install prompt (Chromium/Android)
   const [installEvt, setInstallEvt] = useState<InstallPromptEvent | null>(null);
   const [installAvailable, setInstallAvailable] = useState(false);
+
+  // iOS install help (Safari "Add to Home Screen")
+  const [iosInstallHint, setIosInstallHint] = useState(false);
 
   // Update prompt
   const [waitingReg, setWaitingReg] = useState<ServiceWorkerRegistration | null>(null);
   const updateAvailable = Boolean(waitingReg?.waiting);
+
+  const isIOS = useMemo(() => isIOSPlatform(), []);
+  const standalone = useMemo(() => isStandaloneMode(), []);
 
   useEffect(() => {
     function onOnline() {
@@ -40,7 +73,7 @@ export function PwaClient() {
     };
   }, []);
 
-  // Install prompt handling
+  // Install prompt handling (Chromium)
   useEffect(() => {
     function onBeforeInstallPrompt(e: Event) {
       e.preventDefault();
@@ -51,9 +84,22 @@ export function PwaClient() {
     return () => window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
   }, []);
 
+  // iOS install hint (Safari only; no beforeinstallprompt)
+  useEffect(() => {
+    if (!isIOS) return;
+    if (standalone) return;
+    try {
+      const key = "siddes.ios.install_hint.dismissed";
+      if (window.localStorage.getItem(key) === "1") return;
+      setIosInstallHint(true);
+    } catch {
+      // ignore
+    }
+  }, [isIOS, standalone]);
+
   // Service worker registration + update detection
   useEffect(() => {
-    if (!IS_PROD) return;
+    if (!ENABLE_SW) return;
     if (!("serviceWorker" in navigator)) return;
 
     let mounted = true;
@@ -83,18 +129,20 @@ export function PwaClient() {
           window.location.reload();
         });
       } catch {
-        // SW registration can fail in some dev scenarios; ignore.
+        // SW registration can fail in some environments; ignore.
       }
     })();
 
     return () => {
       mounted = false;
     };
-  }, [IS_PROD]);
+  }, [ENABLE_SW]);
 
-  const showBar = offline || installAvailable || updateAvailable;
+  const showBar = offline || installAvailable || updateAvailable || iosInstallHint;
 
   if (!showBar) return null;
+
+  const dismissLabel = iosInstallHint && !installAvailable && !updateAvailable && !offline ? "Got it" : "Dismiss";
 
   return (
     <div className="fixed bottom-3 left-3 right-3 z-[120] flex justify-center pointer-events-none">
@@ -104,7 +152,7 @@ export function PwaClient() {
             <>
               <div className="text-sm font-bold text-gray-900">You’re offline</div>
               <div className="text-xs text-gray-500 truncate">
-                Showing cached content when available.
+                Reconnect to refresh. Some screens may not load offline yet.
               </div>
             </>
           ) : updateAvailable ? (
@@ -114,11 +162,18 @@ export function PwaClient() {
                 Reload to get the latest version.
               </div>
             </>
-          ) : (
+          ) : installAvailable ? (
             <>
               <div className="text-sm font-bold text-gray-900">Install Siddes</div>
               <div className="text-xs text-gray-500 truncate">
                 Add to your home screen for the best experience.
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="text-sm font-bold text-gray-900">Add Siddes to Home Screen</div>
+              <div className="text-xs text-gray-500 truncate">
+                iPhone/iPad: Safari → Share → Add to Home Screen.
               </div>
             </>
           )}
@@ -144,7 +199,7 @@ export function PwaClient() {
                 if (!installEvt) return;
                 try {
                   await installEvt.prompt();
-                  const res = await installEvt.userChoice;
+                  await installEvt.userChoice;
                   // Regardless of choice, hide prompt.
                   setInstallEvt(null);
                   setInstallAvailable(false);
@@ -160,14 +215,23 @@ export function PwaClient() {
 
           <button
             type="button"
-            className="px-3 py-2 rounded-full bg-gray-100 text-gray-700 text-xs font-bold hover:bg-gray-200"
+            className={cn(
+              "px-3 py-2 rounded-full text-xs font-bold hover:bg-gray-200",
+              dismissLabel === "Got it" ? "bg-gray-900 text-white hover:opacity-90" : "bg-gray-100 text-gray-700"
+            )}
             onClick={() => {
               // dismiss current banners (offline stays handled by state)
               setInstallAvailable(false);
               setWaitingReg(null);
+              setIosInstallHint(false);
+              try {
+                if (iosInstallHint) window.localStorage.setItem("siddes.ios.install_hint.dismissed", "1");
+              } catch {
+                // ignore
+              }
             }}
           >
-            Dismiss
+            {dismissLabel}
           </button>
         </div>
       </div>
