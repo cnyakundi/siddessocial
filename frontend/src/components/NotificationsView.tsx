@@ -128,6 +128,8 @@ export function NotificationsView({ embedded = false }: { embedded?: boolean }) 
   const [loading, setLoading] = useState(true);
   const [restricted, setRestricted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryTick, setRetryTick] = useState(0); // sd_716: retry without full reload
+
   const [itemsRaw, setItemsRaw] = useState<NotificationItem[]>([]);
   const unreadCount = useMemo(() => itemsRaw.filter((n) => !n?.read).length, [itemsRaw]);
   const canMarkAllRead = !loading && !restricted && !error && unreadCount > 0;
@@ -201,7 +203,7 @@ export function NotificationsView({ embedded = false }: { embedded?: boolean }) 
     return () => {
       alive = false;
     };
-  }, [side]);
+  }, [side, retryTick]);
 
   const filtered = useMemo(() => {
     const all = itemsRaw;
@@ -277,10 +279,10 @@ export function NotificationsView({ embedded = false }: { embedded?: boolean }) 
           <div className="text-xs text-gray-600 mt-1">{error}</div>
           <button
             type="button"
-            onClick={() => window.location.reload()}
+            onClick={() => setRetryTick((x) => x + 1)}
             className="mt-3 inline-flex items-center justify-center px-3 py-1.5 rounded-full bg-gray-900 text-white text-xs font-bold"
           >
-            Reload
+            Retry
           </button>
         </div>
       ) : restricted ? (
