@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
+import { useDialogA11y } from "@/src/hooks/useDialogA11y";
 
 import { Ban, ExternalLink, EyeOff, Flag, Link2, Share2, X, Pencil, Trash2, Copy, VolumeX, User, Repeat } from "lucide-react";
 import type { FeedPost } from "@/src/lib/feedTypes";
@@ -258,10 +259,10 @@ const doBlock = async () => {
         aria-label="Close actions"
       />
 
-      <div className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
+      <div ref={panelRef} role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="post-actions-title" className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
         <div className="flex items-center justify-between mb-5">
           <div className="min-w-0">
-            <div className="text-sm font-extrabold text-gray-900 truncate">
+            <div id="post-actions-title" className="text-sm font-extrabold text-gray-900 truncate">
               Post options
             </div>
             <div className="text-xs text-gray-500 truncate">
@@ -270,6 +271,7 @@ const doBlock = async () => {
           </div>
           <button
             type="button"
+            ref={closeBtnRef}
             onClick={onClose}
             className="p-2 rounded-full hover:bg-gray-100"
             aria-label="Close"

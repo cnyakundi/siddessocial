@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Check, Lock } from "lucide-react";
 import type { SideId } from "@/src/lib/sides";
 import { SIDE_ORDER, SIDES, SIDE_THEMES } from "@/src/lib/sides";
 import type { SideActivityMap } from "@/src/lib/sideActivity";
 import { formatActivityPill } from "@/src/lib/sideActivity";
+import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
+import { useDialogA11y } from "@/src/hooks/useDialogA11y";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -26,6 +28,8 @@ export function SideSwitcherSheet({
   onSwitch: (side: SideId) => void;
 }) {
   const [mounted, setMounted] = useState(false);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const cancelRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -40,25 +44,9 @@ export function SideSwitcherSheet({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  // Prevent background scroll + avoid scrollbar layout shift on desktop.
-  useEffect(() => {
-    if (!open) return;
-    if (!mounted) return;
-    if (typeof document === "undefined") return;
+  useDialogA11y({ open: open && mounted, containerRef: panelRef, initialFocusRef: cancelRef });
 
-    const prevOverflow = document.body.style.overflow;
-    const prevPaddingRight = document.body.style.paddingRight;
-
-    const sbw = typeof window !== "undefined" ? (window.innerWidth - document.documentElement.clientWidth) : 0;
-
-    document.body.style.overflow = "hidden";
-    if (sbw > 0) document.body.style.paddingRight = sbw + "px";
-
-    return () => {
-      document.body.style.overflow = prevOverflow;
-      document.body.style.paddingRight = prevPaddingRight;
-    };
-  }, [open, mounted]);
+  useLockBodyScroll(open && mounted);
 
   const handleSwitch = (nextSide: SideId) => {
     onSwitch(nextSide);
@@ -82,9 +70,9 @@ export function SideSwitcherSheet({
         onClose();
       }}
       />
-      <div className="relative w-full max-w-[430px] bg-white rounded-t-[3rem] md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-10 fade-in duration-200">
+      <div ref={panelRef} role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="side-switcher-title" className="relative w-full max-w-[430px] bg-white rounded-t-[3rem] md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-10 fade-in duration-200">
         <div className="w-10 h-1.5 bg-gray-100 rounded-full mx-auto mb-6" />
-        <h3 className="text-xl font-black tracking-tight text-gray-900 mb-4 px-1">Side</h3>
+        <h3 id="side-switcher-title" className="text-xl font-black tracking-tight text-gray-900 mb-4 px-1">Side</h3>
 
         <div className="space-y-3">
           {SIDE_ORDER.map((sideId) => {
@@ -160,7 +148,7 @@ export function SideSwitcherSheet({
           })}
         </div>
 
-        <button type="button" onClick={onClose} className="w-full mt-6 py-3 font-semibold text-gray-500 hover:bg-gray-50 rounded-2xl">
+        <button ref={cancelRef} type="button" onClick={onClose} className="w-full mt-6 py-3 font-semibold text-gray-500 hover:bg-gray-50 rounded-2xl">
           Cancel
         </button>
       </div>

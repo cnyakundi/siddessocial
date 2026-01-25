@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
+import { useDialogA11y } from "@/src/hooks/useDialogA11y";
 
 import { Check, Plus, X } from "lucide-react";
 import type { SetDef, SetId } from "@/src/lib/sets";
@@ -87,6 +88,10 @@ export function SetPickerSheet({
 }) {
   useLockBodyScroll(open);
 
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const closeBtnRef = useRef<HTMLButtonElement | null>(null);
+  useDialogA11y({ open, containerRef: panelRef, initialFocusRef: closeBtnRef });
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -115,13 +120,14 @@ export function SetPickerSheet({
         }}
       />
 
-      <div className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
+      <div ref={panelRef} role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="set-picker-title" className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
         <div className="flex items-center justify-between gap-3 mb-4">
           <div>
-            <h3 className="text-lg font-bold text-gray-900">{title}</h3>
+            <h3 id="set-picker-title" className="text-lg font-bold text-gray-900">{title}</h3>
           </div>
           <button
             type="button"
+            ref={closeBtnRef}
             onClick={onClose}
             className="p-2 rounded-full border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
             aria-label="Close"

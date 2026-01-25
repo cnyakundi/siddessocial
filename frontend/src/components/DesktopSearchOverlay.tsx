@@ -3,6 +3,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, X } from "lucide-react";
+import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
+import { useDialogA11y } from "@/src/hooks/useDialogA11y";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -18,8 +20,12 @@ export function DesktopSearchOverlay({
   placeholder?: string;
 }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
   const [q, setQ] = useState("");
   const router = useRouter();
+
+  useLockBodyScroll(open);
+  useDialogA11y({ open, containerRef: panelRef, initialFocusRef: inputRef });
 
   useEffect(() => {
     if (!open) return;
@@ -45,7 +51,7 @@ export function DesktopSearchOverlay({
         aria-label="Close search"
       />
 
-      <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div ref={panelRef} role="dialog" aria-modal="true" tabIndex={-1} aria-label="Search" className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         <div className="p-4 border-b border-gray-100 flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500">
             <Search size={18} />
