@@ -121,12 +121,13 @@ export function CreateSetSheet(props: {
     <div className="fixed inset-0 z-[99] flex items-end justify-center md:items-center">
       {/* Backdrop */}
       <button type="button" className="absolute inset-0 bg-black/40" onPointerDown={(e) => {
-        // sd_481_sheet_close_reliability: pointerdown closes reliably on mobile
+        // sd_713_backdrop_clickthrough: consume pointerdown to prevent ghost taps (close on click)
         e.preventDefault();
-        close();
+        e.stopPropagation();
       }}
       onClick={(e) => {
         e.preventDefault();
+        e.stopPropagation();
         close();
       }} aria-label="Close" />
 

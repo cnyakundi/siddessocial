@@ -245,10 +245,11 @@ const doBlock = async () => {
         className="absolute inset-0 bg-black/30 backdrop-blur-sm"
         onPointerDown={(e) => {
           e.preventDefault();
-          onClose();
+          e.stopPropagation();
         }}
         onClick={(e) => {
           e.preventDefault();
+          e.stopPropagation();
           onClose();
         }}
         aria-label="Close actions"

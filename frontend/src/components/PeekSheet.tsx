@@ -99,12 +99,13 @@ export function PeekSheet({ open, onClose, sideId }: { open: boolean; onClose: (
   return (
     <div className="fixed inset-0 z-[100] flex items-end justify-center md:items-center">
       <button type="button" className="absolute inset-0 bg-black/30 backdrop-blur-sm" onPointerDown={(e) => {
-        // sd_481_sheet_close_reliability: pointerdown closes reliably on mobile
+        // sd_713_backdrop_clickthrough: consume pointerdown to prevent ghost taps (close on click)
         e.preventDefault();
-        onClose();
+        e.stopPropagation();
       }}
       onClick={(e) => {
         e.preventDefault();
+        e.stopPropagation();
         onClose();
       }} aria-label="Close peek" />
       <div ref={panelRef} role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="peek-title" className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">

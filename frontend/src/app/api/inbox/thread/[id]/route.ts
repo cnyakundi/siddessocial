@@ -24,6 +24,13 @@ function sd_558b_json(payload: any, init?: any) {
 }
 
 
+function parseCursor(raw: string | null): string | null {
+  const s = String(raw || "").trim();
+  if (!s) return null;
+  if (s === "null" || s === "undefined") return null;
+  return s;
+}
+
 function withDevViewer(req: Request): { req2: Request; viewerId: string | null } {
   const isProd = process.env.NODE_ENV === "production";
   const r = resolveStubViewer(req);
@@ -73,7 +80,7 @@ export async function GET(req: Request, ctx: { params: { id: string } }) {
   const id = String(ctx?.params?.id || "").trim();
   const url = new URL(req.url);
   const limit = String(url.searchParams.get("limit") || "").trim();
-  const cursor = String(url.searchParams.get("cursor") || "").trim();
+  const cursor = parseCursor(url.searchParams.get("cursor"));
 
   const isProd = process.env.NODE_ENV === "production";
   const { req2, viewerId } = withDevViewer(req);

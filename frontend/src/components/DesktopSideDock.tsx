@@ -90,9 +90,14 @@ export function DesktopSideDock() {
     <aside className="w-[84px] h-screen sticky top-0 bg-white border-r border-gray-100 flex flex-col items-center">
       {/* Brand (matches Measurement Protocol baseline: 80px header) */}
       <div className="h-20 flex items-center justify-center">
-        <div className="w-11 h-11 bg-gray-900 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg select-none">
+        <Link
+          href="/siddes-feed"
+          aria-label="Home"
+          title="Home"
+          className="w-11 h-11 bg-gray-900 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg select-none hover:opacity-95 active:scale-[0.98] transition"
+        >
           S
-        </div>
+        </Link>
       </div>
 
       {/* Side switcher (Mode) */}

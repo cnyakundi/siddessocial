@@ -14,6 +14,7 @@ Implementation note:
 
 from __future__ import annotations
 
+import hashlib
 import os
 
 # sd_121b: explicit mode boolean for SD_INBOX_STORE=db (used by test harness gate)
@@ -24,6 +25,7 @@ from typing import Any, Optional
 from django.utils.decorators import method_decorator
 from siddes_backend.csrf import dev_csrf_exempt
 from django.conf import settings
+from django.core.cache import cache
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -39,6 +41,77 @@ from siddes_safety.policy import is_blocked_pair
 
 def _truthy(v: str | None) -> bool:
     return str(v or "").strip().lower() in ("1", "true", "yes", "y", "on")
+
+# --- Inbox server-side cache (sd_582) ---
+# Cache is server-side only (never edge-cache personalized/private payloads).
+# Key includes viewer + side + cursor + limit. We also include a per-viewer "version"
+# that is bumped after inbox mutations (send/lock) to avoid serving stale thread state.
+
+def _inbox_cache_enabled() -> bool:
+    return _truthy(os.environ.get("SIDDES_INBOX_CACHE_ENABLED", "1"))
+
+
+def _inbox_cache_ttl() -> int:
+    raw = os.environ.get("SIDDES_INBOX_CACHE_TTL_SECS", "15")
+    try:
+        ttl = int(str(raw).strip())
+    except Exception:
+        ttl = 15
+    if ttl < 0:
+        ttl = 0
+    # Hard cap (avoid accidentally caching private payloads for too long)
+    if ttl > 300:
+        ttl = 300
+    return ttl
+
+
+_INBOX_VER_TTL_SECS = 7 * 24 * 60 * 60  # 7 days
+
+
+def _inbox_ver_key(viewer_id: str) -> str:
+    v = str(viewer_id or "").strip() or "anon"
+    return f"inbox:v1:ver:{v}"
+
+
+def _inbox_get_ver(viewer_id: str) -> int:
+    try:
+        v = cache.get(_inbox_ver_key(viewer_id))
+        iv = int(v) if v is not None else 1
+        return iv if iv > 0 else 1
+    except Exception:
+        return 1
+
+
+def _inbox_bump_ver(viewer_id: str) -> None:
+    v = str(viewer_id or "").strip()
+    if not v:
+        return
+    k = _inbox_ver_key(v)
+    try:
+        cache.add(k, 1, timeout=_INBOX_VER_TTL_SECS)
+        cache.incr(k)  # type: ignore[attr-defined]
+    except Exception:
+        try:
+            cur = cache.get(k)
+            nxt = (int(cur) + 1) if cur is not None else 2
+            cache.set(k, nxt, timeout=_INBOX_VER_TTL_SECS)
+        except Exception:
+            pass
+
+
+def _inbox_hash(raw: str) -> str:
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def _inbox_threads_cache_key(*, viewer_id: str, ver: int, side: str | None, limit: int, cursor: str | None) -> str:
+    raw = f"v1|ver={ver}|viewer={viewer_id}|side={side or ''}|limit={limit}|cursor={cursor or ''}"
+    return f"inbox:threads:v1:{_inbox_hash(raw)}"
+
+
+def _inbox_thread_cache_key(*, viewer_id: str, ver: int, thread_id: str, limit: int, cursor: str | None) -> str:
+    raw = f"v1|ver={ver}|viewer={viewer_id}|thread={thread_id}|limit={limit}|cursor={cursor or ''}"
+    return f"inbox:thread:v1:{_inbox_hash(raw)}"
+
 
 
 SIDE_IDS = ("public", "friends", "close", "work")
@@ -480,6 +553,34 @@ class InboxThreadsView(APIView):
             return Response({"ok": False, "error": "invalid_side"}, status=status.HTTP_400_BAD_REQUEST)
         viewer_id = get_viewer_id(request)
 
+        cache_status = "bypass"
+        cache_ttl = _inbox_cache_ttl()
+        cache_key = None
+
+        if viewer_id and _inbox_cache_enabled() and cache_ttl > 0:
+            ver = _inbox_get_ver(str(viewer_id))
+            cache_key = _inbox_threads_cache_key(
+                viewer_id=str(viewer_id),
+                ver=ver,
+                side=side if side else None,
+                limit=limit,
+                cursor=cursor if cursor else None,
+            )
+            try:
+                cached = cache.get(cache_key)
+            except Exception:
+                cached = None
+                cache_key = None
+            if cached is not None:
+                resp = Response(cached, status=status.HTTP_200_OK)
+                resp["X-Siddes-Cache"] = "hit"
+                resp["X-Siddes-Cache-Ttl"] = str(cache_ttl)
+                resp["Cache-Control"] = "private, no-store"
+                resp["Vary"] = "Cookie, Authorization"
+                return resp
+            if cache_key is not None:
+                cache_status = "miss"
+
         data = list_threads(
             store,
             viewer_id=viewer_id,
@@ -488,7 +589,20 @@ class InboxThreadsView(APIView):
             cursor=cursor if cursor else None,
         )
         data = _filter_blocked_threads_payload(viewer_id, data)
-        return Response(data, status=status.HTTP_200_OK)
+
+        if cache_key is not None and cache_status == "miss" and isinstance(data, dict) and not data.get("restricted"):
+            try:
+                cache.set(cache_key, data, timeout=cache_ttl)
+            except Exception:
+                cache_status = "bypass"
+
+        resp = Response(data, status=status.HTTP_200_OK)
+        resp["Cache-Control"] = "private, no-store"
+        resp["Vary"] = "Cookie, Authorization"
+        resp["X-Siddes-Cache"] = cache_status
+        if cache_status != "bypass":
+            resp["X-Siddes-Cache-Ttl"] = str(cache_ttl)
+        return resp
 
 
 @method_decorator(dev_csrf_exempt, name="dispatch")
@@ -511,6 +625,34 @@ class InboxThreadView(APIView):
         cursor = request.query_params.get("cursor")
         viewer_id = get_viewer_id(request)
 
+        cache_status = "bypass"
+        cache_ttl = _inbox_cache_ttl()
+        cache_key = None
+
+        if viewer_id and _inbox_cache_enabled() and cache_ttl > 0:
+            ver = _inbox_get_ver(str(viewer_id))
+            cache_key = _inbox_thread_cache_key(
+                viewer_id=str(viewer_id),
+                ver=ver,
+                thread_id=str(thread_id),
+                limit=limit,
+                cursor=cursor if cursor else None,
+            )
+            try:
+                cached = cache.get(cache_key)
+            except Exception:
+                cached = None
+                cache_key = None
+            if cached is not None:
+                resp = Response(cached, status=status.HTTP_200_OK)
+                resp["X-Siddes-Cache"] = "hit"
+                resp["X-Siddes-Cache-Ttl"] = str(cache_ttl)
+                resp["Cache-Control"] = "private, no-store"
+                resp["Vary"] = "Cookie, Authorization"
+                return resp
+            if cache_key is not None:
+                cache_status = "miss"
+
         data = get_thread(
             store,
             viewer_id=viewer_id,
@@ -519,7 +661,20 @@ class InboxThreadView(APIView):
             cursor=cursor if cursor else None,
         )
         data = _restrict_blocked_thread_payload(viewer_id, data)
-        return Response(data, status=status.HTTP_200_OK)
+
+        if cache_key is not None and cache_status == "miss" and isinstance(data, dict) and not data.get("restricted"):
+            try:
+                cache.set(cache_key, data, timeout=cache_ttl)
+            except Exception:
+                cache_status = "bypass"
+
+        resp = Response(data, status=status.HTTP_200_OK)
+        resp["Cache-Control"] = "private, no-store"
+        resp["Vary"] = "Cookie, Authorization"
+        resp["X-Siddes-Cache"] = cache_status
+        if cache_status != "bypass":
+            resp["X-Siddes-Cache-Ttl"] = str(cache_ttl)
+        return resp
 
     def post(self, request, thread_id: str):
         viewer = get_viewer_id(request)
@@ -540,7 +695,15 @@ class InboxThreadView(APIView):
                 return Response({"ok": False, "error": "invalid_side"}, status=status.HTTP_400_BAD_REQUEST)
 
             data = set_locked_side(store, viewer_id=viewer, thread_id=thread_id, side=side)  # type: ignore[arg-type]
-            return Response(data, status=status.HTTP_200_OK)
+
+            # sd_582: bump per-viewer version so cached thread/list refreshes after mutations
+            if viewer:
+                _inbox_bump_ver(str(viewer))
+
+            resp = Response(data, status=status.HTTP_200_OK)
+            resp["Cache-Control"] = "private, no-store"
+            resp["Vary"] = "Cookie, Authorization"
+            return resp
 
         raw_text = str(body.get("text") or "")
         text = raw_text.strip()
@@ -594,7 +757,14 @@ class InboxThreadView(APIView):
         except ValueError:
             return Response({"ok": False, "error": "missing_text"}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response(data, status=status.HTTP_200_OK)
+        # sd_582: bump per-viewer version so cached thread/list refreshes after mutations
+        if viewer:
+            _inbox_bump_ver(str(viewer))
+
+        resp = Response(data, status=status.HTTP_200_OK)
+        resp["Cache-Control"] = "private, no-store"
+        resp["Vary"] = "Cookie, Authorization"
+        return resp
 
 
 def _message_dict(m: Any) -> dict[str, Any]:

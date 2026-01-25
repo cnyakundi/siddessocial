@@ -4,7 +4,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import React, { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Image as ImageIcon,
   Link as LinkIcon,
@@ -645,6 +645,8 @@ export function PostCard({
   avatarUrl?: string | null;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const isDetail = typeof pathname === "string" && pathname.startsWith("/siddes-post/");
 
   // sd_568: prefetch post routes on intent (instant tap feel)
   const prefetchPost = () => {
@@ -679,7 +681,7 @@ export function PostCard({
   const [openEdit, setOpenEdit] = useState(false);
   const [contentOverride, setContentOverride] = useState<string | null>(null);
   const [editedAtMs, setEditedAtMs] = useState<number | null>(null);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(() => isDetail);
 
   const displayContent = contentOverride ?? String((post as any)?.content ?? post.content ?? "");
   const isEdited = editedAtMs !== null || typeof (post as any)?.editedAt === "number";
@@ -905,6 +907,7 @@ export function PostCard({
   };
 
   const openPost = () => {
+    if (isDetail) return;
     saveReturnScroll(post.id);
     router.push(`/siddes-post/${post.id}`);
   };
@@ -1111,6 +1114,8 @@ export function PostCard({
         <div
           role="button"
           tabIndex={0}
+          onMouseEnter={prefetchPost}
+          onTouchStart={prefetchPost}
           onClick={
           (e) => {
             // sd_483_action_event_bleed: child actions may call preventDefault/stopPropagation

@@ -61,12 +61,13 @@ export function SideSwitcherSheet({
         aria-label="Close side switcher"
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
         onPointerDown={(e) => {
-        // sd_481_sheet_close_reliability: pointerdown closes reliably on mobile
+        // sd_713_backdrop_clickthrough: consume pointerdown to prevent ghost taps (close on click)
         e.preventDefault();
-        onClose();
+        e.stopPropagation();
       }}
       onClick={(e) => {
         e.preventDefault();
+        e.stopPropagation();
         onClose();
       }}
       />

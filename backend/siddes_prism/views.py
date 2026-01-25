@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+import hashlib
+import os
+
 from typing import Any, Dict, List, Optional, Tuple
 
 from django.conf import settings
+from django.core.cache import cache
 from django.contrib.auth import get_user_model
 from django.utils.decorators import method_decorator
 from rest_framework import status
@@ -21,6 +25,43 @@ MEMBER_SIDES = ("friends", "close", "work")
 
 def _truthy(v: str | None) -> bool:
     return str(v or "").strip().lower() in ("1", "true", "yes", "y", "on")
+
+# --- Profile server-side cache (sd_582) ---
+# Cache is server-side only (never edge-cache personalized/private payloads).
+# Key includes viewer + target + requestedSide + viewSide + cursor + limit to avoid leaks.
+
+def _profile_cache_enabled() -> bool:
+    return _truthy(os.environ.get("SIDDES_PROFILE_CACHE_ENABLED", "1"))
+
+
+def _profile_cache_ttl() -> int:
+    raw = os.environ.get("SIDDES_PROFILE_CACHE_TTL_SECS", "20")
+    try:
+        ttl = int(str(raw).strip())
+    except Exception:
+        ttl = 20
+    if ttl < 0:
+        ttl = 0
+    # Hard cap (avoid accidentally caching private payloads for too long)
+    if ttl > 300:
+        ttl = 300
+    return ttl
+
+
+def _profile_cache_key(
+    *,
+    viewer_tok: str,
+    target_id: int,
+    requested: str,
+    view_side: str,
+    is_owner: bool,
+    limit: int,
+    cursor: str | None,
+) -> str:
+    raw = f"v1|viewer={viewer_tok}|target={target_id}|requested={requested}|viewSide={view_side}|owner={1 if is_owner else 0}|limit={limit}|cursor={cursor or ''}"
+    h = hashlib.sha256(raw.encode("utf-8")).hexdigest()
+    return f"profile:v1:{h}"
+
 
 
 def viewer_id_for_user(user) -> str:
@@ -385,12 +426,13 @@ class ProfileView(APIView):
 
         viewer = _user_from_request(request)
         viewer_authed = bool(viewer)
+        viewer_tok = viewer_id_for_user(viewer) if viewer else "anon"
 
         is_owner = bool(viewer and getattr(viewer, 'id', None) == getattr(target, 'id', None))
         # sd_424_profile_blocks: Blocks hard-stop profile visibility
         if viewer and viewer.id != target.id:
             try:
-                viewer_tok = viewer_id_for_user(viewer)
+                # viewer_tok already resolved above (per-request)
                 target_tok = "@" + str(getattr(target, "username", "") or "").lower()
                 if target_tok and is_blocked_pair(viewer_tok, target_tok):
                     return Response({"ok": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
@@ -437,6 +479,50 @@ class ProfileView(APIView):
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )
+
+        # sd_582: server-side profile cache (per-viewer + per-side, short TTL)
+        lim_raw = str(getattr(request, "query_params", {}).get("limit") or "").strip()
+        try:
+            lim = int(lim_raw) if lim_raw else 40
+        except Exception:
+            lim = 40
+        if lim < 1:
+            lim = 1
+        if lim > 80:
+            lim = 80
+
+        cursor_raw = str(getattr(request, "query_params", {}).get("cursor") or "").strip() or None
+
+        cache_status = "bypass"
+        cache_ttl = _profile_cache_ttl()
+        cache_key = None
+
+        if _profile_cache_enabled() and cache_ttl > 0:
+            cache_key = _profile_cache_key(
+                viewer_tok=str(viewer_tok),
+                target_id=int(getattr(target, "id", 0) or 0),
+                requested=str(requested),
+                view_side=str(view_side),
+                is_owner=bool(is_owner),
+                limit=int(lim),
+                cursor=cursor_raw,
+            )
+            try:
+                cached = cache.get(cache_key)
+            except Exception:
+                cached = None
+                cache_key = None
+
+            if cached is not None:
+                resp = Response(cached, status=status.HTTP_200_OK)
+                resp["X-Siddes-Cache"] = "hit"
+                resp["X-Siddes-Cache-Ttl"] = str(cache_ttl)
+                resp["Cache-Control"] = "private, no-store"
+                resp["Vary"] = "Cookie, Authorization"
+                return resp
+
+            if cache_key is not None:
+                cache_status = "miss"
 
         _ensure_facets(target)
         facet = PrismFacet.objects.filter(user=target, side=requested).first()
@@ -658,22 +744,33 @@ class ProfileView(APIView):
             # Best-effort: profile must still render even if posts hydration fails.
             posts_payload = {"side": requested, "count": 0, "items": [], "nextCursor": None, "hasMore": False}
 
-        return Response(
-            {
-                "ok": True,
-                "user": {"id": target.id, "username": target.username, "handle": "@" + target.username},
-                "viewSide": view_side,
-                "requestedSide": requested,
-                "allowedSides": allowed_sides,
-                "facet": _facet_dict(facet),
-                "siders": ("Close Vault" if view_side == "close" else siders_count),
-                "viewerSidedAs": viewer_sided_as,
-                "viewerAuthed": viewer_authed,
-                "sharedSets": shared_sets,
-                "posts": posts_payload,
-            },
-            status=status.HTTP_200_OK,
-        )
+        out = {
+            "ok": True,
+            "user": {"id": target.id, "username": target.username, "handle": "@" + target.username},
+            "viewSide": view_side,
+            "requestedSide": requested,
+            "allowedSides": allowed_sides,
+            "facet": _facet_dict(facet),
+            "siders": ("Close Vault" if view_side == "close" else siders_count),
+            "viewerSidedAs": viewer_sided_as,
+            "viewerAuthed": viewer_authed,
+            "sharedSets": shared_sets,
+            "posts": posts_payload,
+        }
+
+        if cache_key is not None and cache_status == "miss":
+            try:
+                cache.set(cache_key, out, timeout=cache_ttl)
+            except Exception:
+                cache_status = "bypass"
+
+        resp = Response(out, status=status.HTTP_200_OK)
+        resp["Cache-Control"] = "private, no-store"
+        resp["Vary"] = "Cookie, Authorization"
+        resp["X-Siddes-Cache"] = cache_status
+        if cache_status != "bypass":
+            resp["X-Siddes-Cache-Ttl"] = str(cache_ttl)
+        return resp
 
 
 @method_decorator(dev_csrf_exempt, name="dispatch")

@@ -152,7 +152,6 @@ function SentReplies({ postId, onReplyTo }: { postId: string; onReplyTo?: (paren
     refresh();
   }, [refresh]);
 
-  // Auto-refresh replies when a reply is sent or when offline queue flushes.
   useEffect(() => {
     if (typeof window === "undefined") return;
     const on = () => refresh();
@@ -169,9 +168,9 @@ function SentReplies({ postId, onReplyTo }: { postId: string; onReplyTo?: (paren
   }, [postId, refresh]);
 
   return (
-    <div className="mt-4" data-testid="sent-replies">
-      <div className="flex items-center justify-between mb-2">
-        <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Replies</div>
+    <div className="mt-6" data-testid="sent-replies">
+      <div className="flex items-center justify-between mb-3">
+        <div className="text-[11px] font-black text-gray-900">Replies</div>
         <button
           type="button"
           className="text-xs font-extrabold text-gray-600 hover:underline"
@@ -183,38 +182,51 @@ function SentReplies({ postId, onReplyTo }: { postId: string; onReplyTo?: (paren
       </div>
 
       {replies.length ? (
-        <div className="space-y-2">
-          {replies.map((r) => {
+        <div className="space-y-1">
+          {replies.map((r, idx) => {
             const mine = viewerId ? r.authorId === viewerId : isStubMe(r.authorId);
             const who = mine ? "You" : (r.author || r.handle || r.authorId || "Unknown");
             const depth = Math.max(0, Math.min(3, Number((r as any).depth || 0)));
-            const isNested = depth > 0;
+            const indentPx = depth * 18;
+            const isLast = idx === replies.length - 1;
 
-            // Visual rule: keep width comfortable on mobile. Indent once + show a subtle thread rail.
-            const rail = isNested;
-            const railClass = rail ? "pl-4" : "";
+            const when = (() => {
+              try {
+                return new Date(r.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+              } catch {
+                return "";
+              }
+            })();
 
             return (
-              <div key={r.id} className={cn("relative", railClass)}>
-                {rail ? <div className="absolute left-1 top-0 bottom-8 w-px bg-gray-200" /> : null}
-                <div className="p-3 rounded-2xl border border-gray-200 bg-white">
-                  <div className="flex items-start gap-3">
+              <div key={r.id} className="relative" style={{ marginLeft: indentPx }}>
+                {!isLast ? (
+                  <div className="absolute left-[15px] top-9 bottom-0 w-[2px] bg-gray-100" aria-hidden="true" />
+                ) : null}
+
+                <div className="flex gap-3 relative">
+                  <div className="shrink-0 z-10">
                     <ReplyAvatar label={who} tone="neutral" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2 text-xs mb-1">
-                        <span className="font-extrabold text-gray-900 truncate">{who}</span>
-                        <span className="tabular-nums text-gray-400">{new Date(r.createdAt).toLocaleTimeString()}</span>
+                  </div>
+
+                  <div className="flex-1 pb-6 min-w-0">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="font-extrabold text-gray-900 text-sm truncate">{who}</span>
+                        {when ? <span className="text-gray-400 text-xs tabular-nums">{when}</span> : null}
                       </div>
-                      <div className="text-sm text-gray-900 leading-relaxed">{r.text}</div>
-                      <div className="mt-2 flex items-center gap-3 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">
-                        <button
-                          type="button"
-                          className="min-h-[44px] px-3 py-2 -ml-3 rounded-full hover:bg-gray-100 hover:text-gray-900 transition-colors"
-                          onClick={() => onReplyTo?.(r.id, who)}
-                        >
-                          Reply
-                        </button>
-                      </div>
+                    </div>
+
+                    <div className="text-sm text-gray-900 leading-relaxed mt-1 whitespace-pre-wrap">{r.text}</div>
+
+                    <div className="mt-2 flex items-center gap-6 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">
+                      <button
+                        type="button"
+                        className="hover:text-gray-900"
+                        onClick={() => onReplyTo?.(r.id, who)}
+                      >
+                        Reply
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -228,7 +240,6 @@ function SentReplies({ postId, onReplyTo }: { postId: string; onReplyTo?: (paren
     </div>
   );
 }
-
 
 function SideMismatchBanner({
   active,
@@ -666,6 +677,71 @@ useEffect(() => {
             ) : null}
           </div>
 
+          
+          {mismatch ? (
+            <div className="mt-4 flex items-center justify-between gap-3">
+              <div className="text-sm font-bold text-gray-700">
+                Enter <span className={theme.text}>{postMeta.label}</span> to reply.
+              </div>
+              <button
+                type="button"
+                className={cn("px-4 py-2 rounded-full text-white text-sm font-extrabold hover:opacity-90", theme.primaryBg)}
+                onClick={enterSide}
+              >
+                Enter {postMeta.label}
+              </button>
+            </div>
+          ) : (
+            <div className="mt-4" data-testid="thread-inline-composer">
+              {replyError ? (
+                <div className="text-xs font-extrabold text-rose-600 mb-2">{replyError.message}</div>
+              ) : null}
+
+              {replyTo ? (
+                <div className="flex items-center justify-between gap-3 text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-2">
+                  <span className="truncate">Replying to {replyTo.label}</span>
+                  <button
+                    type="button"
+                    className="px-3 py-1 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    onClick={() => setReplyTo(null)}
+                  >
+                    Clear
+                  </button>
+                </div>
+              ) : null}
+
+              <div className="flex gap-3 py-4 border-t border-b border-gray-100">
+                <ReplyAvatar label="You" tone="neutral" />
+                <div className="flex-1 min-w-0">
+                  <input
+                    ref={replyInputRef}
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                    placeholder="Add a reply…"
+                    className="w-full py-2 bg-transparent outline-none text-base font-bold placeholder:text-gray-400"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        sendReplyNow();
+                      }
+                    }}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={sendReplyNow}
+                  disabled={replyBusy || !replyText.trim()}
+                  className={cn(
+                    "px-4 py-2 rounded-full text-sm font-extrabold text-white",
+                    (replyBusy || !replyText.trim()) ? "bg-gray-200 cursor-not-allowed" : theme.primaryBg
+                  )}
+                >
+                  {replyBusy ? "Sending…" : "Send"}
+                </button>
+              </div>
+            </div>
+          )}
+
           <QueuedReplies postId={found.post.id} />
 <SentReplies
   postId={found.post.id}
@@ -680,71 +756,6 @@ useEffect(() => {
 />
         </div>
       </ContentColumn>
-
-<div className="fixed bottom-0 left-0 right-0 z-[70] bg-white/95 backdrop-blur border-t border-gray-100">
-  <ContentColumn className="py-3">
-    {mismatch ? (
-      <div className="flex items-center justify-between gap-3">
-        <div className="text-sm font-bold text-gray-700">
-          Enter <span className={theme.text}>{postMeta.label}</span> to reply.
-        </div>
-        <button
-          type="button"
-          className={cn("px-4 py-2 rounded-full text-white text-sm font-extrabold hover:opacity-90", theme.primaryBg)}
-          onClick={enterSide}
-        >
-          Enter {postMeta.label}
-        </button>
-      </div>
-    ) : (
-      <div className="space-y-2">
-        {replyError ? (
-          <div className="text-xs font-extrabold text-rose-600">{replyError.message}</div>
-        ) : null}
-
-        {replyTo ? (
-          <div className="flex items-center justify-between gap-3 text-[10px] font-extrabold uppercase tracking-widest text-gray-400">
-            <span className="truncate">Replying to {replyTo.label}</span>
-            <button
-              type="button"
-              className="px-3 py-1 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200"
-              onClick={() => setReplyTo(null)}
-            >
-              Clear
-            </button>
-          </div>
-        ) : null}
-
-        <div className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 focus-within:bg-white focus-within:border-gray-200 transition-all shadow-inner">
-          <input
-            ref={replyInputRef}
-            value={replyText}
-            onChange={(e) => setReplyText(e.target.value)}
-            placeholder="Write a reply…"
-            className="flex-1 bg-transparent outline-none text-sm font-bold placeholder-gray-300"
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                sendReplyNow();
-              }
-            }}
-          />
-          <button
-            type="button"
-            onClick={sendReplyNow}
-            disabled={replyBusy || !replyText.trim()}
-            className={cn(
-              "px-4 py-2 rounded-full text-sm font-extrabold text-white",
-              (replyBusy || !replyText.trim()) ? "bg-gray-200 cursor-not-allowed" : theme.primaryBg
-            )}
-          >
-            {replyBusy ? "Sending…" : "Send"}
-          </button>
-        </div>
-      </div>
-    )}
-  </ContentColumn>
-</div>
 
 </div>
   );

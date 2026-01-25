@@ -9,7 +9,8 @@ import type {
 } from "@/src/lib/inboxProvider";
 import type { SideId } from "@/src/lib/sides";
 import type { ThreadMessage, ThreadMeta } from "@/src/lib/threadStore";
-import { getCachedThread, makeThreadCacheKey, setCachedThread } from "@/src/lib/inboxCache";
+import { deleteCachedThread, getCachedThread, makeThreadCacheKey, setCachedThread } from "@/src/lib/inboxCache";
+import { getSessionIdentity, touchSessionConfirmed } from "@/src/lib/sessionIdentity";
 import { RestrictedError, isRestrictedPayload } from "@/src/lib/restricted";
 
 // sd_142 parity: resolve an origin even when window is unavailable (SSR/tests).
@@ -195,20 +196,44 @@ export const backendStubProvider: InboxProvider = {
   },
 
   async getThread(id: string, opts?: InboxProviderThreadOpts): Promise<InboxThreadView> {
-    const key = makeThreadCacheKey({
-      id,
-      limit: (opts as any)?.limit,
-      cursor: (opts as any)?.cursor,
-    });
+    const identAtStart = getSessionIdentity();
+    const viewerAtStart = identAtStart.viewerId ? String(identAtStart.viewerId) : "";
+    const epochAtStart = identAtStart.epoch ? String(identAtStart.epoch) : "";
+    const canUseCache = Boolean(identAtStart.authed && viewerAtStart && epochAtStart);
 
-    const cached = getCachedThread(key);
+    const key = canUseCache
+      ? makeThreadCacheKey({
+          id,
+          viewerId: viewerAtStart,
+          epoch: epochAtStart,
+          limit: (opts as any)?.limit,
+          cursor: (opts as any)?.cursor,
+        })
+      : "";
+
+    const cached = canUseCache && key ? getCachedThread(key) : null;
 
     // If we have a cached value, return it immediately and revalidate in background.
     if (cached) {
       fetchWithFallback(`/api/inbox/thread/${encodeURIComponent(id)}`, opts, { method: "GET" })
-        .then((r) => r.json())
-        .then((data: any) => {
-          if (data?.restricted || !data?.thread) return;
+        .then(async (r) => {
+          const data = (await r.json().catch(() => null)) as any;
+
+          // Fail closed: if this session is restricted now, evict cached data.
+          if (isRestrictedPayload(r, data)) {
+            try {
+              deleteCachedThread(key);
+            } catch {}
+            return;
+          }
+
+          if (!data?.thread) return;
+
+          // Successful authed call: refresh our "confirmedAt" marker.
+          try {
+            touchSessionConfirmed();
+          } catch {}
+
           const fresh: InboxThreadView = {
             thread: data.thread,
             meta: (data.meta ?? null) as ThreadMeta | null,
@@ -216,7 +241,16 @@ export const backendStubProvider: InboxProvider = {
             messagesHasMore: Boolean(data?.messagesHasMore),
             messagesNextCursor: (data?.messagesNextCursor ?? null) as string | null,
           };
-          setCachedThread(key, fresh);
+
+          // Only store into the same identity that initiated this load.
+          const identNow = getSessionIdentity();
+          if (identNow.viewerId === viewerAtStart && identNow.epoch === epochAtStart && identNow.authed) {
+            setCachedThread(key, fresh);
+          } else {
+            try {
+              deleteCachedThread(key);
+            } catch {}
+          }
         })
         .catch(() => {});
 
@@ -227,6 +261,12 @@ export const backendStubProvider: InboxProvider = {
     const data = (await res.json().catch(() => null)) as ThreadResp | null;
 
     if (isRestrictedPayload(res, data)) {
+      // Fail closed: don't keep any cached value around.
+      if (key) {
+        try {
+          deleteCachedThread(key);
+        } catch {}
+      }
       throw new RestrictedError(res.status || 403, "Thread is restricted — sign in as your session user.");
     }
 
@@ -234,6 +274,11 @@ export const backendStubProvider: InboxProvider = {
       const msg = (data as any)?.error || `Thread request failed (${res.status})`;
       throw new Error(msg);
     }
+
+    // Successful authed call: refresh our "confirmedAt" marker.
+    try {
+      touchSessionConfirmed();
+    } catch {}
 
     const view: InboxThreadView = {
       thread: (data.thread as any) ?? ({} as any),
@@ -243,15 +288,17 @@ export const backendStubProvider: InboxProvider = {
       messagesNextCursor: (data?.messagesNextCursor ?? null) as string | null,
     };
 
-    // Don't cache restricted / empty.
-    if (!data?.restricted && data?.thread) {
-      setCachedThread(key, view);
+    // Don't cache restricted / empty, and only cache when identity is stable.
+    if (canUseCache && key && data?.thread) {
+      const identNow = getSessionIdentity();
+      if (identNow.viewerId === viewerAtStart && identNow.epoch === epochAtStart && identNow.authed) {
+        setCachedThread(key, view);
+      }
     }
 
     return view;
   },
-
-  async sendMessage(
+async sendMessage(
     id: string,
     text: string,
     _from: "me" | "them" = "me",

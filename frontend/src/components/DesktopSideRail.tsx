@@ -57,9 +57,14 @@ export function DesktopSideRail() {
       {/* Slim rail (md..lg): icons + tooltips */}
       <div className="w-full pt-6 pb-4 flex flex-col items-center lg:hidden">
         {/* Brand mark */}
-        <div className={cn("mb-4 font-black text-xl tracking-tight select-none", activeTheme.text)} aria-label="Siddes">
+        <Link
+          href="/siddes-feed"
+          aria-label="Home"
+          title="Home"
+          className={cn("mb-4 font-black text-xl tracking-tight select-none hover:opacity-95 active:scale-[0.98] transition", activeTheme.text)}
+        >
           S
-        </div>
+        </Link>
 
         {/* Create */}
         <Link
@@ -171,13 +176,13 @@ export function DesktopSideRail() {
       {/* Wide rail (lg+): labeled sections */}
       <div className="hidden lg:flex w-full pt-6 pb-4 flex-col">
         {/* Brand */}
-        <div className="px-5 mb-4 flex items-center gap-3">
+        <Link href="/siddes-feed" aria-label="Home" title="Home" className="px-5 mb-4 flex items-center gap-3 hover:opacity-95 transition">
           <div className={cn("w-9 h-9 rounded-lg text-white font-black text-xl flex items-center justify-center", activeTheme.primaryBg)}>S</div>
           <div className="min-w-0">
             <div className="font-black text-lg tracking-tight text-gray-900 leading-none">Siddes</div>
             <div className="text-[11px] text-gray-400 font-semibold truncate">Context-safe by design.</div>
           </div>
-        </div>
+        </Link>
 
         {/* Create */}
         <div className="px-5 mb-5">

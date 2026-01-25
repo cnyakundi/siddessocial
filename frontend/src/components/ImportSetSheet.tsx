@@ -115,12 +115,13 @@ export function ImportSetSheet({
   return (
     <div className="fixed inset-0 z-[99] flex items-end justify-center md:items-center">
       <button type="button" className="absolute inset-0 bg-black/40 backdrop-blur-sm" onPointerDown={(e) => {
-        // sd_481_sheet_close_reliability: pointerdown closes reliably on mobile
+        // sd_713_backdrop_clickthrough: consume pointerdown to prevent ghost taps (close on click)
         e.preventDefault();
-        close();
+        e.stopPropagation();
       }}
       onClick={(e) => {
         e.preventDefault();
+        e.stopPropagation();
         close();
       }} aria-label="Close" />
       <div ref={panelRef} role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="import-set-title" className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-full duration-200">

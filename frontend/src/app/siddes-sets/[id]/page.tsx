@@ -446,7 +446,6 @@ export default function SiddesSetHubPage({ params }: { params: { id: string } })
       toast.error(e?.message || "Revoke failed.");
     }
   };
-;
 
   const membersCount = item ? (item.members || []).length : 0;
 
@@ -795,6 +794,16 @@ export default function SiddesSetHubPage({ params }: { params: { id: string } })
                     <div className="text-sm text-gray-500">Create an invite to bring people in.</div>
                   </div>
                 ) : null}
+              </div>
+
+
+
+              
+              <div className="p-4 rounded-2xl bg-white border border-gray-200">
+                <div className="font-black text-gray-900">Invite links</div>
+                <div className="text-xs text-gray-500 mt-1">
+                  Coming soon. (Temporarily disabled in this build to avoid broken navigation.)
+                </div>
               </div>
 
               <InviteActionSheet

@@ -116,8 +116,17 @@ if (pathname.startsWith("/siddes-profile")) return "Me";
     <div className="sticky top-0 z-[90] bg-white/90 backdrop-blur border-b border-gray-50 pt-[env(safe-area-inset-top)] relative">
       <div className={cn("absolute left-0 right-0 bottom-0 h-[3px]", theme.primaryBg)} aria-hidden />
       <div className="max-w-[430px] mx-auto px-4 h-14 flex items-center justify-between gap-3">
-        {/* Left: Side */}
-        <div className="relative">
+        {/* Left: Brand + Side */}
+        <div className="flex items-center gap-2">
+          <Link
+            href="/siddes-feed"
+            aria-label="Home"
+            title="Home"
+            className="w-9 h-9 rounded-xl bg-gray-900 text-white font-black text-lg flex items-center justify-center shadow-sm hover:opacity-95 active:scale-[0.98] transition"
+          >
+            S
+          </Link>
+          <div className="relative">
           <button
             type="button"
             onClick={() => {
@@ -137,6 +146,7 @@ if (pathname.startsWith("/siddes-profile")) return "Me";
             <span className="text-sm font-black tracking-tight text-gray-900">{SIDES[side].label}</span>
             <ChevronDown size={14} className="text-gray-400" aria-hidden />
           </button>
+          </div>
         </div>
 
         {/* Right: Set (Set) on Now, else Title */}
