@@ -1,4 +1,6 @@
 "use client";
+
+/* eslint-disable react/jsx-no-comment-textnodes */
 export const dynamic = "force-dynamic";
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -396,6 +398,7 @@ export default function UserProfilePage() {
             {/* sd_717_profile_v2_shell_header_tabs */}
             {/* sd_722_profile_v2_tab_url_sync */}
             <div className="mt-4">
+              /* sd_727_fix_profile_v2_variant_and_locked_back */
               <ProfileV2Header
                 displaySide={displaySide}
                 viewSide={viewSide}

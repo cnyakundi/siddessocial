@@ -195,6 +195,16 @@ class ContactsMatchView(APIView):
             except Exception:
                 pass
 
+
+        # Async (Edge Engine): refresh ML suggestions from viewer-scoped contact edges.
+        # Fail-open: if Redis/worker isn't running, matching still succeeds.
+        try:
+            from siddes_backend.edge_queue import enqueue  # type: ignore
+
+            enqueue("ml_refresh_suggestions", {"viewer_id": getattr(user, "id", None)})
+        except Exception:
+            pass
+
         return Response({"ok": True, "matches": matches}, status=status.HTTP_200_OK)
 
 

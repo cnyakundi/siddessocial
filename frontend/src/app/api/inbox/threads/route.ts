@@ -124,7 +124,16 @@ function fillParticipant(t: any): any {
     handle: existing?.handle ?? null,
   };
 
-  return { ...t, participant };
+    const unread = Number((t as any)?.unread ?? 0);
+  const updatedAtRaw =
+    (t as any)?.updatedAt ??
+    (t as any)?.updated_at ??
+    (t as any)?.meta?.updatedAt ??
+    (t as any)?.meta?.updated_at ??
+    0;
+  const updatedAt = Number(updatedAtRaw) || 0;
+
+  return { ...t, unread, updatedAt, participant };
 }
 
 /**

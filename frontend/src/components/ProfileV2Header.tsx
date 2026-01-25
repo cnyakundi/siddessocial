@@ -18,6 +18,7 @@ import { SIDES, SIDE_THEMES, type SideId } from "@/src/lib/sides";
 import type { PrismFacet } from "@/src/components/PrismProfile";
 
 // sd_717_profile_v2_header: hero header for /u/[username] (Profile V2)
+// sd_727_fix_profile_v2_header_variant
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -46,6 +47,9 @@ const COVER_V2: Record<SideId, string> = {
 };
 
 export function ProfileV2Header(props: {
+  // Optional: allow callers to choose a compact rendering. Default is "hero".
+  variant?: "hero" | "clean";
+
   // The identity being displayed (theme, cover, safety pill)
   displaySide: SideId;
   // The relationship-granted side you can see of them

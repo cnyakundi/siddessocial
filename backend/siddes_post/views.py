@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import os
 
+import re
+
 import time
 
 from typing import Any, Dict, Optional, Tuple, Set
@@ -25,6 +27,207 @@ from .models import Post, PostLike
 from .trust_gates import enabled as trust_gates_enabled, enforce_public_write_gates, normalize_trust_level
 
 _ALLOWED_SIDES = {"public", "friends", "close", "work"}
+
+
+# sd_717d_mentions_backend: Context-safe @mentions (server enforcement + notifications)
+# Siddes rule:
+# - In Friends/Close/Work, you can only @mention people who already belong in that Side (or Set).
+# - Mentions must NEVER be client-only; server enforces the "No Leaks" rule.
+# - Notifications are best-effort and must never break posting.
+
+MENTION_MAX = 20
+_MENTION_RE = re.compile(r'(?<![A-Za-z0-9_])@([A-Za-z0-9_.-]{1,32})')
+
+
+def _extract_mention_handles(text: str) -> list[str]:
+    # Extract normalized @handles from text (unique, order-preserving, capped).
+    s = str(text or "")
+    if not s:
+        return []
+    out: list[str] = []
+    seen: set[str] = set()
+    for m in _MENTION_RE.finditer(s):
+        uname = (m.group(1) or "").strip()
+        if not uname:
+            continue
+        h = "@" + uname.lower()
+        if h in seen:
+            continue
+        seen.add(h)
+        out.append(h)
+        if len(out) >= MENTION_MAX:
+            break
+    return out
+
+
+def _set_allows_mention(*, set_id: str, handle: str) -> bool:
+    # True if handle is a member of the Set. Fail-closed.
+    sid = str(set_id or "").strip()
+    h = str(handle or "").strip().lower()
+    if not sid or not h:
+        return False
+
+    try:
+        from siddes_sets.models import SiddesSetMember  # type: ignore
+        return bool(SiddesSetMember.objects.filter(set_id=sid, member_id=h).exists())
+    except Exception:
+        # Fallback: JSON members list
+        try:
+            from siddes_sets.models import SiddesSet  # type: ignore
+            ss = SiddesSet.objects.filter(id=sid).first()
+            members = getattr(ss, "members", []) or []
+            if not isinstance(members, list):
+                return False
+            mem = set()
+            for it in members:
+                t = str(it or "").strip().lower()
+                if not t:
+                    continue
+                if not t.startswith("@"):
+                    t = "@" + t
+                mem.add(t)
+            return h in mem
+        except Exception:
+            return False
+
+
+def _disallowed_mentions(*, author_id: str, side: str, set_id: str | None, handles: list[str]) -> list[str]:
+    # Return disallowed mention handles for this context.
+    # Enforcement is STRICT for non-public.
+    # - If set_id is present (non-broadcast): allow only Set members.
+    # - Else: allow only SideMembership-placed members (Close implies Friends).
+    s = str(side or "").strip().lower() or "public"
+    if s == "public":
+        return []
+
+    sid = str(set_id or "").strip()
+    out: list[str] = []
+
+    try:
+        from siddes_safety.policy import is_blocked_pair  # type: ignore
+    except Exception:
+        is_blocked_pair = None
+
+    for h in (handles or []):
+        hh = str(h or "").strip().lower()
+        if not hh:
+            continue
+
+        # self-mention is always harmless
+        try:
+            if _same_person(author_id, hh):
+                continue
+        except Exception:
+            pass
+
+        # Set-scoped: must be in Set roster
+        if sid and not sid.startswith("b_"):
+            if not _set_allows_mention(set_id=sid, handle=hh):
+                out.append(hh)
+            continue
+
+        # Side-scoped: must be placed into this Side by the author.
+        if is_blocked_pair is not None:
+            try:
+                if is_blocked_pair(author_id, hh):
+                    out.append(hh)
+                    continue
+            except Exception:
+                pass
+
+        try:
+            if not _side_membership_allows(viewer_id=hh, author_id=author_id, side=s):
+                out.append(hh)
+        except Exception:
+            out.append(hh)
+
+    return out
+
+
+def _notify_mentions_handles_best_effort(
+    *,
+    author_id: str,
+    side: str,
+    handles: list[str],
+    post_id: str,
+    post_title: str | None = None,
+    glimpse: str = "",
+    exclude_tokens: list[str] | None = None,
+) -> None:
+    # Create mention notifications for handles (best-effort, never raises).
+    try:
+        from siddes_notifications.service import notify  # type: ignore
+    except Exception:
+        return
+
+    try:
+        from siddes_safety.policy import is_blocked_pair  # type: ignore
+    except Exception:
+        is_blocked_pair = None
+
+    ex = [str(x or "").strip() for x in (exclude_tokens or []) if str(x or "").strip()]
+
+    for h in (handles or []):
+        hh = str(h or "").strip().lower()
+        if not hh:
+            continue
+
+        try:
+            if _same_person(author_id, hh):
+                continue
+        except Exception:
+            pass
+
+        # Resolve user for notification targeting: @handle -> Django user -> me_<id>
+        try:
+            u = _user_from_token(hh)
+        except Exception:
+            u = None
+        if not u:
+            continue
+
+        try:
+            uid = int(getattr(u, "id"))
+        except Exception:
+            continue
+
+        target_viewer = f"me_{uid}"
+
+        # Exclusions (e.g. post author already getting reply notification)
+        skip = False
+        for tok in ex:
+            try:
+                if _same_person(target_viewer, tok):
+                    skip = True
+                    break
+            except Exception:
+                if target_viewer == tok:
+                    skip = True
+                    break
+        if skip:
+            continue
+
+        # Block-aware: never ping across blocks.
+        if is_blocked_pair is not None:
+            try:
+                if is_blocked_pair(author_id, target_viewer) or is_blocked_pair(author_id, hh):
+                    continue
+            except Exception:
+                pass
+
+        try:
+            notify(
+                viewer_id=target_viewer,
+                ntype="mention",
+                side=side,
+                actor_id=author_id,
+                glimpse=str(glimpse or ""),
+                post_id=str(post_id or ""),
+                post_title=post_title,
+            )
+        except Exception:
+            continue
+
 
 
 # --- Feature flags (MVP hardening) ---
@@ -642,6 +845,12 @@ class PostCreateView(APIView):
                     payload["min_trust"] = gate.get("min_trust")
                 return Response(payload, status=st)
 
+        # sd_717d_mentions_backend: enforce context-safe @mentions (server-side)
+        mention_handles = _extract_mention_handles(text)
+        disallowed = _disallowed_mentions(author_id=viewer, side=side, set_id=set_id, handles=mention_handles)
+        if disallowed:
+            return Response({"ok": False, "error": "mention_forbidden", "handles": disallowed}, status=status.HTTP_400_BAD_REQUEST)
+
         rec = POST_STORE.create(author_id=viewer, side=side, text=text, set_id=set_id, urgent=urgent, public_channel=public_channel, client_key=client_key)
 
         # sd_384_media: commit + attach media to post (server-side visibility is enforced here)
@@ -693,6 +902,19 @@ class PostCreateView(APIView):
                 _BC_STORE.touch_last_post(broadcast_id=str(set_id), created_at=float(getattr(rec, "created_at", 0.0) or 0.0))
             except Exception:
                 pass
+
+        # sd_717d_mentions_backend: mention notifications (best-effort)
+        try:
+            _notify_mentions_handles_best_effort(
+                author_id=viewer,
+                side=side,
+                handles=mention_handles,
+                post_id=str(getattr(rec, "id", "") or ""),
+                post_title=(text[:60] if text else None),
+                glimpse=text,
+            )
+        except Exception:
+            pass
 
         return Response({"ok": True, "status": 201, "post": _feed_post_from_record(rec, viewer_id=viewer), "side": side}, status=status.HTTP_201_CREATED)
 
@@ -818,6 +1040,22 @@ class PostDetailView(APIView):
                     payload["min_trust"] = gate.get("min_trust")
                 return Response(payload, status=st)
 
+        # sd_717d_mentions_backend: enforce context-safe @mentions on edit (only newly added)
+        old_text = str(getattr(rec, "text", "") or "")
+        old_handles = set(_extract_mention_handles(old_text))
+        new_handles = _extract_mention_handles(text)
+        added_handles = [h for h in new_handles if h not in old_handles]
+        disallowed = _disallowed_mentions(
+            author_id=viewer,
+            side=side,
+            set_id=(str(getattr(rec, "set_id", "") or "").strip() or None),
+            handles=added_handles,
+        )
+        if disallowed:
+            return Response({"ok": False, "error": "mention_forbidden", "handles": disallowed}, status=status.HTTP_400_BAD_REQUEST)
+
+        # (added_handles is used after save for notifications)
+
         try:
             import time as _time
             rec.text = text
@@ -825,6 +1063,20 @@ class PostDetailView(APIView):
             rec.save(update_fields=["text", "edited_at"])
         except Exception:
             return Response({"ok": False, "error": "update_failed"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # sd_717d_mentions_backend: notify newly added mentions (best-effort)
+        try:
+            if added_handles:
+                _notify_mentions_handles_best_effort(
+                    author_id=viewer,
+                    side=side,
+                    handles=added_handles,
+                    post_id=str(post_id),
+                    post_title=(text[:60] if text else None),
+                    glimpse=text,
+                )
+        except Exception:
+            pass
 
         return Response({"ok": True, "post": _feed_post_from_record(rec, viewer_id=viewer)}, status=status.HTTP_200_OK)
 
@@ -977,6 +1229,12 @@ class PostReplyCreateView(APIView):
                     payload["min_trust"] = gate.get("min_trust")
                 return Response(payload, status=st)
 
+        # sd_717d_mentions_backend: enforce context-safe @mentions for replies (server-side)
+        mention_handles = _extract_mention_handles(text)
+        disallowed = _disallowed_mentions(author_id=viewer, side=side, set_id=set_id_of_post, handles=mention_handles)
+        if disallowed:
+            return Response({"ok": False, "error": "mention_forbidden", "handles": disallowed}, status=status.HTTP_400_BAD_REQUEST)
+
         try:
             r = REPLY_STORE.create(post_id=post_id, author_id=viewer, text=text, client_key=client_key, parent_id=parent_id)
 
@@ -994,6 +1252,21 @@ class PostReplyCreateView(APIView):
                         post_id=post_id,
                         post_title=(post_text[:60] if post_text else None),
                     )
+            except Exception:
+                pass
+
+            # sd_717d_mentions_backend: notify mentioned users (best-effort)
+            try:
+                post_text = str(getattr(rec, "text", "") or "")
+                _notify_mentions_handles_best_effort(
+                    author_id=viewer,
+                    side=side,
+                    handles=mention_handles,
+                    post_id=str(post_id),
+                    post_title=(post_text[:60] if post_text else None),
+                    glimpse=text,
+                    exclude_tokens=[author_id, viewer],
+                )
             except Exception:
                 pass
 
@@ -1342,6 +1615,12 @@ class PostQuoteEchoView(APIView):
 
         client_key = str(body.get("client_key") or body.get("clientKey") or "").strip() or None
 
+        # sd_717d_mentions_backend: enforce context-safe @mentions for quote-echo
+        mention_handles = _extract_mention_handles(text)
+        disallowed = _disallowed_mentions(author_id=viewer, side=tgt, set_id=None, handles=mention_handles)
+        if disallowed:
+            return Response({"ok": False, "error": "mention_forbidden", "handles": disallowed}, status=status.HTTP_400_BAD_REQUEST)
+
         rec = POST_STORE.create(
             author_id=viewer,
             side=tgt,
@@ -1367,6 +1646,19 @@ class PostQuoteEchoView(APIView):
                     post_id=post_id,
                     post_title=(base_text[:60] if base_text else None),
                 )
+        except Exception:
+            pass
+
+        # sd_717d_mentions_backend: mention notifications (best-effort)
+        try:
+            _notify_mentions_handles_best_effort(
+                author_id=viewer,
+                side=tgt,
+                handles=mention_handles,
+                post_id=str(getattr(rec, "id", "") or ""),
+                post_title=(text[:60] if text else None),
+                glimpse=text,
+            )
         except Exception:
             pass
 

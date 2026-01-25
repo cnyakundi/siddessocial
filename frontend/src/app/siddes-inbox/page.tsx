@@ -38,6 +38,23 @@ function sortTs(t: InboxThreadItem): number {
 }
 
 
+function formatAbsTime(ts: number): string {
+  const n = Number(ts || 0);
+  if (!n || !Number.isFinite(n)) return "";
+  try {
+    const d = new Date(n);
+    return d.toLocaleString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return "";
+  }
+}
+
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
 }
@@ -543,6 +560,7 @@ function SiddesInboxPageInner() {
           const initials = String(participant?.initials || (t.title || "??")).slice(0, 2);
           const sideId = ((t as any)?.lockedSide as SideId) || side;
           const seed = String(participant?.avatarSeed || t.id || "").trim() || null;
+          const ts = sortTs(t);
           return (
             <Link
               key={t.id}
@@ -561,7 +579,7 @@ function SiddesInboxPageInner() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline justify-between gap-3">
                     <span className="truncate text-[15px] font-black text-gray-900">{t.title}</span>
-                    <span className="text-[11px] font-bold text-gray-400 flex-shrink-0">{t.time}</span>
+                    <span className="text-[11px] font-bold text-gray-400 flex-shrink-0" title={formatAbsTime(ts)}>{t.time}</span>
                     {showContextRisk ? <ContextRiskBadge isPrivate={isPrivate} /> : null}
                   </div>
                   <div className="text-[13px] font-medium text-gray-600 truncate">{lastText}</div>

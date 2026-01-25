@@ -36,6 +36,26 @@ services:
     volumes:
       - ../../backend:/app/backend
 
+  edge_engine:
+    build:
+      context: ../..
+      dockerfile: ops/docker/backend.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgres://siddes:siddes_dev_password@db:5432/siddes}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-1}
+      SIDDES_EDGE_ENGINE_ENABLED: ${SIDDES_EDGE_ENGINE_ENABLED:-1}
+    command: ["sh", "-lc", "python manage.py edge_engine"]
+    volumes:
+      - ../../backend:/app/backend
+
+
   frontend:
     build:
       context: ../..
