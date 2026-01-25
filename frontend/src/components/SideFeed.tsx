@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronDown, Sparkles } from "lucide-react";
+import { ChevronDown, MessageCircle } from "lucide-react";
 import { useSide } from "@/src/components/SideProvider";
 import { useReturnScrollRestore } from "@/src/hooks/returnScroll";
 import type { SideId } from "@/src/lib/sides";
@@ -82,7 +82,7 @@ function EmptyState({ side, onCreateSet, composeHref }: { side: SideId; onCreate
       </div>
 
       <div className={cn("w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4", theme.lightBg, theme.text)}>
-        <Sparkles size={28} />
+        <MessageCircle size={28} />
       </div>
 
       <p className="text-gray-800 text-sm font-semibold mb-1">No posts in {meta.label} yet.</p>
@@ -859,7 +859,7 @@ export function SideFeed() {
                     key={row.key}
                     data-index={vr.index}
                     ref={rowVirtualizer.measureElement}
-                    className={row.kind === "divider" ? "" : ""}
+                    className="px-4 lg:px-0"
                     style={{
                       position: "absolute",
                       top: 0,

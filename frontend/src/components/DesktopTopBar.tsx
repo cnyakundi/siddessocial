@@ -249,7 +249,8 @@ export function DesktopTopBar() {
   const canPickSet = isNow && side !== "public";
 
   return (
-    <div className="sticky top-0 z-[90] bg-white/95 backdrop-blur border-b border-gray-50">
+    <div className="sticky top-0 z-[90] bg-white/95 backdrop-blur border-b border-gray-50 relative">
+      <div className={cn("absolute left-0 right-0 bottom-0 h-[3px]", theme.primaryBg)} aria-hidden />
       <div className="h-16">
         <div className="mx-auto w-full max-w-[760px] px-6 h-16 flex items-center justify-between gap-4">
         {/* Left: Side chip */}

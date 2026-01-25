@@ -1009,30 +1009,9 @@ export function PostCard({
       {/* Header */}
       <div className={cn("flex justify-between items-start", isRow ? "mb-2" : "mb-4")}>
         <div
-          role="button"
-          tabIndex={0}
           onMouseEnter={prefetchPost}
           onTouchStart={prefetchPost}
-          onClick={
-          (e) => {
-            // sd_483_action_event_bleed: child actions may call preventDefault/stopPropagation
-            if (e.defaultPrevented) return;
-            // Selection-safe: don't navigate when the user is highlighting text.
-            try {
-              const sel = typeof window !== "undefined" ? window.getSelection() : null;
-              if (sel && sel.toString().trim().length > 0) return;
-            } catch {}
-            openPost();
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") openPost();
-            if (e.key === " " ) {
-              e.preventDefault();
-              openPost();
-            }
-          }}
-          className="flex gap-4 lg:gap-6 text-left cursor-pointer"
-          aria-label="Open post"
+          className="flex gap-4 lg:gap-6 text-left"
         >
           <button
             type="button"
@@ -1317,8 +1296,8 @@ export function PostCard({
                 "min-w-[44px] min-h-[44px] px-2 rounded-full inline-flex items-center gap-2 text-xs font-extrabold hover:bg-gray-50 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-900/20 disabled:opacity-60",
                 liked ? theme.text : "text-gray-400 hover:text-gray-900"
               )}
-              aria-label="React"
-              title="React"
+              aria-label={side === "work" ? "Acknowledge" : "Like"}
+              title={side === "work" ? "Acknowledge" : "Like"}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -1331,7 +1310,7 @@ export function PostCard({
               ) : (
                 <Heart size={18} strokeWidth={2.5} fill={liked ? "currentColor" : "none"} />
               )}
-              React
+              {side === "work" ? "Ack" : "Like"}
             </button>
           </div>
         ) : (
@@ -1363,14 +1342,14 @@ export function PostCard({
                   "transition-colors disabled:opacity-60",
                   liked ? theme.text : cn("text-gray-400", side === "work" ? HOVER_TEXT[side] : "hover:text-red-500")
                 )}
-                aria-label="React"
+                aria-label={side === "work" ? "Acknowledge" : "Like"}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   toggleLike();
                 }}
                 disabled={likeBusy}
-                title="React"
+                title={side === "work" ? "Acknowledge" : "Like"}
               >
                 <span className="inline-flex items-center gap-1">
                   {side === "work" ? (

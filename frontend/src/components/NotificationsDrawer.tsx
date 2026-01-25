@@ -56,13 +56,12 @@ export function NotificationsDrawer({
         <div className="px-6 pt-6 pb-4 flex items-center justify-between">
           <div>
             <div id="notifications-drawer-title" className="text-xl font-black tracking-tight text-gray-900">Notifications</div>
-            <div className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mt-1">Deterministic • Server truth</div>
           </div>
           <button
             type="button"
             ref={closeBtnRef}
             onClick={onClose}
-            className="w-11 h-11 rounded-2xl border border-gray-200 bg-white text-gray-400 inline-flex items-center justify-center active:scale-95 transition-transform"
+            className="w-11 h-11 rounded-2xl border border-gray-200 bg-white text-gray-600 inline-flex items-center justify-center active:scale-95 transition-transform"
             aria-label="Close"
           >
             <X size={22} strokeWidth={2} />

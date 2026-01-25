@@ -6,7 +6,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Zap, Inbox, Plus, Layers, User, type LucideIcon } from "lucide-react";
+import { Home, Inbox, Plus, Layers, User, type LucideIcon } from "lucide-react";
 import { useSide } from "@/src/components/SideProvider";
 import { SIDE_THEMES, type SideId } from "@/src/lib/sides";
 import { getStoredLastPublicTopic, getStoredLastSetForSide } from "@/src/lib/audienceStore";
@@ -177,7 +177,7 @@ export function BottomNav() {
     >
       <div className="max-w-[430px] mx-auto px-4">
         <div className="h-[88px] grid grid-cols-5 items-start pt-2">
-          <TabLink href="/siddes-feed" label="Now" Icon={Zap} active={isHome} />
+          <TabLink href="/siddes-feed" label="Now" Icon={Home} active={isHome} />
 
           {/* Sets are "Sets" in mobile UX language */}
           <TabLink href="/siddes-sets" label="Sets" Icon={Layers} active={isSets} />
@@ -197,7 +197,7 @@ export function BottomNav() {
                 theme.primaryBg
               )}
             >
-              <Plus size={32} strokeWidth={4} />
+              <Plus size={32} strokeWidth={2.5} />
             </span>
             <span
               className={cn(

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { useDialogA11y } from "@/src/hooks/useDialogA11y";
 
-import { Ban, ExternalLink, EyeOff, Flag, Link2, Share2, X, Pencil, Trash2, Copy, VolumeX, User, Repeat } from "lucide-react";
+import { Ban, MessageCircle, EyeOff, Flag, Link2, Share2, X, Pencil, Trash2, Copy, VolumeX, User, Repeat } from "lucide-react";
 import type { FeedPost } from "@/src/lib/feedTypes";
 import type { SideId } from "@/src/lib/sides";
 import { toast } from "@/src/lib/toast";
@@ -282,7 +282,7 @@ const doBlock = async () => {
             className="w-full p-4 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center gap-4 text-left"
           >
             <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-800 shadow-sm">
-              <ExternalLink size={18} />
+              <MessageCircle size={18} />
             </div>
             <div>
               <div className="font-bold text-gray-900">Open thread</div>

@@ -121,7 +121,7 @@ export function DesktopContextInspectorRail({ expanded, onExpandedChange }: Prop
           title="Expand"
           aria-label="Expand"
         >
-          <ChevronLeft size={18} strokeWidth={3} className="rotate-180" />
+          <ChevronLeft size={18} strokeWidth={2.5} className="rotate-180" />
         </button>
       </aside>
     );
@@ -143,7 +143,7 @@ export function DesktopContextInspectorRail({ expanded, onExpandedChange }: Prop
             title="Collapse"
             aria-label="Collapse"
           >
-            <ChevronLeft size={18} strokeWidth={3} />
+            <ChevronLeft size={18} strokeWidth={2.5} />
           </button>
         </div>
 

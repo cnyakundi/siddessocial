@@ -189,11 +189,14 @@ function SentReplies({ postId, onReplyTo }: { postId: string; onReplyTo?: (paren
             const who = mine ? "You" : (r.author || r.handle || r.authorId || "Unknown");
             const depth = Math.max(0, Math.min(3, Number((r as any).depth || 0)));
             const isNested = depth > 0;
-            const indentPx = depth * 20;
+
+            // Visual rule: keep width comfortable on mobile. Indent once + show a subtle thread rail.
+            const rail = isNested;
+            const railClass = rail ? "pl-4" : "";
 
             return (
-              <div key={r.id} className="relative" style={{ marginLeft: indentPx }}>
-                {isNested ? <div className="absolute -left-3 top-0 bottom-8 w-px bg-gray-200" /> : null}
+              <div key={r.id} className={cn("relative", railClass)}>
+                {rail ? <div className="absolute left-1 top-0 bottom-8 w-px bg-gray-200" /> : null}
                 <div className="p-3 rounded-2xl border border-gray-200 bg-white">
                   <div className="flex items-start gap-3">
                     <ReplyAvatar label={who} tone="neutral" />
@@ -206,7 +209,7 @@ function SentReplies({ postId, onReplyTo }: { postId: string; onReplyTo?: (paren
                       <div className="mt-2 flex items-center gap-3 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">
                         <button
                           type="button"
-                          className="hover:text-gray-900"
+                          className="min-h-[44px] px-3 py-2 -ml-3 rounded-full hover:bg-gray-100 hover:text-gray-900 transition-colors"
                           onClick={() => onReplyTo?.(r.id, who)}
                         >
                           Reply
@@ -632,15 +635,7 @@ useEffect(() => {
             >
               Enter {postMeta.label}
             </button>
-          ) : (
-            <button
-              type="button"
-              className="px-4 py-2 rounded-full bg-gray-900 text-white text-sm font-extrabold hover:opacity-90"
-              onClick={() => { setReplyTo(null); try { replyInputRef.current?.focus(); } catch {} }}
-            >
-              Reply
-            </button>
-          )}
+          ) : null}
         </div>
 
         <SideMismatchBanner active={activeSide} target={postSide} onEnter={enterSide} />
@@ -651,10 +646,10 @@ useEffect(() => {
           calmHideCounts={found.side === "public" && FLAGS.publicCalmUi && !(publicCalm?.showCounts)}
         />
 
-        <div className="mt-4 rounded-2xl border border-gray-100 bg-gray-50 p-4">
+        <div className="mt-4 rounded-3xl border border-gray-100 bg-white p-5">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Thread</div>
+              <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Replies</div>
               <div className="text-xs text-gray-500 mt-1">Replies stay in the same Side.</div>
             </div>
             {mismatch ? (
@@ -668,15 +663,7 @@ useEffect(() => {
               >
                 Enter {postMeta.label}
               </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => { setReplyTo(null); try { replyInputRef.current?.focus(); } catch {} }}
-                className="px-3 py-2 rounded-full border border-gray-200 bg-white text-sm font-extrabold text-gray-800 hover:bg-gray-100"
-              >
-                Add reply
-              </button>
-            )}
+            ) : null}
           </div>
 
           <QueuedReplies postId={found.post.id} />
