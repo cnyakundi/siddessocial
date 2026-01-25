@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { X } from "lucide-react";
 import type { PublicChannelId } from "@/src/lib/publicChannels";
 import { PUBLIC_CHANNELS } from "@/src/lib/publicChannels";
 import { getPublicSidingChannels, setPublicSidingChannels } from "@/src/lib/publicSiding";
+import { useDialogA11y } from "@/src/hooks/useDialogA11y";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -30,17 +31,13 @@ export function PublicChannelPrefsSheet({
   const [selected, setSelected] = useState<PublicChannelId[]>([]);
 
   // Escape to close
-  useEffect(() => {
-    if (!open) return;
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
 
 
   useLockBodyScroll(open);
+
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const closeBtnRef = useRef<HTMLButtonElement | null>(null);
+  useDialogA11y({ open, containerRef: panelRef, initialFocusRef: closeBtnRef, onClose });
   // Load current prefs on open (after mount)
   useEffect(() => {
     if (!open) return;
@@ -86,16 +83,17 @@ export function PublicChannelPrefsSheet({
         aria-label="Close Public Topics sheet"
       />
 
-      <div className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
+      <div ref={panelRef} role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="public-channel-prefs-title" className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <div className="text-lg font-bold text-gray-900">{title}</div>
+            <div id="public-channel-prefs-title" className="text-lg font-bold text-gray-900">{title}</div>
             <div className="text-xs text-gray-500 mt-0.5">
               Tune what you see from this person in the Public Side.
             </div>
           </div>
           <button
             type="button"
+            ref={closeBtnRef}
             onClick={onClose}
             className="p-2 rounded-full hover:bg-gray-100"
             aria-label="Close"

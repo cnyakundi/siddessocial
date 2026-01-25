@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import Link from "next/link";
 import { LogOut, User, Link as LinkIcon, Grid3X3, FileText } from "lucide-react";
+import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
+import { useDialogA11y } from "@/src/hooks/useDialogA11y";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -17,14 +19,11 @@ export function DesktopUserMenu({
   onClose: () => void;
   align?: "right" | "left";
 }) {
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  useLockBodyScroll(open);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const firstItemRef = useRef<HTMLAnchorElement | null>(null);
+  useDialogA11y({ open, containerRef: panelRef, initialFocusRef: firstItemRef, onClose });
+
 
   if (!open) return null;
 
@@ -42,19 +41,19 @@ export function DesktopUserMenu({
     <>
       <button type="button" className="fixed inset-0 z-[210]" onClick={onClose} aria-label="Close user menu" />
 
-      <div
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-labelledby="desktop-user-menu-title" tabIndex={-1}
         className={cn(
           "absolute top-12 z-[220] w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden",
           align === "right" ? "right-0" : "left-0"
         )}
       >
         <div className="p-3 border-b border-gray-100">
-          <div className="text-sm font-extrabold text-gray-900">Account</div>
+          <div id="desktop-user-menu-title" className="text-sm font-extrabold text-gray-900">Account</div>
           <div className="text-xs text-gray-500">Quick actions</div>
         </div>
 
         <div className="p-2">
-          <Link href="/siddes-profile" className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-gray-50 text-sm font-bold text-gray-700">
+          <Link href="/siddes-profile" ref={firstItemRef} className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-gray-50 text-sm font-bold text-gray-700">
             <User size={16} className="text-gray-500" /> Prism Identity
           </Link>
           <Link href="/siddes-profile/account" className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-gray-50 text-sm font-bold text-gray-700">

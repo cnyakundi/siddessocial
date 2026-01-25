@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { Check, Pencil, X } from "lucide-react";
 import type { SuggestedSet } from "@/src/lib/setSuggestions";
@@ -9,6 +9,7 @@ import type { SideId } from "@/src/lib/sides";
 import { SIDE_ORDER, SIDE_THEMES, SIDES } from "@/src/lib/sides";
 import { SET_THEMES } from "@/src/lib/setThemes";
 import { sdTelemetry } from "@/src/lib/telemetry/sdTelemetry";
+import { useDialogA11y } from "@/src/hooks/useDialogA11y";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -75,6 +76,10 @@ export function SuggestedSetsSheet({
   const [batchNote, setBatchNote] = useState<string | null>(null);
 
   useLockBodyScroll(open);
+
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const closeBtnRef = useRef<HTMLButtonElement | null>(null);
+  useDialogA11y({ open, containerRef: panelRef, initialFocusRef: closeBtnRef, onClose });
 
   const validCount = useMemo(() => {
     return suggestions
@@ -147,9 +152,9 @@ export function SuggestedSetsSheet({
         e.preventDefault();
         onClose();
       }} aria-label="Close" />
-      <div className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
+      <div ref={panelRef} role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="suggested-sets-title" className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
         <div className="flex items-center justify-between mb-4">
-          <div className="text-lg font-bold text-gray-900">Suggested Sets</div>
+          <div id="suggested-sets-title" className="text-lg font-bold text-gray-900">Suggested Sets</div>
           <button className="p-2 rounded-full hover:bg-gray-100" onClick={onClose} aria-label="Close">
             <X size={18} className="text-gray-500" />
           </button>

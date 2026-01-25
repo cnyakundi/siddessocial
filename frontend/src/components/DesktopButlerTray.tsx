@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import Link from "next/link";
 import {
   Shield,
@@ -14,6 +14,8 @@ import {
 import { useSide } from "@/src/components/SideProvider";
 import { SIDES, SIDE_THEMES } from "@/src/lib/sides";
 import { NotificationsView } from "@/src/components/NotificationsView";
+import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
+import { useDialogA11y } from "@/src/hooks/useDialogA11y";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -132,18 +134,14 @@ export function DesktopButlerTray({
 
   const [tab, setTab] = useState<TabId>(initialTab);
 
+  useLockBodyScroll(open);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const closeBtnRef = useRef<HTMLButtonElement | null>(null);
+  useDialogA11y({ open, containerRef: panelRef, initialFocusRef: closeBtnRef, onClose });
+
   useEffect(() => {
     if (open) setTab(initialTab);
   }, [open, initialTab]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
 
   if (!open) return null;
 
@@ -156,10 +154,10 @@ export function DesktopButlerTray({
         aria-label="Close"
       />
 
-      <div className="relative h-full w-full max-w-[420px] bg-white shadow-2xl border-l border-gray-100">
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-labelledby="desktop-butler-title" tabIndex={-1} className="relative h-full w-full max-w-[420px] bg-white shadow-2xl border-l border-gray-100">
         <div className="p-4 border-b border-gray-100 flex items-center justify-between">
           <div className="min-w-0">
-            <div className="text-sm font-extrabold text-gray-900 truncate">Activity</div>
+            <div id="desktop-butler-title" className="text-sm font-extrabold text-gray-900 truncate">Activity</div>
             <div className={cn("text-[11px] font-extrabold uppercase tracking-widest", theme.text)}>
               {meta.label} Side
             </div>
@@ -167,6 +165,7 @@ export function DesktopButlerTray({
 
           <button
             type="button"
+            ref={closeBtnRef}
             onClick={onClose}
             className="p-2 rounded-full hover:bg-gray-100 text-gray-600"
             aria-label="Close tray"

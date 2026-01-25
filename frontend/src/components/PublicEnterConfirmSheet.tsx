@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useRef } from "react";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { Globe } from "lucide-react";
 import type { SideId } from "@/src/lib/sides";
 import { SIDES, SIDE_THEMES } from "@/src/lib/sides";
+import { useDialogA11y } from "@/src/hooks/useDialogA11y";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -21,17 +22,13 @@ export function PublicEnterConfirmSheet({
   onCancel: () => void;
   onConfirm: () => void;
 }) {
-  useEffect(() => {
-    if (!open) return;
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onCancel();
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onCancel]);
 
 
   useLockBodyScroll(open);
+
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const cancelBtnRef = useRef<HTMLButtonElement | null>(null);
+  useDialogA11y({ open, containerRef: panelRef, initialFocusRef: cancelBtnRef, onClose: onCancel });
   if (!open) return null;
 
   const pub = SIDE_THEMES.public;
@@ -53,13 +50,13 @@ export function PublicEnterConfirmSheet({
       }}
         aria-label="Cancel"
       />
-      <div className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
+      <div ref={panelRef} role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="public-enter-title" className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
         <div className="flex items-center gap-3 mb-4">
           <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center text-white", pub.primaryBg)}>
             <Globe size={20} />
           </div>
           <div className="min-w-0">
-            <div className="text-lg font-black text-gray-900 leading-tight">Enter Public?</div>
+            <div id="public-enter-title" className="text-lg font-black text-gray-900 leading-tight">Enter Public?</div>
             <div className="text-sm text-gray-500">Public is visible to anyone.</div>
           </div>
         </div>
@@ -75,6 +72,7 @@ export function PublicEnterConfirmSheet({
         <div className="mt-6 flex gap-3">
           <button
             type="button"
+            ref={cancelBtnRef}
             onClick={onCancel}
             className="flex-1 py-3 rounded-xl font-extrabold text-gray-700 border border-gray-200 hover:bg-gray-50"
           >

@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useRef } from "react";
 import { ArrowLeft, Check, Contact, X } from "lucide-react";
 import { SuggestedSetsSheet } from "@/src/components/SuggestedSetsSheet";
 import { useSide } from "@/src/components/SideProvider";
 import type { SideId } from "@/src/lib/sides";
 import { SIDE_THEMES } from "@/src/lib/sides";
 import { suggestSetsFromMatches, type ContactMatch } from "@/src/lib/localIntelligence/onDeviceContextEngine";
+import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
+import { useDialogA11y } from "@/src/hooks/useDialogA11y";
 type Step = "import" | "select" | "name";
 
 type ContactRow = { id: string; name: string; handle: string; matched: boolean };
@@ -28,6 +30,11 @@ export function ImportSetSheet({
   onCreateSuggested: (payload: { label: string; color: any; members: string[]; side?: SideId }) => void;
   side?: SideId;
 }) {
+  useLockBodyScroll(open);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const closeBtnRef = useRef<HTMLButtonElement | null>(null);
+  useDialogA11y({ open, containerRef: panelRef, initialFocusRef: closeBtnRef, onClose: close });
+
   const [step, setStep] = useState<Step>("import");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [setName, setSetName] = useState("Gym Squad");
@@ -117,7 +124,7 @@ export function ImportSetSheet({
         e.preventDefault();
         close();
       }} aria-label="Close" />
-      <div className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-full duration-200">
+      <div ref={panelRef} role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="import-set-title" className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-full duration-200">
         <div className="p-4 border-b border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
             {step !== "import" ? (
@@ -132,13 +139,14 @@ export function ImportSetSheet({
             ) : (
               <div className="w-10" />
             )}
-            <div className="font-bold text-gray-900">
+            <div id="import-set-title" className="font-bold text-gray-900">
               {step === "import" ? "Find your people" : step === "select" ? "Select people" : "Name this Set"}
             </div>
           </div>
 
           <button
             type="button"
+            ref={closeBtnRef}
             onClick={() => {
               reset();
               close();

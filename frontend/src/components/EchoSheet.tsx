@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useRef } from "react";
 import { Repeat, PenLine, X } from "lucide-react";
 import type { FeedPost } from "@/src/lib/feedTypes";
 import type { SideId } from "@/src/lib/sides";
 import { SIDE_THEMES } from "@/src/lib/sides";
+import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
+import { useDialogA11y } from "@/src/hooks/useDialogA11y";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -29,14 +31,11 @@ export function EchoSheet({
   echoed?: boolean;
   echoBusy?: boolean;
 }) {
-  useEffect(() => {
-    if (!open) return;
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  useLockBodyScroll(open);
+
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const closeBtnRef = useRef<HTMLButtonElement | null>(null);
+  useDialogA11y({ open: open && Boolean(post), containerRef: panelRef, initialFocusRef: closeBtnRef, onClose });
 
   if (!open || !post) return null;
 
@@ -58,9 +57,9 @@ export function EchoSheet({
       }}
         aria-label="Close echo sheet"
       />
-      <div className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
+      <div ref={panelRef} role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="echo-title" className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
         <div className="flex items-center justify-between mb-5">
-          <div className="text-lg font-bold text-gray-900">Echo to your Side</div>
+          <div id="echo-title" className="text-lg font-bold text-gray-900">Echo to your Side</div>
           <button
             type="button"
             onClick={onClose}

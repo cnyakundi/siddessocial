@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { X } from "lucide-react";
 
 import type { SideId } from "@/src/lib/sides";
 import type { SetInvite } from "@/src/lib/inviteProvider";
 import { getInviteProvider } from "@/src/lib/inviteProvider";
+import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
+import { useDialogA11y } from "@/src/hooks/useDialogA11y";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -38,6 +40,12 @@ export function InviteActionSheet({
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
+  useLockBodyScroll(open);
+
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const closeBtnRef = useRef<HTMLButtonElement | null>(null);
+  useDialogA11y({ open, containerRef: panelRef, initialFocusRef: closeBtnRef, onClose: close });
 
   useEffect(() => {
     if (!open) return;
@@ -76,10 +84,10 @@ export function InviteActionSheet({
   return (
     <div className="fixed inset-0 z-[99] flex items-end justify-center md:items-center">
       <button type="button" className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={close} aria-label="Close" />
-      <div className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-full duration-200">
+      <div ref={panelRef} role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="invite-actions-title" className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-full duration-200">
         <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-          <div className="font-black text-gray-900">Invite more to this Set</div>
-          <button type="button" onClick={close} className="p-2 rounded-full hover:bg-gray-100" aria-label="Close">
+          <div id="invite-actions-title" className="font-black text-gray-900">Invite more to this Set</div>
+          <button type="button" ref={closeBtnRef} onClick={close} className="p-2 rounded-full hover:bg-gray-100" aria-label="Close">
             <X size={18} className="text-gray-500" />
           </button>
         </div>

@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { X } from "lucide-react";
 import { toast } from "@/src/lib/toast";
+import { useDialogA11y } from "@/src/hooks/useDialogA11y";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -29,6 +30,9 @@ export function EditPostSheet({
   const taRef = useRef<HTMLTextAreaElement | null>(null);
 
   useLockBodyScroll(open);
+
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  useDialogA11y({ open, containerRef: panelRef, initialFocusRef: taRef, onClose });
 
   const limit = useMemo(() => {
     const n = Number(maxLen || 0);
@@ -95,7 +99,7 @@ export function EditPostSheet({
         aria-label="Close edit"
       />
 
-      <div className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
+      <div ref={panelRef} role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="edit-post-title" className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
         <div className="flex items-center justify-between gap-3 mb-4">
           <div>
             <div className="text-sm font-extrabold text-gray-900">Edit post</div>

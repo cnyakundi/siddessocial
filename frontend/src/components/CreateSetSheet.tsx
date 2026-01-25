@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { ArrowLeft, Check, ChevronRight, Palette, Users, X } from "lucide-react";
 
@@ -8,6 +8,7 @@ import type { SideId } from "@/src/lib/sides";
 import { SIDES, SIDE_THEMES } from "@/src/lib/sides";
 import type { SetColor } from "@/src/lib/setThemes";
 import { SET_THEMES } from "@/src/lib/setThemes";
+import { useDialogA11y } from "@/src/hooks/useDialogA11y";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -60,6 +61,10 @@ export function CreateSetSheet(props: {
   const [localErr, setLocalErr] = useState<string | null>(null);
 
   useLockBodyScroll(open);
+
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const closeBtnRef = useRef<HTMLButtonElement | null>(null);
+  useDialogA11y({ open, containerRef: panelRef, initialFocusRef: closeBtnRef, onClose });
 
   const steps: Step[] = useMemo(() => ["name", "side", "theme", "members", "review"], []);
   const stepIdx = steps.indexOf(step);
@@ -125,7 +130,7 @@ export function CreateSetSheet(props: {
         close();
       }} aria-label="Close" />
 
-      <div className="relative w-full md:max-w-lg bg-white rounded-t-3xl md:rounded-3xl shadow-2xl border border-gray-200 max-h-[92vh] overflow-y-auto">
+      <div ref={panelRef} role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="create-set-title" className="relative w-full md:max-w-lg bg-white rounded-t-3xl md:rounded-3xl shadow-2xl border border-gray-200 max-h-[92vh] overflow-y-auto">
         {/* Header */}
         <div className="px-4 pt-4 pb-3 border-b border-gray-100">
           <div className="flex items-center justify-between gap-3">
@@ -148,7 +153,7 @@ export function CreateSetSheet(props: {
               )}
 
               <div>
-                <div className="text-sm font-black text-gray-900">Create Set</div>
+                <div id="create-set-title" className="text-sm font-black text-gray-900">Create Set</div>
                 <div className="text-[11px] text-gray-500">
                   Step {stepNum}/{steps.length} • Name → Side → Theme → Members → Create
                 </div>
@@ -157,6 +162,7 @@ export function CreateSetSheet(props: {
 
             <button
               type="button"
+              ref={closeBtnRef}
               onClick={close}
               className="p-2 rounded-full border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
               aria-label="Close"

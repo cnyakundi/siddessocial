@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useRef } from "react";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { Check, X } from "lucide-react";
 import type { PublicChannelId } from "@/src/lib/publicChannels";
 import { PUBLIC_CHANNELS } from "@/src/lib/publicChannels";
 import type { PublicTrustMode } from "@/src/lib/publicTrustDial";
+import { useDialogA11y } from "@/src/hooks/useDialogA11y";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -36,17 +37,13 @@ publicChannel: "all" | PublicChannelId;
   countsShown: boolean;
   onToggleCounts: () => void;
 }) {
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
 
 
   useLockBodyScroll(open);
+
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const closeBtnRef = useRef<HTMLButtonElement | null>(null);
+  useDialogA11y({ open, containerRef: panelRef, initialFocusRef: closeBtnRef, onClose });
   if (!open) return null;
 
   const hasAnything = showTopics || showTrust || showCounts ;
@@ -62,11 +59,12 @@ publicChannel: "all" | PublicChannelId;
         onClose();
       }} aria-label="Close" />
 
-      <div className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-full duration-200">
+      <div ref={panelRef} role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="public-tune-title" className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-full duration-200">
         <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-          <div className="text-sm font-extrabold text-gray-900">Tune</div>
+          <div id="public-tune-title" className="text-sm font-extrabold text-gray-900">Tune</div>
           <button
             type="button"
+            ref={closeBtnRef}
             className="p-2 rounded-full hover:bg-gray-100 text-gray-500"
             onClick={onClose}
             aria-label="Close"

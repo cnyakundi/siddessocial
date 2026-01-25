@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { SideId } from "@/src/lib/sides";
 import { SIDES, SIDE_THEMES } from "@/src/lib/sides";
 import { toast } from "@/src/lib/toast";
+import { useDialogA11y } from "@/src/hooks/useDialogA11y";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -48,6 +49,10 @@ export function PeekSheet({ open, onClose, sideId }: { open: boolean; onClose: (
 
   useLockBodyScroll(open);
 
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const closeBtnRef = useRef<HTMLButtonElement | null>(null);
+  useDialogA11y({ open, containerRef: panelRef, initialFocusRef: closeBtnRef, onClose });
+
   useEffect(() => {
     if (!open) return;
 
@@ -87,15 +92,6 @@ export function PeekSheet({ open, onClose, sideId }: { open: boolean; onClose: (
     };
   }, [open, sideId]);
 
-  useEffect(() => {
-    if (!open) return;
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
-
   const viewItems = useMemo(() => items ?? [], [items]);
 
   if (!open) return null;
@@ -111,10 +107,10 @@ export function PeekSheet({ open, onClose, sideId }: { open: boolean; onClose: (
         e.preventDefault();
         onClose();
       }} aria-label="Close peek" />
-      <div className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
+      <div ref={panelRef} role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="peek-title" className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
         <div className="flex items-center justify-between mb-4">
-          <div className={cn("font-bold", theme.text)}>Peeking into {meta.label}</div>
-          <button type="button" onClick={onClose} className="p-2 rounded-full hover:bg-gray-100" aria-label="Close">
+          <div id="peek-title" className={cn("font-bold", theme.text)}>Peeking into {meta.label}</div>
+          <button type="button" ref={closeBtnRef} onClick={onClose} className="p-2 rounded-full hover:bg-gray-100" aria-label="Close">
             <X size={18} className="text-gray-500" />
           </button>
         </div>

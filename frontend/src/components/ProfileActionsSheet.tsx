@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useRef } from "react";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { Ban, Flag, Link2, VolumeX, X, Copy } from "lucide-react";
 import { toast } from "@/src/lib/toast";
+import { useDialogA11y } from "@/src/hooks/useDialogA11y";
 
 async function copyText(text: string): Promise<boolean> {
   const t = String(text || "");
@@ -42,14 +43,9 @@ export function ProfileActionsSheet(props: {
 
   useLockBodyScroll(open);
 
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const closeBtnRef = useRef<HTMLButtonElement | null>(null);
+  useDialogA11y({ open, containerRef: panelRef, initialFocusRef: closeBtnRef, onClose });
 
   if (!open) return null;
 
@@ -152,10 +148,10 @@ export function ProfileActionsSheet(props: {
         onClose();
       }} aria-label="Close" />
 
-      <div className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
+      <div ref={panelRef} role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="profile-actions-title" className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
         <div className="flex items-center justify-between mb-5">
           <div className="min-w-0">
-            <div className="text-sm font-extrabold text-gray-900 truncate">Profile options</div>
+            <div id="profile-actions-title" className="text-sm font-extrabold text-gray-900 truncate">Profile options</div>
             <div className="text-xs text-gray-500 truncate">{name} {who}</div>
           </div>
           <button type="button" onClick={onClose} className="p-2 rounded-full hover:bg-gray-100" aria-label="Close">

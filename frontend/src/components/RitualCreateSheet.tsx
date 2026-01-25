@@ -2,13 +2,15 @@
 
 // sd_338: Create Ritual sheet (Set-scoped v1)
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { BookOpen, HelpCircle, Smile, Sparkles, X } from "lucide-react";
 import type { SideId } from "@/src/lib/sides";
 import { SIDE_THEMES, SIDES } from "@/src/lib/sides";
 import type { RitualKind, RitualItem } from "@/src/lib/ritualsTypes";
 import { getRitualsProvider } from "@/src/lib/ritualsProvider";
 import { toast } from "@/src/lib/toast";
+import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
+import { useDialogA11y } from "@/src/hooks/useDialogA11y";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -37,6 +39,11 @@ export function RitualCreateSheet({
   initialKind?: RitualKind;
   onCreated?: (r: RitualItem) => void;
 }) {
+  useLockBodyScroll(open);
+
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const closeBtnRef = useRef<HTMLButtonElement | null>(null);
+  useDialogA11y({ open, containerRef: panelRef, initialFocusRef: closeBtnRef, onClose });
   const theme = SIDE_THEMES[side];
   const provider = useMemo(() => getRitualsProvider(), []);
 
@@ -60,15 +67,6 @@ export function RitualCreateSheet({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kind]);
 
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
-
   if (!open) return null;
 
   const disabled = busy || !setId || !prompt.trim();
@@ -86,13 +84,13 @@ export function RitualCreateSheet({
         onClose();
       }} />
 
-      <div className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200"> 
+      <div ref={panelRef} role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="ritual-create-title" className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200"> 
         <div className="flex items-center justify-between gap-3 mb-4"> 
           <div>
-            <h3 className="text-lg font-bold text-gray-900">Start a Ritual</h3>
+            <h3 id="ritual-create-title" className="text-lg font-bold text-gray-900">Start a Ritual</h3>
             <div className="text-xs text-gray-500 mt-1">Pulse for <span className="font-semibold text-gray-800">{setLabel}</span>.</div>
           </div>
-          <button type="button" onClick={onClose} className="p-2 rounded-full border border-gray-200 bg-white text-gray-700 hover:bg-gray-50" aria-label="Close"> 
+          <button type="button" ref={closeBtnRef} onClick={onClose} className="p-2 rounded-full border border-gray-200 bg-white text-gray-700 hover:bg-gray-50" aria-label="Close"> 
             <X size={16} />
           </button>
         </div>
