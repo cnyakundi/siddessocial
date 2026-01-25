@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { TrendingUp, Sparkles, Camera, Clock, ArrowRight, X, Shield } from "lucide-react";
+import { Hash, PenLine, Clock, ArrowRight, X, Shield } from "lucide-react";
 import type { SideId } from "@/src/lib/sides";
 import { SIDE_THEMES, SIDES } from "@/src/lib/sides";
 import type { FeedModule } from "@/src/lib/feedModules";
@@ -61,7 +61,7 @@ export function FeedModuleCard({ module }: { module: FeedModule }) {
         <DismissButton id={module.id} />
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <TrendingUp size={16} className={theme.text} />
+            <Hash size={16} className={theme.text} />
             <div>
               <div className={cn("text-xs font-bold uppercase tracking-widest", theme.text)}>{module.title}</div>
               <div className="text-xs text-gray-500">{module.subtitle}</div>
@@ -97,7 +97,7 @@ export function FeedModuleCard({ module }: { module: FeedModule }) {
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <TrendingUp size={16} className={theme.text} />
+              <Shield size={16} className={theme.text} />
               <span className={cn("text-xs font-bold uppercase tracking-widest", theme.text)}>{module.title}</span>
             </div>
             <div className="text-3xl font-black text-gray-900 leading-none">{stat}</div>
@@ -119,40 +119,36 @@ export function FeedModuleCard({ module }: { module: FeedModule }) {
     const href = `/siddes-compose?prompt=${encodeURIComponent(prompt)}&side=${encodeURIComponent(side)}`;
 
     return (
-      <div className="relative group rounded-[2.5rem] p-5 bg-gray-900 text-white shadow-xl overflow-hidden">
+      <CardShell side={side} className={cn(theme.lightBg)}>
         <DismissButton id={module.id} />
-        <div className="absolute top-0 right-0 p-4 opacity-20">
-          <Sparkles size={64} />
-        </div>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <PenLine size={16} className={theme.text} />
+              <span className={cn("text-xs font-bold uppercase tracking-widest", theme.text)}>{module.title}</span>
+            </div>
 
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-3">
-            <Camera size={16} className="text-yellow-400" />
-            <span className="text-xs font-bold uppercase tracking-widest text-gray-400">{module.title}</span>
-          </div>
+            <div className="text-lg font-black text-gray-900 leading-snug">"{prompt}"</div>
 
-          <h3 className="text-lg font-bold leading-snug mb-4">“{prompt}”</h3>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs text-gray-400">
+            <div className="mt-2 flex items-center gap-2 text-[11px] font-extrabold text-gray-500">
               <span className={cn("w-2 h-2 rounded-full", theme.primaryBg)} />
               <span>{sideLabel} only</span>
             </div>
-
-            <Link
-              href={href}
-              className="px-4 py-2 rounded-full text-xs font-bold text-gray-900 bg-white hover:bg-gray-100 active:scale-95 transition-transform flex items-center gap-2"
-              aria-label={`${cta} in ${sideLabel}`}
-            >
-              {cta} <ArrowRight size={12} />
-            </Link>
           </div>
+
+          <Link
+            href={href}
+            className="min-h-[44px] px-4 rounded-full text-xs font-black bg-white border border-gray-200 text-gray-900 hover:bg-gray-50 active:scale-95 transition flex items-center gap-2"
+            aria-label={`${cta} in ${sideLabel}`}
+          >
+            {cta} <ArrowRight size={12} />
+          </Link>
         </div>
-      </div>
+      </CardShell>
     );
   }
 
-  if (module.kind === "memory") {
+if (module.kind === "memory") {
     const time = (module.payload?.time || "On this day") as string;
     const text = (module.payload?.text || "") as string;
     const img = (module.payload?.image || "") as string;

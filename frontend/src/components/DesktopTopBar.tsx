@@ -351,7 +351,7 @@ export function DesktopTopBar() {
               <div className="px-3 py-2 rounded-full bg-gray-50 text-sm font-extrabold text-gray-400 select-none">All</div>
             )
           ) : pageTitle ? (
-            <div className="text-sm font-semibold text-gray-400 pr-1 select-none">{pageTitle}</div>
+            <div className="text-sm font-semibold text-gray-700 pr-1 select-none">{pageTitle}</div>
           ) : (
             <div />
           )}

@@ -73,7 +73,7 @@ export function DesktopSideRail() {
           title={`Create in ${SIDES[side].label}`}
         >
           <span className="text-sm font-extrabold">Create</span>
-          <Plus size={18} strokeWidth={3} />
+          <Plus size={18} strokeWidth={2.5} />
         </Link>
 
         {/* Sides (Doorway moment) */}
@@ -190,7 +190,7 @@ export function DesktopSideRail() {
             aria-label={`New post in ${SIDES[side].label}`}
             title={`Create in ${SIDES[side].label}`}
           >
-            <Plus size={18} strokeWidth={3} />
+            <Plus size={18} strokeWidth={2.5} />
             <span>New Post</span>
           </Link>
         </div>

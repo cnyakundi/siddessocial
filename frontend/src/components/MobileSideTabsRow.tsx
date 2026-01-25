@@ -86,7 +86,7 @@ export function MobileSideTabsRow() {
                 )}
               >
                 <span className={cn("w-1.5 h-5 rounded-full", theme.primaryBg)} aria-hidden />
-                <Icon size={14} strokeWidth={2.6} aria-hidden />
+                <Icon size={14} strokeWidth={2.5} aria-hidden />
                 <span className="truncate">{SIDES[id].label}</span>
 
                 {!allowed ? (
