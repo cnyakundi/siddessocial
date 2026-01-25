@@ -6,10 +6,12 @@ import { useState } from "react";
 
 export default function CreateFirstSetStep({
   onCreate,
+  onSkip,
   busy,
   msg,
 }: {
   onCreate: (info: { side: SideId; name: string }) => void;
+  onSkip?: () => void;
   busy: boolean;
   msg: string | null;
 }) {
@@ -25,15 +27,15 @@ export default function CreateFirstSetStep({
   const can = !!setName.trim() && !busy;
 
   return (
-    <div className="flex flex-col min-h-full px-10 pt-32 text-center pb-12">
-      <h2 className="text-4xl font-black text-gray-900 tracking-tight mb-4 leading-tight">Create your first Set.</h2>
-      <p className="text-gray-400 mb-12 font-medium leading-relaxed">
-        Sets = rooms inside a Side.
+    <div className="flex flex-col min-h-full px-10 pt-28 text-center pb-12">
+      <h2 className="text-4xl font-black text-gray-900 tracking-tight mb-3 leading-tight">Create your first Set</h2>
+      <p className="text-gray-500 mb-10 font-semibold leading-relaxed">
+        A Set is a private room inside a Side.
         <br />
-        They help you post with zero audience mistakes.
+        You can add people later.
       </p>
 
-      <div className="space-y-4 mb-10">
+      <div className="space-y-4 mb-8">
         <div className="flex gap-2 justify-center">
           {(["friends", "close", "work"] as SideId[]).map((side) => {
             const theme = SIDE_THEMES[side];
@@ -87,6 +89,16 @@ export default function CreateFirstSetStep({
           disabled={!can}
           icon={ArrowRight}
         />
+
+        {onSkip ? (
+          <button
+            onClick={onSkip}
+            disabled={busy}
+            className={`text-[10px] font-black uppercase tracking-widest transition-colors ${busy ? "text-gray-300 cursor-not-allowed" : "text-gray-400 hover:text-gray-900"}`}
+          >
+            Skip for now
+          </button>
+        ) : null}
       </div>
     </div>
   );

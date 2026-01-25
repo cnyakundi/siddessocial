@@ -701,20 +701,43 @@ class PostCreateView(APIView):
 class PostDetailView(APIView):
     def get(self, request, post_id: str):
         has_viewer, viewer, role = _viewer_ctx(request)
-        if not has_viewer or not post_id:
+        if not post_id:
             return Response({"ok": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
 
         # sd_422_user_hide: treat viewer-hidden posts as not_found
-        try:
-            from siddes_safety.models import UserHiddenPost  # type: ignore
-            if UserHiddenPost.objects.filter(viewer_id=viewer, post_id=str(post_id)).exists():
-                return Response({"ok": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
-        except Exception:
-            pass
+
+        if has_viewer:
+
+            try:
+
+                from siddes_safety.models import UserHiddenPost  # type: ignore
+
+                if UserHiddenPost.objects.filter(viewer_id=viewer, post_id=str(post_id)).exists():
+
+                    return Response({"ok": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
+
+            except Exception:
+
+                pass
 
         rec = POST_STORE.get(post_id)
         if rec is None:
             return Response({"ok": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # sd_707: allow anonymous reads ONLY for Public posts (and only when not in a private Set).
+        # Unlocks external sharing without weakening private Sides.
+        if not has_viewer:
+            try:
+                s = str(getattr(rec, "side", "") or "").strip().lower()
+                sid = str(getattr(rec, "set_id", "") or "").strip()
+            except Exception:
+                s = ""
+                sid = ""
+            if s != "public":
+                return Response({"ok": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
+            # Treat ANY Set post as private, except broadcast-like set ids (b_*) which are explicitly shareable.
+            if sid and not sid.startswith("b_"):
+                return Response({"ok": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
 
         ok_set, set_side = _set_meta(viewer, getattr(rec, "set_id", None))
         if not ok_set:
@@ -732,7 +755,7 @@ class PostDetailView(APIView):
         ):
             return Response({"ok": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
 
-        return Response({"ok": True, "post": _feed_post_from_record(rec, viewer_id=viewer), "side": rec.side}, status=status.HTTP_200_OK)
+        return Response({"ok": True, "post": _feed_post_from_record(rec, viewer_id=viewer), "side": rec.side, "viewerAuthed": bool(has_viewer)}, status=status.HTTP_200_OK)
 
     # sd_325: method-scoped throttling (edit/delete)
     def get_throttles(self):
@@ -849,12 +872,27 @@ class PostDetailView(APIView):
 class PostRepliesView(APIView):
     def get(self, request, post_id: str):
         has_viewer, viewer, role = _viewer_ctx(request)
-        if not has_viewer or not post_id:
+        if not post_id:
             return Response({"ok": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
 
         rec = POST_STORE.get(post_id)
         if rec is None:
             return Response({"ok": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # sd_707: allow anonymous reads ONLY for Public posts (and only when not in a private Set).
+        # Unlocks external sharing without weakening private Sides.
+        if not has_viewer:
+            try:
+                s = str(getattr(rec, "side", "") or "").strip().lower()
+                sid = str(getattr(rec, "set_id", "") or "").strip()
+            except Exception:
+                s = ""
+                sid = ""
+            if s != "public":
+                return Response({"ok": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
+            # Treat ANY Set post as private, except broadcast-like set ids (b_*) which are explicitly shareable.
+            if sid and not sid.startswith("b_"):
+                return Response({"ok": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
 
         ok_set, _set_side = _set_meta(viewer, getattr(rec, "set_id", None))
         if not ok_set:
@@ -885,7 +923,7 @@ class PostRepliesView(APIView):
             }
             for r in replies
         ]
-        return Response({"ok": True, "postId": post_id, "count": len(out), "replies": out}, status=status.HTTP_200_OK)
+        return Response({"ok": True, "postId": post_id, "count": len(out), "replies": out, "viewerAuthed": bool(has_viewer)}, status=status.HTTP_200_OK)
 
 
 @method_decorator(dev_csrf_exempt, name="dispatch")

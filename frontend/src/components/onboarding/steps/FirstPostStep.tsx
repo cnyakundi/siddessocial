@@ -15,22 +15,27 @@ const SIDE_ICON: Record<SideId, LucideIcon> = {
 export default function FirstPostStep({
   setInfo,
   onPosted,
+  onSkip,
+  busy,
 }: {
   setInfo: { id: string; name: string; side: SideId };
   onPosted: () => void;
+  onSkip?: () => void;
+  busy?: boolean;
 }) {
   const [text, setText] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [posting, setPosting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   const theme = SIDE_THEMES[setInfo.side || "friends"];
   const SideIcon = SIDE_ICON[setInfo.side || "friends"];
+  const finishing = Boolean(busy);
 
   async function post() {
     const v = String(text || "").trim();
-    if (!v || busy) return;
+    if (!v || posting || finishing) return;
     setErr(null);
-    setBusy(true);
+    setPosting(true);
     try {
       const r = await fetch("/api/post", {
         method: "POST",
@@ -46,15 +51,30 @@ export default function FirstPostStep({
     } catch {
       setErr("Could not post");
     } finally {
-      setBusy(false);
+      setPosting(false);
     }
   }
 
   return (
     <div className={`flex flex-col min-h-full ${theme.primaryBg} transition-colors p-8 animate-in fade-in duration-700 pb-12`}>
-      <div className="mt-20 mb-10 text-center md:text-left shrink-0">
-        <h2 className="text-5xl font-black text-white tracking-tight mb-2 leading-[0.85]">First Take.</h2>
-        <p className="text-white/80 font-bold text-lg">Post your first context-safe update.</p>
+      <div className="mt-16 mb-8 shrink-0">
+        <div className="flex items-start justify-between gap-4">
+          <div className="text-center md:text-left">
+            <h2 className="text-5xl font-black text-white tracking-tight mb-2 leading-[0.85]">First Take</h2>
+            <p className="text-white/80 font-bold text-lg">Post your first context-safe update.</p>
+          </div>
+
+          {onSkip ? (
+            <button
+              onClick={onSkip}
+              disabled={posting || finishing}
+              className={`text-[10px] font-black uppercase tracking-widest transition-colors ${posting || finishing ? "text-white/20 cursor-not-allowed" : "text-white/70 hover:text-white"}`}
+              aria-label="Skip"
+            >
+              Skip
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <div className="flex-1 bg-white rounded-[3.5rem] p-8 shadow-2xl flex flex-col animate-in slide-in-from-bottom-10 duration-500 overflow-hidden">
@@ -78,17 +98,18 @@ export default function FirstPostStep({
         {err ? <div className="mt-3 text-xs font-bold text-rose-600">{err}</div> : null}
 
         <div className="flex justify-between items-center pt-6 border-t border-gray-50 shrink-0">
-          <button className="p-3 bg-gray-50 rounded-2xl text-gray-400 hover:text-gray-900 transition-colors">
+          <button type="button" className="p-3 bg-gray-50 rounded-2xl text-gray-400 hover:text-gray-900 transition-colors" aria-label="Add media">
             <Camera size={24} />
           </button>
           <button
+            type="button"
             onClick={post}
-            disabled={!text.trim() || busy}
+            disabled={!text.trim() || posting || finishing}
             className={`px-8 py-3 rounded-2xl font-black text-sm uppercase tracking-widest transition-all ${
-              text.trim() && !busy ? `${theme.primaryBg} text-white shadow-xl hover:scale-105 active:scale-95` : "bg-gray-100 text-gray-300 cursor-not-allowed"
+              text.trim() && !posting && !finishing ? `${theme.primaryBg} text-white shadow-xl hover:scale-105 active:scale-95` : "bg-gray-100 text-gray-300 cursor-not-allowed"
             }`}
           >
-            {busy ? "Posting..." : "Post"}
+            {posting ? "Posting..." : finishing ? "Finishing..." : "Post"}
           </button>
         </div>
       </div>

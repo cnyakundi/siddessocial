@@ -78,6 +78,27 @@ function sd_558b_json(payload: any, init?: any) {
 }
 
 
+function parseLimit(raw: string | null): number | null {
+  const t = String(raw || "").trim();
+  if (!t) return null;
+  const n = Number(t);
+  if (!Number.isFinite(n)) return null;
+  const nn = Math.max(1, Math.min(50, Math.floor(n)));
+  return nn;
+}
+
+function parseCursor(raw: string | null): string | null {
+  const t = String(raw || "").trim();
+  if (!t) return null;
+  if (t === "null" || t === "undefined") return null;
+
+  // Cursor is opaque for clients, but current stub format is "<updatedAt>:<id>".
+  // If it doesn't match, behave like no cursor (matches docs/INBOX_PAGINATION.md).
+  if (!/^\d+:.+/.test(t)) return null;
+  return t;
+}
+
+
 function withDevViewer(req: Request): { req2: Request; viewerId: string | null } {
   const isProd = process.env.NODE_ENV === "production";
   const r = resolveStubViewer(req);
@@ -118,8 +139,8 @@ function fillParticipant(t: any): any {
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const side = String(url.searchParams.get("side") || "").trim();
-  const limit = String(url.searchParams.get("limit") || "").trim();
-  const cursor = String(url.searchParams.get("cursor") || "").trim();
+  const limit = parseLimit(url.searchParams.get("limit"));
+  const cursor = parseCursor(url.searchParams.get("cursor"));
 
   const isProd = process.env.NODE_ENV === "production";
   const { req2, viewerId } = withDevViewer(req);
@@ -131,7 +152,7 @@ export async function GET(req: Request) {
 
   const qs = new URLSearchParams();
   if (side) qs.set("side", side);
-  if (limit) qs.set("limit", limit);
+  if (limit) qs.set("limit", String(limit));
   if (cursor) qs.set("cursor", cursor);
   const path = qs.toString() ? `/api/inbox/threads?${qs.toString()}` : "/api/inbox/threads";
 
@@ -139,6 +160,13 @@ export async function GET(req: Request) {
   if (out instanceof NextResponse) return out;
 
   const { res, data, setCookies } = out;
+
+  // sd_721_ensure_pagination_keys: some backends may omit pagination fields
+  if (data && typeof data === "object") {
+    if (!("hasMore" in data)) (data as any).hasMore = false;
+    if (!("nextCursor" in data)) (data as any).nextCursor = null;
+  }
+
 
   // Ensure deterministic participant fields for stable avatar variation.
   if (data && typeof data === "object" && Array.isArray((data as any).items)) {

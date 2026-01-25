@@ -246,8 +246,12 @@ function SiddesSetsPageInner() {
           ) : null}
         </div>
 
+        
         <div className="text-[11px] text-gray-500 -mt-2 mb-4 text-right">
           Guided flow • Name → Side → Theme → Members → Create
+        </div>
+<div className="text-[11px] text-gray-500 -mt-2 mb-4 text-right">
+          Quick create • Name (+ optional members) • More options for Side/Theme
         </div>
 
         {advanced ? (
@@ -346,6 +350,7 @@ function SiddesSetsPageInner() {
       </div>
       <CreateSetSheet
         open={createOpen}
+        advanced={advanced}
         onClose={() => setCreateOpen(false)}
         canWrite={canWrite}
         creating={creating}

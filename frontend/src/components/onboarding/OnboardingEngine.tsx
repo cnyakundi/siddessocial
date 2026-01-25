@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Shield } from "lucide-react";
 
@@ -12,17 +11,11 @@ import { ProgressDots, StepWrapper } from "@/src/components/onboarding/ui";
 import PrivacyModal from "@/src/components/onboarding/PrivacyModal";
 
 import WelcomeStep from "@/src/components/onboarding/steps/WelcomeStep";
-import UsernameStep from "@/src/components/onboarding/steps/UsernameStep";
-import SidesExplainerStep from "@/src/components/onboarding/steps/SidesExplainerStep";
 import CreateFirstSetStep from "@/src/components/onboarding/steps/CreateFirstSetStep";
+import FirstPostStep from "@/src/components/onboarding/steps/FirstPostStep";
 
-const AddPeopleStep = dynamic(() => import("@/src/components/onboarding/steps/AddPeopleStep"), { ssr: false });
-const PrismPeopleStep = dynamic(() => import("@/src/components/onboarding/steps/PrismPeopleStep"), { ssr: false });
-const FirstPostStep = dynamic(() => import("@/src/components/onboarding/steps/FirstPostStep"), { ssr: false });
-const RetentionStep = dynamic(() => import("@/src/components/onboarding/steps/RetentionStep"), { ssr: false });
-
-type StepId = "welcome" | "username" | "sides" | "create_set" | "add_people" | "prism_people" | "first_post" | "install";
-const STEP_ORDER: StepId[] = ["welcome", "username", "sides", "create_set", "add_people", "prism_people", "first_post", "install"];
+type StepId = "welcome" | "create_set" | "first_post";
+const STEP_ORDER: StepId[] = ["welcome", "create_set", "first_post"];
 
 type MeResp = {
   ok: boolean;
@@ -37,8 +30,12 @@ type MeResp = {
 
 type SetItem = { id: string; label: string; side: SideId; color?: string; members?: string[] };
 type SetsCreateResp = { ok: boolean; item?: SetItem; error?: string };
-type SetsPatchResp = { ok: boolean; item?: SetItem; error?: string };
 
+/**
+ * sd_718: Radical onboarding simplify
+ * Old: welcome → username → sides explainer → create_set → add_people → prism_people → first_post → install
+ * New: welcome (includes side preview) → create_set → first_post (both skippable)
+ */
 export function OnboardingEngine() {
   const router = useRouter();
   const sp = useSearchParams();
@@ -52,12 +49,7 @@ export function OnboardingEngine() {
   const [meLoading, setMeLoading] = useState(true);
 
   const [showPrivacy, setShowPrivacy] = useState(false);
-
   const [stepId, setStepId] = useState<StepId>("welcome");
-
-  const [handle, setHandle] = useState("");
-  const [handleBusy, setHandleBusy] = useState(false);
-  const [handleMsg, setHandleMsg] = useState<string | null>(null);
 
   const needsAgeGate = !Boolean(me?.ageGateConfirmed);
   const minAge = Number(me?.minAge || 13);
@@ -69,7 +61,6 @@ export function OnboardingEngine() {
   const [setBusy, setSetBusy] = useState(false);
   const [setMsg, setSetMsg] = useState<string | null>(null);
   const [firstSet, setFirstSet] = useState<{ id: string; name: string; side: SideId } | null>(null);
-  const [contactSyncDone, setContactSyncDone] = useState(false);
 
   const [finishBusy, setFinishBusy] = useState(false);
 
@@ -86,6 +77,7 @@ export function OnboardingEngine() {
         if (!alive) return;
 
         setMe(d);
+
         if (d?.authenticated && d?.onboarding?.completed) {
           router.replace(nextHref);
           return;
@@ -94,9 +86,6 @@ export function OnboardingEngine() {
           router.replace("/login");
           return;
         }
-
-        const uname = String(d?.user?.username || "").trim().toLowerCase();
-        if (uname) setHandle(uname);
       } catch {
         if (!alive) return;
         router.replace("/login");
@@ -123,6 +112,7 @@ export function OnboardingEngine() {
   async function confirmAgeGate() {
     if (!needsAgeGate) return true;
     if (!ageOk) return false;
+
     setAgeBusy(true);
     setAgeErr(null);
     try {
@@ -149,39 +139,7 @@ export function OnboardingEngine() {
   async function nextFromWelcome() {
     const ok = await confirmAgeGate();
     if (!ok) return;
-    setStepId("username");
-  }
-
-  async function saveHandle() {
-    setHandleMsg(null);
-    const desired = String(handle || "").trim().toLowerCase();
-    if (!desired) return;
-
-    const current = String(me?.user?.username || "").trim().toLowerCase();
-    if (current && desired === current) {
-      setStepId("sides");
-      return;
-    }
-
-    setHandleBusy(true);
-    try {
-      const r = await fetch("/api/auth/username/set", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ username: desired }),
-      });
-      const d = await r.json().catch(() => ({}));
-      if (r.ok && d?.ok) {
-        await refreshMe();
-        setStepId("sides");
-        return;
-      }
-      setHandleMsg(d?.error ? String(d.error) : "Could not save handle");
-    } catch {
-      setHandleMsg("Could not save handle");
-    } finally {
-      setHandleBusy(false);
-    }
+    setStepId("create_set");
   }
 
   async function createSet(info: { side: SideId; name: string }) {
@@ -198,7 +156,7 @@ export function OnboardingEngine() {
       const item = d?.item;
       if (r.ok && d?.ok && item?.id) {
         setFirstSet({ id: item.id, name: info.name, side: info.side });
-        setStepId("add_people");
+        setStepId("first_post");
         return;
       }
       setSetMsg(d?.error ? String(d.error) : "Could not create set");
@@ -209,47 +167,13 @@ export function OnboardingEngine() {
     }
   }
 
-  async function applyMembersAndNext(payload: { handles: string[]; contactSyncDone: boolean }) {
-    setContactSyncDone(!!payload.contactSyncDone);
-
-    if (!firstSet) {
-      setStepId("prism_people");
-      return;
-    }
-
-    const handles = (payload.handles || []).map((h) => String(h || "").trim()).filter(Boolean);
-    if (!handles.length) {
-      setStepId("prism_people");
-      return;
-    }
-
-    setFinishBusy(true);
-    try {
-      const r = await fetch(`/api/sets/${encodeURIComponent(firstSet.id)}`, {
-        method: "PATCH",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ members: handles }),
-      });
-      const d = (await r.json().catch(() => ({}))) as SetsPatchResp;
-      if (r.ok && d?.ok) {
-        setStepId("prism_people");
-        return;
-      }
-      setStepId("prism_people");
-    } catch {
-      setStepId("prism_people");
-    } finally {
-      setFinishBusy(false);
-    }
-  }
-
   async function completeOnboarding() {
     setFinishBusy(true);
     try {
       const r = await fetch("/api/auth/onboarding/complete", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ contact_sync_done: !!contactSyncDone }),
+        body: JSON.stringify({ contact_sync_done: false }),
       });
       const d = await r.json().catch(() => ({}));
       if (r.ok && d?.ok) {
@@ -301,48 +225,17 @@ export function OnboardingEngine() {
           />
         </StepWrapper>
 
-        <StepWrapper active={stepId === "username"} onBack={() => setStepId("welcome")}>
-          <UsernameStep value={handle} setValue={setHandle} busy={handleBusy} msg={handleMsg} onNext={saveHandle} />
+        <StepWrapper active={stepId === "create_set"} onBack={() => setStepId("welcome")}> 
+          <CreateFirstSetStep onCreate={createSet} onSkip={completeOnboarding} busy={setBusy} msg={setMsg} />
         </StepWrapper>
 
-        <StepWrapper active={stepId === "sides"} onBack={() => setStepId("username")}>
-          <SidesExplainerStep onNext={() => setStepId("create_set")} />
-        </StepWrapper>
-
-        <StepWrapper active={stepId === "create_set"} onBack={() => setStepId("sides")}>
-          <CreateFirstSetStep onCreate={createSet} busy={setBusy} msg={setMsg} />
-        </StepWrapper>
-
-        <StepWrapper active={stepId === "add_people"} onBack={() => setStepId("create_set")}>
-          <AddPeopleStep
-            setName={setInfo.name}
-            sideId={setInfo.side}
-            myHandle={handle}
-            onContinue={(payload: { handles: string[]; contactSyncDone: boolean }) => applyMembersAndNext(payload)}
-            onSkip={() => setStepId("prism_people")}
-          />
-        </StepWrapper>
-
-
-        <StepWrapper active={stepId === "prism_people"} onBack={() => setStepId("add_people")}>
-          <PrismPeopleStep
-            onContinue={(payload: { contactSyncDone: boolean }) => {
-              setContactSyncDone((prev) => prev || !!payload.contactSyncDone);
-              setStepId("first_post");
-            }}
-            onSkip={() => setStepId("first_post")}
-          />
-        </StepWrapper>
-
-        <StepWrapper active={stepId === "first_post"} onBack={() => setStepId("prism_people")}>
+        <StepWrapper active={stepId === "first_post"} onBack={() => setStepId("create_set")}> 
           <FirstPostStep
-            setInfo={firstSet ? { id: firstSet.id, name: firstSet.name, side: firstSet.side } : { id: "", name: "My Set", side: "friends" }}
-            onPosted={() => setStepId("install")}
+            setInfo={{ id: setInfo.id, name: setInfo.name, side: setInfo.side }}
+            onPosted={completeOnboarding}
+            onSkip={completeOnboarding}
+            busy={finishBusy}
           />
-        </StepWrapper>
-
-        <StepWrapper active={stepId === "install"} onBack={() => setStepId("first_post")}>
-          <RetentionStep onFinish={completeOnboarding} busy={finishBusy} />
         </StepWrapper>
       </main>
 

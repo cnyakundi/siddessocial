@@ -2,7 +2,7 @@
 export const dynamic = "force-dynamic";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 
 import { MoreHorizontal } from "lucide-react";
 
@@ -63,6 +63,35 @@ export default function UserProfilePage() {
   const [lockedSide, setLockedSide] = useState<SideId | null>(null); // sd_529_locked_tab_explainer
 
   const [contentTab, setContentTab] = useState<ProfileV2TabId>("posts"); // sd_717_profile_v2_shell
+
+  // sd_722_profile_v2_tab_url_sync: keep profile content tab in URL (?tab=posts|media|sets)
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const t = searchParams.get("tab");
+    if (t === "posts" || t === "media" || t === "sets") {
+      setContentTab(t as ProfileV2TabId);
+    }
+  }, [searchParams]);
+
+  const pickContentTab = (tab: ProfileV2TabId) => {
+    setContentTab(tab);
+
+    // Update URL without navigation
+    try {
+      const url = new URL(window.location.href);
+      if (tab === "posts") url.searchParams.delete("tab");
+      else url.searchParams.set("tab", tab);
+      window.history.replaceState({}, "", url.toString());
+    } catch {}
+
+    // Nudge scroll so the tabs stay in view
+    try {
+      const el = document.getElementById("profile-v2-tabs");
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch {}
+  };
+
 
 
   useEffect(() => {
@@ -140,6 +169,12 @@ export default function UserProfilePage() {
   // sd_717_profile_v2_shell: reset content tab when identity side changes
   useEffect(() => {
     setContentTab("posts");
+    // sd_722_profile_v2_tab_url_sync: reset tab URL on identity change
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("tab");
+      window.history.replaceState({}, "", url.toString());
+    } catch {}
   }, [displaySide]);
 
 
@@ -359,6 +394,7 @@ export default function UserProfilePage() {
 
             
             {/* sd_717_profile_v2_shell_header_tabs */}
+            {/* sd_722_profile_v2_tab_url_sync */}
             <div className="mt-4">
               <ProfileV2Header
                 displaySide={displaySide}
@@ -417,7 +453,9 @@ export default function UserProfilePage() {
                 }
               />
 
-              <ProfileV2Tabs side={displaySide} active={contentTab} onPick={setContentTab} />
+              <div id="profile-v2-tabs">
+              <ProfileV2Tabs side={displaySide} active={contentTab} onPick={pickContentTab} />
+            </div>
 
               {/* Content */}
               <div className="mt-4">
