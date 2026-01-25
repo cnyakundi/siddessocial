@@ -2,6 +2,7 @@
 
 import type { SideId } from "@/src/lib/sides";
 import type { FeedItem, FeedPage, FeedProvider } from "@/src/lib/feedProvider";
+import { handleSessionInvalidation } from "@/src/lib/privateClientCaches";
 import { RestrictedError, isRestrictedPayload } from "@/src/lib/restricted";
 
 // sd_231: Client code must NEVER call Django cross-origin or forward viewer identity.
@@ -112,6 +113,10 @@ export const backendStubProvider: FeedProvider = {
     const data = (await res.json().catch(() => null)) as FeedResp | null;
 
     if (isRestrictedPayload(res, data)) {
+      // sd_586: Session invalidation hard reset (prevents cached private feed flashes after expiry).
+      try {
+        handleSessionInvalidation("feed_restricted", { redirectToLogin: true });
+      } catch {}
       throw new RestrictedError(res.status || 403, "Feed is restricted — sign in as your session user.");
     }
 

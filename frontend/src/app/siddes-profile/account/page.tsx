@@ -87,7 +87,7 @@ export default function SiddesAccountPage() {
 
         <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Link
-            href="/siddes-profile"
+            href="/siddes-profile/prism"
             className="rounded-2xl border border-gray-200 bg-white hover:bg-gray-50 p-4"
           >
             <div className="text-sm font-extrabold text-gray-900">Prism Identity</div>

@@ -12,6 +12,7 @@ import type { ThreadMessage, ThreadMeta } from "@/src/lib/threadStore";
 import { deleteCachedThread, getCachedThread, makeThreadCacheKey, setCachedThread } from "@/src/lib/inboxCache";
 import { getSessionIdentity, touchSessionConfirmed } from "@/src/lib/sessionIdentity";
 import { RestrictedError, isRestrictedPayload } from "@/src/lib/restricted";
+import { handleSessionInvalidation } from "@/src/lib/privateClientCaches";
 
 // sd_142 parity: resolve an origin even when window is unavailable (SSR/tests).
 // Browser still uses SAME-ORIGIN Next API routes.
@@ -179,6 +180,10 @@ export const backendStubProvider: InboxProvider = {
     const data = (await res.json().catch(() => null)) as ThreadsResp | null;
 
     if (isRestrictedPayload(res, data)) {
+      // sd_586: Session invalidation hard reset (prevents cached private inbox flashes after expiry).
+      try {
+        handleSessionInvalidation("inbox_or_thread_restricted", { redirectToLogin: true });
+      } catch {}
       throw new RestrictedError(res.status || 403, "Inbox is restricted — sign in as your session user.");
     }
 

@@ -10,6 +10,7 @@ import { AlertTriangle, CheckCircle2, ChevronRight, Send, X } from "lucide-react
 import { InboxBanner } from "@/src/components/InboxBanner";
 import { InboxStubDebugPanel } from "@/src/components/InboxStubDebugPanel";
 import { toast } from "@/src/lib/toastBus";
+import { fetchMe } from "@/src/lib/authMe";
 import { MentionPicker } from "@/src/components/MentionPicker";
 import { useSide } from "@/src/components/SideProvider";
 
@@ -391,6 +392,34 @@ function SiddesThreadPageInner() {
   const debug = sp.get("debug") === "1";
 
   const [viewerInput, setViewerInput] = useInboxStubViewer();
+  const [retryingMe, setRetryingMe] = useState(false);
+
+  const retryAsMe = async () => {
+    if (retryingMe) return;
+    setRetryingMe(true);
+    try {
+      const me = await fetchMe();
+      const vid = String(me?.viewerId || "").trim();
+      if (me?.authenticated && vid) {
+        setViewerInput(vid);
+        toast?.info?.("Retrying as your session user…");
+      } else {
+        toast?.error?.("Not signed in. Please sign in, then retry.");
+      }
+    } catch {
+      toast?.error?.("Retry failed. Please sign in and try again.");
+    } finally {
+      setRetryingMe(false);
+    }
+  };
+
+  const clearViewer = () => {
+    try {
+      setViewerInput("");
+      toast?.success?.("Cleared viewer override.");
+    } catch {}
+  };
+
   const viewer = (viewerInput || "").trim() || undefined;
   const MSG_PAGE = 30;
 
@@ -411,23 +440,84 @@ function SiddesThreadPageInner() {
   const [mentionOpen, setMentionOpen] = useState(false);
   const [mentionQuery, setMentionQuery] = useState("");
 
+  // sd_717b: mention suggestions are Side-scoped (No Leaks)
+  const [lockedSide, setLockedSide] = useState<SideId>("friends");
+
   // sd_181o: DB-backed mention candidates (no [])
   const [mentionCandidates, setMentionCandidates] = useState<MentionCandidate[]>([]);
   const [mentionCandidatesLoading, setMentionCandidatesLoading] = useState(false);
-
   useEffect(() => {
     let alive = true;
-
     const ac = new AbortController();
-    if (!mentionOpen) return () => { alive = false; };
+
+    if (!mentionOpen) {
+      return () => {
+        alive = false;
+        try { ac.abort(); } catch {}
+      };
+    }
 
     setMentionCandidatesLoading(true);
 
-    fetch("/api/contacts/suggestions", { cache: "no-store" })
-      .then((r) => r.json())
-      .then((j) => {
-        if (!alive) return;
-        const items = Array.isArray(j?.items) ? j.items : [];
+    const s = String(lockedSide || "").trim().toLowerCase();
+    const isPrivateSide = s === "friends" || s === "close" || s === "work";
+
+    const finish = (items: MentionCandidate[]) => {
+      if (!alive) return;
+
+      // De-dupe by handle, keep stable order.
+      const seen = new Set<string>();
+      const uniq = items.filter((m) => {
+        const h = String((m as any)?.handle || "").trim();
+        if (!h) return false;
+        if (seen.has(h)) return false;
+        seen.add(h);
+        return true;
+      });
+
+      setMentionCandidates(uniq.slice(0, 80));
+    };
+
+    (async () => {
+      try {
+        if (isPrivateSide) {
+          const r = await fetch("/api/siders", { cache: "no-store", signal: ac.signal });
+          const j = await r.json().catch(() => ({} as any));
+          const sides = (j as any)?.sides || {};
+
+          const friendsArr = Array.isArray((sides as any)?.friends) ? (sides as any).friends : [];
+          const closeArr = Array.isArray((sides as any)?.close) ? (sides as any).close : [];
+          const workArr = Array.isArray((sides as any)?.work) ? (sides as any).work : [];
+
+          const bucket =
+            s === "friends"
+              ? ([] as any[]).concat(friendsArr, closeArr) // close can view friends posts
+              : s === "close"
+                ? closeArr
+                : s === "work"
+                  ? workArr
+                  : [];
+
+          const mapped = (bucket as any[])
+            .map((x: any) => {
+              const name = String(x?.displayName || x?.handle || "").trim();
+              let handle = String(x?.handle || "").trim();
+              if (!handle && name) handle = name.startsWith("@") ? name : `@${name}`;
+              handle = String(handle || "").trim();
+              if (!handle) return null;
+              if (!handle.startsWith("@")) handle = `@${handle.replace(/^@+/, "")}`;
+              return { name: name || handle, handle } as MentionCandidate;
+            })
+            .filter(Boolean) as MentionCandidate[];
+
+          finish(mapped);
+          return;
+        }
+
+        // Public fallback: suggestions are viewer-scoped (no global directory)
+        const r = await fetch("/api/contacts/suggestions", { cache: "no-store", signal: ac.signal });
+        const j = await r.json().catch(() => ({} as any));
+        const items = Array.isArray((j as any)?.items) ? (j as any).items : [];
         const mapped = items
           .map((x: any) => {
             const name = String(x?.name || x?.handle || "").trim();
@@ -436,32 +526,30 @@ function SiddesThreadPageInner() {
             handle = String(handle || "").trim();
             if (!handle) return null;
             if (!handle.startsWith("@")) handle = `@${handle.replace(/^@+/, "")}`;
-            return { name: name || handle, handle };
+            return { name: name || handle, handle } as MentionCandidate;
           })
-          .filter(Boolean);
+          .filter(Boolean) as MentionCandidate[];
 
-        setMentionCandidates((mapped as any[]).slice(0, 80));
-      })
-      .catch(() => {
+        finish(mapped);
+      } catch {
         if (!alive) return;
         setMentionCandidates([]);
-      })
-      .finally(() => {
+      } finally {
         if (!alive) return;
         setMentionCandidatesLoading(false);
-      });
+      }
+    })();
 
     return () => {
       alive = false;
       try { ac.abort(); } catch {}
     };
-  }, [mentionOpen]);
+  }, [mentionOpen, lockedSide]);
 
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const isOnline = typeof navigator !== "undefined" ? navigator.onLine : true;
 
-  const [lockedSide, setLockedSide] = useState<SideId>("friends");
   const [moveConfirmTo, setMoveConfirmTo] = useState<SideId | null>(null);
   const [movePickerOpen, setMovePickerOpen] = useState(false);
   const [recentMoveSides, setRecentMoveSides] = useState<SideId[]>([]);
@@ -741,8 +829,27 @@ function SiddesThreadPageInner() {
             <div data-testid="restricted-thread-banner" className="space-y-2">
               <div>This thread is unavailable (restricted or not found).</div>
 
-              <div className="flex gap-2 flex-wrap">
-                <Link
+              <div data-testid="restricted-thread-actions" className="flex gap-2 flex-wrap">
+                                <button
+                  type="button"
+                  data-testid="restricted-thread-retry-me"
+                  onClick={retryAsMe}
+                  disabled={retryingMe}
+                  className="px-3 py-1.5 rounded-full bg-white border border-amber-200 text-amber-900 text-xs font-bold hover:bg-amber-100 disabled:opacity-60"
+                >
+                  {retryingMe ? "Retrying…" : "Restricted — retry as me"}
+                </button>
+
+                <button
+                  type="button"
+                  data-testid="restricted-thread-clear-viewer"
+                  onClick={clearViewer}
+                  className="px-3 py-1.5 rounded-full bg-white border border-gray-200 text-gray-900 text-xs font-bold hover:bg-gray-50"
+                >
+                  Clear viewer
+                </button>
+
+<Link
                   data-testid="restricted-thread-back-inbox"
                   href="/siddes-inbox"
                   className="px-3 py-1.5 rounded-full bg-white border border-amber-200 text-amber-900 text-xs font-bold hover:bg-amber-100"

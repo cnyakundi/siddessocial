@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 import Link from "next/link";
-import { LogOut, User, Link as LinkIcon, Grid3X3, FileText } from "lucide-react";
+import { LogOut, User, Sparkles, Link as LinkIcon, Grid3X3, FileText } from "lucide-react";
 import { clearPrivateClientCaches } from "@/src/lib/privateClientCaches";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { useDialogA11y } from "@/src/hooks/useDialogA11y";
@@ -57,7 +57,10 @@ export function DesktopUserMenu({
 
         <div className="p-2">
           <Link href="/siddes-profile" ref={firstItemRef} className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-gray-50 text-sm font-bold text-gray-700">
-            <User size={16} className="text-gray-500" /> Prism Identity
+            <User size={16} className="text-gray-500" /> Me
+          </Link>
+          <Link href="/siddes-profile/prism" className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-gray-50 text-sm font-bold text-gray-700">
+            <Sparkles size={16} className="text-gray-500" /> Prism Identity
           </Link>
           <Link href="/siddes-profile/account" className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-gray-50 text-sm font-bold text-gray-700">
             <FileText size={16} className="text-gray-500" /> Account

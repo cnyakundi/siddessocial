@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Mail, User, Layers, Plus, Users as UsersIcon, CloudOff } from "lucide-react";
+import { Home, Mail, User, Layers, Plus, Users as UsersIcon, Sparkles } from "lucide-react";
 import { useSide } from "@/src/components/SideProvider";
 import { SIDES, SIDE_THEMES } from "@/src/lib/sides";
 import { SIDE_UX } from "@/src/lib/sideUx";
@@ -92,8 +92,8 @@ export function DesktopWorkspaceNav() {
 
         <WorkspaceNavItem href="/siddes-feed" label="Feed" icon={Home} active={pathname.startsWith("/siddes-feed")} theme={theme} />
         <WorkspaceNavItem href="/siddes-inbox" label="Inbox" icon={Mail} active={pathname.startsWith("/siddes-inbox")} theme={theme} />
-        <WorkspaceNavItem href="/siddes-profile" label="Outbox" icon={CloudOff} active={pathname.startsWith("/siddes-profile")} theme={theme} />
-        <WorkspaceNavItem href="/siddes-profile" label="Prism" icon={User} active={pathname.startsWith("/siddes-profile")} theme={theme} />
+        <WorkspaceNavItem href="/siddes-profile" label="Me" icon={User} active={pathname.startsWith("/siddes-profile") && !pathname.startsWith("/siddes-profile/prism")} theme={theme} />
+        <WorkspaceNavItem href="/siddes-profile/prism" label="Prism" icon={Sparkles} active={pathname.startsWith("/siddes-profile/prism")} theme={theme} />
         <WorkspaceNavItem href="/siddes-sets" label="Sets" icon={Layers} active={pathname.startsWith("/siddes-sets")} theme={theme} />
 
         <div className="mt-8 mb-4 px-4 text-[10px] font-black text-gray-300 uppercase tracking-widest">Active Sets</div>

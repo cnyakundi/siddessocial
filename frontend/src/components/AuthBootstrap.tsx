@@ -4,8 +4,8 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { fetchMe } from "@/src/lib/authMe";
 import { patchFetchForCsrf } from "@/src/lib/csrf";
-import { updateSessionFromMe } from "@/src/lib/sessionIdentity";
-
+import { clearPrivateClientCaches, clearPrivateDataCaches } from "@/src/lib/privateClientCaches";
+import { getSessionIdentity, updateSessionFromMe } from "@/src/lib/sessionIdentity";
 /**
  * AuthBootstrap
  *
@@ -63,10 +63,31 @@ export function AuthBootstrap() {
 
     const isProtected = protectedPrefixes.some((pre) => p.startsWith(pre));
 
+    // Capture identity before checking /me so we can detect silent logout / user changes.
+    const prevIdent = getSessionIdentity();
+
     fetchMe().then((me) => {
       // Cache a safe in-tab identity for user-scoped client caches.
       // If the session is not authenticated, this clears identity.
       updateSessionFromMe(me);
+
+      // If we were previously authed in this tab and /me now says unauthenticated,
+      // fail-closed by clearing all private caches (feeds/threads/drafts) to avoid cross-user bleed.
+      const nowAuthed = !!me?.authenticated;
+      const nowViewer = nowAuthed && me?.viewerId ? String(me.viewerId).trim() : "";
+      if (!nowAuthed) {
+        if (prevIdent.authed || prevIdent.viewerId || prevIdent.epoch) {
+          try {
+            clearPrivateClientCaches();
+          } catch {}
+        }
+      } else if (prevIdent.viewerId && nowViewer && prevIdent.viewerId !== nowViewer) {
+        // User changed without an explicit logout flow: clear private data caches but keep new identity.
+        try {
+          clearPrivateDataCaches();
+        } catch {}
+      }
+
       const authed = !!me?.authenticated;
       const onboarded = !!me?.onboarding?.completed;
 
