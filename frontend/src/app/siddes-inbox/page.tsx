@@ -600,6 +600,8 @@ function SiddesInboxPageInner() {
         <div className="mt-3 flex justify-center">
           <button
             type="button"
+            data-testid="inbox-load-more"
+
             onClick={() => void loadMore()}
             disabled={loadingMore}
             className={cn(
