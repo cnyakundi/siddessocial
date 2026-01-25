@@ -35,7 +35,8 @@ export function saveReturnScroll(anchorPostId?: string) {
   if (typeof window === "undefined") return;
   try {
     const path = getPath();
-    // Only capture list pages where restoring makes sense.    const ok =
+    // Only capture list pages where restoring makes sense.
+    const ok =
       path.startsWith("/siddes-feed") ||
       path.startsWith("/siddes-sets") ||
       path.startsWith("/siddes-inbox") ||
@@ -45,7 +46,7 @@ export function saveReturnScroll(anchorPostId?: string) {
       path.startsWith("/siddes-profile");
     // sd_719_fix_returnScroll_ok_guard: only capture list pages where restoring makes sense (avoid undefined ok)
     if (!path.startsWith("/siddes-feed") && !path.startsWith("/siddes-sets") && !path.startsWith("/siddes-inbox")) return;
-window.sessionStorage.setItem(KEY_PATH, path);
+    window.sessionStorage.setItem(KEY_PATH, path);
     window.sessionStorage.setItem(KEY_Y, String(Math.max(0, Math.round(window.scrollY || 0))));
     window.sessionStorage.setItem(KEY_TS, String(now()));
     if (anchorPostId) window.sessionStorage.setItem(KEY_ANCHOR, String(anchorPostId));

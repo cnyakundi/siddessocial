@@ -9,6 +9,7 @@ import { MoreHorizontal } from "lucide-react";
 import { SIDES, type SideId } from "@/src/lib/sides";
 import {
   CopyLinkButton,
+  PrismIdentityCard,
   PrismSideTabs,
   SideActionButtons,
   SideWithSheet,

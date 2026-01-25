@@ -721,6 +721,7 @@ const qs = params.toString();
                           <Link
                             key={p.id}
                             data-result-idx={idx >= 0 ? idx : undefined}
+                             data-post-id={String(p.id)}
                             href={"/siddes-post/" + p.id + "?from=search" + (backQS ? "&back=" + encodeURIComponent(backQS) : "")}
                             onClick={() => { try { saveReturnScroll(String(p.id)); } catch {} }}
                             className={

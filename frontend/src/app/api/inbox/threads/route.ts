@@ -3,6 +3,56 @@ import { resolveStubViewer } from "@/src/lib/server/inboxViewer";
 import { participantForThread } from "@/src/lib/server/inboxParticipant";
 import { proxyJson } from "../../auth/_proxy";
 
+function isGenericTitle(title: string): boolean {
+  const t = String(title || "").trim();
+  if (!t) return true;
+  const low = t.toLowerCase();
+  if (low === "thread" || low === "conversation") return true;
+  if (low.startsWith("thread ")) return true;
+  return false;
+}
+
+function _cleanSnippet(s: string): string {
+  let t = String(s || "").replace(/\s+/g, " ").trim();
+  // Remove common "You:" prefix from previews (keeps it readable).
+  t = t.replace(/^you:\s+/i, "");
+  return t;
+}
+
+function _truncate(s: string, n = 32): string {
+  const t = String(s || "").trim();
+  if (t.length <= n) return t;
+  return t.slice(0, Math.max(0, n - 1)).trimEnd() + "…";
+}
+
+// deriveThreadTitle: used for BOTH list + detail payloads.
+function deriveThreadTitle(threadOrItem: any, messages?: any[]): string {
+  try {
+    const threadId = String((threadOrItem as any)?.id || "");
+    const titleRaw = String((threadOrItem as any)?.title || "");
+    if (!isGenericTitle(titleRaw)) return titleRaw;
+
+    // 1) First message text (detail route)
+    if (Array.isArray(messages) && messages.length) {
+      const first = messages[0];
+      const last = messages[messages.length - 1];
+      const firstText = _cleanSnippet(String((first as any)?.text || ""));
+      if (firstText) return _truncate(firstText);
+      const lastText = _cleanSnippet(String((last as any)?.text || ""));
+      if (lastText) return _truncate(lastText);
+    }
+
+    // 2) Last preview snippet (threads list route)
+    const lastPreview = _cleanSnippet(String((threadOrItem as any)?.last || (threadOrItem as any)?.preview || ""));
+    if (lastPreview) return _truncate(lastPreview);
+
+    // 3) Thread id
+    return _truncate(threadId || "Thread");
+  } catch {
+    return "Thread";
+  }
+}
+
 // sd_558b_withParticipants: inject participant fields for UI avatar seeds
 function sd_558b_withParticipants(payload: any): any {
   try {
@@ -13,8 +63,9 @@ function sd_558b_withParticipants(payload: any): any {
       if (!it || typeof it !== "object" || Array.isArray(it)) return it;
       if ((it as any).participant) return it;
       const threadId = String((it as any).id || "");
-      const title = String((it as any).title || "");
-      return { ...(it as any), participant: participantForThread({ threadId, title }) };
+            const titleRaw = String((it as any).title || "");
+      const title = isGenericTitle(titleRaw) ? deriveThreadTitle(it) : titleRaw;
+      return { ...(it as any), title, participant: participantForThread({ threadId, title }) };
     });
     return { ...(payload as any), items: patched };
   } catch {

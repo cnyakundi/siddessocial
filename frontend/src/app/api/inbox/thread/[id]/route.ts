@@ -3,17 +3,63 @@ import { resolveStubViewer } from "@/src/lib/server/inboxViewer";
 import { participantForThread } from "@/src/lib/server/inboxParticipant";
 import { proxyJson } from "../../../auth/_proxy";
 
+function _cleanSnippet(s: string): string {
+  let t = String(s || "").replace(/\s+/g, " ").trim();
+  t = t.replace(/^you:\s+/i, "");
+  return t;
+}
+
+function _truncate(s: string, n = 32): string {
+  const t = String(s || "").trim();
+  if (t.length <= n) return t;
+  return t.slice(0, Math.max(0, n - 1)).trimEnd() + "…";
+}
+
+function _isGenericTitle(title: string): boolean {
+  const t = String(title || "").trim();
+  if (!t) return true;
+  const low = t.toLowerCase();
+  if (low === "thread" || low === "conversation") return true;
+  if (low.startsWith("thread ")) return true;
+  return false;
+}
+
+function deriveThreadTitle(threadOrItem: any, messages?: any[]): string {
+  try {
+    const threadId = String((threadOrItem as any)?.id || "");
+    const titleRaw = String((threadOrItem as any)?.title || "");
+    if (!_isGenericTitle(titleRaw)) return titleRaw;
+
+    if (Array.isArray(messages) && messages.length) {
+      const first = messages[0];
+      const last = messages[messages.length - 1];
+      const firstText = _cleanSnippet(String((first as any)?.text || ""));
+      if (firstText) return _truncate(firstText);
+      const lastText = _cleanSnippet(String((last as any)?.text || ""));
+      if (lastText) return _truncate(lastText);
+    }
+
+    const lastPreview = _cleanSnippet(String((threadOrItem as any)?.last || ""));
+    if (lastPreview) return _truncate(lastPreview);
+
+    return _truncate(threadId || "Thread");
+  } catch {
+    return "Thread";
+  }
+}
+
 // sd_558b_withThreadParticipant: inject participant fields for thread header
 function sd_558b_withThreadParticipant(payload: any): any {
   try {
     if (!payload || typeof payload !== "object" || Array.isArray(payload)) return payload;
     const th = (payload as any).thread;
+    const msgs = (payload as any).messages;
     if (!th || typeof th !== "object" || Array.isArray(th)) return payload;
     if ((th as any).participant) return payload;
     const threadId = String((th as any).id || "");
-    const title = String((th as any).title || "");
+        const title = deriveThreadTitle(th, Array.isArray(msgs) ? msgs : undefined);
     const participant = participantForThread({ threadId, title });
-    return { ...(payload as any), thread: { ...(th as any), participant } };
+    return { ...(payload as any), thread: { ...(th as any), title, participant } };
   } catch {
     return payload;
   }
