@@ -845,10 +845,52 @@ export default function SiddesComposePage() {
       (f: any): f is File => !!f && typeof f === "object" && typeof f.type === "string"
     );
 
-    const media = list.filter((f) => {
-      const t = String(f.type || "");
-      return t.startsWith("image/") || t.startsWith("video/");
-    });
+    // Some mobile browsers (and some share sheets) provide files with an empty MIME type.
+    // sd_749_media_picker: infer kind from extension as a fallback so Photo Library picks always work.
+    const detectMediaKind = (file: File): ("image" | "video" | null) => {
+      const t = String((file as any).type || "").toLowerCase();
+      if (t.startsWith("image/")) return "image";
+      if (t.startsWith("video/")) return "video";
+
+      const name = String((file as any).name || "");
+      const m = name.match(/\.([a-z0-9]{1,8})$/i);
+      const ext = m ? m[1].toLowerCase() : "";
+      if (!ext) return null;
+
+      const IMG = new Set([
+        "jpg",
+        "jpeg",
+        "png",
+        "gif",
+        "webp",
+        "avif",
+        "heic",
+        "heif",
+        "bmp",
+        "tif",
+        "tiff",
+      ]);
+      const VID = new Set([
+        "mp4",
+        "mov",
+        "m4v",
+        "webm",
+        "ogg",
+        "ogv",
+        "avi",
+        "mkv",
+        "3gp",
+      ]);
+      if (IMG.has(ext)) return "image";
+      if (VID.has(ext)) return "video";
+      return null;
+    };
+
+    const media: Array<{ file: File; kind: "image" | "video" }> = [];
+    for (const f of list) {
+      const k = detectMediaKind(f);
+      if (k === "image" || k === "video") media.push({ file: f, kind: k });
+    }
 
     if (media.length === 0) {
       toast.error("Pick a photo or video file.");
@@ -875,8 +917,9 @@ export default function SiddesComposePage() {
 
     const batch = media.slice(0, remaining);
 
-    for (const file of batch) {
-      const kind = String(file.type || "").startsWith("video/") ? "video" : "image";
+    for (const item of batch) {
+      const file = item.file;
+      const kind = item.kind;
       const id = `m_${Date.now()}_${Math.random().toString(16).slice(2)}`;
       const previewUrl = URL.createObjectURL(file);
       const name = String((file as any).name || (kind === "video" ? "video" : "photo"));
@@ -1643,8 +1686,8 @@ const quickTools = useMemo<QuickTool[]>(() => {
                     ? "border-gray-200 text-gray-300 bg-white cursor-not-allowed"
                     : "border-gray-200 text-gray-700 bg-white hover:bg-gray-50"
                 )}
-                aria-label="Add photo"
-                title={!isOnline ? "Go online to upload" : mediaItems.length >= 4 ? "Max 4 media" : "Add photo"}
+                aria-label="Add media"
+                title={!isOnline ? "Go online to upload media" : mediaItems.length >= 4 ? "Max 4 media" : "Add media"}
               >
                 <ImagePlus size={18} />
               </button>
@@ -1692,7 +1735,9 @@ const quickTools = useMemo<QuickTool[]>(() => {
         type="file"
         accept="image/*,video/*"
         multiple
-        className="hidden"
+        aria-hidden="true"
+        tabIndex={-1}
+        className="sr-only"
         onChange={(e) => {
           const files = e.currentTarget.files;
           if (files && files.length) {

@@ -1,5 +1,5 @@
 # Siddes — STATE (single source of “where we are”)
-**Updated:** 2026-01-25
+**Updated:** 2026-01-26
 
 ## Baseline (active truth)
 - Branch:
@@ -81,6 +81,7 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 
 ## NEXT overlay
 - Next: TBD
+- **sd_749_media_picker_local_media_fix:** Media picker reliability (iOS/Safari-safe file inputs + extension-based kind detection)
 
 - **sd_740_sets_v1_dead_simple:** Sets v1 UX simplification (Sets-as-audience: SetFilterBar on Feed; Set hub = Feed+People with More sheet; read-only banners; scannable set cards)
 - **sd_743_sets_v1_1_inline_create_fast_add:** Sets v1.1 (Inline create in picker + Add People sheet: type/paste + voice stub + invite-link fallback)
@@ -142,6 +143,8 @@ These are the overlays applied/created during the current session (evidence: ter
 - sd_382_fix_desktop_siderail_search_icon - missing lucide Search import (typecheck)
 - sd_383_cce_v12_bulk_accept_undo_delete_sets_telemetry_knob - bulk accept + Undo + delete + telemetry knob (pending apply)
 - sd_384_docs_refresh_status_pack - added status refresh doc + ML part docs
+
+- **sd_566:** Fix SetPickerSheet backdrop handler corruption + add default-safe restricted branch to /api/inbox/threads when stub viewer is missing.
 
 ## Known gotchas
 

@@ -87,7 +87,6 @@ export function QuoteEchoComposer({
       <button
         type="button"
         className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-        aria-label="Close quote echo composer"
         onPointerDown={(e) => {
           // sd_713_backdrop_clickthrough: consume pointerdown to prevent ghost taps (close on click)
           e.preventDefault();
@@ -103,6 +102,7 @@ export function QuoteEchoComposer({
           e.stopPropagation();
           onClose();
         }}
+        aria-label="Close quote echo composer"
       />
       <div className={cn("relative w-full max-w-lg bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200", error ? "ring-2 ring-red-500" : null)}>
         <div className="flex items-center justify-between mb-4">

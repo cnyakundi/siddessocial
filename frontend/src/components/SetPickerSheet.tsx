@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { useDialogA11y } from "@/src/hooks/useDialogA11y";
 
@@ -215,12 +214,12 @@ export function SetPickerSheet({
   return (
     <>
       <div className="fixed inset-0 z-[125] flex items-end justify-center md:items-center">
-        <button
+                <button
           type="button"
           aria-label="Close set picker"
           className="absolute inset-0 bg-black/40 backdrop-blur-sm"
           onPointerDown={(e) => {
-            // sd_713_backdrop_clickthrough: consume pointerdown to prevent ghost taps (close on click)
+            // sd_713_backdrop_clickthrough: consume pointerdown to prevent ghost taps (close on click/touch)
             e.preventDefault();
             e.stopPropagation();
           }}

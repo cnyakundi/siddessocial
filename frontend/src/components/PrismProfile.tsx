@@ -555,7 +555,9 @@ export function PrismFacetEditSheet(props: {
               ref={avatarInputRef}
               type="file"
               accept="image/*"
-              className="hidden"
+              aria-hidden="true"
+              tabIndex={-1}
+              className="sr-only"
               onChange={async (e) => {
                 const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
                 e.target.value = "";

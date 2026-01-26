@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Camera, Globe, Users, Lock, Briefcase, type LucideIcon } from "lucide-react";
+import { Camera, Globe, Users, Heart, Lock, Briefcase, type LucideIcon } from "lucide-react";
 import type { SideId } from "@/src/lib/sides";
 import { SIDES, SIDE_THEMES } from "@/src/lib/sides";
 
@@ -8,7 +8,8 @@ type PostCreateResp = { ok: boolean; item?: unknown; error?: string };
 const SIDE_ICON: Record<SideId, LucideIcon> = {
   public: Globe,
   friends: Users,
-  close: Lock,
+  // sd_749_pwa_notifs_nav: Close = Inner Circle (Heart)
+  close: Heart,
   work: Briefcase,
 };
 

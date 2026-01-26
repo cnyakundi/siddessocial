@@ -37,6 +37,8 @@ import { EditPostSheet } from "@/src/components/EditPostSheet";
 import { toast } from "@/src/lib/toast";
 import { saveReturnScroll } from "@/src/hooks/returnScroll";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
+import { getSessionIdentity } from "@/src/lib/sessionIdentity";
+import { makePostCacheKey, setCachedPost } from "@/src/lib/postInstantCache";
 
 // Tailwind-safe hover text tokens (static strings)
 const HOVER_TEXT: Record<SideId, string> = {
@@ -933,6 +935,13 @@ export function PostCard({
   const openPost = () => {
     if (isDetail) return;
     saveReturnScroll(post.id);
+    try {
+      const ident = getSessionIdentity();
+      if (ident.authed && ident.viewerId && ident.epoch) {
+        const key = makePostCacheKey({ epoch: String(ident.epoch), viewerId: String(ident.viewerId), postId: String(post.id) });
+        setCachedPost(key, { post, side });
+      }
+    } catch {}
     router.push(`/siddes-post/${post.id}`);
   };
 
@@ -949,6 +958,13 @@ export function PostCard({
   };
   const openReply = () => {
     saveReturnScroll(post.id);
+    try {
+      const ident = getSessionIdentity();
+      if (ident.authed && ident.viewerId && ident.epoch) {
+        const key = makePostCacheKey({ epoch: String(ident.epoch), viewerId: String(ident.viewerId), postId: String(post.id) });
+        setCachedPost(key, { post, side });
+      }
+    } catch {}
     router.push(`/siddes-post/${post.id}?reply=1`);
   };
 

@@ -15,6 +15,8 @@ import { ContentColumn } from "@/src/components/ContentColumn";
 import { toast } from "@/src/lib/toast";
 import { getStubViewerCookie, isStubMe } from "@/src/lib/stubViewerClient";
 import { fetchMe } from "@/src/lib/authMe";
+import { getSessionIdentity, touchSessionConfirmed, updateSessionFromMe } from "@/src/lib/sessionIdentity";
+import { getCachedPost, makePostCacheKey, setCachedPost } from "@/src/lib/postInstantCache";
 import { getSetsProvider } from "@/src/lib/setsProvider";
 import {
   enqueueReply,
@@ -485,21 +487,75 @@ useEffect(() => {
     let mounted = true;
     if (!id) return;
 
+    const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+
     async function load() {
       setLoading(true);
+      let cacheKey: string | null = null;
+      let usedCache = false;
+
       try {
-        const res = await fetch(`/api/post/${encodeURIComponent(id)}`, { cache: "no-store" });
+        // Ensure we have a user-scoped identity for safe cache keys.
+        let ident = getSessionIdentity();
+        if ((!ident.viewerId || !ident.epoch || !ident.authed) && typeof fetchMe === "function") {
+          try {
+            const me = await fetchMe();
+            updateSessionFromMe(me);
+          } catch {
+            // ignore
+          }
+          ident = getSessionIdentity();
+        }
+
+        // Only show cached thread if the session was confirmed recently (reduces stale-access risk).
+        const confirmedAt = typeof ident.confirmedAt === "number" ? ident.confirmedAt : null;
+        const confirmedFresh = !!confirmedAt && Date.now() - confirmedAt < 120_000;
+        const canUseCache = confirmedFresh && ident.authed && !!ident.viewerId && !!ident.epoch;
+
+        if (canUseCache) {
+          cacheKey = makePostCacheKey({
+            epoch: String(ident.epoch),
+            viewerId: String(ident.viewerId),
+            postId: String(id),
+          });
+          const cached = getCachedPost(cacheKey);
+          if (cached) {
+            usedCache = true;
+            setFound(cached);
+          }
+        }
+
+        const res = await fetch(`/api/post/${encodeURIComponent(id)}`, { cache: "no-store", signal: (ctrl as any)?.signal });
         if (!mounted) return;
+
         if (!res.ok) {
+          // Fail closed if access changed.
           setFound(null);
           return;
         }
-        const data = await res.json();
+
+        const data = await res.json().catch(() => null);
+        if (!mounted) return;
+
         if (data?.ok) {
-          setFound({ post: data.post, side: data.side });
+          const next = { post: data.post, side: data.side } as any;
+          setFound(next);
+          touchSessionConfirmed();
+          if (cacheKey) {
+            try { setCachedPost(cacheKey, next); } catch {}
+          }
         } else {
           setFound(null);
         }
+      } catch {
+        if (!mounted) return;
+        if (usedCache) {
+          try {
+            toast.info("Offline / flaky network — showing last opened thread.");
+          } catch {}
+          return;
+        }
+        setFound(null);
       } finally {
         if (mounted) setLoading(false);
       }
@@ -508,10 +564,10 @@ useEffect(() => {
     load();
     return () => {
       mounted = false;
+      try { (ctrl as any)?.abort?.(); } catch {}
     };
   }, [id]);
-
-  // Enrich post with Set metadata for private sides so ContextStamp shows the real Set name/color.
+// Enrich post with Set metadata for private sides so ContextStamp shows the real Set name/color.
   useEffect(() => {
     let mounted = true;
     if (!found) return;

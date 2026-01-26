@@ -576,9 +576,36 @@ class ProfileView(APIView):
                 _can_view_record,
                 _hydrate_from_record,
             )
+            from siddes_backend.identity import viewer_aliases  # type: ignore
+
 
             viewer_tok = viewer_id_for_user(viewer) if viewer else "anon"
             author_tok = viewer_id_for_user(target)
+
+            # sd_750_profile_author_aliases: include legacy author_id tokens.
+            # Posts may have been authored under handle tokens (@name) during stub/dev flows.
+            # Treat me_<id> and @username as the same person for profile listing.
+            author_ids: List[str] = []
+            try:
+                aliases = set(viewer_aliases(str(author_tok)) or set())
+            except Exception:
+                aliases = set()
+            aliases.add(str(author_tok or '').strip())
+            try:
+                uname_raw = str(getattr(target, 'username', '') or '').strip()
+                if uname_raw:
+                    aliases.add(uname_raw)
+                    aliases.add('@' + uname_raw.lower())
+            except Exception:
+                pass
+            for a in list(aliases):
+                ss = str(a or '').strip()
+                if not ss:
+                    continue
+                if ss not in author_ids:
+                    author_ids.append(ss)
+            if not author_ids:
+                author_ids = [str(author_tok)]
 
             lim_raw = str(getattr(request, "query_params", {}).get("limit") or "").strip()
             try:
@@ -638,7 +665,7 @@ class ProfileView(APIView):
             while len(visible) < lim and loops < 5:
                 loops += 1
 
-                qs = Post.objects.filter(author_id=author_tok, side=str(requested)).order_by("-created_at", "-id")
+                qs = Post.objects.filter(author_id__in=author_ids, side=str(requested)).order_by("-created_at", "-id")
                 cts, cid = parse_cursor(after)
                 if cts is not None and cid:
                     qs = qs.filter(Q(created_at__lt=cts) | (Q(created_at=cts) & Q(id__lt=cid)))

@@ -125,6 +125,10 @@ function parseCursor(raw: string | null): string | null {
   return t;
 }
 
+function restrictedThreadsPayload() {
+  return { ok: true, restricted: true, items: [], hasMore: false, nextCursor: null };
+}
+
 
 function withDevViewer(req: Request): { req2: Request; viewerId: string | null } {
   const isProd = process.env.NODE_ENV === "production";
@@ -180,6 +184,12 @@ export async function GET(req: Request) {
 
   const isProd = process.env.NODE_ENV === "production";
   const { req2, viewerId } = withDevViewer(req);
+
+  // Default-safe in dev: missing stub viewer => restricted with no content.
+  // In production, we rely on backend auth via session cookies; do NOT gate on viewerId.
+  if (!isProd && !viewerId) {
+    return sd_558b_json(restrictedThreadsPayload(), { status: 200 });
+  }
 
   // In both dev + prod, rely on the backend for auth/restriction.
   // viewerId is only used for dev-only shims (stub visibility + unread hints).

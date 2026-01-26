@@ -41,7 +41,6 @@ export function ChipOverflowSheet({
       <button
         type="button"
         className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-        aria-label="Close"
         onPointerDown={(e) => {
           // sd_713_backdrop_clickthrough: consume pointerdown to prevent ghost taps (close on click)
           e.preventDefault();
@@ -57,6 +56,7 @@ export function ChipOverflowSheet({
           e.stopPropagation();
           onClose();
         }}
+        aria-label="Close"
       />
       <div ref={panelRef} role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="chip-overflow-title" className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200 max-h-[85dvh] md:max-h-[80vh] overflow-y-auto overscroll-contain">
         <div className="flex items-center justify-between mb-4">

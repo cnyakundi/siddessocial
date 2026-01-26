@@ -53,7 +53,6 @@ export function EchoSheet({
       <button
         type="button"
         className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-        aria-label="Close echo sheet"
         onPointerDown={(e) => {
           // sd_713_backdrop_clickthrough: consume pointerdown to prevent ghost taps (close on click)
           e.preventDefault();
@@ -69,6 +68,7 @@ export function EchoSheet({
           e.stopPropagation();
           onClose();
         }}
+        aria-label="Close echo sheet"
       />
       <div ref={panelRef} role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="echo-title" className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
         <div className="flex items-center justify-between mb-5">
