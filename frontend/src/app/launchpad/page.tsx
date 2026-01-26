@@ -63,7 +63,7 @@ export default function LaunchpadPage() {
         <div className="mt-10 rounded-2xl border border-gray-200 bg-gray-50 p-4">
           <div className="text-sm font-semibold text-gray-900">Dev status command</div>
           <pre className="mt-2 overflow-auto rounded-xl border border-gray-200 bg-white p-3 text-xs text-gray-800">
-./verify_overlays.sh && ./scripts/run_tests.sh && tail -n 60 docs/OVERLAYS_INDEX.md
+bash scripts/run_tests.sh --smoke
           </pre>
         </div>
       </div>

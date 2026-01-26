@@ -200,7 +200,7 @@ Rule: Apply overlays with `scripts/apply_overlay.sh`. The script appends a row a
 | 2026-01-12 14:20:34 | sd_141c_a_invites_setlabel_snapshot_backend_v0.9.23.zip | Adds invite set_label field + migration; store outputs setLabel and snapshots Set label on create; views accept direction filter. |
 | 2026-01-12 14:20:34 | sd_141c_b_invites_setlabel_snapshot_frontend_core_v0.9.23.zip | Adds SetInvite.setLabel; providers parse/return it; Next stub store snapshots Set label at create-time. |
 | 2026-01-12 14:20:34 | sd_141c_c_invites_setlabel_snapshot_ui_check_state_v0.9.23.zip | UI prefers inv.setLabel while keeping hydrateSetLabels/sets.get; adds sd_141c check + updates STATE. |
-| 2026-01-12 19:56:49 | sd_tooling_overlay_builder_v0.1.1.zip | Add a local overlay builder script + time-limit playbook so you can package micro-overlays instantly without ChatGPT zip limits. |
+| 2026-01-12 19:56:49 | sd_tooling_overlay_builder_v0.1.1.zip | Add a local overlay builder script + time-limit playbook so you can package micro-overlays instantly without packaging/tooling limits. |
 | 2026-01-13 06:30:00 | sd_142_feed_drf_api_base_v0.9.24.zip | Feed DRF endpoint + frontend API base fallback. |
 | 2026-01-13 05:39:20 | sd_143a_state_readme_manifest_v0.9.25.zip | Posts+Replies DRF endpoints + Next API proxy to Django base; DRF feed returns FeedPost shape + merges runtime posts. |
 | 2026-01-13 05:45:14 | sd_143b_state_mentions_sd_142_v0.9.25.zip |  |
@@ -217,12 +217,12 @@ Rule: Apply overlays with `scripts/apply_overlay.sh`. The script appends a row a
 | 2026-01-13 14:11:03 | sd_148b_fix_readonly_copy_v0.9.34a.zip | Restore Sets read-only banner copy |
 | 2026-01-13 14:43:34 | sd_148b_fix_sets_page_rebuild_v0.9.34c.zip | Fix Sets page JSX parse error (rebuild page, keep guided creator) |
 | 2026-01-13 14:51:53 | sd_148b_fix_sets_jsx_parent_v0.9.34d.zip | Fix Sets page JSX parent parse error |
-| 2026-01-13 15:52:03 | sd_148c_docs_ai_workflow_hardening_v0.9.35.zip | Docs: no AI zips; apply-helper workflow; add check |
-| 2026-01-13 16:07:56 | sd_148d_repo_hygiene_ignore_artifacts_v0.9.36.zip | Docs: no AI zips; apply-helper workflow; add check |
-| 2026-01-13 16:22:08 | sd_148e_django_tests_minimal_api_v0.9.37.zip | Docs: no AI zips; apply-helper workflow; add check |\n| 2026-01-13 19:43:43 | sd_148f_django_tests_debug_override_v0.9.38.zip | Fix Django tests: force DEBUG=True in tests so x-sd-viewer header auth works in Docker |\n| 2026-01-13 18:29:18 | sd_149d_homepage_launchpad_v0.9.43.zip | Docs: no AI zips; apply-helper workflow; add check |
+| 2026-01-13 15:52:03 | sd_148c_docs_ai_workflow_hardening_v0.9.35.zip | Docs: no remote zips; apply-helper workflow; add check |
+| 2026-01-13 16:07:56 | sd_148d_repo_hygiene_ignore_artifacts_v0.9.36.zip | Docs: no remote zips; apply-helper workflow; add check |
+| 2026-01-13 16:22:08 | sd_148e_django_tests_minimal_api_v0.9.37.zip | Docs: no remote zips; apply-helper workflow; add check |\n| 2026-01-13 19:43:43 | sd_148f_django_tests_debug_override_v0.9.38.zip | Fix Django tests: force DEBUG=True in tests so x-sd-viewer header auth works in Docker |\n| 2026-01-13 18:29:18 | sd_149d_homepage_launchpad_v0.9.43.zip | Docs: no remote zips; apply-helper workflow; add check |
 | 2026-01-13 21:56:46 | sd_149h_next_remove_pagesdir_api_build_fix_v0.9.48.zip | Fix next build PageNotFoundError on /api/* by removing pagesDir (use App Router route handlers only) + add harness check |
 | 2026-01-14 06:36:16 | sd_150b_home_is_feed_launchpad_dev_only_v0.9.51.zip | UI: make / behave like a social app (redirect to feed); move dev launchpad to /launchpad; disable SW caching in dev |
-| 2026-01-14 03:42:13 | sd_150c_fix_homepage_launchpad_check_v0.9.52.zip | Docs: no AI zips; apply-helper workflow; add check |
+| 2026-01-14 03:42:13 | sd_150c_fix_homepage_launchpad_check_v0.9.52.zip | Docs: no remote zips; apply-helper workflow; add check |
 
 ## Recent applied overlays (Jan 19, 2026)
 

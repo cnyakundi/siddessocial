@@ -1,7 +1,7 @@
 # Siddes UI Master Spec (MVP → Launch)
 
 **Updated:** 2026-01-14  
-**Audience:** Product Designer, Frontend/Backend Engineers, and any AI coding tool you migrate to.
+**Audience:** Product Designer, Frontend/Backend Engineers, and any collaborator who needs to work in this repo.
 
 This document consolidates **all agreed UI designs + rules** for Siddes and maps them to the current repo.  
 It is intentionally opinionated: **context-first, calm, privacy-first.**

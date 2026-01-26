@@ -1,4 +1,4 @@
-/* Siddes Service Worker (sd_015.1) — SAFE shell caching + push notifications
+/* Siddes Service Worker — safe shell caching + push notifications
  *
  * SAFETY RULES (Siddes non-negotiables):
  *  - Never cache /api/* (NetworkOnly). Service Worker caches are shared across a browser profile.
@@ -8,7 +8,7 @@
  * Result: instant app shell + offline fallback, without any cross-user/Side cache contamination.
  */
 
-const VERSION = "sd015-1-v0.1.2";
+const VERSION = "0.1.2";
 const CORE_CACHE = `siddes-core-${VERSION}`;
 const STATIC_CACHE = `siddes-static-${VERSION}`;
 

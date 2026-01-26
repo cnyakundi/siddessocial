@@ -1,8 +1,8 @@
-# Vibe Coding Playbook (Siddes Edition)
+# Engineering Playbook (Siddes)
 
 **Goal:** move fast without turning the repo into chaos.
 
-You vibe-code features, but the project stays:
+You move fast, but the project stays:
 - reproducible
 - debuggable
 - refactorable
@@ -10,7 +10,7 @@ You vibe-code features, but the project stays:
 
 ---
 
-## The 10 Rules of Vibe Coding That Scales
+## The 10 Rules of Fast Shipping That Scales
 1. **One baseline is truth.** Every session starts from a named baseline (branch + commit or zip ID).
 2. **Small batches only.** One change-set = one idea.
 3. **One-command gates are sacred.** If gates fail, stop and fix gates first.
@@ -20,7 +20,7 @@ You vibe-code features, but the project stays:
 7. **Widening visibility requires confirmation.** (Siddes rule) Close → Friends → Public must never happen accidentally.
 8. **UI issues are treated like broken contracts.** Not “feels weird” — it’s a contract (z-index/scroll-lock/back-nav) broken.
 9. **No multi-window drift.** Many windows are ok, but only one active truth.
-10. **GPT works from snapshots, not memories.** Always provide a structured Debug Snapshot pack.
+10. **Work from snapshots, not memories.** Always provide a structured Debug Snapshot pack.
 
 ---
 
@@ -49,7 +49,7 @@ You vibe-code features, but the project stays:
 2) Run gates (`bash scripts/run_gates.sh`)  
 3) Make one change  
 4) Run gates again  
-5) Package change (one overlay per change-set)
+5) Package change (one small bundle per change-set)
 
 ---
 

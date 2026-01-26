@@ -201,8 +201,6 @@ export function ProfileActionsSheet(props: {
             </div>
           </button>
         </div>
-
-        <div className="mt-4 text-[11px] text-gray-500">sd_424_profile_actions_sheet</div>
       </div>
     </div>
   );

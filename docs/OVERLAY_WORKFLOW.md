@@ -1,40 +1,37 @@
-# Siddes — Overlay Workflow (must-side)
-**Updated:** 2026-01-09
+# Siddes — Change Bundle Workflow
+**Updated:** 2026-01-26
 
-Siddes is built via **overlay zips**. The workflow goal is: **zero context** needed when you move between chat windows.
+Siddes ships changes as small **diff-only bundles** (overlay zips).
+
+Goal: **zero hidden context** — a collaborator should be able to understand what changed, apply it, and verify it from repo docs alone.
 
 ---
 
 ## 1) Non-negotiables
-Every overlay zip must:
+Every change bundle must:
 
-### A) Include a root `README_OVERLAY.md`
-It must contain:
-- `Summary: ...` (one line)
-- what changed + why
-- acceptance criteria
-- test steps
-- rollback steps
+### A) Include a short change note
+Pick one:
+- add a row to `docs/OVERLAYS_INDEX.md`, or
+- add a small note under `docs/` (single file, short and scannable)
 
-### B) Update docs
-Each overlay must ensure these stay correct:
-- `docs/STATE.md` (current status + NEXT overlay)
-- `docs/MIGRATION_PACK.md` (only if the product/architecture meaningfully changed)
+### B) Keep core docs accurate
+- `docs/STATE.md` (current status + what’s next)
+- `docs/PROJECT_HANDOFF.md` (how to run + where truth lives)
 
 ### C) Pass the quality gate
-After applying any overlay:
+After applying any bundle:
+
 ```bash
 ./verify_overlays.sh
 ./scripts/run_tests.sh
 ```
 
-### D) Avoid fix packs
-We ship patch overlays only if necessary (broken overlay, security issue, or critical build break).
-
 ---
 
-## 2) Applying overlays (standard)
-Run from your repo root:
+## 2) Applying overlays
+Run from repo root:
+
 ```bash
 chmod +x scripts/apply_overlay.sh
 ./scripts/apply_overlay.sh ~/Downloads/<zip>
@@ -44,69 +41,13 @@ chmod +x scripts/apply_overlay.sh
 
 ---
 
-## 3) Overlay authoring rules
-- Keep overlays small and coherent (one theme).
+## 3) Authoring rules
+- Keep bundles small and coherent (one theme).
 - Never ship “half features.”
 - Prefer adding new files over editing many existing ones.
-- If editing core code, include at least one test or smoke-check.
+- If editing core flows, include at least one smoke check.
 
 ---
 
-## 4) README_OVERLAY.md template (copy/paste)
-```md
-# sd_<NNN>_<slug>_vX.Y.Z
-
-Summary: <one line>
-
-## Why
-<why this exists>
-
-## What changed
-- ...
-
-## Acceptance criteria
-- ...
-
-## How to test
-```bash
-./verify_overlays.sh
-./scripts/run_tests.sh
-# plus overlay-specific commands
-```
-
-## Rollback
-```bash
-git checkout -- <paths>
-```
-```
-
----
-
-## 5) Documentation rule (“GitHub memory”)
-The repo must answer these without chat context:
-- What is Siddes?
-- What is the next overlay?
-- What changed in the last overlay?
-- How do I test?
-- How do I run Docker dev?
-
-If any of those are not obvious from the repo docs, the overlay is not “done.”
-
----
-
-## 6) When chat/tools time out (escape hatch)
-If the chat UI becomes unresponsive or a zip is too large for tooling, **don’t block**.
-
-Use the local overlay builder:
-```bash
-chmod +x scripts/make_overlay.sh
-# package your current git changes into a diff-only overlay:
-./scripts/make_overlay.sh sd_<NNN>_<slug>_vX.Y.Z --summary "<one line>" --changed
-```
-
-Then apply like any other overlay:
-```bash
-./scripts/apply_overlay.sh ~/Downloads/sd_<NNN>_<slug>_vX.Y.Z.zip
-./verify_overlays.sh
-./scripts/run_tests.sh
-```
+## 4) If a bundle is too big
+Split it into two or three bundles with clean boundaries.

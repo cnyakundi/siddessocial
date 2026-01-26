@@ -1,49 +1,39 @@
-# Siddes — Time Limit Playbook (stop losing days)
+# Siddes — Batching Playbook (stop losing days)
 
-This repo uses **overlay zips**. Chat windows + attachment tooling can time out or lag when:
-- an overlay gets too big,
-- the conversation gets too long,
-- or you try to ship too many files at once.
+This repo uses small **change bundles** (overlay zips). Tooling gets slow or fragile when a bundle gets too big.
 
-This playbook keeps momentum even when chat is flaky.
+This playbook keeps momentum by keeping bundles **small**, **testable**, and **reproducible**.
 
 ---
 
-## The core rule: micro-overlays
-**Cap each overlay part** to something like:
+## The core rule: micro-bundles
+**Cap each bundle** to something like:
 - **≤ 10–25 files**
 - **≤ ~300–600 lines changed**
-- **one theme per overlay** (frontend only, backend only, docs/checks only)
+- **one theme per bundle** (frontend-only, backend-only, docs-only)
 
 If it feels “big”, it *is* big. Split it.
 
 ---
 
-## The escape hatch: build the zip locally
-When chat can’t (or shouldn’t) package a zip, you can do it locally.
+## Package bundles locally
+If you’re using the overlay workflow, create the zip locally:
 
 ### A) Package current git changes
 ```bash
 chmod +x scripts/make_overlay.sh
-./scripts/make_overlay.sh sd_142a_a_frontend_v0.9.24 --summary "Invite context pills (frontend)" --changed
+./scripts/make_overlay.sh <bundle_name> --summary "<one line>" --changed
 ```
 
 ### B) Package only staged changes
 ```bash
 git add -A
-./scripts/make_overlay.sh sd_142a_a_frontend_v0.9.24 --summary "Invite context pills (frontend)" --staged
+./scripts/make_overlay.sh <bundle_name> --summary "<one line>" --staged
 ```
 
-### C) No git? Package explicit files
+Then apply and verify:
 ```bash
-./scripts/make_overlay.sh sd_142a_a_frontend_v0.9.24 --summary "Invite context pills (frontend)" -- \
-  frontend/src/app/siddes-invites/page.tsx \
-  frontend/src/components/SidePill.tsx
-```
-
-Then apply normally:
-```bash
-./scripts/apply_overlay.sh ~/Downloads/sd_142a_a_frontend_v0.9.24.zip
+./scripts/apply_overlay.sh ~/Downloads/<bundle_name>.zip
 ./verify_overlays.sh
 ./scripts/run_tests.sh
 ```
@@ -51,62 +41,37 @@ Then apply normally:
 ---
 
 ## Operating procedure (the “never lose state” loop)
-1. **Apply overlay** → `./verify_overlays.sh` → `./scripts/run_tests.sh`
-2. If green: **commit**
-   ```bash
-   git add -A
-   git commit -m "Apply <overlay_zip_name>"
-   ```
-3. If chat starts lagging: **stop**, create a fresh window, and paste:
-   - `docs/MIGRATION_PACK.md`
-   - current milestone from `docs/STATE.md`
-   - the latest `verify_overlays.sh` output
+1) Apply bundle → `./verify_overlays.sh` → `./scripts/run_tests.sh`
+2) If green: commit
+3) If tooling gets flaky: stop and capture a clean snapshot (update `docs/STATE.md`, save logs, zip repo excluding caches)
 
 ---
 
 ## Anti-footguns
-- Never include `node_modules`, `.next`, `__pycache__` in overlays.
-- Fix **check failures first** (docs/STATE.md and grep tokens matter).
-- Keep overlay zips **diff-only**.
+- Never include `node_modules`, `.next`, `__pycache__` in bundles.
+- Fix **gate failures first**.
+- Keep bundles **diff-only**.
 
 ### Zsh gotcha: paths with [id]
 If you're using zsh, file paths containing brackets like `[id]` are treated as glob patterns.
-That's why you see:
-`zsh: no matches found: frontend/src/app/api/post/[id]/route.ts`
-
 Fix by quoting the path:
+
 ```bash
 git add 'frontend/src/app/api/post/[id]/route.ts'
 ```
 
 Or use `noglob`:
+
 ```bash
 noglob git add frontend/src/app/api/post/[id]/route.ts
 ```
 
-Beginner tip: you can skip staging entirely and package with `--changed`.
+---
 
-### Preferred workflow: apply helper scripts (beginner-safe)
-
+## Preferred workflow: one apply-helper per bundle
 Avoid patch files. The reliable pattern is:
 
-1) Ask AI for a single downloadable apply script (example: `sd_144c_apply_helper.sh`)
-2) Run it locally:
-```bash
-bash ~/Downloads/sd_144c_apply_helper.sh
-```
-3) Run tests:
-```bash
-./scripts/run_tests.sh
-```
-4) Create the overlay zip locally (no AI zipping):
-```bash
-./scripts/make_overlay.sh sd_144c_example_v0.9.26 --summary "what changed" --changed
-```
-5) Apply + verify:
-```bash
-./scripts/apply_overlay.sh ~/Downloads/sd_144c_example_v0.9.26.zip
-./verify_overlays.sh
-```
-
-This avoids tool limits and prevents broken patch files.
+1) Make changes using a single apply-helper script (one per bundle)
+2) Run it locally
+3) Run gates/tests
+4) Package the bundle locally with `scripts/make_overlay.sh`

@@ -17,7 +17,7 @@ bash scripts/dev/full_project_audit.sh
 It generates:
 
 - `audit_runs/audit_YYYYMMDD_HHMMSS/` (logs + summary)
-- `audit_runs/audit_YYYYMMDD_HHMMSS.zip` (upload this zip back to ChatGPT)
+- `audit_runs/audit_YYYYMMDD_HHMMSS.zip` (share this zip with your dev/debugging assistant)
 
 ## What’s inside
 

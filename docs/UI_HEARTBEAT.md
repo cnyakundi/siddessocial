@@ -1,7 +1,7 @@
 # Siddes UI Heartbeat (Read this first)
 
 This file is the **UI source of truth** for Siddes.  
-If you migrate this repo to another AI coding tool, read this first.
+If you hand this repo to a collaborator or move it to a new environment, read this first.
 
 ---
 

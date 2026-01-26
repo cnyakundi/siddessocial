@@ -3,7 +3,7 @@
 
 If you have zero context, start with:
 - `SIDDES_BOOK.md` — consolidated overview (philosophy + architecture + feature surface)
-- `MIGRATION_PACK.md` — master handoff doc (product + tech)
+- `PROJECT_HANDOFF.md` — master handoff doc (product + tech)
 - `STATE.md` — where we are + what to do next
 - `DEPLOYMENT_GATES.md` — launch readiness checklist
 
@@ -40,7 +40,6 @@ If you have zero context, start with:
 ## Historical / workflow docs
 - Overlays workflow rules: `OVERLAY_WORKFLOW.md`
 - Overlays log: `OVERLAYS_INDEX.md`
-- Multi-chat handoff: `AI_HANDOFF.md`
 
 ## Go-live
 - `GO_LIVE_ISSUE_REGISTER.md` - single source of truth for launch gaps and fixes

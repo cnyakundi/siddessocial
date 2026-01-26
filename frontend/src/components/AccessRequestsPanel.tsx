@@ -167,8 +167,6 @@ export function AccessRequestsPanel() {
           ))
         )}
       </div>
-
-      <div className="mt-4 text-[11px] text-gray-500">sd_712_access_requests</div>
     </div>
   );
 }

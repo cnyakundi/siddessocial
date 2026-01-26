@@ -195,20 +195,39 @@ export default function UserProfilePage() {
 
     setBusy(true);
     try {
-      const res = await fetch("/api/side", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          username: user.handle,
-          side,
-          confirm: side === "close" || side === "work" ? true : undefined,
-        }),
-      });
-      const j = (await res.json().catch(() => null)) as any;
+      const postSide = async (wanted: SideId | "public") => {
+        const res = await fetch("/api/side", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            username: user.handle,
+            side: wanted,
+            confirm: wanted === "close" || wanted === "work" ? true : undefined,
+          }),
+        });
+        const j = (await res.json().catch(() => null)) as any;
+        return { res, j };
+      };
+
+      let out = await postSide(side);
+      let res = out.res;
+      let j = out.j;
+
+      // sd_741_close_implies_friends: smooth assist (no user-facing friends_required error)
+      if ((!res.ok || !j || j.ok !== true) && side === "close" && j?.error === "friends_required") {
+        toast.info("Close is inside Friends — adding to Friends first…");
+        try {
+          await postSide("friends");
+        } catch {
+          // ignore
+        }
+        out = await postSide("close");
+        res = out.res;
+        j = out.j;
+      }
 
       if (!res.ok || !j || j.ok !== true) {
         let msg = res.status === 429 ? "Slow down." : "Could not update Side.";
-        if (j?.error === "friends_required") msg = "Friends first (then Close).";
         if (j?.error === "confirm_required") msg = "Confirmation required for Close/Work.";
         if (res.status === 401 || j?.error === "restricted") msg = "Login required.";
         toast.error(msg);
@@ -596,12 +615,12 @@ export default function UserProfilePage() {
                 ) : contentTab === "media" ? (
                   <div className="py-14 text-center px-6 rounded-3xl border border-gray-200 bg-white">
                     <div className="text-sm font-extrabold text-gray-900">Media</div>
-                    <div className="text-xs text-gray-500 mt-1">Media grid ships in the next overlay.</div>
+                    <div className="text-xs text-gray-500 mt-1">Media grid coming soon.</div>
                   </div>
                 ) : (
                   <div className="py-14 text-center px-6 rounded-3xl border border-gray-200 bg-white">
                     <div className="text-sm font-extrabold text-gray-900">Sets</div>
-                    <div className="text-xs text-gray-500 mt-1">Sets tab ships in the next overlay.</div>
+                    <div className="text-xs text-gray-500 mt-1">Sets tab coming soon.</div>
                   </div>
                 )}
               </div>
