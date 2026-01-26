@@ -32,6 +32,11 @@ export function NotificationsDrawer({
     <div
       className="fixed inset-0 z-[210] lg:hidden"
       onClick={onClose}
+      onTouchStart={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onClose();
+      }}
     >
       <div className="absolute inset-0 bg-black/60 backdrop-blur-md animate-in fade-in duration-200" />
 
@@ -48,6 +53,7 @@ export function NotificationsDrawer({
           "animate-in slide-in-from-bottom-10 fade-in duration-200"
         )}
         onClick={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
       >
         <div className="pt-4 px-4">
           <div className="w-10 h-1.5 bg-gray-100 rounded-full mx-auto" />

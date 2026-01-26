@@ -85,6 +85,7 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 
 ## NEXT overlay
 - Next: TBD
+- **sd_759_topbar_alerts_drawer_button:** Mobile AppTopBar bell opens Notifications Drawer (PWA quick alerts)
 - **sd_758_standardize_sheet_backdrops_touchstart:** UI: standardize all sheet backdrops to close on touchstart with preventDefault (consistent, anti-jank).
 - **sd_756_fix_actions_sheet_backdrop_ghosttap:** UI: prevent PostActionsSheet backdrop ghost taps/clickthrough on iOS PWA (touchstart now preventDefault).
 - **sd_757_fix_setpicker_member_avatars_no_external_calls:** UI: SetPickerSheet member preview avatars are now offline-safe initials badges (removed external Dicebear calls).

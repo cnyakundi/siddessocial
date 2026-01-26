@@ -25,6 +25,7 @@
 - Profile: user pages + actions
 
 ## Recent windows
+- sd_759: AppTopBar bell opens NotificationsDrawer on mobile (quick alerts)
 - sd_756_fix_actions_sheet_backdrop_ghosttap: PostActionsSheet backdrop touchstart now calls preventDefault to stop iOS ghost taps/clickthrough.
 - sd_757_fix_setpicker_member_avatars_no_external_calls: SetPickerSheet member preview no longer hits Dicebear; uses deterministic initials badges.
 

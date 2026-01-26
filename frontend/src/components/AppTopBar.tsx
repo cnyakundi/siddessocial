@@ -3,13 +3,14 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ChevronDown, RefreshCw, Search as SearchIcon } from "lucide-react";
+import { Bell, ChevronDown, RefreshCw, Search as SearchIcon } from "lucide-react";
 
 import { SideSwitcherSheet } from "@/src/components/SideSwitcherSheet";
 import { SetPickerSheet } from "@/src/components/SetPickerSheet";
 
 import { useSide } from "@/src/components/SideProvider";
 import { useSideActivity } from "@/src/hooks/useSideActivity";
+import { useNotificationsActivity } from "@/src/hooks/useNotificationsActivity";
 import { SIDES, SIDE_THEMES } from "@/src/lib/sides";
 import type { SetDef, SetId } from "@/src/lib/sets";
 import { getSetsProvider } from "@/src/lib/setsProvider";
@@ -31,7 +32,7 @@ function cn(...parts: Array<string | undefined | false | null>) {
  * - One header layer only (no stacked bars).
  * - Left: Side chip → opens SideSwitcherSheet.
  * - Right: Set chip only on /siddes-feed; otherwise a calm page title.
- * - No Search/Bell/Avatar here (MVP: Now/Sets/Inbox/Me + Create).
+ * - Alerts bell opens the Notifications drawer (mobile); Search stays as a route (MVP utility).
  */
 export function AppTopBar(_props: { onOpenNotificationsDrawer?: () => void } = {}) {
   const pathname = usePathname() || "/";
@@ -39,6 +40,7 @@ export function AppTopBar(_props: { onOpenNotificationsDrawer?: () => void } = {
   const { side, setSide } = useSide();
   const theme = SIDE_THEMES[side];
   const activity = useSideActivity(side);
+  const { unread } = useNotificationsActivity();
 
   const isSiddes = pathname.startsWith("/siddes-");
   const isNow = pathname === "/siddes-feed" || pathname.startsWith("/siddes-feed/");
@@ -193,6 +195,32 @@ if (pathname.startsWith("/siddes-profile")) return "Me";
                   >
                     <RefreshCw size={18} className="text-gray-500" aria-hidden />
                   </button>
+
+<button
+  type="button"
+  className="p-2 rounded-full hover:bg-gray-100 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900/20"
+  aria-label="Alerts"
+  title="Alerts"
+  onClick={() => {
+    try {
+      if (_props?.onOpenNotificationsDrawer) {
+        _props.onOpenNotificationsDrawer();
+        return;
+      }
+    } catch {}
+    router.push("/siddes-notifications");
+  }}
+>
+  <span className="relative">
+    <Bell size={18} className="text-gray-500" aria-hidden />
+    {unread > 0 ? (
+      <span
+        className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-red-500 border-2 border-white"
+        aria-label="New notifications"
+      />
+    ) : null}
+  </span>
+</button>
 
                   <Link
             href="/siddes-search"
