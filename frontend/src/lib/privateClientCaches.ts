@@ -117,7 +117,12 @@ export function handleSessionInvalidation(reason: string = "session_invalid", op
 
     const next = encodeURIComponent(p + (window.location?.search || ""));
     const e = encodeURIComponent(reason || "session_invalid");
-    window.location.href = `/login?next=${next}&e=${e}`;
+    const href = `/login?next=${next}&e=${e}`;
+    try {
+      window.dispatchEvent(new CustomEvent("sd:navigate", { detail: { href, replace: true } }));
+    } catch {
+      // ignore
+    }
   } catch {
     // ignore
   }

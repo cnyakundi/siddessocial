@@ -11,13 +11,15 @@ import { QueueIndicator } from "@/src/components/QueueIndicator";
 import { StubViewerCookie } from "@/src/components/StubViewerCookie";
 import { ToastHost } from "@/src/components/ToastHost";
 import { AuthBootstrap } from "@/src/components/AuthBootstrap";
+import { NavEventBridge } from "@/src/components/NavEventBridge";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
     <SideProvider>
-      
+
       <ThemeColorSync />
 <FirstRunSidePicker />
+      <NavEventBridge />
       <AuthBootstrap />
 
       {/* Reserve space for BottomNav (and iOS safe-area). */}
@@ -26,7 +28,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       <AppBadgeClient />
       <QueueIndicator />
       <StubViewerCookie />
-    
+
       <ToastHost />
 </SideProvider>
   );

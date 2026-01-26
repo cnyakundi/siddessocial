@@ -61,6 +61,17 @@ function buildUrl(path: string, opts?: InboxProviderListOpts | InboxProviderThre
   return u.toString();
 }
 
+
+
+// sd_751_inbox_send_idempotency: generate stable clientKey per send attempt
+function makeClientKey(): string {
+  try {
+    const c: any = (globalThis as any).crypto;
+    if (c && typeof c.randomUUID === "function") return `ck_${c.randomUUID()}`;
+  } catch {}
+  return `ck_${Date.now().toString(36)}_${Math.random().toString(36).slice(2)}`;
+}
+
 // sd_300 parity: safe fetch helper for the DB-backed inbox provider.
 // - Browser: same-origin Next API routes (/api/inbox/*) so session cookies are truth.
 // - SSR/tests: falls back to NEXT_PUBLIC_API_BASE origin resolution.
@@ -262,7 +273,8 @@ export const backendStubProvider: InboxProvider = {
       return cached;
     }
 
-    const res = await fetchWithFallback(`/api/inbox/thread/${encodeURIComponent(id)}`, opts, { method: "GET" });
+        const clientKey = makeClientKey(); // sd_751_inbox_send_idempotency
+const res = await fetchWithFallback(`/api/inbox/thread/${encodeURIComponent(id)}`, opts, { method: "GET" });
     const data = (await res.json().catch(() => null)) as ThreadResp | null;
 
     if (isRestrictedPayload(res, data)) {
@@ -309,10 +321,12 @@ async sendMessage(
     _from: "me" | "them" = "me",
     opts?: InboxProviderThreadOpts
   ): Promise<ThreadMessage> {
+    const clientKey = makeClientKey(); // sd_751_inbox_send_idempotency
+
     const res = await fetchWithFallback(`/api/inbox/thread/${encodeURIComponent(id)}`, opts, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ text, clientKey }),
     });
 
     const data = (await res.json().catch(() => null)) as ThreadResp | null;

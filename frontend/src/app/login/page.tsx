@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import AuthLegal from "@/src/components/auth/AuthLegal";
 import AuthShell from "@/src/components/auth/AuthShell";
@@ -37,8 +37,8 @@ function humanizeAuthError(err: string, status: number, kind: "login" | "signup"
   return e.replace(/_/g, " ");
 }
 
-
 export default function LoginPage() {
+  const router = useRouter();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
@@ -86,7 +86,7 @@ export default function LoginPage() {
       const data = await res.json().catch(() => ({}));
       if (res.ok && data?.ok) {
         const next = safeNextPath(new URLSearchParams(window.location.search).get("next"));
-        window.location.href = next ?? "/siddes-feed";
+        router.replace(next ?? "/siddes-feed");
         return;
       }
 
@@ -115,7 +115,6 @@ export default function LoginPage() {
       setBackendOk(false);
     }
   }
-
 
   const showGidNotice = !gid && process.env.NODE_ENV !== "production";
 
@@ -202,7 +201,7 @@ export default function LoginPage() {
                 const d = await r.json().catch(() => ({}));
                 if (r.ok && d?.ok) {
                   const next = safeNextPath(new URLSearchParams(window.location.search).get("next"));
-                  window.location.href = next ?? (d?.created ? "/onboarding" : "/siddes-feed");
+                  router.replace(next ?? (d?.created ? "/onboarding" : "/siddes-feed"));
                   return;
                 }
                 setMsg(d?.error ? String(d.error) : "Google sign-in failed");

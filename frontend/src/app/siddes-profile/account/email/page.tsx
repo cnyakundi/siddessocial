@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 type MePayload = {
@@ -10,6 +11,7 @@ type MePayload = {
 };
 
 export default function AccountEmailPage() {
+  const router = useRouter();
   const [me, setMe] = useState<MePayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [newEmail, setNewEmail] = useState("");
@@ -28,7 +30,7 @@ export default function AccountEmailPage() {
       setLoading(false);
       if (!j?.authenticated) {
         const next = encodeURIComponent("/siddes-profile/account/email");
-        window.location.href = `/login?next=${next}`;
+        router.replace(`/login?next=${next}`);
       }
     })();
     return () => {

@@ -11,6 +11,7 @@
 
 ## Current milestone
 - **sd_146:** Posts+Replies DB scaffold (models+migrations+SD_POST_STORE=memory|db|auto)
+- **sd_753:** Stabilization manual + docs slimming (canonical docs + archive) + root `verify_overlays.sh` wrapper.
 
 
 
@@ -158,3 +159,9 @@ These are the overlays applied/created during the current session (evidence: ter
 ## PWA (mobile app feel)
 - **sd_741_push_backend_db:** Push subscriptions stored in backend DB + endpoints + UI wiring
 - **sd_742_push_auto_dispatch_on_notifications:** push is automatically dispatched when notifications are created (reply/like/mention/echo)
+
+
+## World launch readiness (Jan 2026)
+- **sd_751:** Launch P0 gatepack + World Launch docs
+  - Run: `bash scripts/checks/launch_world_p0_gatepack_check.sh`
+  - Tracker: `docs/LAUNCH_WORLD_P0_TRACKER.md`

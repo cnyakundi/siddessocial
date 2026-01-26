@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import React, { Suspense, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import AuthShell from "@/src/components/auth/AuthShell";
 
 type ConsumeResp = { ok?: boolean; error?: string; created?: boolean };
@@ -38,6 +38,7 @@ export default function MagicConsumePage() {
 
 function MagicConsumePageInner() {
   const sp = useSearchParams();
+  const router = useRouter();
   const urlToken = useMemo(() => String(sp?.get("token") || "").trim(), [sp]);
   const nextPath = useMemo(() => safeNextPath(sp?.get("next") || null), [sp]);
 
@@ -71,7 +72,7 @@ function MagicConsumePageInner() {
         setStatus("ok");
         setMsg("Signed in.");
         const dest = nextPath ?? (data?.created ? "/onboarding" : "/siddes-feed");
-        window.location.href = dest;
+        router.replace(dest);
         return;
       }
 

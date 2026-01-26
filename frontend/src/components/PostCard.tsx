@@ -1,6 +1,5 @@
 "use client";
 
-
 /* eslint-disable @next/next/no-img-element */
 
 import React, { useMemo, useState } from "react";
@@ -102,7 +101,6 @@ const safeIndex = Math.max(0, Math.min(count - 1, Math.floor(index || 0)));
     v.muted = muted;
   }, [muted, safeIndex, open]);
 
-
   const goPrev = React.useCallback(() => {
     if (count < 2) return;
     onIndexChange((prev) => (prev - 1 + count) % count);
@@ -133,8 +131,6 @@ const safeIndex = Math.max(0, Math.min(count - 1, Math.floor(index || 0)));
   }, [open, count, onClose, goPrev, goNext]);
 
   if (!open || count === 0) return null;
-
-
 
   return (
     <div
@@ -1032,8 +1028,6 @@ export function PostCard({
     }
   };
 
-
-
   // Launch-safe: Echo is only offered on Public posts (prevents private re-broadcast leaks).
   const canEcho = side === "public";
 
@@ -1563,7 +1557,7 @@ onClick={
                 try {
                   router.replace("/siddes-feed");
                 } catch {
-                  window.location.href = "/siddes-feed";
+                  // no hard reload fallback
                 }
                 return;
               }

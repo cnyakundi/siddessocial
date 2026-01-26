@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import React, { Suspense, useEffect, useMemo, useState } from "react";
 import AuthShell from "@/src/components/auth/AuthShell";
 
@@ -29,6 +29,7 @@ export default function ResetPasswordPage() {
 
 function ResetPasswordPageInner() {
   const params = useSearchParams();
+  const router = useRouter();
   const urlToken = useMemo(() => String(params.get("token") || "").trim(), [params]);
 
   const [token, setToken] = useState(urlToken);
@@ -63,7 +64,7 @@ function ResetPasswordPageInner() {
     const data = (await res.json().catch(() => ({}))) as ResetResp;
 
     if (res.ok && data?.ok && data?.reset) {
-      window.location.href = "/siddes-feed";
+      router.replace("/siddes-feed");
       return;
     }
 

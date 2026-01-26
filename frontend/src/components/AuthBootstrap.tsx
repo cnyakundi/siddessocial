@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { fetchMe } from "@/src/lib/authMe";
 import { patchFetchForCsrf } from "@/src/lib/csrf";
 import { clearPrivateClientCaches, clearPrivateDataCaches } from "@/src/lib/privateClientCaches";
@@ -24,6 +24,7 @@ import { getSessionIdentity, updateSessionFromMe } from "@/src/lib/sessionIdenti
 const ONB_REDIRECT_MARK = "__sd_onb_redirected_v1";
 
 export function AuthBootstrap() {
+  const router = useRouter();
   // sd_237a: patch fetch so unsafe /api/* requests include X-CSRFToken
   patchFetchForCsrf();
   const pathname = usePathname() || "/";
@@ -98,13 +99,13 @@ export function AuthBootstrap() {
           if (!marked) {
             window.sessionStorage.setItem(ONB_REDIRECT_MARK, "1");
             const next = encodeURIComponent(p + (searchStr ? `?${searchStr}` : ""));
-            window.location.href = `/onboarding?next=${next}`;
+            router.replace(`/onboarding?next=${next}`);
             return;
           }
         } catch {
           // If sessionStorage fails, fall back to always redirecting (safer than leaking)
           const next = encodeURIComponent(p + (searchStr ? `?${searchStr}` : ""));
-          window.location.href = `/onboarding?next=${next}`;
+          router.replace(`/onboarding?next=${next}`);
           return;
         }
       }
@@ -119,7 +120,7 @@ export function AuthBootstrap() {
       // If not authenticated and trying to access private surfaces, redirect.
       if (!authed && isProtected) {
         const next = encodeURIComponent(p + (searchStr ? `?${searchStr}` : ""));
-        window.location.href = `/login?next=${next}`;
+        router.replace(`/login?next=${next}`);
         return;
       }
     });

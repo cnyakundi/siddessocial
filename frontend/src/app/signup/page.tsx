@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import AuthLegal from "@/src/components/auth/AuthLegal";
 import AuthShell from "@/src/components/auth/AuthShell";
@@ -37,8 +37,8 @@ function humanizeAuthError(err: string, status: number, kind: "login" | "signup"
   return e.replace(/_/g, " ");
 }
 
-
 export default function SignupPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -51,7 +51,6 @@ export default function SignupPage() {
   const nextParam = safeNextPath(sp?.get("next"));
   const onboardingHref = nextParam ? `/onboarding?next=${encodeURIComponent(nextParam)}` : "/onboarding";
   const loginHref = nextParam ? `/login?next=${encodeURIComponent(nextParam)}` : "/login";
-
 
   const canSubmit = email.includes("@") && /^[a-z0-9_]{3,24}$/.test(username.trim()) && password.length >= 8 && ageOk;
 
@@ -88,7 +87,7 @@ export default function SignupPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data?.ok) {
-        window.location.href = onboardingHref;
+        router.replace(onboardingHref);
         return;
       }
 
@@ -117,7 +116,6 @@ export default function SignupPage() {
       setBackendOk(false);
     }
   }
-
 
   const showGidNotice = !gid && process.env.NODE_ENV !== "production";
 
@@ -211,7 +209,7 @@ export default function SignupPage() {
                 });
                 const d = await r.json().catch(() => ({}));
                 if (r.ok && d?.ok) {
-                  window.location.href = onboardingHref;
+                  router.replace(onboardingHref);
                   return;
                 }
                 setMsg(d?.error ? String(d.error) : "Google sign-up failed");

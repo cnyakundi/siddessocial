@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { clearPrivateClientCaches } from "@/src/lib/privateClientCaches";
 
 type MePayload = {
@@ -23,6 +24,7 @@ function Badge({ children }: { children: React.ReactNode }) {
 }
 
 export default function SiddesAccountPage() {
+  const router = useRouter();
   const [data, setData] = useState<MePayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -60,7 +62,7 @@ export default function SiddesAccountPage() {
     }
     // Paranoia: clear private client caches before leaving the session.
     clearPrivateClientCaches();
-    window.location.href = "/login";
+    router.replace("/login");
   }
 
   const authed = !!data?.authenticated;
@@ -132,7 +134,6 @@ export default function SiddesAccountPage() {
             <div className="text-xs text-gray-500 mt-1">Who can see you in Friends / Close / Work</div>
           </Link>
 
-
           <Link
             href="/siddes-profile/account/danger"
             className="rounded-2xl border border-rose-200 bg-white hover:bg-rose-50 p-4"
@@ -141,9 +142,6 @@ export default function SiddesAccountPage() {
             <div className="text-xs text-gray-500 mt-1">Deactivate or delete</div>
           </Link>
 
-
-
-
           <Link
             href="/siddes-profile/account/sessions"
             className="rounded-2xl border border-gray-200 bg-white hover:bg-gray-50 p-4"
@@ -151,7 +149,6 @@ export default function SiddesAccountPage() {
             <div className="text-sm font-extrabold text-gray-900">Devices & Sessions</div>
             <div className="text-xs text-gray-500 mt-1">Log out other devices</div>
           </Link>
-
 
         </div>
 

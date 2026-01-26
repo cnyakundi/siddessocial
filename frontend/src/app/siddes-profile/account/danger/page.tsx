@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 function humanizeErr(err: string): string {
@@ -14,6 +15,7 @@ function humanizeErr(err: string): string {
 }
 
 export default function DangerZonePage() {
+  const router = useRouter();
   const [authed, setAuthed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -24,7 +26,7 @@ export default function DangerZonePage() {
       const me = await meRes?.json().catch(() => ({} as any));
       if (!me?.authenticated) {
         const next = encodeURIComponent("/siddes-profile/account/danger");
-        window.location.href = `/login?next=${next}`;
+        router.replace(`/login?next=${next}`);
         return;
       }
       setAuthed(true);
@@ -39,7 +41,7 @@ export default function DangerZonePage() {
       const res = await fetch("/api/auth/account/deactivate", { method: "POST" });
       const data = await res.json().catch(() => ({} as any));
       if (res.ok && data?.ok) {
-        window.location.href = "/login";
+        router.replace("/login");
         return;
       }
       setMsg(humanizeErr(String(data?.error || "")));

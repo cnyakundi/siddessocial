@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 type SessionRow = {
@@ -23,6 +24,7 @@ function fmt(ts?: string | null) {
 }
 
 export default function AccountSessionsPage() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<SessionRow[]>([]);
   const [busy, setBusy] = useState(false);
@@ -38,7 +40,7 @@ export default function AccountSessionsPage() {
       const me = await meRes.json().catch(() => ({} as any));
       if (!me?.authenticated) {
         const next = encodeURIComponent("/siddes-profile/account/sessions");
-        window.location.href = `/login?next=${next}`;
+        router.replace(`/login?next=${next}`);
         return;
       }
 
@@ -80,7 +82,7 @@ export default function AccountSessionsPage() {
       const data = await res.json().catch(() => ({}));
       if (res.ok && data?.ok) {
         if (data?.loggedOut) {
-          window.location.href = "/login";
+          router.replace("/login");
           return;
         }
         setMsg("Session revoked.");

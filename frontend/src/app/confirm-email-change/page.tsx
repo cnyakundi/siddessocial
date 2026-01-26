@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState, Suspense } from "react";
 import AuthShell from "@/src/components/auth/AuthShell";
 
@@ -26,6 +26,7 @@ export default function ConfirmEmailChangePage(props: any) {
 
 function ConfirmEmailChangePageInner() {
   const params = useSearchParams();
+  const router = useRouter();
   const urlToken = useMemo(() => String(params.get("token") || "").trim(), [params]);
 
   const [token, setToken] = useState(urlToken);
@@ -55,7 +56,7 @@ function ConfirmEmailChangePageInner() {
     const data = await res.json().catch(() => ({} as any));
 
     if (res.ok && data?.ok) {
-      window.location.href = "/siddes-profile/account";
+      router.replace("/siddes-profile/account");
       return;
     }
 

@@ -2,8 +2,8 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { ChevronDown , Search as SearchIcon } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { ChevronDown, RefreshCw, Search as SearchIcon } from "lucide-react";
 
 import { SideSwitcherSheet } from "@/src/components/SideSwitcherSheet";
 import { SetPickerSheet } from "@/src/components/SetPickerSheet";
@@ -19,6 +19,8 @@ import {
   setStoredLastSetForSide,
   subscribeAudienceChanged,
 } from "@/src/lib/audienceStore";
+import { emitAppRefresh } from "@/src/lib/refreshBus"; // sd_746_pwa_refresh
+
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -33,6 +35,7 @@ function cn(...parts: Array<string | undefined | false | null>) {
  */
 export function AppTopBar(_props: { onOpenNotificationsDrawer?: () => void } = {}) {
   const pathname = usePathname() || "/";
+  const router = useRouter(); // sd_746_pwa_refresh
   const { side, setSide } = useSide();
   const theme = SIDE_THEMES[side];
   const activity = useSideActivity(side);
@@ -178,6 +181,19 @@ if (pathname.startsWith("/siddes-profile")) return "Me";
           ) : (
             <div />
           )}
+                  <button
+                    type="button"
+                    className="p-2 rounded-full hover:bg-gray-100 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900/20"
+                    aria-label="Refresh"
+                    title="Refresh"
+                    onClick={() => {
+                      try { emitAppRefresh("topbar"); } catch {}
+                      try { router.refresh(); } catch {}
+                    }}
+                  >
+                    <RefreshCw size={18} className="text-gray-500" aria-hidden />
+                  </button>
+
                   <Link
             href="/siddes-search"
             className="p-2 rounded-full hover:bg-gray-100 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900/20"

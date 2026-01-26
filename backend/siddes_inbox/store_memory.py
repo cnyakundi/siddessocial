@@ -274,6 +274,16 @@ class InMemoryInboxStore:
         now = _now_ms()
         # `core` set above
 
+        # sd_751_inbox_send_idempotency: if client_key repeats, return existing message (no duplicates on retry)
+        if client_key:
+            try:
+                for m in self._messages.get(thread_id, []):
+                    if getattr(m, "from_id", None) == "me" and getattr(m, "client_key", None) == client_key:
+                        meta = ThreadMetaRecord(locked_side=core.locked_side, updated_at=core.updated_at)
+                        return m, meta
+            except Exception:
+                pass
+
         msg = MessageRecord(
             id=f"m_{uuid.uuid4().hex[:10]}",
             thread_id=thread_id,

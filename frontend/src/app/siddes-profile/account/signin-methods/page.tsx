@@ -161,7 +161,7 @@ export default function SignInMethodsPage() {
 
               <Row
                 title="Passkeys"
-                desc="Fast, phishing-resistant sign-in. (Coming soon.)"
+                desc="Fast, phishing-resistant sign-in. "
                 right={<Badge tone={passkeysCount > 0 ? "good" : "warn"}>{passkeysCount > 0 ? `${passkeysCount} saved` : "None yet"}</Badge>}
                               />
 

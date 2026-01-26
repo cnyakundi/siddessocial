@@ -21,7 +21,6 @@ import {
 import { ProfileV2Header } from "@/src/components/ProfileV2Header";
 import { ProfileV2Tabs, type ProfileV2TabId } from "@/src/components/ProfileV2Tabs";
 
-
 import { PostCard } from "@/src/components/PostCard";
 
 import { useReturnScrollRestore } from "@/src/hooks/returnScroll";
@@ -66,14 +65,13 @@ export default function UserProfilePage() {
 
   const [msgBusy, setMsgBusy] = useState(false);
 
-  const [actionsOpen, setActionsOpen] = useState(false); // sd_424_profile_actions
-  const [lockedSide, setLockedSide] = useState<SideId | null>(null); // sd_529_locked_tab_explainer
-  const [accessReqBusy, setAccessReqBusy] = useState(false); // sd_712_access_requests
-  const [accessReqSentFor, setAccessReqSentFor] = useState<SideId | null>(null); // sd_712_access_requests
+  const [actionsOpen, setActionsOpen] = useState(false);
+  const [lockedSide, setLockedSide] = useState<SideId | null>(null);
+  const [accessReqBusy, setAccessReqBusy] = useState(false);
+  const [accessReqSentFor, setAccessReqSentFor] = useState<SideId | null>(null);
 
-  const [contentTab, setContentTab] = useState<ProfileV2TabId>("posts"); // sd_717_profile_v2_shell
+  const [contentTab, setContentTab] = useState<ProfileV2TabId>("posts");
 
-  // sd_722_profile_v2_tab_url_sync: keep profile content tab in URL (?tab=posts|media|sets)
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -101,8 +99,6 @@ export default function UserProfilePage() {
     } catch {}
   };
 
-
-
   useEffect(() => {
     let mounted = true;
 
@@ -122,7 +118,6 @@ export default function UserProfilePage() {
         const j = (await res.json().catch(() => null)) as any;
         if (!mounted) return;
 
-        // sd_538_locked_403_fallback: locked side requested (e.g. URL) -> fall back to viewSide
         if (j && typeof j === "object" && j.ok === false && j.error === "locked") {
           const fallback = (j.viewSide || "public") as SideId;
           const requested = (j.requestedSide || activeIdentitySide || "public") as SideId;
@@ -171,22 +166,17 @@ export default function UserProfilePage() {
 
   const postsCount = typeof postsPayload?.count === "number" ? postsPayload.count : posts.length;
 
-
   const avatarUrl = String((facet as any)?.avatarImage || "").trim() || null;
 
-
-  // sd_717_profile_v2_shell: reset content tab when identity side changes
   useEffect(() => {
     setContentTab("posts");
-    // sd_722_profile_v2_tab_url_sync: reset tab URL on identity change
+
     try {
       const url = new URL(window.location.href);
       url.searchParams.delete("tab");
       window.history.replaceState({}, "", url.toString());
     } catch {}
   }, [displaySide]);
-
-
 
   const doPickSide = async (side: SideId | "public", opts?: { silent?: boolean }) => {
     if (!user?.handle) return;
@@ -213,7 +203,6 @@ export default function UserProfilePage() {
       let res = out.res;
       let j = out.j;
 
-      // sd_741_close_implies_friends: smooth assist (no user-facing friends_required error)
       if ((!res.ok || !j || j.ok !== true) && side === "close" && j?.error === "friends_required") {
         toast.info("Close is inside Friends — adding to Friends first…");
         try {
@@ -346,10 +335,6 @@ const tid = String(j?.thread?.id || "").trim();
     }
   };
 
-
-
-
-
   const loadMore = async () => {
     if (!handle || loadingMore) return;
     const cur = String((postsPayload as any)?.nextCursor || "").trim();
@@ -439,8 +424,6 @@ const tid = String(j?.thread?.id || "").trim();
               onLockedPick={(side) => setLockedSide(side)}
             />
 
-
-            {/* sd_529_locked_tab_explainer: locked identity tabs never open Side sheet */}
             {!isOwner && lockedSide ? (
               <div className="fixed inset-0 z-[97] flex items-end justify-center md:items-center">
                 <button
@@ -481,7 +464,7 @@ const tid = String(j?.thread?.id || "").trim();
                         They currently show you: <span className="font-black text-gray-900">{SIDES[viewSide]?.label || viewSide}</span>
                       </div>
                     </div>
-                    {/* sd_712_access_requests: request access to the locked side */}
+
                     {lockedSide && lockedSide !== "public" ? (
                       <button
                         type="button"
@@ -492,8 +475,6 @@ const tid = String(j?.thread?.id || "").trim();
                         {accessReqSentFor === lockedSide ? "Request sent" : accessReqBusy ? "Sending…" : "Request access"}
                       </button>
                     ) : null}
-
-
 
                     <div className="flex gap-3">
                       <button
@@ -523,13 +504,11 @@ const tid = String(j?.thread?.id || "").trim();
               </div>
             ) : null}
 
-
-            
             {/* sd_717_profile_v2_shell_header_tabs */
             /* sd_732_fix_profile_messageHref */}
-            {/* sd_722_profile_v2_tab_url_sync */}
+
             <div className="mt-4">
-              {/* sd_727_fix_profile_v2_variant_and_locked_back */}
+
               <ProfileV2Header
                 displaySide={displaySide}
                 viewSide={viewSide}
@@ -549,7 +528,7 @@ const tid = String(j?.thread?.id || "").trim();
                         type="button"
                         onClick={() => {
                           try {
-                            window.location.href = "/siddes-profile/prism";
+                            router.replace("/siddes-profile/prism");
                           } catch {}
                         }}
                         className="w-full py-3 rounded-2xl font-extrabold text-sm text-white shadow-md active:scale-95 transition-all bg-slate-800 hover:bg-slate-900"
@@ -639,9 +618,6 @@ const tid = String(j?.thread?.id || "").trim();
               </div>
             </div>
 
-
-            {/* sd_718: removed legacy PrismIdentityCard + duplicate profile feed (Profile V2 handles header/tabs/content) */}
-
 {!isOwner ? (
             <SideWithSheet
               open={sideSheet}
@@ -659,7 +635,6 @@ onPick={doPickSide}
               displayName={facet.displayName || user.handle}
               href={href}
             />
-            
 
                       </>
         )}
@@ -668,5 +643,3 @@ onPick={doPickSide}
   );
 }
 
-
-// sd_712_access_requests

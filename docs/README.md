@@ -1,48 +1,43 @@
 # Siddes Docs
-**Updated:** 2026-01-19
+**Updated:** 2026-01-26
 
-If you have zero context, start with:
-- `SIDDES_BOOK.md` — consolidated overview (philosophy + architecture + feature surface)
+This repo has a **lean docs system**. The goal is: fewer sources of truth, easier navigation, faster fixes.
+
+---
+
+## Start here (canonical)
+If you read nothing else, read these in order:
+
+1) `CORE_LAWS.md` — Siddes constitution (non‑negotiables)
+2) `STATE.md` — current truth: where we are + what’s next
+3) `STABILIZATION_MANUAL.md` — how we stabilize as the codebase grows
+4) `VIBE_CODING_PLAYBOOK.md` — workflow, debug snapshot, test ladder, gates
+5) `OVERLAYS_INDEX.md` — history of overlays and why they exist
+
+---
+
+## Launch / go-live
+- `DEPLOYMENT_GATES.md` — readiness checklist (referenced by checks)
+- `GO_LIVE_MASTER_RUNBOOK.md` — end-to-end go-live runbook
+- `SIDDES_BOOK.md` — philosophy + architecture + feature surface
 - `PROJECT_HANDOFF.md` — master handoff doc (product + tech)
-- `STATE.md` — where we are + what to do next
-- `DEPLOYMENT_GATES.md` — launch readiness checklist
 
-## Core (read these first)
-- `UI_HEARTBEAT.md` — non-negotiable UI laws
-- `PRIVACY_SECURITY.md` — privacy + authz rules (no cross-side leakage)
-- `SESSIONS.md` — session auth truths
-- `ARCHITECTURE.md` — system overview
+---
 
-## Feature docs
-- Graph: `GRAPH.md` — Prism relationship graph (directional Sides + invariants)
+## Required-by-checks reference docs
+Some docs must remain in `docs/` because automated checks validate them
+(e.g., Inbox contracts, visibility policy, throttling, etc.). If you want to consolidate them later,
+do it in a dedicated overlay and keep the filenames as wrappers until checks are updated.
 
-- Feed: `FEED_BACKEND.md`, `PERFORMANCE_SUPERSONIC.md`
-- Posts: `POSTS_CREATE_BACKEND.md`, `POST_DETAIL_BACKEND.md`, `POST_EDIT_DELETE.md`
-- Sets: `SETS_BACKEND.md`
-- Inbox: `INBOX_BACKEND_CONTRACT.md`, `INBOX_DB.md`
-- Search: `SEARCH.md`
-- Safety: `LEGAL.md` (policy framing), `VISIBILITY_POLICY.md`
-- Media: `MEDIA_R2.md`
+---
 
-## ML / on-device intelligence
-- `ML_PART_0.md`
-- `ML_PART_1_ON_DEVICE.md`
-- `ML_PART_2_LOCAL_CLUSTERING.md`
-- `ML_PART_6_HUMAN_REVIEW.md`
-- `ML_PART_7_SIDE_GUARDS.md`
-- `ML_PART_8_PRIVACY_SAFE_TELEMETRY.md`
+## Archived docs
+Historical fix packs, older drafts, and duplicates live in:
+- `docs/_archive/`
 
-## Dev + ops
-- Docker dev: `../ops/docker/README.md`
-- Testing ladder: `TESTING.md`, `SMOKE_TESTS.md`, `DRF_SMOKE.md`
-- Observability: `OBSERVABILITY.md`, `THROTTLING.md`
+You can still read them, but they are **not** canonical.
 
-## Historical / workflow docs
-- Overlays workflow rules: `OVERLAY_WORKFLOW.md`
-- Overlays log: `OVERLAYS_INDEX.md`
+---
 
-## Go-live
-- `GO_LIVE_ISSUE_REGISTER.md` - single source of truth for launch gaps and fixes
-
-## Spider-Audit Maps
-- `SPIDER_AUDIT/INDEX.md` — system map (Phase 1 registry + Phase 2 spider packs)
+## Tip
+If you feel lost, go back to `STATE.md`. If you feel tempted to work on five things at once, go to `STABILIZATION_MANUAL.md`.

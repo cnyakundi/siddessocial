@@ -70,7 +70,12 @@ export function FeedComposerRow(props: {
     }
   };
 
+  const openAtRef = useRef(0);
+
   const open = () => {
+    const now = Date.now();
+    if (now - openAtRef.current < 450) return;
+    openAtRef.current = now;
     try {
       onOpen();
     } catch {
@@ -110,6 +115,16 @@ export function FeedComposerRow(props: {
               <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-3xl px-3 py-2.5">
                 <button
                   type="button"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    open();
+                  }}
+                  onTouchStart={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    open();
+                  }}
                   onClick={open}
                   className="flex-1 min-w-0 text-left py-2"
                   aria-label="Open composer"
@@ -126,6 +141,16 @@ export function FeedComposerRow(props: {
 
                 <button
                   type="button"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    open();
+                  }}
+                  onTouchStart={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    open();
+                  }}
                   onClick={open}
                   className="w-11 h-11 rounded-2xl border border-gray-200 bg-white text-gray-700 flex items-center justify-center active:scale-[0.98] transition focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-900/20"
                   aria-label="Add media"
@@ -136,6 +161,16 @@ export function FeedComposerRow(props: {
 
                 <button
                   type="button"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    open();
+                  }}
+                  onTouchStart={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    open();
+                  }}
                   onClick={open}
                   className={cn(
                     "w-11 h-11 rounded-2xl flex items-center justify-center active:scale-[0.98] transition shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-900/20",

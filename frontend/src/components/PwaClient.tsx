@@ -106,7 +106,7 @@ export function PwaClient() {
     const onControllerChange = () => {
       if (refreshing) return;
       refreshing = true;
-      window.location.reload();
+      // no hard reload (apply update on next open)
     };
     navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
 
@@ -159,8 +159,8 @@ export function PwaClient() {
             </>
           ) : updateAvailable ? (
             <>
-              <div className="text-sm font-bold text-gray-900">Update available</div>
-              <div className="text-xs text-gray-500 truncate">Reload to get the latest version.</div>
+              <div className="text-sm font-bold text-gray-900">Update ready</div>
+              <div className="text-xs text-gray-500 truncate">Applies next time you open Siddes.</div>
             </>
           ) : installAvailable ? (
             <>
@@ -183,10 +183,9 @@ export function PwaClient() {
               onClick={() => {
                 const w = waitingReg?.waiting;
                 if (w) w.postMessage({ type: "SKIP_WAITING" });
-              }}
-            >
-              Reload
-            </button>
+                              setWaitingReg(null);
+}}
+            >Update</button>
           ) : installAvailable ? (
             <button
               type="button"

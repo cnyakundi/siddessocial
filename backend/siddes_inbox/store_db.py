@@ -431,6 +431,30 @@ class DbInboxStore(InboxStore):
             # Default-safe: hide existence
             raise KeyError("restricted")
 
+        # sd_751_inbox_send_idempotency: if client_key repeats, return existing message (no duplicates on retry)
+        if client_key:
+            try:
+                ex = (
+                    InboxMessage.objects.filter(thread=t, from_id="me", client_key=str(client_key))
+                    .order_by("ts")
+                    .first()
+                )
+                if ex is not None:
+                    meta = ThreadMetaRecord(locked_side=str(t.locked_side), updated_at=_dt_to_ms(t.updated_at))
+                    msg = MessageRecord(
+                        id=str(ex.id),
+                        thread_id=str(t.id),
+                        ts=_dt_to_ms(ex.ts),
+                        from_id=str(ex.from_id),
+                        text=str(ex.text or ""),
+                        side=str(ex.side),
+                        queued=bool(ex.queued),
+                        client_key=str(ex.client_key) if ex.client_key is not None else None,
+                    )
+                    return msg, meta
+            except Exception:
+                pass
+
         msg_id = f"m_{uuid4().hex[:18]}"
         side = str(t.locked_side)
 

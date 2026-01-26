@@ -165,7 +165,7 @@
       navigator.serviceWorker.addEventListener("controllerchange", () => {
         if (refreshing) return;
         refreshing = true;
-        window.location.reload();
+        /* no hard reload (apply update on next open) */
       });
     } catch (e) {
       console.warn("[Siddes PWA] SW registration failed:", e);

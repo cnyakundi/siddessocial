@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function ExportPage() {
+  const router = useRouter();
   const [authed, setAuthed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -14,7 +16,7 @@ export default function ExportPage() {
       const me = await meRes?.json().catch(() => ({} as any));
       if (!me?.authenticated) {
         const next = encodeURIComponent("/siddes-profile/account/export");
-        window.location.href = `/login?next=${next}`;
+        router.replace(`/login?next=${next}`);
         return;
       }
       setAuthed(true);

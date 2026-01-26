@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 type MePayload = {
@@ -9,6 +10,7 @@ type MePayload = {
 };
 
 export default function AccountPasswordPage() {
+  const router = useRouter();
   const [me, setMe] = useState<MePayload | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -29,14 +31,14 @@ export default function AccountPasswordPage() {
         setMe(j || {});
         if (!j?.authenticated) {
           const next = encodeURIComponent("/siddes-profile/account/password");
-          window.location.href = `/login?next=${next}`;
+          router.replace(`/login?next=${next}`);
           return;
         }
       } catch {
         if (!mounted) return;
         setMe({ ok: false, authenticated: false });
         const next = encodeURIComponent("/siddes-profile/account/password");
-        window.location.href = `/login?next=${next}`;
+        router.replace(`/login?next=${next}`);
         return;
       } finally {
         if (mounted) setLoading(false);

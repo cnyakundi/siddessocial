@@ -578,11 +578,9 @@ class ProfileView(APIView):
             )
             from siddes_backend.identity import viewer_aliases  # type: ignore
 
-
             viewer_tok = viewer_id_for_user(viewer) if viewer else "anon"
             author_tok = viewer_id_for_user(target)
 
-            # sd_750_profile_author_aliases: include legacy author_id tokens.
             # Posts may have been authored under handle tokens (@name) during stub/dev flows.
             # Treat me_<id> and @username as the same person for profile listing.
             author_ids: List[str] = []
