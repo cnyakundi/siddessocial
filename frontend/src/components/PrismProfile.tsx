@@ -24,7 +24,7 @@ Globe,
   Pencil,
 } from "lucide-react";
 import type { SideId } from "@/src/lib/sides";
-import { SIDES, SIDE_THEMES } from "@/src/lib/sides";
+import { SIDE_ORDER, SIDES, SIDE_THEMES } from "@/src/lib/sides";
 import type { FeedPost } from "@/src/lib/feedTypes";
 import { signUpload, uploadToSignedUrl, commitUpload } from "@/src/lib/mediaClient";
 function cn(...parts: Array<string | undefined | false | null>) {
@@ -96,9 +96,10 @@ export function PrismSideTabs(props: {
   onLockedPick?: (side: SideId) => void;
 }) {
   const { active, allowedSides, onPick, onLockedPick } = props;
-  const items: SideId[] = ["public", "friends", "close", "work"];
+  const items: SideId[] = SIDE_ORDER;
   return (
     <div className="mt-4">
+      <div className="text-xs text-gray-500 font-semibold mb-2">Side = who this is for.</div>
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
         {items.map((side) => {
           const t = SIDE_THEMES[side];
@@ -206,13 +207,13 @@ export function SideWithSheet(props: {
     {
       side: "close",
       title: "Close",
-      desc: "They can view your Close identity + Close posts.",
+      desc: "Inner Circle. They can view your Close identity + Close posts.",
       requiresConfirm: true,
     },
     {
       side: "work",
       title: "Work",
-      desc: "They can view your Work identity + Work posts.",
+      desc: "Colleagues & clients. They can view your Work identity + Work posts.",
       requiresConfirm: true,
     },
   ];
@@ -232,10 +233,10 @@ export function SideWithSheet(props: {
       confirmLabel: "Confirm",
     },
     close: {
-      title: "Confirm Close access",
+      title: "Confirm Inner Circle access",
       body:
-        "You are about to place this person into your Close Side. This grants them access to your Close identity and Close posts. This does not change what you can see of them.",
-      confirmLabel: "Grant Close access",
+        "You are about to place this person into your Close (Inner Circle) Side. This grants them access to your Close identity and Close posts. This does not change what you can see of them.",
+      confirmLabel: "Grant Inner Circle access",
     },
     work: {
       title: "Confirm Work access",
@@ -995,7 +996,7 @@ export function EditFacetButton({ onClick }: { onClick: () => void }) {
 }
 export function OwnerTopRow(props: { username: string; previewSide: SideId; setPreviewSide: (s: SideId) => void }) {
   const { username, previewSide, setPreviewSide } = props;
-  const sides: SideId[] = ["public", "friends", "close", "work"];
+  const sides: SideId[] = SIDE_ORDER;
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-4">
       <div className="flex items-start justify-between gap-3">
