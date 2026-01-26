@@ -90,6 +90,7 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 - **sd_757_fix_setpicker_member_avatars_no_external_calls:** UI: SetPickerSheet member preview avatars are now offline-safe initials badges (removed external Dicebear calls).
 - **sd_749_media_picker_local_media_fix:** Media picker reliability (iOS/Safari-safe file inputs + extension-based kind detection)
 - **sd_757_postcard_media_single_image_contain:** PostCard MediaGrid: single-image preview uses object-contain + aspect-aware height (reduced cropping / bad image UI).
+- **sd_758_media_ui_mobile_carousel_aspect:** MediaGrid (PostCard): mobile multi-media carousel uses aspect-ratio containers (no fixed `h-64`) for more stable previews.
 
 - **sd_740_sets_v1_dead_simple:** Sets v1 UX simplification (Sets-as-audience: SetFilterBar on Feed; Set hub = Feed+People with More sheet; read-only banners; scannable set cards)
 - **sd_743_sets_v1_1_inline_create_fast_add:** Sets v1.1 (Inline create in picker + Add People sheet: type/paste + voice stub + invite-link fallback)
@@ -174,3 +175,28 @@ These are the overlays applied/created during the current session (evidence: ter
   - Tracker: `docs/LAUNCH_WORLD_P0_TRACKER.md`
 
 - **sd_755_fix_inboxviewer_node_env_marker:** Restore explicit NODE_ENV/production marker in inboxViewer shim (keeps Next inbox stub safety check green).
+
+## Project Map (keep updated, small)
+[Shell]
+- Rail: Side switching / navigation
+- BottomNav (PWA): primary tabs
+- AppShell: layout + safe chrome exclusions
+
+[Content]
+- FilterBar: Set pills / context chips
+- FeedEngine: feed rendering + caching safety
+- PostCard: actions sheets / overflow
+- PostDetail: /siddes-post/[id]
+
+[Creation]
+- ComposeModal: posting + identity gating
+- MediaPicker: local photo/video selection + uploads (sd_757/sd_758)
+
+[Social/Comms]
+- Inbox/DMs: threads list + thread view + send/receive + unread
+- Notifications: list + mark read
+
+[Identity]
+- AuthBootstrap: session bootstrap + me()
+- Profile: user pages + actions
+

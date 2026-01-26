@@ -362,7 +362,7 @@ function MediaGrid({ items }: { items: MediaItem[] }) {
                 aria-label={m.kind === 'video' ? 'Open video' : 'Open image'}
               >
                 {m.kind === 'video' ? (
-                  <div className="relative w-full h-64 bg-black">
+                  <div className={cn("relative w-full bg-black", shown.length >= 4 ? "aspect-square" : "aspect-[4/5]")}>
                     <div className="w-full h-full bg-black" aria-hidden />
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="w-12 h-12 rounded-full bg-black/35 flex items-center justify-center">
@@ -383,7 +383,7 @@ function MediaGrid({ items }: { items: MediaItem[] }) {
                     ) : null}
                   </div>
                 ) : (
-                  <div className="relative w-full h-64">
+                  <div className={cn("relative w-full bg-black", shown.length >= 4 ? "aspect-square" : "aspect-[4/5]")}>
                     <img
                       className="w-full h-full object-cover"
                       src={m.url}
