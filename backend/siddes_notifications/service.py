@@ -11,8 +11,9 @@ from siddes_backend.identity import handle_for_viewer_id, normalize_handle
 
 from .models import Notification
 
-
-# sd_742_push_auto_dispatch_on_notifications
+# sd_748_rewrite_notifications_service_clean_push_and_prefs
+# This file is intentionally explicit (no Django signals).
+# It also contains BEST-EFFORT push dispatch for newly-created notifications.
 
 
 def _safe_str(x: object) -> str:
@@ -49,7 +50,7 @@ def _truthy(v: str | None) -> bool:
 
 
 def _push_on_notifications_enabled() -> bool:
-    # Master gate for auto push when notifications are created/refreshed.
+    # sd_742_push_auto_dispatch_on_notifications: master gate for push on notification creation.
     return _truthy(os.environ.get("SIDDES_PUSH_ON_NOTIFICATIONS_ENABLED", "1"))
 
 
@@ -80,7 +81,10 @@ def notify(
 
     - Deterministic id (upsert): one active row per (viewer_id, type, actor, post_id)
     - If already read, a new event resets read_at to None.
-    - Push dispatch is best-effort and never breaks the primary action.
+    - BEST-EFFORT push dispatch:
+      - sends only if row is newly created, OR it was previously read
+      - respects push preferences when available
+      - never breaks the primary action
     """
 
     vid = _safe_str(viewer_id)
@@ -110,7 +114,7 @@ def notify(
 
     now = float(time.time())
 
-    # Determine whether this notification was previously read (so we should re-push).
+    # Determine if this notification was previously read (so we can re-push).
     prev = None
     try:
         prev = Notification.objects.filter(id=nid).values("read_at").first()
@@ -139,27 +143,48 @@ def notify(
         # Notifications must never break the primary action.
         return
 
-    # --- Push dispatch (best-effort) ---
+    # --- Push dispatch (best-effort; never breaks) ---
     try:
         if not _push_on_notifications_enabled():
             return
 
-        # Only push if newly created OR it was previously read.
+        # Only push when newly created OR when it was previously read (so this is a new event again).
         if not created and not prev_was_read:
             return
 
-        # Build deep link
+        # sd_743_push_prefs_gate: respect viewer push preferences (best-effort).
+        try:
+            from siddes_push.models import PushPreferences  # type: ignore
+            from siddes_push.prefs import normalize_prefs  # type: ignore
+
+            rec = PushPreferences.objects.filter(viewer_id=vid).values("prefs").first()
+            prefs = normalize_prefs((rec or {}).get("prefs") or {}) if rec else normalize_prefs({})
+
+            if not prefs.get("enabled", True):
+                return
+            if not prefs.get("sides", {}).get(sid, True):
+                return
+
+            tkey = str(t or "").lower()
+            if tkey not in ("mention", "reply", "like", "echo"):
+                tkey = "other"
+            if not prefs.get("types", {}).get(tkey, True):
+                return
+        except Exception:
+            # If prefs are unavailable, don't block push.
+            pass
+
+        # Deep link: post if present, else notifications.
         url = f"/siddes-post/{pid}" if pid else "/siddes-notifications"
 
-        # Build push content (must include glimpse)
         push_title = actor or "Siddes"
         push_body = _push_body_for_type(t)
         push_glimpse = g or title or push_body
         if len(push_glimpse) < 2:
             push_glimpse = "New activity"
 
-        # Badge = unread notifications count (best-effort)
-        badge = None
+        # Badge = unread notifications count (best-effort).
+        badge: int | None = None
         try:
             badge = int(Notification.objects.filter(viewer_id=vid, read_at__isnull=True).count())
         except Exception:
@@ -171,28 +196,7 @@ def notify(
         except Exception:
             return
 
-        
-# sd_743_push_prefs_gate: respect viewer push preferences (best-effort)
-try:
-    from siddes_push.models import PushPreferences  # type: ignore
-    from siddes_push.prefs import normalize_prefs  # type: ignore
-
-    rec = PushPreferences.objects.filter(viewer_id=vid).values("prefs").first()
-    prefs = normalize_prefs((rec or {}).get("prefs") or {}) if rec else normalize_prefs({})
-
-    if not prefs.get("enabled", True):
-        return
-    if not prefs.get("sides", {}).get(sid, True):
-        return
-    tkey = str(t or "").lower()
-    if tkey not in ("mention", "reply", "like", "echo"):
-        tkey = "other"
-    if not prefs.get("types", {}).get(tkey, True):
-        return
-except Exception:
-    pass
-
-payload = PushPayload(
+        payload = PushPayload(
             title=push_title,
             body=push_body,
             url=url,
@@ -203,5 +207,4 @@ payload = PushPayload(
 
         send_push_to_viewer_best_effort(viewer_id=vid, payload=payload, badge=badge)
     except Exception:
-        # Never break primary action.
         return

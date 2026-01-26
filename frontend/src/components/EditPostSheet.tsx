@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { X } from "lucide-react";
 import { toast } from "@/src/lib/toast";
@@ -29,10 +30,16 @@ export function EditPostSheet({
   const [busy, setBusy] = useState(false);
   const taRef = useRef<HTMLTextAreaElement | null>(null);
 
-  useLockBodyScroll(open);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+
+  useLockBodyScroll(open && mounted);
 
   const panelRef = useRef<HTMLDivElement | null>(null);
-  useDialogA11y({ open, containerRef: panelRef, initialFocusRef: taRef, onClose });
+  useDialogA11y({ open: open && mounted, containerRef: panelRef, initialFocusRef: taRef, onClose });
 
   const limit = useMemo(() => {
     const n = Number(maxLen || 0);
@@ -50,7 +57,7 @@ export function EditPostSheet({
     return () => clearTimeout(t);
   }, [open, initialText]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
   const trimmed = String(text || "").trim();
   const canSave = !busy && trimmed.length > 0 && trimmed.length <= limit;
@@ -82,24 +89,28 @@ export function EditPostSheet({
     }
   }
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[110] flex items-end justify-center md:items-center">
       <button
         type="button"
         className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-        onPointerDown={(e) => {
-        // sd_713_backdrop_clickthrough: consume pointerdown to prevent ghost taps (close on click)
-        e.preventDefault();
-        e.stopPropagation();
-      }}
-      onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        onClose();
-      }}
         aria-label="Close edit"
+        onPointerDown={(e) => {
+          // sd_713_backdrop_clickthrough: consume pointerdown to prevent ghost taps (close on click)
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        onTouchStart={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onClose();
+        }}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onClose();
+        }}
       />
-
       <div ref={panelRef} role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="edit-post-title" className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
         <div className="flex items-center justify-between gap-3 mb-4">
           <div>
@@ -142,5 +153,6 @@ export function EditPostSheet({
         </div>
       </div>
     </div>
+    , document.body
   );
 }

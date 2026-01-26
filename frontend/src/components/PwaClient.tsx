@@ -100,6 +100,16 @@ export function PwaClient() {
 
     let mounted = true;
 
+    // Reload once when the new SW takes control (after SKIP_WAITING).
+    // Guarded to prevent reload loops (dev/hot reload can trigger multiple controllerchange events).
+    let refreshing = false;
+    const onControllerChange = () => {
+      if (refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    };
+    navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
+
     (async () => {
       try {
         const reg = await navigator.serviceWorker.register("/sw.js");
@@ -119,11 +129,6 @@ export function PwaClient() {
             }
           });
         });
-
-        // Reload when controller changes (after SKIP_WAITING)
-        navigator.serviceWorker.addEventListener("controllerchange", () => {
-          window.location.reload();
-        });
       } catch {
         // SW registration can fail in some environments; ignore.
       }
@@ -131,6 +136,9 @@ export function PwaClient() {
 
     return () => {
       mounted = false;
+      try {
+        navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
+      } catch {}
     };
   }, [ENABLE_SW]);
 
@@ -141,7 +149,7 @@ export function PwaClient() {
   const dismissLabel = iosInstallHint && !installAvailable && !updateAvailable && !offline ? "Got it" : "Dismiss";
 
   return (
-    <div className="fixed bottom-3 left-3 right-3 z-[120] flex justify-center pointer-events-none">
+    <div className="fixed bottom-3 left-3 right-3 z-[92] flex justify-center pointer-events-none">
       <div className="pointer-events-auto max-w-xl w-full bg-white border border-gray-200 shadow-lg rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
         <div className="min-w-0">
           {offline ? (

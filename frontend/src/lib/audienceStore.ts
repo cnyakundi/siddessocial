@@ -3,6 +3,7 @@ import type { SetId } from "./sets";
 
 const KEY_SET_PREFIX = "sd.feed.lastSet.";
 const KEY_TOPIC = "sd.feed.lastPublicTopic";
+const KEY_RECENT_PREFIX = "sd.feed.recentSets.";
 
 function hasWindow(): boolean {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
@@ -25,6 +26,51 @@ export function setStoredLastSetForSide(side: SideId, setId: SetId | null): void
     const key = KEY_SET_PREFIX + side;
     if (!setId) window.localStorage.removeItem(key);
     else window.localStorage.setItem(key, String(setId));
+  } catch {
+    // ignore
+  }
+}
+
+
+export function getStoredRecentSetIdsForSide(side: SideId, limit = 3): SetId[] {
+  if (!hasWindow()) return [];
+  if (side === "public") return [];
+  try {
+    const raw = window.localStorage.getItem(KEY_RECENT_PREFIX + side);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) return [];
+    const out: SetId[] = [];
+    for (const v of arr) {
+      if (typeof v !== "string") continue;
+      out.push(v as SetId);
+      if (out.length >= limit) break;
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
+export function pushStoredRecentSetForSide(side: SideId, setId: SetId, max = 12): void {
+  if (!hasWindow()) return;
+  if (side === "public") return;
+  const id = String(setId || "").trim();
+  if (!id) return;
+  try {
+    const key = KEY_RECENT_PREFIX + side;
+    let arr: any = [];
+    const raw = window.localStorage.getItem(key);
+    if (raw) {
+      try {
+        arr = JSON.parse(raw);
+      } catch {
+        arr = [];
+      }
+    }
+    if (!Array.isArray(arr)) arr = [];
+    const next = [id, ...arr.filter((x: any) => typeof x === "string" && x !== id)];
+    window.localStorage.setItem(key, JSON.stringify(next.slice(0, Math.max(3, max))));
   } catch {
     // ignore
   }

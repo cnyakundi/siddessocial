@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import type { Chip } from "@/src/lib/chips";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
@@ -21,30 +22,41 @@ export function ChipOverflowSheet({
   chips: Chip[];
   title?: string;
 }) {
-  useLockBodyScroll(open);
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useLockBodyScroll(open && mounted);
 
   const panelRef = useRef<HTMLDivElement | null>(null);
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
-  useDialogA11y({ open, containerRef: panelRef, initialFocusRef: closeBtnRef, onClose });
+  useDialogA11y({ open: open && mounted, containerRef: panelRef, initialFocusRef: closeBtnRef, onClose });
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[95] flex items-end justify-center md:items-center">
       <button
         type="button"
         className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-        onPointerDown={(e) => {
-        // sd_713_backdrop_clickthrough: consume pointerdown to prevent ghost taps (close on click)
-        e.preventDefault();
-        e.stopPropagation();
-      }}
-      onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        onClose();
-      }}
         aria-label="Close"
+        onPointerDown={(e) => {
+          // sd_713_backdrop_clickthrough: consume pointerdown to prevent ghost taps (close on click)
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        onTouchStart={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onClose();
+        }}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onClose();
+        }}
       />
       <div ref={panelRef} role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="chip-overflow-title" className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200 max-h-[85dvh] md:max-h-[80vh] overflow-y-auto overscroll-contain">
         <div className="flex items-center justify-between mb-4">
@@ -86,5 +98,6 @@ export function ChipOverflowSheet({
         </button>
       </div>
     </div>
+    , document.body
   );
 }

@@ -53,8 +53,8 @@ const LAST_FETCH: Record<SideId, number> = {
   work: 0,
 };
 
-const MIN_ACTIVE_MS = 12_000; // fetch the active side at most ~every 12s
-const MIN_OTHER_MS = 60_000; // fetch non-active sides at most ~every 60s
+const MIN_ACTIVE_MS = 20_000; // fetch the active side at most ~every 12s
+const MIN_OTHER_MS = 180_000; // fetch non-active sides at most ~every 60s
 
 // Concurrency guard
 let inFlight: Promise<void> | null = null;
@@ -139,7 +139,7 @@ export function getSideActivityMap(): SideActivityMap {
 
 async function fetchOneSide(side: SideId): Promise<boolean> {
   try {
-    const res = await fetch(`/api/feed?side=${encodeURIComponent(side)}`, { cache: "no-store" });
+    const res = await fetch(`/api/feed?side=${encodeURIComponent(side)}&limit=40&lite=1`, { cache: "no-store" });
     const j = await res.json().catch(() => null);
 
     if (j && j.restricted) {

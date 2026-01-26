@@ -78,7 +78,7 @@ def _restricted_payload(
 
 # --- Feed caching (sd_364) ---
 # Cache is server-side only (never edge-cache personalized/private payloads).
-# Key includes viewer + role + side + topic + cursor + limit to avoid leaks.
+# Key includes viewer + role + side + topic + cursor + limit + lite to avoid leaks.
 
 def _truthy(v: str | None) -> bool:
     return str(v or "").strip().lower() in ("1", "true", "yes", "y", "on")
@@ -103,8 +103,8 @@ def _feed_cache_ttl() -> int:
     return ttl
 
 
-def _feed_cache_key(*, viewer: str, role: str, side: str, topic: str | None, tag: str | None, set_id: str | None, limit: int, cursor: str | None) -> str:
-    raw = f"v1|viewer={viewer}|role={role}|side={side}|topic={topic or ''}|tag={tag or ''}|set={set_id or ''}|limit={limit}|cursor={cursor or ''}"
+def _feed_cache_key(*, viewer: str, role: str, side: str, topic: str | None, tag: str | None, set_id: str | None, limit: int, cursor: str | None, lite: bool = False) -> str:
+    raw = f"v1|viewer={viewer}|role={role}|side={side}|topic={topic or ''}|tag={tag or ''}|set={set_id or ''}|limit={limit}|cursor={cursor or ''}|lite={'1' if lite else '0'}"
     h = hashlib.sha256(raw.encode("utf-8")).hexdigest()
     return f"feed:v1:{h}"
 
@@ -143,6 +143,8 @@ class FeedView(APIView):
         limit_raw = str(getattr(request, "query_params", {}).get("limit") or "").strip()
         cursor_raw = str(getattr(request, "query_params", {}).get("cursor") or "").strip() or None
 
+        lite = _truthy(getattr(request, "query_params", {}).get("lite"))
+
         try:
             limit = int(limit_raw) if limit_raw else 200
         except Exception:
@@ -168,6 +170,7 @@ class FeedView(APIView):
                 set_id=set_id,
                 limit=limit,
                 cursor=cursor_raw,
+                lite=lite,
             )
             try:
                 cached = cache.get(cache_key)
@@ -184,7 +187,7 @@ class FeedView(APIView):
                 return resp
             if cache_key is not None:
                 cache_status = "miss"
-        data = list_feed(viewer_id=viewer, side=side, topic=topic, tag=tag, set_id=set_id, limit=limit, cursor=cursor_raw)
+        data = list_feed(viewer_id=viewer, side=side, topic=topic, tag=tag, set_id=set_id, limit=limit, cursor=cursor_raw, lite=lite)
         if cache_key is not None and cache_status == "miss":
             try:
                 cache.set(cache_key, data, timeout=cache_ttl)

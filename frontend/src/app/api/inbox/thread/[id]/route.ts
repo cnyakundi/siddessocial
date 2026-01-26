@@ -133,14 +133,14 @@ export async function GET(req: Request, ctx: { params: { id: string } }) {
   const isProd = process.env.NODE_ENV === "production";
   const { req2, viewerId } = withDevViewer(req);
 
-  // Default-safe: in dev, missing viewer => restricted (no content).
-  if (!isProd && !viewerId) {
-    return sd_558b_json(restrictedThreadPayload(), { status: 200 });
-  }
+  // In both dev + prod, rely on the backend for auth/restriction.
+  // viewerId is only used for dev-only shims.
 
-  // sd_728_clear_unread_on_open: opening a thread marks it read (server counters)
-  const viewerRole = roleForViewer(viewerId || "anon");
-  clearThreadUnreadRole(id, viewerRole);
+  // sd_743_inbox_proxy_gate: stub unread clearing only when we have a stub viewer (dev).
+  if (!isProd && viewerId) {
+    const viewerRole = roleForViewer(viewerId);
+    clearThreadUnreadRole(id, viewerRole);
+  }
 
   const qs = new URLSearchParams();
   if (limit) qs.set("limit", limit);
@@ -154,17 +154,19 @@ export async function GET(req: Request, ctx: { params: { id: string } }) {
 
   const { res, data, setCookies } = out;
 
-  // sd_730_visibility_gate: enforce stub visibility shim (defense-in-depth)
-  try {
-    const v = viewerId || "anon";
-    const th = data && typeof data === "object" ? (data as any).thread : null;
-    const meta = data && typeof data === "object" ? (data as any).meta : null;
-    const lockedSide = String((meta as any)?.locked_side || (th as any)?.lockedSide || (th as any)?.locked_side || "public");
-    if (lockedSide && !viewerAllowed(v, lockedSide)) {
-      return sd_558b_json(restrictedThreadPayload(), { status: 200 });
+  // sd_743_inbox_proxy_gate: stub visibility shim only when we have a stub viewer (dev).
+  if (!isProd && viewerId) {
+    try {
+      const v = viewerId;
+      const th = data && typeof data === "object" ? (data as any).thread : null;
+      const meta = data && typeof data === "object" ? (data as any).meta : null;
+      const lockedSide = String((meta as any)?.locked_side || (th as any)?.lockedSide || (th as any)?.locked_side || "public");
+      if (lockedSide && !viewerAllowed(v, lockedSide)) {
+        return sd_558b_json(restrictedThreadPayload(), { status: 200 });
+      }
+    } catch {
+      // ignore
     }
-  } catch {
-    // ignore
   }
 
   if (data && typeof data === "object" && (data as any).thread) {
@@ -183,10 +185,8 @@ export async function POST(req: Request, ctx: { params: { id: string } }) {
   const isProd = process.env.NODE_ENV === "production";
   const { req2, viewerId } = withDevViewer(req);
 
-  // Default-safe: in dev, missing viewer => restricted (no content).
-  if (!isProd && !viewerId) {
-    return sd_558b_json(restrictedSendPayload(), { status: 200 });
-  }
+  // In both dev + prod, rely on the backend for auth/restriction.
+  // viewerId is only used for dev-only shims.
 
   const path = `/api/inbox/thread/${encodeURIComponent(id)}`;
   const out = await proxyJson(req2, path, "POST", body || {});

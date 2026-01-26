@@ -513,7 +513,7 @@ def _hydrate_from_record(
     return out
 
 
-def list_feed(viewer_id: str, side: SideId, *, topic: str | None = None, tag: str | None = None, set_id: str | None = None, limit: int = 200, cursor: str | None = None) -> Dict[str, Any]:
+def list_feed(viewer_id: str, side: SideId, *, topic: str | None = None, tag: str | None = None, set_id: str | None = None, limit: int = 200, cursor: str | None = None, lite: bool = False) -> Dict[str, Any]:
     """Cursor-paginated feed (backward compatible).
 
     Inputs (via view query params):
@@ -698,6 +698,40 @@ def list_feed(viewer_id: str, side: SideId, *, topic: str | None = None, tag: st
         has_more_underlying = False
         break
 
+
+    # sd_743: lite mode for activity polling (avoid heavy hydration/engagement/media)
+    if lite:
+        items: List[dict] = []
+        for r in visible:
+            pid = str(getattr(r, 'id', '') or '').strip()
+            if not pid:
+                continue
+            text = str(getattr(r, 'text', '') or '')
+            has_link = ('http://' in text) or ('https://' in text) or ('www.' in text)
+            has_mention = ('@' in text)
+            it: Dict[str, Any] = {'id': pid}
+            if has_mention:
+                it['context'] = 'mention'
+            it['hasDoc'] = bool(has_link)
+            if has_link:
+                it['kind'] = 'link'
+            items.append(it)
+
+        next_cursor = None
+        if has_more_underlying:
+            if visible:
+                next_cursor = encode_cursor(visible[-1])
+            elif last_scanned is not None:
+                next_cursor = encode_cursor(last_scanned)
+
+        return {
+            'side': side,
+            'count': len(items),
+            'items': items,
+            'nextCursor': next_cursor,
+            'hasMore': bool(next_cursor),
+            'serverTs': time.time(),
+        }
     post_ids = [str(getattr(r, "id", "") or "").strip() for r in visible if str(getattr(r, "id", "") or "").strip()]
     like_counts, reply_counts, liked_ids = _bulk_engagement(viewer_id, post_ids)
     echo_counts, echoed_ids = _bulk_echo(viewer_id, post_ids, side, visible)

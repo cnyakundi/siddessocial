@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { AlertTriangle, Loader2, Repeat, X } from "lucide-react";
 import type { FeedPost } from "@/src/lib/feedTypes";
 import { SIDE_THEMES, type SideId } from "@/src/lib/sides";
@@ -43,8 +44,13 @@ export function QuoteEchoComposer({
     setError(null);
     setLocalBusy(false);
   }, [open]);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-  if (!open || !post) return null;
+
+  if (!open || !post || !mounted) return null;
 
   const submit = async () => {
     if (!canSubmit) return;
@@ -76,13 +82,27 @@ export function QuoteEchoComposer({
     }
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[98] flex items-end justify-center md:items-center">
       <button
         type="button"
         className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-        onClick={onClose}
         aria-label="Close quote echo composer"
+        onPointerDown={(e) => {
+          // sd_713_backdrop_clickthrough: consume pointerdown to prevent ghost taps (close on click)
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        onTouchStart={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onClose();
+        }}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onClose();
+        }}
       />
       <div className={cn("relative w-full max-w-lg bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200", error ? "ring-2 ring-red-500" : null)}>
         <div className="flex items-center justify-between mb-4">
@@ -143,5 +163,6 @@ export function QuoteEchoComposer({
         </div>
       </div>
     </div>
+    , document.body
   );
 }

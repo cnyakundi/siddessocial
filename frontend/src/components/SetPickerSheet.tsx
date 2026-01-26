@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { useDialogA11y } from "@/src/hooks/useDialogA11y";
 
@@ -112,11 +113,17 @@ export function SetPickerSheet({
   title?: string;
   allLabel?: string;
 }) {
-  useLockBodyScroll(open);
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useLockBodyScroll(open && mounted);
 
   const panelRef = useRef<HTMLDivElement | null>(null);
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
-  useDialogA11y({ open, containerRef: panelRef, initialFocusRef: closeBtnRef });
+  useDialogA11y({ open: open && mounted, containerRef: panelRef, initialFocusRef: closeBtnRef });
 
   const inferredSide: SideId = useMemo(() => {
     const byActive = activeSet ? sets.find((s) => s.id === activeSet) : null;
@@ -203,7 +210,7 @@ export function SetPickerSheet({
     }
   };
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
   return (
     <>
@@ -216,6 +223,11 @@ export function SetPickerSheet({
             // sd_713_backdrop_clickthrough: consume pointerdown to prevent ghost taps (close on click)
             e.preventDefault();
             e.stopPropagation();
+          }}
+          onTouchStart={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onClose();
           }}
           onClick={(e) => {
             e.preventDefault();

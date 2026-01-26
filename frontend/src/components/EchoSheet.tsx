@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Repeat, PenLine, X } from "lucide-react";
 import type { FeedPost } from "@/src/lib/feedTypes";
 import type { SideId } from "@/src/lib/sides";
@@ -31,32 +32,43 @@ export function EchoSheet({
   echoed?: boolean;
   echoBusy?: boolean;
 }) {
-  useLockBodyScroll(open);
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useLockBodyScroll(open && mounted);
 
   const panelRef = useRef<HTMLDivElement | null>(null);
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
-  useDialogA11y({ open: open && Boolean(post), containerRef: panelRef, initialFocusRef: closeBtnRef, onClose });
+  useDialogA11y({ open: open && Boolean(post) && mounted, containerRef: panelRef, initialFocusRef: closeBtnRef, onClose });
 
-  if (!open || !post) return null;
+  if (!open || !post || !mounted) return null;
 
   const theme = SIDE_THEMES[side];
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[97] flex items-end justify-center md:items-center">
       <button
         type="button"
         className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-        onPointerDown={(e) => {
-        // sd_713_backdrop_clickthrough: consume pointerdown to prevent ghost taps (close on click)
-        e.preventDefault();
-        e.stopPropagation();
-      }}
-      onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        onClose();
-      }}
         aria-label="Close echo sheet"
+        onPointerDown={(e) => {
+          // sd_713_backdrop_clickthrough: consume pointerdown to prevent ghost taps (close on click)
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        onTouchStart={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onClose();
+        }}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onClose();
+        }}
       />
       <div ref={panelRef} role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="echo-title" className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
         <div className="flex items-center justify-between mb-5">
@@ -126,5 +138,6 @@ export function EchoSheet({
         </button>
       </div>
     </div>
+    , document.body
   );
 }

@@ -181,10 +181,8 @@ export async function GET(req: Request) {
   const isProd = process.env.NODE_ENV === "production";
   const { req2, viewerId } = withDevViewer(req);
 
-  // Default-safe: in dev, if we don't know who the viewer is, return restricted.
-  if (!isProd && !viewerId) {
-    return sd_558b_json({ ok: true, restricted: true, items: [], hasMore: false, nextCursor: null }, { status: 200 });
-  }
+  // In both dev + prod, rely on the backend for auth/restriction.
+  // viewerId is only used for dev-only shims (stub visibility + unread hints).
 
   const qs = new URLSearchParams();
   if (side) qs.set("side", side);
@@ -205,9 +203,9 @@ export async function GET(req: Request) {
 
 
 
-  // sd_730_visibility_filter: enforce stub visibility shim (defense-in-depth)
-  if (data && typeof data === "object" && Array.isArray((data as any).items)) {
-    const v = viewerId || "anon";
+  // sd_743_inbox_proxy_gate: stub visibility shim should only run when we have a stub viewer (dev).
+  if (!isProd && viewerId && data && typeof data === "object" && Array.isArray((data as any).items)) {
+    const v = viewerId;
     (data as any).items = (data as any).items.filter((it: any) => {
       const lockedSide = String((it as any)?.lockedSide || (it as any)?.side || "public");
       return viewerAllowed(v, lockedSide);
@@ -248,10 +246,8 @@ export async function POST(req: Request) {
   const isProd = process.env.NODE_ENV === "production";
   const { req2, viewerId } = withDevViewer(req);
 
-  // Default-safe: in dev, if we don't know who the viewer is, return restricted.
-  if (!isProd && !viewerId) {
-    return sd_558b_json({ ok: true, restricted: true, thread: null, meta: null }, { status: 200 });
-  }
+  // In both dev + prod, rely on the backend for auth/restriction.
+  // viewerId is only used for dev-only shims.
 
   const body = (await req.json().catch(() => ({}))) as any;
 
@@ -265,17 +261,19 @@ export async function POST(req: Request) {
     (data as any).thread = fillParticipant((data as any).thread);
   }
 
-  // Defense-in-depth: enforce deterministic visibility.
-  try {
-    const v = viewerId || "anon";
-    const lockedSide = String((data as any)?.thread?.lockedSide || (data as any)?.thread?.side || "public");
-    if ((data as any)?.restricted !== true && (data as any)?.thread && !viewerAllowed(v, lockedSide)) {
-      (data as any).restricted = true;
-      (data as any).thread = null;
-      (data as any).meta = null;
+  // sd_743_inbox_proxy_gate: stub deterministic visibility only when we have a stub viewer (dev).
+  if (!isProd && viewerId) {
+    try {
+      const v = viewerId;
+      const lockedSide = String((data as any)?.thread?.lockedSide || (data as any)?.thread?.side || "public");
+      if ((data as any)?.restricted !== true && (data as any)?.thread && !viewerAllowed(v, lockedSide)) {
+        (data as any).restricted = true;
+        (data as any).thread = null;
+        (data as any).meta = null;
+      }
+    } catch {
+      // ignore
     }
-  } catch {
-    // ignore
   }
 
   const r = sd_558b_json(data, { status: res.status });

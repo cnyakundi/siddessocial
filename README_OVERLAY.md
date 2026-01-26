@@ -1,16 +1,19 @@
-# sd_741_dm_bootstrap_userid_stability
+# sd_743_inbox_proxy_real_auth_fix
 
-## Goal
-Make “Message”/DM threads stable even if a user changes their @handle, while keeping 1‑tap messaging.
+Summary: Fix inbox Next.js proxy routes incorrectly treating authenticated users as anonymous (causing `restricted:true` even when logged in). Stub-only visibility gates now run ONLY when a dev stub viewer is present.
+
+## What this fixes
+- "Login required" when tapping **Message** (POST /api/inbox/threads) even though you are logged in.
+- Inbox list / thread open returning restricted in production builds due to stub visibility shims.
 
 ## Changes
-- Backend: POST /api/inbox/threads now accepts `targetUserId` and passes it into `ParticipantRecord`.
-- DB inbox store: `ensure_thread()` now prefers `participant_user_id` for idempotency (falls back to handle), and auto-migrates older handle-based threads by backfilling `participant_user_id` when possible.
-- Memory inbox store: DM idempotency now prefers `participant.user_id` when provided.
-- Frontend: Profile “Message” now includes `targetUserId` in the DM bootstrap call.
+- Removed dev-only early returns that required a stub viewer even when real session auth is present.
+- Guarded stub visibility filtering/gating behind: `!isProd && viewerId` (dev stub only).
 
 ## Files
-- backend/siddes_inbox/views.py
-- backend/siddes_inbox/store_db.py
-- backend/siddes_inbox/store_memory.py
-- frontend/src/app/u/[username]/page.tsx
+- frontend/src/app/api/inbox/threads/route.ts
+- frontend/src/app/api/inbox/thread/[id]/route.ts
+
+## Verify
+- Open `/u/<username>` → tap **Message** → should open `/siddes-inbox/<threadId>` without `Login required`.
+- Open Inbox list and a thread: no unexpected `restricted:true` when logged in.
