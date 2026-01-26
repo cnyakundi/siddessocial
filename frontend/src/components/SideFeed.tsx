@@ -4,14 +4,14 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChevronDown, MessageCircle } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { useSide } from "@/src/components/SideProvider";
 import { useReturnScrollRestore } from "@/src/hooks/returnScroll";
 import type { SideId } from "@/src/lib/sides";
 import { SIDES, SIDE_THEMES } from "@/src/lib/sides";
 import { PostCard } from "@/src/components/PostCard";
 import { PublicTuneSheet } from "@/src/components/PublicTuneSheet";
-import { SetPickerSheet } from "@/src/components/SetPickerSheet";
+import { SetFilterBar } from "@/src/components/SetFilterBar";
 import { ImportSetSheet } from "@/src/components/ImportSetSheet";
 import { FeedComposerRow } from "@/src/components/FeedComposerRow";
 
@@ -146,7 +146,6 @@ export function SideFeed() {
 
   // Audience filter (Sets for private sides; Topics for Public)
   const [activeSet, setActiveSet] = useState<SetId | null>(null);
-  const [setPickerOpen, setSetPickerOpen] = useState(false);
 
   const [publicChannel, setPublicChannel] = useState<"all" | PublicChannelId>("all");
   const [publicTuneOpen, setPublicTuneOpen] = useState(false);
@@ -728,55 +727,26 @@ export function SideFeed() {
     return s ? s.label : "Set";
   }, [activeSet, sets, side]);
 
-  const showPublicTune = side === "public";
-
   return (
     <div className="w-full min-h-full bg-white">
-            {/* Feed header: audience pill */}
-      <div className="hidden">
-        <div className="flex items-center gap-3 min-w-0">
-          {showPublicTune ? (
-            <button
-              type="button"
-              onClick={() => setPublicTuneOpen(true)}
-              className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 rounded-xl text-sm font-extrabold text-gray-700 transition-colors min-w-0"
-              aria-label="Tune public feed"
-            >
-              <span className="truncate">{publicChannelLabel}</span>
-<ChevronDown size={14} className="text-gray-400" />
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setSetPickerOpen(true)}
-              className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 rounded-xl text-sm font-extrabold text-gray-700 transition-colors min-w-0"
-              aria-label="Select set"
-            >
-              <span className="truncate">{activeSetLabel}</span>
-              <ChevronDown size={14} className="text-gray-400" />
-            </button>
-          )}
-        </div>
-      </div>
+            {/* Sets-as-filter (Step 2): SetFilterBar for private sides */}
+{side !== "public" ? (
+  <div className="px-3 pt-3">
+    <SetFilterBar
+      sets={(sets || []).filter((s) => s.side === side)}
+      activeSet={activeSet}
+      onSetChange={pickSet}
+      onNewSet={() => {
+        if (process.env.NODE_ENV !== "production") setImportOpen(true);
+        else router.push("/siddes-sets?create=1");
+      }}
+      label="Set"
+      allLabel={`All ${SIDES[side].label}`}
+    />
+  </div>
+) : null}
 
-{/* Set picker (private sides) */}
-      {side !== "public" ? (
-        <SetPickerSheet
-          open={setPickerOpen}
-          onClose={() => setSetPickerOpen(false)}
-          sets={(sets || []).filter((s) => s.side === side)}
-          activeSet={activeSet}
-          onPick={pickSet}
-          onNewSet={() => {
-            if (process.env.NODE_ENV !== "production") setImportOpen(true);
-            else router.push("/siddes-sets?create=1");
-          }}
-          title="Choose Set"
-          allLabel={`All ${SIDES[side].label}`}
-        />
-      ) : null}
-
-      {/* Public tune */}
+{/* Public tune */}
       <PublicTuneSheet
         open={publicTuneOpen}
         onClose={() => setPublicTuneOpen(false)}
@@ -812,14 +782,8 @@ export function SideFeed() {
           try {
             (router).prefetch?.(href);
           } catch {}
-          try {
-            router.push(href);
-          } catch {
-            try {
-              window.location.href = href;
-            } catch {}
-          }
-}}
+          router.push(href);
+        }}
       />
 
 {/* Feed content */}
@@ -984,4 +948,3 @@ export function SideFeed() {
     </div>
   );
 }
-

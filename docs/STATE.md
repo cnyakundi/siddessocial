@@ -82,6 +82,10 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 ## NEXT overlay
 - Next: TBD
 
+- **sd_740_sets_v1_dead_simple:** Sets v1 UX simplification (Sets-as-audience: SetFilterBar on Feed; Set hub = Feed+People with More sheet; read-only banners; scannable set cards)
+
+- **sd_741_fix_sd740_sets_v1_syntax:** Hotfix: repair sd_740 JSX syntax in Sets page + SideFeed; add MIGRATION_PACK if missing
+
 - **sd_736_fix_postcard_nav_share_restore:** Restore PostCard navigation/share helpers after syntax corruption (openPost/openProfile/doShare)
 
 - **sd_734_fix_postcard_share_block_syntax:** Fix PostCard share block syntax (restore text: field)

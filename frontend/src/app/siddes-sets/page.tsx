@@ -8,6 +8,7 @@ import { ChevronRight, DownloadCloud, Plus, RefreshCcw, Search } from "lucide-re
 import { ImportSetSheet } from "@/src/components/ImportSetSheet";
 import { SuggestedSetsTray } from "@/src/components/SuggestedSetsTray";
 import { CreateSetSheet } from "@/src/components/CreateSetSheet";
+import { SetsJoinedPill } from "@/src/components/SetsJoinedBanner";
 import { getSetsProvider } from "@/src/lib/setsProvider";
 import type { SetDef } from "@/src/lib/sets";
 import type { SideId } from "@/src/lib/sides";
@@ -15,6 +16,7 @@ import { SIDE_THEMES, SIDES } from "@/src/lib/sides";
 import type { SetColor } from "@/src/lib/setThemes";
 import { getSetTheme } from "@/src/lib/setThemes";
 import { onSetsChanged } from "@/src/lib/setsSignals";
+import { getStubViewerCookie, isStubMe } from "@/src/lib/stubViewerClient";
 import { useReturnScrollRestore } from "@/src/hooks/returnScroll";
 import { useSide } from "@/src/components/SideProvider";
 
@@ -30,7 +32,7 @@ const SIDE_FILTERS: Array<{ id: SideId | "all"; label: string }> = [
   { id: "work", label: "Work" },
 ];
 
-const COLOR_OPTIONS: SetColor[] = ["orange", "purple", "blue", "emerald", "rose", "slate"];
+const COLOR_OPTIONS: SetColor[] = ["orange", "purple", "emerald", "rose", "slate"];
 
 function normalizeHandle(raw: string): string {
   const t = (raw || "").trim();
@@ -56,6 +58,13 @@ function parseMembers(raw: string): string[] {
   return out;
 }
 
+
+function initialsFromHandle(raw: string): string {
+  const t = String(raw || "").trim().replace(/^@/, "");
+  if (!t) return "??";
+  return t.slice(0, 2).toUpperCase();
+}
+
 function SiddesSetsPageInner() {
   // sd_464c: restore scroll when returning to Sets list
   useReturnScrollRestore();
@@ -77,8 +86,12 @@ function SiddesSetsPageInner() {
   };
   const setsProvider = useMemo(() => getSetsProvider(), []);
 
-  // sd_256: Sets UI is session-auth only (no viewer cookie gating).
-  const canWrite = true;
+  const viewer = getStubViewerCookie();
+  const inStub = Boolean(viewer);
+  const isMe = isStubMe(viewer);
+
+  // Writes are allowed unless we are explicitly viewing as a non-owner stub viewer.
+  const canWrite = !inStub || isMe;
 
   const [sideFilter, setSideFilter] = useState<SideId | "all">(ctxSide);
 
@@ -195,6 +208,20 @@ function SiddesSetsPageInner() {
           </div>
         ) : null}
 
+{!canWrite && viewer ? (
+  <div className="mb-3 p-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 text-sm">
+    <div className="flex items-center gap-2 font-bold mb-1">
+      <SetsJoinedPill />
+      <div className="min-w-0 truncate">
+        Read-only: you are viewing as <span className="font-mono">{viewer}</span>
+      </div>
+    </div>
+    <div className="text-xs leading-relaxed text-slate-600">
+      <span className="font-bold">Create disabled (read-only)</span> — only the owner can create or edit Sets in this view.
+    </div>
+  </div>
+) : null}
+
         {/* MVP: one obvious action */}
         <div className="flex items-center justify-end gap-2 mb-4">
           {canWrite ? (
@@ -250,10 +277,6 @@ function SiddesSetsPageInner() {
         <div className="text-[11px] text-gray-500 -mt-2 mb-4 text-right">
           Guided flow • Name → Side → Theme → Members → Create
         </div>
-<div className="text-[11px] text-gray-500 -mt-2 mb-4 text-right">
-          Quick create • Name (+ optional members) • More options for Side/Theme
-        </div>
-
         {advanced ? (
           <div className="mb-4">
             <SuggestedSetsTray onCreated={() => void refresh()} />
@@ -312,7 +335,14 @@ function SiddesSetsPageInner() {
           ) : (
             filtered.map((s) => {
               const theme = SIDE_THEMES[s.side];
+              const setTheme = getSetTheme(s.color);
               const membersCount = Array.isArray(s.members) ? s.members.length : 0;
+
+              // Joined vs owner polish (server may provide isOwner; stub mode also implies non-owner)
+              const joined = (s as any).isOwner === false || (!!viewer && !isMe && (s as any).isOwner !== true);
+
+              const previewMembers = Array.isArray(s.members) ? s.members.slice(0, 3) : [];
+              const extra = membersCount > 3 ? membersCount - 3 : 0;
 
               return (
                 <Link
@@ -328,12 +358,42 @@ function SiddesSetsPageInner() {
                       theme.hoverBg
                     )}
                   >
-                    <div className="min-w-0">
-                      <div className="font-extrabold text-gray-900 truncate">{s.label}</div>
-                      <div className="mt-1 text-xs text-gray-500 font-semibold">
-                        {membersCount} member{membersCount === 1 ? "" : "s"}
+                    <div className="min-w-0 flex items-center gap-3">
+                      <span className={cn("w-3 h-3 rounded-full flex-shrink-0", setTheme.bg)} aria-hidden="true" />
+
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="font-extrabold text-gray-900 truncate">{s.label}</div>
+                          {joined ? <SetsJoinedPill className="shrink-0" /> : null}
+                        </div>
+
+                        <div className="mt-1 flex items-center justify-between gap-3">
+                          <div className="text-xs text-gray-500 font-semibold">
+                            {membersCount} member{membersCount === 1 ? "" : "s"}
+                          </div>
+
+                          {previewMembers.length ? (
+                            <div className="flex -space-x-2">
+                              {previewMembers.map((m) => (
+                                <div
+                                  key={m}
+                                  className="w-6 h-6 rounded-full border border-gray-200 bg-white flex items-center justify-center text-[10px] font-black text-gray-600"
+                                  title={m}
+                                >
+                                  {initialsFromHandle(m)}
+                                </div>
+                              ))}
+                              {extra ? (
+                                <div className="w-6 h-6 rounded-full border border-gray-200 bg-gray-50 flex items-center justify-center text-[10px] font-black text-gray-500">
+                                  +{extra}
+                                </div>
+                              ) : null}
+                            </div>
+                          ) : null}
+                        </div>
                       </div>
                     </div>
+
                     <ChevronRight size={18} className="text-gray-300 flex-shrink-0" />
                   </div>
                 </Link>
@@ -363,15 +423,20 @@ function SiddesSetsPageInner() {
         setColor={setNewColor}
         membersRaw={newMembersRaw}
         setMembersRaw={setNewMembersRaw}
-        onCreate={create} /><ImportSetSheet
+        onCreate={create}
+      />
+      <ImportSetSheet
         open={importOpen}
         onClose={() => setImportOpen(false)}
         onFinish={({ name, members }) => {
-          void create(name, members.join(", "), newSide, newColor).catch(() => { });
-        } }
+          void create(name, members.join(", "), newSide, newColor).catch(() => {});
+        }}
         onCreateSuggested={({ label, color, members, side }) => {
-          void create(label, members.join(", "), (side || newSide), color as any).catch(() => { });
-        } } /></>
+          void create(label, members.join(", "), (side || newSide), (color as any)).catch(() => {});
+        }}
+      />
+    </>
+
   );
 }
 

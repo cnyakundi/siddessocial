@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSide } from "@/src/components/SideProvider";
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { ArrowLeft, History, Mail, Plus, RefreshCcw, Settings, Shield, Trash2, UserMinus, LogOut } from "lucide-react";
+import { ArrowLeft, History, Mail, MoreHorizontal, Plus, RefreshCcw, Settings, Shield, Trash2, UserMinus, LogOut } from "lucide-react";
 
 import { getSetsProvider } from "@/src/lib/setsProvider";
 import type { SetDef } from "@/src/lib/sets";
@@ -28,13 +28,16 @@ import { InviteLinksPanel/* sd_731_fix_sets_page_syntax */ } from "@/src/compone
 import { fetchInviteSuggestionHandles } from "@/src/lib/inviteSuggestions";
 import { emitSetsChanged, onSetsChanged } from "@/src/lib/setsSignals";
 import { toast } from "@/src/lib/toast";
+import { getStubViewerCookie, isStubMe } from "@/src/lib/stubViewerClient";
+import { SetsJoinedBanner } from "@/src/components/SetsJoinedBanner";
+import { SetHubMoreSheet } from "@/src/components/SetHubMoreSheet";
 import { useReturnScrollRestore } from "@/src/hooks/returnScroll";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
 }
 
-const COLOR_OPTIONS: SetColor[] = ["orange", "purple", "blue", "emerald", "rose", "slate"];
+const COLOR_OPTIONS: SetColor[] = ["orange", "purple", "emerald", "rose", "slate"];
 
 function normalizeHandle(raw: string): string {
   const t = (raw || "").trim();
@@ -137,15 +140,21 @@ export default function SiddesSetHubPage({ params }: { params: { id: string } })
   const feedProvider = useMemo(() => getFeedProvider(), []);
 
   const [tab, setTab] = useState<TabId>("feed");
+  const [moreOpen, setMoreOpen] = useState(false);
   const [item, setItem] = useState<SetDef | null>(null);
   const [events, setEvents] = useState<SetEvent[]>([]);
   const [outInvites, setOutInvites] = useState<SetInvite[]>([]);
 
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const viewer = getStubViewerCookie();
+  const inStub = Boolean(viewer);
+  const isMe = isStubMe(viewer);
 
   const isOwner = Boolean((item as any)?.isOwner === true);
-  const canWrite = isOwner;
+  const canWrite = isOwner && (!inStub || isMe);
 
   // Settings fields (owner)
   const [label, setLabel] = useState("");
@@ -173,6 +182,7 @@ export default function SiddesSetHubPage({ params }: { params: { id: string } })
   const refresh = useCallback(async () => {
     setLoading(true);
     setErr(null);
+    setSaving(true);
     try {
       const got = await setsProvider.get(setId);
       setItem(got);
@@ -465,7 +475,11 @@ export default function SiddesSetHubPage({ params }: { params: { id: string } })
 
             <div className="min-w-0">
               <div className="text-lg font-extrabold text-gray-900 truncate">{item ? item.label : "Set"}</div>
-              <div className="text-[11px] text-gray-400 font-mono truncate">{setId}</div>
+              {!isOwner && viewer ? (
+                <div className="text-[11px] text-gray-400 truncate">
+                  Joined as <span className="font-mono">{viewer}</span>
+                </div>
+              ) : null}
             </div>
           </div>
 
@@ -543,19 +557,17 @@ export default function SiddesSetHubPage({ params }: { params: { id: string } })
                 <div className="flex items-center gap-6">
                   <TabButton id="feed" label="Feed" active={tab === "feed"} onClick={() => setTab("feed")} />
                   <TabButton id="people" label="People" active={tab === "people"} onClick={() => setTab("people")} />
-                  {isOwner ? (
-                    <>
-                      <TabButton id="invites" label="Invites" active={tab === "invites"} onClick={() => setTab("invites")} />
-                      <TabButton id="settings" label="Settings" active={tab === "settings"} onClick={() => setTab("settings")} />
-                    </>
-                  ) : null}
-                  <TabButton id="history" label="History" active={tab === "history"} onClick={() => setTab("history")} />
                 </div>
 
-                {/* mini anchor */}
-                <div className="px-2 py-1 rounded-full bg-gray-50 border border-gray-200 text-[10px] font-black uppercase tracking-widest text-gray-600 max-w-[160px] truncate">
-                  {item ? item.label : "Set"}
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setMoreOpen(true)}
+                  className="px-3 py-2 rounded-full bg-white border border-gray-200 text-gray-700 font-bold text-sm hover:bg-gray-50 flex items-center gap-2"
+                  aria-label="More"
+                >
+                  <MoreHorizontal size={16} />
+                  More
+                </button>
               </div>
             </div>
           </div>
@@ -563,6 +575,7 @@ export default function SiddesSetHubPage({ params }: { params: { id: string } })
 
         {/* Tab body */}
         <div className="mt-3">
+          {!isOwner && viewer ? <SetsJoinedBanner viewer={String(viewer)} /> : null}
           {/* FEED */}
           {tab === "feed" ? (
             <div className="space-y-3">
@@ -675,22 +688,40 @@ export default function SiddesSetHubPage({ params }: { params: { id: string } })
                     {!isOwner ? <div className="text-[11px] text-gray-400 mt-2">Only the owner can invite people.</div> : null}
                   </div>
 
-                  {!isOwner && item ? (
-                    <button
-                      type="button"
-                      onClick={() => void leaveSet()}
-                      className="px-3 py-2 rounded-full bg-white border border-red-200 text-red-600 font-bold text-sm hover:bg-red-50 flex items-center gap-2"
-                    >
-                      <LogOut size={16} />
-                      Leave
-                    </button>
-                  ) : null}
+                  {isOwner ? (
+  <button
+    type="button"
+    disabled={!item || !canWrite}
+    onClick={() => {
+      setPrefillTo(null);
+      setInviteOpen(true);
+    }}
+    className={cn(
+      "px-3 py-2 rounded-full border font-bold text-sm flex items-center gap-2",
+      !item || !canWrite
+        ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+        : "bg-white text-gray-900 border-gray-300 hover:bg-gray-50"
+    )}
+  >
+    <Plus size={16} />
+    Add people
+  </button>
+) : item ? (
+  <button
+    type="button"
+    onClick={() => void leaveSet()}
+    className="px-3 py-2 rounded-full bg-white border border-red-200 text-red-600 font-bold text-sm hover:bg-red-50 flex items-center gap-2"
+  >
+    <LogOut size={16} />
+    Leave
+  </button>
+) : null}
                 </div>
               </div>
 
               <div className="p-4 rounded-2xl bg-white border border-gray-200">
                 <div className="flex items-center justify-between gap-3 mb-3">
-                  <div className="text-xs font-black uppercase tracking-widest text-gray-500">Members</div>
+                  <div className="font-black text-gray-900">Members ({membersCount})</div>
                   <div className="text-xs text-gray-500 font-bold">{membersCount}</div>
                 </div>
 
@@ -708,7 +739,7 @@ export default function SiddesSetHubPage({ params }: { params: { id: string } })
                           <div className="text-[11px] text-gray-400 font-mono truncate">member</div>
                         </Link>
 
-                        {isOwner ? (
+                        {canWrite ? (
                           <button
                             type="button"
                             onClick={() => void removeMember(m)}
@@ -745,7 +776,7 @@ export default function SiddesSetHubPage({ params }: { params: { id: string } })
                   </div>
                   <button
                     type="button"
-                    disabled={!item || !isOwner}
+                    disabled={!item || !canWrite}
                     onClick={() => {
                       setPrefillTo(null);
                       setInviteOpen(true);
@@ -798,20 +829,6 @@ export default function SiddesSetHubPage({ params }: { params: { id: string } })
               </div>
 
               {item ? (<InviteLinksPanel setId={item.id} setLabel={item.label} canManage={isOwner} />) : null}
-
-              <InviteActionSheet
-                open={inviteOpen}
-                onClose={() => {
-                  setInviteOpen(false);
-                  setPrefillTo(null);
-                }}
-                setId={setId}
-                side={item ? item.side : side}
-                prefillTo={prefillTo || undefined}
-                onCreated={(inv) => {
-                  setOutInvites((prev) => [inv, ...prev.filter((x) => x.id !== inv.id)].filter((x) => x.setId === setId));
-                }}
-              />
             </div>
           ) : null}
 
@@ -826,7 +843,7 @@ export default function SiddesSetHubPage({ params }: { params: { id: string } })
                   </div>
                   <button
                     type="button"
-                    disabled={!item || !isOwner}
+                    disabled={saving || !item || !canWrite}
                     onClick={() => void saveSettings()}
                     className={cn(
                       "px-3 py-2 rounded-full border font-bold text-sm",
@@ -844,11 +861,11 @@ export default function SiddesSetHubPage({ params }: { params: { id: string } })
                     <div className="text-xs font-bold text-gray-700 mb-1">Label</div>
                     <input
                       value={label}
-                      readOnly={!isOwner}
+                      readOnly={!canWrite}
                       onChange={(e) => setLabel(e.target.value)}
                       className={cn(
                         "w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm font-semibold outline-none focus:ring-2 ring-gray-900/10",
-                        !isOwner && "bg-gray-50 text-gray-600"
+                        !canWrite && "bg-gray-50 text-gray-600"
                       )}
                       placeholder="Set name"
                     />
@@ -858,7 +875,7 @@ export default function SiddesSetHubPage({ params }: { params: { id: string } })
                     <div className="text-xs font-bold text-gray-700 mb-1">Side</div>
                     <select
                       value={side}
-                      disabled={!isOwner}
+                      disabled={!canWrite}
                       onChange={(e) => setSide(e.target.value as SideId)}
                       className={cn(
                         "w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm font-semibold outline-none focus:ring-2 ring-gray-900/10",
@@ -877,7 +894,7 @@ export default function SiddesSetHubPage({ params }: { params: { id: string } })
                     <div className="text-xs font-bold text-gray-700 mb-1">Color</div>
                     <select
                       value={color}
-                      disabled={!isOwner}
+                      disabled={!canWrite}
                       onChange={(e) => setColor(e.target.value as SetColor)}
                       className={cn(
                         "w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm font-semibold outline-none focus:ring-2 ring-gray-900/10",
@@ -969,6 +986,33 @@ export default function SiddesSetHubPage({ params }: { params: { id: string } })
             </div>
           ) : null}
         </div>
+
+<InviteActionSheet
+  open={inviteOpen}
+  onClose={() => {
+    setInviteOpen(false);
+    setPrefillTo(null);
+  }}
+  setId={setId}
+  side={item ? item.side : side}
+  prefillTo={prefillTo || undefined}
+  onCreated={(inv) => {
+    setOutInvites((prev) => [inv, ...prev.filter((x) => x.id !== inv.id)].filter((x) => x.setId === setId));
+  }}
+/>
+
+<SetHubMoreSheet
+  open={moreOpen}
+  onClose={() => setMoreOpen(false)}
+  setId={setId}
+  setLabel={item ? item.label : null}
+  isOwner={isOwner}
+  canWrite={canWrite}
+  onOpenInvites={() => setTab("invites")}
+  onOpenSettings={() => setTab("settings")}
+  onOpenHistory={() => setTab("history")}
+  onDelete={() => void deleteSet()}
+/>
       </div>
     </div>
   );

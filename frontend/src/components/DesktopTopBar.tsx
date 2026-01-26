@@ -58,7 +58,10 @@ function SidePopover({
         }}
       />
       <div className="absolute top-12 left-0 w-48 bg-white rounded-xl shadow-xl border border-gray-100 z-[100] py-2 animate-in fade-in zoom-in-95 duration-100">
-        <div className="px-4 py-2 text-[11px] font-black text-gray-400 uppercase tracking-widest">Side</div>
+        <div className="px-4 py-2">
+          <div className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Side</div>
+          <div className="text-[10px] font-semibold text-gray-400 mt-0.5">Side = who this is for.</div>
+        </div>
         {SIDE_ORDER.map((id) => {
           const t = SIDE_THEMES[id];
           const isActive = currentSide === id;

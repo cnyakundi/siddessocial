@@ -11,7 +11,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation"; import { Globe, Users, Lock, Briefcase, Plus, Settings, Home, Mail, User, Layers } from "lucide-react";
+import { usePathname } from "next/navigation"; import { Globe, Users, Heart, Briefcase, Plus, Settings, Home, Mail, User, Layers } from "lucide-react";
 import { useSide } from "@/src/components/SideProvider";
 import type { SideId } from "@/src/lib/sides";
 import { SIDES, SIDE_THEMES } from "@/src/lib/sides";
@@ -30,7 +30,7 @@ type IconType = React.ComponentType<{
 const SIDE_ITEMS: Array<{ id: SideId; icon: IconType }> = [
   { id: "public", icon: Globe },
   { id: "friends", icon: Users },
-  { id: "close", icon: Lock },
+  { id: "close", icon: Heart },
   { id: "work", icon: Briefcase },
 ];
 

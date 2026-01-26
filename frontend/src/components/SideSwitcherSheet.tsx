@@ -73,7 +73,8 @@ export function SideSwitcherSheet({
       />
       <div ref={panelRef} role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="side-switcher-title" className="relative w-full max-w-[430px] bg-white rounded-t-[3rem] md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-10 fade-in duration-200">
         <div className="w-10 h-1.5 bg-gray-100 rounded-full mx-auto mb-6" />
-        <h3 id="side-switcher-title" className="text-xl font-black tracking-tight text-gray-900 mb-4 px-1">Side</h3>
+        <h3 id="side-switcher-title" className="text-xl font-black tracking-tight text-gray-900 mb-1 px-1">Side</h3>
+        <p className="text-xs text-gray-500 font-semibold mb-4 px-1">Side = who this is for.</p>
 
         <div className="space-y-3">
           {SIDE_ORDER.map((sideId) => {
