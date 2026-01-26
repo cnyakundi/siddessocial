@@ -1,5 +1,7 @@
 "use client";
 
+
+// sd_764_fix_icon_tap_targets_44px
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -185,7 +187,7 @@ if (pathname.startsWith("/siddes-profile")) return "Me";
           )}
                   <button
                     type="button"
-                    className="p-2 rounded-full hover:bg-gray-100 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900/20"
+                    className="min-w-[44px] min-h-[44px] inline-flex items-center justify-center p-2 rounded-full hover:bg-gray-100 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900/20"
                     aria-label="Refresh"
                     title="Refresh"
                     onClick={() => {
@@ -198,7 +200,7 @@ if (pathname.startsWith("/siddes-profile")) return "Me";
 
 <button
   type="button"
-  className="p-2 rounded-full hover:bg-gray-100 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900/20"
+  className="min-w-[44px] min-h-[44px] inline-flex items-center justify-center p-2 rounded-full hover:bg-gray-100 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900/20"
   aria-label="Alerts"
   title="Alerts"
   onClick={() => {
@@ -224,7 +226,7 @@ if (pathname.startsWith("/siddes-profile")) return "Me";
 
                   <Link
             href="/siddes-search"
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900/20"
+            className="min-w-[44px] min-h-[44px] inline-flex items-center justify-center p-2 rounded-full hover:bg-gray-100 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900/20"
             aria-label="Search"
             title="Search"
           >

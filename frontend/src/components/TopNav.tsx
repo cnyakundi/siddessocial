@@ -1,5 +1,7 @@
 "use client";
 
+
+// sd_763_standardize_alerts_label
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Bell, Home, Inbox, PenSquare, User, UserPlus, Users } from "lucide-react";
@@ -11,7 +13,7 @@ function cn(...parts: Array<string | undefined |false | null>) {
 const NAV = [
   { href: "/siddes-feed", label: "Feed", icon: Home },
   { href: "/siddes-compose", label: "Compose", icon: PenSquare },
-  { href: "/siddes-notifications", label: "Notifs", icon: Bell },
+  { href: "/siddes-notifications", label: "Alerts", icon: Bell },
   { href: "/siddes-inbox", label: "Inbox", icon: Inbox },
   { href: "/siddes-invites", label: "Invites", icon: UserPlus },
   { href: "/siddes-sets", label: "Sets", icon: Users },

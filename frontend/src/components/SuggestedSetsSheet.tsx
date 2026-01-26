@@ -1,5 +1,7 @@
 "use client";
 
+
+// sd_764_fix_icon_tap_targets_44px
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { Check, Pencil, X } from "lucide-react";
@@ -270,7 +272,7 @@ export function SuggestedSetsSheet({
                             <span className="truncate max-w-[160px]">{h}</span>
                             <button
                               type="button"
-                              className="p-0.5 rounded-full hover:bg-gray-200"
+                              className="p-2 -m-1 rounded-full hover:bg-gray-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900/20"
                               onClick={() => {
                                 sdTelemetry("suggestion_edited");
                                 setOverrides((prev) => ({
@@ -284,7 +286,7 @@ export function SuggestedSetsSheet({
                               aria-label={`Remove ${h}`}
                               title="Remove"
                             >
-                              <X size={12} className="text-gray-500" />
+                              <X size={16} strokeWidth={2} className="text-gray-500" />
                             </button>
                           </span>
                         ))}

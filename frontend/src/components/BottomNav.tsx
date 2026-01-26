@@ -1,6 +1,8 @@
 "use client";
 
 
+
+// sd_763_standardize_alerts_label
 /* eslint-disable @next/next/no-img-element */
 
 import React, { useEffect, useState } from "react";
@@ -124,13 +126,13 @@ function TabLink({
         {showDot ? (
           <span
             className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-red-500 border-2 border-white"
-            aria-label="New notifications"
+            aria-label="New alerts"
           />
         ) : null}
         {showCount ? (
           <span
             className="absolute -top-2 -right-3 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center border-2 border-white"
-            aria-label={display + " unread notifications"}
+            aria-label={display + " unread alerts"}
           >
             {display}
           </span>

@@ -10,6 +10,9 @@
 
 
 ## Current milestone
+- **sd_769:** Feed: add FLAGS.feedModules + NEXT_PUBLIC_SD_FEED_MODULES (fix feed modules framework check + SideFeed TS errors)
+- **sd_767:** Feed: restore feed modules framework files (feedModules.ts + SideFeed.tsx) to fix harness check + TS parse errors
+- **sd_766:** Inbox: fix DB store compile blockers in `store_db.py` (ensure_thread early-return; send_message idempotency block)
 - **sd_752:** Notifications: set `cache-control: no-store` on Next /api/notifications + mark-all-read to prevent stale/cross-user caching
 - **sd_750:** Notifications: fix alerts list endpoint (filter before LIMIT; avoids Django sliced-query crash)
 - **sd_146:** Posts+Replies DB scaffold (models+migrations+SD_POST_STORE=memory|db|auto)
@@ -85,6 +88,8 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 
 ## NEXT overlay
 - Next: TBD
+- **sd_764_fix_icon_tap_targets_44px:** UI: Make key icon-only controls easier to tap (AppTopBar icons → 44×44; Toast dismiss → 44×44; SuggestedSets member remove → bigger hit area without pill blowup).
+- **sd_763_standardize_alerts_label:** UI: Standardize label to “Alerts” across nav + NotificationsDrawer title + a11y strings (removes Notifs/Notifications inconsistency).
 - **sd_762_compact_other_sheets_max_height:** UI: Reduce max height of common sheets (ChipOverflow/SetPicker/ProfileActions) to 70dvh so they feel less full-screen on mobile.
 - **sd_761_compact_post_actions_sheet:** UI: Make PostActionsSheet ("…") compact on mobile (max height 70dvh + smaller paddings) so it doesn't feel full-screen.
 - **sd_760_post_detail_safe_back_to_list:** UI: Post detail back always returns to the exact list route (uses saved return path; avoids router.back out-of-app in PWA).

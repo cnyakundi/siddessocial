@@ -1,5 +1,7 @@
 "use client";
 
+
+// sd_763_standardize_alerts_label
 import React, { useRef } from "react";
 import { X } from "lucide-react";
 import { NotificationsView } from "@/src/components/NotificationsView";
@@ -61,7 +63,7 @@ export function NotificationsDrawer({
 
         <div className="px-6 pt-6 pb-4 flex items-center justify-between">
           <div>
-            <div id="notifications-drawer-title" className="text-xl font-black tracking-tight text-gray-900">Notifications</div>
+            <div id="notifications-drawer-title" className="text-xl font-black tracking-tight text-gray-900">Alerts</div>
           </div>
           <button
             type="button"

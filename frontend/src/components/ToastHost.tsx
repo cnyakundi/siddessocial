@@ -1,5 +1,7 @@
 "use client";
 
+
+// sd_764_fix_icon_tap_targets_44px
 import React, { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle2, Info, X } from "lucide-react";
 import type { ToastItem } from "@/src/lib/toast";
@@ -84,7 +86,7 @@ export function ToastHost() {
             <button
               type="button"
               aria-label="Dismiss"
-              className="p-1 rounded-lg hover:bg-gray-100 text-gray-500"
+              className="min-w-[44px] min-h-[44px] p-2 rounded-lg hover:bg-gray-100 text-gray-500 inline-flex items-center justify-center"
               onClick={() => setItems((cur) => cur.filter((x) => x.id !== it.id))}
             >
               <X size={16} />
