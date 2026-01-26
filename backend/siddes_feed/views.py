@@ -1,7 +1,7 @@
 """Feed API views (Django REST Framework).
 
 Contract (mirrors frontend expectations):
-- Default-safe: unknown viewer => `restricted: true` with empty items.
+- Default-safe: unknown viewer => restricted for non-public sides; Public is browseable read-only.
 - Endpoint: GET /api/feed?side=<public|friends|close|work>
 
 Viewer identity (stub/demo):
@@ -118,8 +118,11 @@ class FeedView(APIView):
         side_raw = str(getattr(request, "query_params", {}).get("side") or "public").strip().lower()
         side: SideId = side_raw if side_raw in _ALLOWED_SIDES else "public"  # type: ignore[assignment]
 
-        # Default-safe: unknown viewer => restricted, no content.
-        if not has_viewer:
+        viewer_out = viewer if has_viewer else None
+
+        # sd_745_public_browse_readonly: unknown viewer may browse Public (read-only).
+        # Default-safe: unknown viewer => restricted for non-public sides.
+        if not has_viewer and side != "public":
             return Response(
                 _restricted_payload(has_viewer, viewer, role, extra={"side": side, "count": 0, "items": []}),
                 status=status.HTTP_200_OK,
@@ -173,7 +176,7 @@ class FeedView(APIView):
                 cache_key = None
                 cache_status = "bypass"
             if cached is not None:
-                payload: Dict[str, Any] = {"ok": True, "restricted": False, "viewer": viewer, "role": role}
+                payload: Dict[str, Any] = {"ok": True, "restricted": False, "viewer": viewer_out, "role": role}
                 payload.update(cached)
                 resp = Response(payload, status=status.HTTP_200_OK)
                 resp["X-Siddes-Cache"] = "hit"
@@ -188,7 +191,7 @@ class FeedView(APIView):
             except Exception:
                 cache_status = "bypass"
 
-        payload: Dict[str, Any] = {"ok": True, "restricted": False, "viewer": viewer, "role": role}
+        payload: Dict[str, Any] = {"ok": True, "restricted": False, "viewer": viewer_out, "role": role}
         payload.update(data)
         resp = Response(payload, status=status.HTTP_200_OK)
         resp["X-Siddes-Cache"] = cache_status

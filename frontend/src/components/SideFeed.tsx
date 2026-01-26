@@ -22,7 +22,7 @@ import { getLastSeenId, setLastSeenId } from "@/src/lib/lastSeen";
 import { fetchMe } from "@/src/lib/authMe";
 import type { FeedItem } from "@/src/lib/feedProvider";
 import { getFeedProvider } from "@/src/lib/feedProvider";
-import { getSessionIdentity, touchSessionConfirmed, updateSessionFromMe } from "@/src/lib/sessionIdentity";
+import { EVT_SESSION_IDENTITY_CHANGED, getSessionIdentity, touchSessionConfirmed, updateSessionFromMe } from "@/src/lib/sessionIdentity";
 import { getCachedFeedPage, makeFeedCacheKey, setCachedFeedPage } from "@/src/lib/feedInstantCache";
 import { FLAGS } from "@/src/lib/flags";
 import type { PublicCalmUiState } from "@/src/lib/publicCalmUi";
@@ -53,13 +53,15 @@ const MemoPostCard = React.memo(PostCard);
 // Feed paging size (cursor-based)
 const PAGE_LIMIT = 20;
 
+// sd_745_public_browse_readonly: Public feed browseable when logged-out (read-only).
+
 
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
 }
 
-function EmptyState({ side, onCreateSet, composeHref }: { side: SideId; onCreateSet?: () => void; composeHref?: string }) {
+function EmptyState({ side, onCreateSet, composeHref, canPost }: { side: SideId; onCreateSet?: () => void; composeHref?: string; canPost?: boolean }) {
   // sd_201: actionable empty state (build the graph, ethically)
   const meta = SIDES[side];
   const theme = SIDE_THEMES[side];
@@ -89,12 +91,21 @@ function EmptyState({ side, onCreateSet, composeHref }: { side: SideId; onCreate
       <p className="text-gray-500 text-xs mb-6">Start a thread, or invite a few people so this Side comes alive.</p>
 
       <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
-        <Link
-          href={composeHref || `/siddes-compose?side=${side}`}
-          className={cn("px-4 py-2 rounded-full text-sm font-extrabold text-white shadow-sm hover:opacity-95 transition", theme.primaryBg)}
-        >
-          New Post
-        </Link>
+        {canPost !== false ? (
+          <Link
+            href={composeHref || `/siddes-compose?side=${side}`}
+            className={cn("px-4 py-2 rounded-full text-sm font-extrabold text-white shadow-sm hover:opacity-95 transition", theme.primaryBg)}
+          >
+            New Post
+          </Link>
+        ) : (
+          <Link
+            href="/login"
+            className={cn("px-4 py-2 rounded-full text-sm font-extrabold text-white shadow-sm hover:opacity-95 transition", theme.primaryBg)}
+          >
+            Sign in to post
+          </Link>
+        )}
 
         {side !== "public" ? (<button
             type="button"
@@ -125,6 +136,20 @@ export function SideFeed() {
   const activeTagRaw = (sp.get("tag") || "").trim();
   const activeTagLabel = activeTagRaw ? activeTagRaw.replace(/^#/, "").trim() : "";
   const activeTag = activeTagLabel ? activeTagLabel.toLowerCase() : null;
+
+
+  // sd_745_public_browse_readonly: show Public feed for logged-out users (read-only).
+  // We re-render when session identity changes so the composer appears immediately after login.
+  const [sessionTick, setSessionTick] = useState(0);
+  useEffect(() => {
+    const on = () => setSessionTick((x) => x + 1);
+    window.addEventListener(EVT_SESSION_IDENTITY_CHANGED, on);
+    return () => window.removeEventListener(EVT_SESSION_IDENTITY_CHANGED, on);
+  }, []);
+  const identNow = getSessionIdentity();
+  const isAuthed = Boolean(identNow.authed && identNow.viewerId);
+  void sessionTick;
+
 
   const clearTagFilter = useCallback(() => {
     if (typeof window === "undefined") return;
@@ -763,28 +788,42 @@ export function SideFeed() {
 
 
 {/* Composer (in-feed) */}
-      <FeedComposerRow
-        side={side}
-        prompt={
-          side === "public"
-            ? (FLAGS.publicChannels && publicChannel !== "all"
-                ? `Share in ${publicChannelLabel}…`
-                : "Share with everyone…")
-            : (activeSet ? `Post to ${activeSetLabel}…` : `Post to ${SIDES[side].label}…`)
-        }
-        subtitle={side === "public" ? SIDES[side].privacyHint : (activeSet ? `In ${activeSetLabel}` : undefined)}
-        onSubmit={submitQuick}
-        onOpen={() => {
-          try {
-            window.sessionStorage.setItem("sd.compose.opened", "1");
-          } catch {}
-          const href = composeHref;
-          try {
-            (router).prefetch?.(href);
-          } catch {}
-          router.push(href);
-        }}
-      />
+      {side === "public" && !isAuthed ? (
+        <div className="px-4 py-4 bg-white border-b border-gray-100 lg:px-0 lg:py-6" data-testid="public-browse-cta">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-sm font-extrabold text-gray-900">Browse Public</div>
+              <div className="text-xs text-gray-500 font-semibold">Sign in to post, reply, like, or save.</div>
+            </div>
+            <Link href="/login" className="shrink-0 px-4 py-2 rounded-full bg-gray-900 text-white text-xs font-extrabold">
+              Sign in
+            </Link>
+          </div>
+        </div>
+      ) : (
+        <FeedComposerRow
+                side={side}
+                prompt={
+                  side === "public"
+                    ? (FLAGS.publicChannels && publicChannel !== "all"
+                        ? `Share in ${publicChannelLabel}…`
+                        : "Share with everyone…")
+                    : (activeSet ? `Post to ${activeSetLabel}…` : `Post to ${SIDES[side].label}…`)
+                }
+                subtitle={side === "public" ? SIDES[side].privacyHint : (activeSet ? `In ${activeSetLabel}` : undefined)}
+                onSubmit={submitQuick}
+                onOpen={() => {
+                  try {
+                    window.sessionStorage.setItem("sd.compose.opened", "1");
+                  } catch {}
+                  const href = composeHref;
+                  try {
+                    (router).prefetch?.(href);
+                  } catch {}
+                  router.push(href);
+                }}
+              />
+      )}
 
 {/* Feed content */}
       <div className="pt-2 px-4 lg:px-0">
@@ -894,7 +933,7 @@ export function SideFeed() {
                 ))}
               </div>
             ) : null}
-            <EmptyState side={side} composeHref={composeHref} onCreateSet={() => {
+            <EmptyState side={side} canPost={side !== "public" || isAuthed} composeHref={composeHref} onCreateSet={() => {
               if (process.env.NODE_ENV !== "production") setImportOpen(true);
               else router.push("/siddes-sets?create=1");
             }} />
