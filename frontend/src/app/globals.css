@@ -6,6 +6,35 @@ html, body {
   height: 100%;
 }
 
+/* sd_736_app_like_touch_polish: reduce “webby” feel on mobile */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  /* Prevent scroll chaining / pull-to-refresh on supporting browsers (Android). */
+  overscroll-behavior-y: none;
+  overscroll-behavior-x: none;
+
+  /* Reduce tap highlight flash. */
+  -webkit-tap-highlight-color: transparent;
+
+  /* Helps remove the old 300ms tap delay and improves gesture semantics. */
+  touch-action: manipulation;
+}
+
+a, button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Keep iOS momentum scrolling where applicable. */
+@supports (-webkit-overflow-scrolling: touch) {
+  .sd-scroll-touch {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+
 body {
   background: #f9fafb; /* gray-50 */
   /* sd_732: app-like taps */

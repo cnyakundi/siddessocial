@@ -1,6 +1,14 @@
 # Siddes — STATE (single source of “where we are”)
 **Updated:** 2026-01-25
 
+## Baseline (active truth)
+- Branch:
+- Commit:
+- Zip/Overlay ID:
+- Environment: local | prod
+- Last overlay applied:
+
+
 ## Current milestone
 - **sd_146:** Posts+Replies DB scaffold (models+migrations+SD_POST_STORE=memory|db|auto)
 

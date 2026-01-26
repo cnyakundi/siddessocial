@@ -146,15 +146,42 @@ ${data.glimpse}`.trim()
     data: { url, side: data.side || "public" },
   };
 
-  event.waitUntil(self.registration.showNotification(title, options));
-});
+  event.waitUntil(
+  (async () => {
+    // sd_737_app_badge_sw: set an app icon badge when a push arrives (supported browsers only).
+    await self.registration.showNotification(title, options);
 
+    try {
+      const reg = self.registration;
+      const setBadge = reg && typeof reg.setAppBadge === "function" ? reg.setAppBadge.bind(reg) : null;
+      const clearBadge = reg && typeof reg.clearAppBadge === "function" ? reg.clearAppBadge.bind(reg) : null;
+
+      if (setBadge || clearBadge) {
+        const raw = data.badge ?? data.unread ?? data.count;
+        const n = Number.isFinite(Number(raw)) ? Math.max(0, Math.floor(Number(raw))) : 1;
+        if (n > 0 && setBadge) await setBadge(n);
+        if (n <= 0 && clearBadge) await clearBadge();
+      }
+    } catch {
+      // ignore badge errors
+    }
+  })()
+);
+});
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const url = event.notification?.data?.url || "/";
 
   event.waitUntil(
     (async () => {
+      // sd_737_badge_clear_on_click
+      try {
+        const reg = self.registration;
+        if (reg && typeof reg.clearAppBadge === "function") {
+          await reg.clearAppBadge();
+        }
+      } catch {}
+
       const allClients = await clients.matchAll({ type: "window", includeUncontrolled: true });
       for (const c of allClients) {
         if ("focus" in c) {

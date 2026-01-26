@@ -894,7 +894,7 @@ export function SideFeed() {
                     key={row.key}
                     data-index={vr.index}
                     ref={rowVirtualizer.measureElement}
-                    className="px-4 lg:px-0"
+                    className=""
                     style={{
                       position: "absolute",
                       top: 0,

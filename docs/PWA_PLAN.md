@@ -43,3 +43,30 @@ import Script from "next/script";
 - `./scripts/pwa_check.sh`
 - Chrome DevTools → Application → Manifest / Service Workers
 - Offline test: disable network, refresh, observe offline page
+
+
+## App-like polish (sd_736)
+- **Theme-color sync:** the `<meta name="theme-color">` is updated when the active Side changes (Public/Friends/Close/Work).
+  This makes installed PWAs feel more native on Android (status bar / top chrome color matches the app).
+- **Touch polish:** global CSS reduces tap highlight and prevents pull-to-refresh on supporting browsers.
+
+Files:
+- `frontend/src/components/ThemeColorSync.tsx`
+- `frontend/src/components/AppProviders.tsx` (wires ThemeColorSync)
+- `frontend/src/app/globals.css` (touch polish)
+
+
+
+## App icon badges (sd_737_app_icon_badges)
+On supported browsers (mainly Chromium installed PWAs), Siddes can show a small badge on the app icon when new activity arrives.
+
+### How it works
+- **Service worker** sets a badge when a **push** arrives.
+  - Payload may include `badge` (int). If absent, Siddes falls back to `1`.
+- **Client** clears the badge when the app becomes active (focus/visible), and the SW also clears it on notification click.
+
+Files:
+- `frontend/public/sw.js` (sets badge on push; clears on notification click)
+- `frontend/src/components/AppBadgeClient.tsx` (clears badge on app open)
+- `frontend/src/components/AppProviders.tsx` (wires AppBadgeClient)
+
