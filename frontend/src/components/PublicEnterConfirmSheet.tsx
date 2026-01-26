@@ -44,6 +44,11 @@ export function PublicEnterConfirmSheet({
         e.preventDefault();
         e.stopPropagation();
       }}
+      onTouchStart={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onCancel();
+      }}
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();

@@ -114,6 +114,11 @@ export function CreateSetSheet(props: {
           e.preventDefault();
           e.stopPropagation();
         }}
+        onTouchStart={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          close();
+        }}
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();

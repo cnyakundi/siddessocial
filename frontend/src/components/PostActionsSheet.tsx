@@ -249,7 +249,8 @@ const doBlock = async () => {
         type="button"
         className="absolute inset-0 bg-black/30 backdrop-blur-sm"
         onPointerDown={(e) => {
-          // Do NOT preventDefault here — iOS PWA can suppress the click.
+          // sd_713_backdrop_clickthrough: consume pointerdown to prevent ghost taps
+          e.preventDefault();
           e.stopPropagation();
         }}
         onTouchStart={(e) => {

@@ -5,6 +5,7 @@ Rule: Apply overlays with `scripts/apply_overlay.sh`. The script appends a row a
 
 | Applied (UTC) | Overlay Zip | Summary |
 |---|---|---|
+| 2026-01-26 16:48:50 | sd_757_postcard_media_single_image_contain_apply_helper.sh | PostCard MediaGrid: single-image preview uses object-contain + aspect-aware height (reduced cropping / bad image UI). |
 | 2026-01-26 00:00:00 | sd_753_stabilization_manual_docs_slim_apply_helper.sh | Add stabilization manual + canonical docs + archive sprawl + root verify wrapper. |
 | 2026-01-09 06:56:22 | sd_000_docs_docker_testing_hardening_v0.1.2.zip | Summary: Replace placeholder docs/docker files with complete versions + add a standard test harness. |
 | 2026-01-09 07:06:09 | sd_001_pwa_app_shell_v0.1.0.zip | PWA app shell (manifest + icons + baseline service worker + install/update banners) |

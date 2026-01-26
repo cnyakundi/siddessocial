@@ -288,6 +288,19 @@ function MediaGrid({ items }: { items: MediaItem[] }) {
 
   const cardBase = "rounded-3xl border-2 border-gray-100 bg-gray-50 overflow-hidden";
 
+  // sd_757_media_ui: single media should not crop; pick a gentle height from metadata when available.
+  // (We keep it as a class string so Tailwind can see all possible values.)
+  const singleSize = (() => {
+    const m = shown[0];
+    const w = typeof (m as any)?.width === "number" ? Number((m as any).width) : 0;
+    const h = typeof (m as any)?.height === "number" ? Number((m as any).height) : 0;
+    const r = w > 0 && h > 0 ? w / h : 0;
+    if (r && r < 0.8) return "h-[min(680px,72vh)]"; // portrait
+    if (r && r > 1.35) return "h-[min(420px,55vh)]"; // wide
+    return "h-[min(520px,65vh)]"; // default
+  })();
+
+
   return (
     <>
       <div
@@ -309,7 +322,7 @@ function MediaGrid({ items }: { items: MediaItem[] }) {
             aria-label="Open media"
           >
             {shown[0].kind === 'video' ? (
-              <div className="relative w-full h-[min(520px,65vh)] bg-black">
+              <div className={cn("relative w-full bg-black", singleSize)}>
                 <div className="absolute inset-0 bg-black" aria-hidden />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="w-14 h-14 rounded-full bg-black/35 flex items-center justify-center">
@@ -318,9 +331,9 @@ function MediaGrid({ items }: { items: MediaItem[] }) {
                 </div>
               </div>
             ) : (
-              <div className="relative w-full h-[min(520px,65vh)]">
+              <div className={cn("relative w-full bg-black", singleSize)}>
                 <img
-                  className="absolute inset-0 w-full h-full object-cover"
+                  className="absolute inset-0 w-full h-full object-contain"
                   src={shown[0].url}
                   alt=""
                   loading="lazy"

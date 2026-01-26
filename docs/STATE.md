@@ -10,6 +10,7 @@
 
 
 ## Current milestone
+- **sd_752:** Notifications: set `cache-control: no-store` on Next /api/notifications + mark-all-read to prevent stale/cross-user caching
 - **sd_750:** Notifications: fix alerts list endpoint (filter before LIMIT; avoids Django sliced-query crash)
 - **sd_146:** Posts+Replies DB scaffold (models+migrations+SD_POST_STORE=memory|db|auto)
 - **sd_753:** Stabilization manual + docs slimming (canonical docs + archive) + root `verify_overlays.sh` wrapper.
@@ -84,9 +85,11 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 
 ## NEXT overlay
 - Next: TBD
+- **sd_758_standardize_sheet_backdrops_touchstart:** UI: standardize all sheet backdrops to close on touchstart with preventDefault (consistent, anti-jank).
 - **sd_756_fix_actions_sheet_backdrop_ghosttap:** UI: prevent PostActionsSheet backdrop ghost taps/clickthrough on iOS PWA (touchstart now preventDefault).
 - **sd_757_fix_setpicker_member_avatars_no_external_calls:** UI: SetPickerSheet member preview avatars are now offline-safe initials badges (removed external Dicebear calls).
 - **sd_749_media_picker_local_media_fix:** Media picker reliability (iOS/Safari-safe file inputs + extension-based kind detection)
+- **sd_757_postcard_media_single_image_contain:** PostCard MediaGrid: single-image preview uses object-contain + aspect-aware height (reduced cropping / bad image UI).
 
 - **sd_740_sets_v1_dead_simple:** Sets v1 UX simplification (Sets-as-audience: SetFilterBar on Feed; Set hub = Feed+People with More sheet; read-only banners; scannable set cards)
 - **sd_743_sets_v1_1_inline_create_fast_add:** Sets v1.1 (Inline create in picker + Add People sheet: type/paste + voice stub + invite-link fallback)

@@ -65,6 +65,11 @@ export function SideSwitcherSheet({
         e.preventDefault();
         e.stopPropagation();
       }}
+      onTouchStart={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onClose();
+      }}
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();

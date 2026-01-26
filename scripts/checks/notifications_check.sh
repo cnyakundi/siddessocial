@@ -5,6 +5,7 @@ echo "== Check: Notifications DB-backed =="
 
 REQ=(
   "frontend/src/app/api/notifications/route.ts"
+  "frontend/src/app/api/notifications/mark-all-read/route.ts"
   "frontend/src/components/NotificationsView.tsx"
   "frontend/src/app/siddes-notifications/page.tsx"
 )
@@ -35,4 +36,18 @@ if grep -q "MOCK_NOTIFICATIONS" "frontend/src/components/NotificationsView.tsx";
   exit 1
 else
   echo "✅ No MOCK_NOTIFICATIONS references"
+fi
+
+if grep -qi "cache-control" "frontend/src/app/api/notifications/route.ts" && grep -qi "no-store" "frontend/src/app/api/notifications/route.ts"; then
+  echo "✅ /api/notifications sets cache-control: no-store"
+else
+  echo "❌ /api/notifications missing cache-control: no-store"
+  exit 1
+fi
+
+if grep -qi "cache-control" "frontend/src/app/api/notifications/mark-all-read/route.ts" && grep -qi "no-store" "frontend/src/app/api/notifications/mark-all-read/route.ts"; then
+  echo "✅ /api/notifications/mark-all-read sets cache-control: no-store"
+else
+  echo "❌ /api/notifications/mark-all-read missing cache-control: no-store"
+  exit 1
 fi
