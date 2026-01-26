@@ -54,3 +54,20 @@ Set:
 2) Open `/siddes-notifications`
 3) Enable → Subscribe
 4) In dev: press **Test** and confirm you receive a push
+
+## Automatic push on notifications (sd_742_push_auto_dispatch_on_notifications)
+
+When Siddes creates a notification (reply / like / mention / echo), it can also **send a push** to the viewer’s devices.
+
+How it works:
+- `siddes_notifications.service.notify()` upserts the notification row.
+- If the row is new (or was previously read), it dispatches a push via `siddes_push.send.send_push_to_viewer_best_effort()`.
+
+Gates / env:
+- `SIDDES_PUSH_ON_NOTIFICATIONS_ENABLED=1` (default) — disable to stop auto push
+- `SIDDES_PUSH_ENABLED=1` (default) — master push enable/disable
+- `SIDDES_PUSH_MAX_PER_MIN=8` (default) — per-viewer rate limit (best-effort)
+
+Deep links:
+- If `post_id` exists → `/siddes-post/<post_id>`
+- Otherwise → `/siddes-notifications`

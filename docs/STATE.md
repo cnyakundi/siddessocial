@@ -153,3 +153,4 @@ These are the overlays applied/created during the current session (evidence: ter
 
 ## PWA (mobile app feel)
 - **sd_741_push_backend_db:** Push subscriptions stored in backend DB + endpoints + UI wiring
+- **sd_742_push_auto_dispatch_on_notifications:** push is automatically dispatched when notifications are created (reply/like/mention/echo)
