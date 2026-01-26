@@ -18,10 +18,8 @@ from siddes_safety.policy import is_blocked_pair
 
 from .models import PrismFacet, PrismSideId, SideMembership, SideAccessRequest
 
-
 VIEW_SIDES = ("public", "friends", "close", "work")
 MEMBER_SIDES = ("friends", "close", "work")
-
 
 def _truthy(v: str | None) -> bool:
     return str(v or "").strip().lower() in ("1", "true", "yes", "y", "on")
@@ -32,7 +30,6 @@ def _truthy(v: str | None) -> bool:
 
 def _profile_cache_enabled() -> bool:
     return _truthy(os.environ.get("SIDDES_PROFILE_CACHE_ENABLED", "1"))
-
 
 def _profile_cache_ttl() -> int:
     raw = os.environ.get("SIDDES_PROFILE_CACHE_TTL_SECS", "20")
@@ -46,7 +43,6 @@ def _profile_cache_ttl() -> int:
     if ttl > 300:
         ttl = 300
     return ttl
-
 
 def _profile_cache_key(
     *,
@@ -62,11 +58,8 @@ def _profile_cache_key(
     h = hashlib.sha256(raw.encode("utf-8")).hexdigest()
     return f"profile:v1:{h}"
 
-
-
 def viewer_id_for_user(user) -> str:
     return f"me_{getattr(user, 'id', '')}"
-
 
 def _allowed_set_sides_for_side(side: str) -> set[str]:
     s = str(side or '').strip().lower()
@@ -165,7 +158,6 @@ def _prune_member_from_owner_sets(*, owner_tok: str, member_handle: str, allowed
 
     return touched
 
-
 def _parse_me_id(raw: str) -> Optional[int]:
     s = str(raw or "").strip()
     if not s:
@@ -177,7 +169,6 @@ def _parse_me_id(raw: str) -> Optional[int]:
         return int(s)
     except Exception:
         return None
-
 
 def _user_from_request(request) -> Optional[Any]:
     """Resolve a real Django user.
@@ -233,14 +224,12 @@ def _user_from_request(request) -> Optional[Any]:
     User = get_user_model()
     return User.objects.filter(id=uid).first()
 
-
 def _pretty_name(username: str) -> str:
     raw = (username or "").replace("_", " ").replace("-", " ").strip()
     if not raw:
         return "You"
     parts = [p for p in raw.split() if p]
     return " ".join([p[:1].upper() + p[1:] for p in parts])
-
 
 def _ensure_facets(user) -> None:
     username = getattr(user, "username", "") or "you"
@@ -282,7 +271,6 @@ def _ensure_facets(user) -> None:
     for side in VIEW_SIDES:
         PrismFacet.objects.get_or_create(user=user, side=side, defaults=defaults.get(side, {}))
 
-
 def _avatar_url_for_facet(f: PrismFacet) -> Optional[str]:
     """Resolve avatar URL for a facet.
 
@@ -299,7 +287,6 @@ def _avatar_url_for_facet(f: PrismFacet) -> Optional[str]:
             return "/m/" + k.lstrip("/")
     raw = str(getattr(f, "avatar_image_url", "") or "").strip()
     return raw or None
-
 
 def _facet_dict(f: PrismFacet) -> Dict[str, Any]:
     return {
@@ -324,7 +311,6 @@ def _facet_dict(f: PrismFacet) -> Dict[str, Any]:
         ),
         "updatedAt": f.updated_at.isoformat() if f.updated_at else None,
     }
-
 
 @method_decorator(dev_csrf_exempt, name="dispatch")
 class PrismView(APIView):
@@ -396,13 +382,11 @@ class PrismView(APIView):
 
         return Response({"ok": True, "item": _facet_dict(f)}, status=status.HTTP_200_OK)
 
-
 def _normalize_username(raw: str) -> str:
     s = str(raw or "").strip()
     if s.startswith("@"):
         s = s[1:]
     return s.strip()
-
 
 @method_decorator(dev_csrf_exempt, name="dispatch")
 class ProfileView(APIView):
@@ -429,7 +413,6 @@ class ProfileView(APIView):
         viewer_tok = viewer_id_for_user(viewer) if viewer else "anon"
 
         is_owner = bool(viewer and getattr(viewer, 'id', None) == getattr(target, 'id', None))
-        # sd_424_profile_blocks: Blocks hard-stop profile visibility
         if viewer and viewer.id != target.id:
             try:
                 # viewer_tok already resolved above (per-request)
@@ -480,7 +463,6 @@ class ProfileView(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        # sd_582: server-side profile cache (per-viewer + per-side, short TTL)
         lim_raw = str(getattr(request, "query_params", {}).get("limit") or "").strip()
         try:
             lim = int(lim_raw) if lim_raw else 40
@@ -772,7 +754,6 @@ class ProfileView(APIView):
             resp["X-Siddes-Cache-Ttl"] = str(cache_ttl)
         return resp
 
-
 @method_decorator(dev_csrf_exempt, name="dispatch")
 class SideActionView(APIView):
     """Viewer action: Side/Unside someone. POST /api/side
@@ -812,8 +793,6 @@ class SideActionView(APIView):
         owner_tok = viewer_id_for_user(viewer)
         member_handle = "@" + str(getattr(target, "username", "") or "").lower()
 
-
-        # sd_424_side_action_blocks: respect blocks (allow unside; prevent setting a side when blocked)
         try:
             viewer_tok = viewer_id_for_user(viewer)
             target_tok = "@" + str(getattr(target, "username", "") or "").lower()
@@ -834,17 +813,14 @@ class SideActionView(APIView):
         if side not in MEMBER_SIDES:
             return Response({"ok": False, "error": "invalid_side"}, status=status.HTTP_400_BAD_REQUEST)
 
-        
-        # sd_530_confirm_close_work: require explicit confirm for Close/Work
         if side in ("close", "work"):
             c = body.get("confirm")
             if not (c is True or _truthy(str(c))):
                 return Response({"ok": False, "error": "confirm_required"}, status=status.HTTP_400_BAD_REQUEST)
 
-# sd_534_close_requires_friends: prevent jumping to Close without Friends first
         if side == "close":
             existing = SideMembership.objects.filter(owner=viewer, member=target).first()
-            if not existing or existing.side not in ("friends", "close"): 
+            if not existing or existing.side not in ("friends", "close"):
                 return Response({"ok": False, "error": "friends_required"}, status=status.HTTP_400_BAD_REQUEST)
 
         obj, _ = SideMembership.objects.update_or_create(
@@ -945,8 +921,6 @@ class SidersLedgerView(APIView):
         }
         return Response(out, status=status.HTTP_200_OK)
 
-
-# sd_712_access_requests: request access to locked Sides (no followers)
 @method_decorator(dev_csrf_exempt, name="dispatch")
 class AccessRequestsView(APIView):
     # GET: list inbound pending requests for the viewer (owner)
@@ -1022,7 +996,6 @@ class AccessRequestsView(APIView):
         )
 
         return Response({"ok": True, "id": str(getattr(obj, "id", "")), "status": str(getattr(obj, "status", "pending"))}, status=status.HTTP_200_OK)
-
 
 @method_decorator(dev_csrf_exempt, name="dispatch")
 class AccessRequestRespondView(APIView):

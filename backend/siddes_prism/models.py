@@ -3,13 +3,11 @@ from __future__ import annotations
 from django.conf import settings
 from django.db import models
 
-
 class PrismSideId(models.TextChoices):
     PUBLIC = "public", "Public"
     FRIENDS = "friends", "Friends"
     CLOSE = "close", "Close"
     WORK = "work", "Work"
-
 
 class PrismFacet(models.Model):
     """One identity facet per user per Side.
@@ -32,7 +30,6 @@ class PrismFacet(models.Model):
 
     avatar_media_key = models.CharField(max_length=512, blank=True, default="")
 
-
     anthem_title = models.CharField(max_length=96, blank=True, default="")
     anthem_artist = models.CharField(max_length=96, blank=True, default="")
 
@@ -49,7 +46,6 @@ class PrismFacet(models.Model):
         indexes = [
             models.Index(fields=["user", "side"], name="prismfacet_user_side_idx"),
         ]
-
 
 class SideMembership(models.Model):
     """Relationship state: owner has placed member into a Side.
@@ -80,8 +76,6 @@ class SideMembership(models.Model):
             models.Index(fields=["member", "updated_at"], name="side_member_upd"),
         ]
 
-
-# sd_712_access_requests: permissioned "Request access" (no followers)
 class SideAccessRequest(models.Model):
     # Requester asks owner to place them into a Side (Friends/Close/Work).
     # Owner controls access; requester can only ask.
@@ -122,5 +116,3 @@ class SideAccessRequest(models.Model):
             models.Index(fields=["requester", "status", "-updated_at"], name="side_access_req_st_upd"),
         ]
 
-
-# sd_533: UserFollow removed (Siddes has no followers; graph is SideMembership only).

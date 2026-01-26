@@ -248,6 +248,11 @@ const doBlock = async () => {
           e.stopPropagation();
           onClose();
         }}
+        onTouchStart={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onClose();
+        }}
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
