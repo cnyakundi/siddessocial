@@ -62,11 +62,27 @@ class NotificationsListView(APIView):
             muted_check = None
 
 
-        qs = Notification.objects.filter(viewer_id=viewer).order_by("-created_at")[:50]
         side = str(request.headers.get("x-sd-side") or request.query_params.get("side") or "").strip().lower()
+
+
+
         if side not in ("public", "friends", "close", "work"):
+
+
+
             side = "public"
-        qs = qs.filter(side=side)
+
+
+
+        
+
+
+
+        # IMPORTANT: Django disallows filtering after slicing. Filter first, then apply LIMIT.
+
+
+
+        qs = Notification.objects.filter(viewer_id=viewer, side=side).order_by("-created_at")[:50]
         items: list[Dict[str, Any]] = []
         for n in qs:
             try:

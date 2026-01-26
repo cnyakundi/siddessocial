@@ -4,7 +4,7 @@ set -euo pipefail
 echo "== Check: Feed scaffold + PostCard present =="
 
 REQ=(
-  "frontend/src/lib/mockFeed.ts"
+  "frontend/src/lib/feedFixtures.ts"
   "frontend/src/components/PostCard.tsx"
   "frontend/src/components/SideFeed.tsx"
   "frontend/src/app/siddes-feed/page.tsx"

@@ -7,7 +7,7 @@ REQ=(
   "frontend/src/lib/flags.ts"
   "frontend/src/lib/publicChannels.ts"
   "docs/PUBLIC_CHANNELS.md"
-  "frontend/src/lib/mockFeed.ts"
+  "frontend/src/lib/feedFixtures.ts"
   "frontend/src/components/SideFeed.tsx"
   "frontend/src/app/siddes-compose/page.tsx"
   "frontend/src/lib/chips.ts"
@@ -40,7 +40,7 @@ need() {
   fi
 }
 
-need "frontend/src/lib/mockFeed.ts" "publicChannel"
+need "frontend/src/lib/feedFixtures.ts" "publicChannel"
 need "frontend/src/lib/chips.ts" "export function buildChips"
 need "frontend/src/lib/chips.ts" "ChipId.*channel"
 need "frontend/src/lib/chips.ts" "FLAGS\.publicChannels"

@@ -21,10 +21,23 @@ function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
 }
 
-function avatarUrl(seed: string): string {
-  const s = String(seed || "").replace(/^@/, "").trim() || "user";
-  // Dicebear is fine for mocks; replace with real profile media later.
-  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(s)}`;
+function hashHue(seed: string): number {
+  const s = String(seed || "");
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return h % 360;
+}
+
+function avatarInitial(handle: string): string {
+  const s = String(handle || "").replace(/^@/, "").trim();
+  if (!s) return "?";
+  return s[0]!.toUpperCase();
+}
+
+function avatarStyle(seed: string): React.CSSProperties {
+  const hue = hashHue(seed);
+  // Stable, offline-safe: no external network calls.
+  return { backgroundColor: `hsl(${hue} 70% 42%)` };
 }
 
 function MembersPreview({ members, inverted }: { members: string[]; inverted?: boolean }) {
@@ -52,8 +65,13 @@ function MembersPreview({ members, inverted }: { members: string[]; inverted?: b
             )}
             title={m}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={avatarUrl(m)} alt={m} className="w-full h-full object-cover" />
+            <div
+              className="w-full h-full flex items-center justify-center text-[11px] font-black text-white select-none"
+              style={avatarStyle(m)}
+              aria-label={m}
+            >
+              {avatarInitial(m)}
+            </div>
           </div>
         ))}
         {more > 0 ? (

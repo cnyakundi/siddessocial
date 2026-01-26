@@ -253,9 +253,11 @@ const doBlock = async () => {
           e.stopPropagation();
         }}
         onTouchStart={(e) => {
+          // Prevent iOS 'ghost tap' click-through when dismissing on touchstart.
+          e.preventDefault();
           e.stopPropagation();
           onClose();
-}}
+        }}
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();

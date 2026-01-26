@@ -112,3 +112,6 @@ siddes_login_debug.zip
 # Playwright artifacts (generated; do not commit)
 frontend/playwright-report/
 frontend/test-results/
+
+# TypeScript buildinfo cache dir (keeps frontend/ clean)
+frontend/.tsbuildinfo/

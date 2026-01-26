@@ -10,8 +10,10 @@
 
 
 ## Current milestone
+- **sd_750:** Notifications: fix alerts list endpoint (filter before LIMIT; avoids Django sliced-query crash)
 - **sd_146:** Posts+Replies DB scaffold (models+migrations+SD_POST_STORE=memory|db|auto)
 - **sd_753:** Stabilization manual + docs slimming (canonical docs + archive) + root `verify_overlays.sh` wrapper.
+- **sd_754:** Repo hygiene (TypeScript tsBuildInfoFile path) + dedupe stub viewer (inboxViewer re-export).
 
 
 
@@ -82,6 +84,8 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 
 ## NEXT overlay
 - Next: TBD
+- **sd_756_fix_actions_sheet_backdrop_ghosttap:** UI: prevent PostActionsSheet backdrop ghost taps/clickthrough on iOS PWA (touchstart now preventDefault).
+- **sd_757_fix_setpicker_member_avatars_no_external_calls:** UI: SetPickerSheet member preview avatars are now offline-safe initials badges (removed external Dicebear calls).
 - **sd_749_media_picker_local_media_fix:** Media picker reliability (iOS/Safari-safe file inputs + extension-based kind detection)
 
 - **sd_740_sets_v1_dead_simple:** Sets v1 UX simplification (Sets-as-audience: SetFilterBar on Feed; Set hub = Feed+People with More sheet; read-only banners; scannable set cards)
@@ -165,3 +169,5 @@ These are the overlays applied/created during the current session (evidence: ter
 - **sd_751:** Launch P0 gatepack + World Launch docs
   - Run: `bash scripts/checks/launch_world_p0_gatepack_check.sh`
   - Tracker: `docs/LAUNCH_WORLD_P0_TRACKER.md`
+
+- **sd_755_fix_inboxviewer_node_env_marker:** Restore explicit NODE_ENV/production marker in inboxViewer shim (keeps Next inbox stub safety check green).

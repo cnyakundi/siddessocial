@@ -18,7 +18,7 @@ if not SRC.exists():
 SKIP = {
     "frontend/src/lib/chips.ts",
     "frontend/src/lib/publicChannels.ts",
-    "frontend/src/lib/mockFeed.ts",
+    "frontend/src/lib/feedFixtures.ts",
 }
 
 # Scan string literals only (heuristic) to avoid identifiers like publicChannel.
