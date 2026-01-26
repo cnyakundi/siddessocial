@@ -246,6 +246,7 @@ const doBlock = async () => {
         onPointerDown={(e) => {
           e.preventDefault();
           e.stopPropagation();
+          onClose();
         }}
         onClick={(e) => {
           e.preventDefault();
