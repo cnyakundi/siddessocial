@@ -812,8 +812,14 @@ export function SideFeed() {
           try {
             (router).prefetch?.(href);
           } catch {}
-          router.push(href);
-        }}
+          try {
+            router.push(href);
+          } catch {
+            try {
+              window.location.href = href;
+            } catch {}
+          }
+}}
       />
 
 {/* Feed content */}

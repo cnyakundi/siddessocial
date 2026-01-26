@@ -156,6 +156,41 @@ export function FeedComposerRow(props: {
                   ref={taRef}
                   value={text}
                   onChange={(e) => setText(e.target.value)}
+                onFocus={(e) => {
+                  try {
+                    const isDesktop =
+                      typeof window !== "undefined" &&
+                      (window as any).matchMedia &&
+                      (window as any).matchMedia("(min-width: 1024px)").matches;
+
+                    // Siddes Standard: on mobile, the feed composer is a LAUNCHER.
+                    if (!isDesktop) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      try {
+                        (e.target as any)?.blur?.();
+                      } catch {}
+                      onOpen();
+                    }
+                  } catch {}
+                }}
+                onTouchStart={(e) => {
+                  try {
+                    const isDesktop =
+                      typeof window !== "undefined" &&
+                      (window as any).matchMedia &&
+                      (window as any).matchMedia("(min-width: 1024px)").matches;
+
+                    if (!isDesktop) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      try {
+                        (e.target as any)?.blur?.();
+                      } catch {}
+                      onOpen();
+                    }
+                  } catch {}
+                }}
                   placeholder={prompt}
                   className="flex-1 min-w-0 resize-none bg-transparent outline-none text-[15px] leading-5 text-gray-900 placeholder:text-gray-500"
                   rows={1}
