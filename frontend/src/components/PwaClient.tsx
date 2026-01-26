@@ -16,22 +16,18 @@ function isIOSPlatform() {
   const ua = navigator.userAgent || "";
   const isIPhoneIPadIPod = /iPad|iPhone|iPod/.test(ua);
 
-  // iPadOS 13+ reports as MacIntel, but has touch points.
-  const isIPadOS =
-    (navigator.platform === "MacIntel" || navigator.platform === "MacPPC") &&
-    // @ts-ignore - maxTouchPoints exists in modern browsers
-    // sd_732_fix_pwa_ts_expect: avoid unused @ts-expect-error errors
-    (navigator.maxTouchPoints || 0) > 1;
+  // iPadOS 13+ reports as MacIntel but has touch points.
+  const platform = String((navigator as any).platform || "");
+  const maxTouchPoints = Number((navigator as any).maxTouchPoints || 0);
+  const isIPadOS = (platform === "MacIntel" || platform === "MacPPC") && maxTouchPoints > 1;
 
   return Boolean(isIPhoneIPadIPod || isIPadOS);
 }
 
 function isStandaloneMode() {
   if (typeof window === "undefined") return false;
-  // iOS Safari supports navigator.standalone when launched from Home Screen.
-  // Other browsers support display-mode media query.
-  // @ts-ignore - standalone is iOS-only
-  const iosStandalone = Boolean(navigator.standalone);
+  // iOS: navigator.standalone (non-standard). Others: display-mode media query.
+  const iosStandalone = Boolean((navigator as any).standalone);
   const dmStandalone = Boolean(window.matchMedia?.("(display-mode: standalone)").matches);
   return iosStandalone || dmStandalone;
 }
@@ -151,30 +147,22 @@ export function PwaClient() {
           {offline ? (
             <>
               <div className="text-sm font-bold text-gray-900">You’re offline</div>
-              <div className="text-xs text-gray-500 truncate">
-                Reconnect to refresh. Some screens may not load offline yet.
-              </div>
+              <div className="text-xs text-gray-500 truncate">Reconnect to refresh. Some screens may not load offline yet.</div>
             </>
           ) : updateAvailable ? (
             <>
               <div className="text-sm font-bold text-gray-900">Update available</div>
-              <div className="text-xs text-gray-500 truncate">
-                Reload to get the latest version.
-              </div>
+              <div className="text-xs text-gray-500 truncate">Reload to get the latest version.</div>
             </>
           ) : installAvailable ? (
             <>
               <div className="text-sm font-bold text-gray-900">Install Siddes</div>
-              <div className="text-xs text-gray-500 truncate">
-                Add to your home screen for the best experience.
-              </div>
+              <div className="text-xs text-gray-500 truncate">Add to your home screen for the best experience.</div>
             </>
           ) : (
             <>
               <div className="text-sm font-bold text-gray-900">Add Siddes to Home Screen</div>
-              <div className="text-xs text-gray-500 truncate">
-                iPhone/iPad: Safari → Share → Add to Home Screen.
-              </div>
+              <div className="text-xs text-gray-500 truncate">iPhone/iPad: Safari → Share → Add to Home Screen.</div>
             </>
           )}
         </div>

@@ -52,17 +52,19 @@ export function makeFeedCacheKey(args: {
   viewerId: string;
   side: SideId;
   topic?: string | null;
+  tag?: string | null;
   setId?: string | null;
   cursor?: string | null;
   limit?: number;
 }) {
   const topic = String(args.topic || "").trim() || "_";
+  const tag = String(args.tag || "").trim() || "_";
   const setId = String(args.setId || "").trim() || "_";
   const cursor = String(args.cursor || "").trim() || "first";
   const limit = typeof args.limit === "number" ? String(args.limit) : "_";
 
   // NOTE: Epoch is critical. It rotates when auth state changes.
-  return `feed:v1|epoch:${args.epoch}|viewer:${args.viewerId}|side:${args.side}|topic:${topic}|set:${setId}|cursor:${cursor}|limit:${limit}`;
+  return `feed:v1|epoch:${args.epoch}|viewer:${args.viewerId}|side:${args.side}|topic:${topic}|tag:${tag}|set:${setId}|cursor:${cursor}|limit:${limit}`;
 }
 
 export function getCachedFeedPage(key: string): FeedPage | null {

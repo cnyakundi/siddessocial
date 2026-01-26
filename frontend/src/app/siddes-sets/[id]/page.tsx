@@ -23,7 +23,7 @@ import type { SetInvite } from "@/src/lib/inviteProvider";
 import { getInviteProvider } from "@/src/lib/inviteProvider";
 import { InviteActionSheet } from "@/src/components/Invites/InviteActionSheet";
 import { InviteList } from "@/src/components/Invites/InviteList";
-import { InviteLinksPanel } from "@/src/components/Invites/InviteLinksPanel";
+import { InviteLinksPanel/* sd_731_fix_sets_page_syntax */ } from "@/src/components/Invites/InviteLinksPanel";
 
 import { fetchInviteSuggestionHandles } from "@/src/lib/inviteSuggestions";
 import { emitSetsChanged, onSetsChanged } from "@/src/lib/setsSignals";

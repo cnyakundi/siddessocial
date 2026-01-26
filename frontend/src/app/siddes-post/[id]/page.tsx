@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 
 import React, { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { useSide } from "@/src/components/SideProvider";
 import { SIDES, SIDE_THEMES, type SideId } from "@/src/lib/sides";
 import type { FeedPost } from "@/src/lib/feedTypes";
@@ -284,6 +284,7 @@ function SideMismatchBanner({
 function PostDetailInner() {
   const params = useParams();
   const sp = useSearchParams();
+  const router = useRouter();
 
   // If this post was opened from Search, provide a clean back-link.
   const backToSearchHref = (() => {
@@ -300,6 +301,17 @@ function PostDetailInner() {
   })();
   const backHref = backToSearchHref || "/siddes-feed";
   const backLabel = backToSearchHref ? "Search" : "Feed";
+
+  const goBack = useCallback(() => {
+    try {
+      if (typeof window !== "undefined" && window.history.length > 1) {
+        router.back();
+        return;
+      }
+    } catch {}
+    router.push(backHref);
+  }, [router, backHref]);
+
 
   const id = (params?.id as string) || "";
 
@@ -604,9 +616,9 @@ useEffect(() => {
             <p className="text-sm text-gray-500 mt-2">
               It may have been deleted, or you might not have access in your current Side.
             </p>
-            <Link href={backHref} className="inline-block mt-4 text-sm font-extrabold text-gray-700 hover:underline">
-              ← Back to feed
-            </Link>
+            <button type="button" onClick={goBack} className="inline-block mt-4 text-sm font-extrabold text-gray-700 hover:underline">
+              ← Back to {backLabel}
+            </button>
           </div>
         </ContentColumn>
       </div>
@@ -629,9 +641,9 @@ useEffect(() => {
       <ContentColumn>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">
-            <Link href={backHref} className="text-sm font-extrabold text-gray-700 hover:underline">
+            <button type="button" onClick={goBack} className="text-sm font-extrabold text-gray-700 hover:underline">
               ← {backLabel}
-            </Link>
+            </button>
             <Badge n={queuedCount} />
           </div>
 

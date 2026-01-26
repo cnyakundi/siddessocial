@@ -65,12 +65,12 @@ function MeTabLink({ active, side }: { active: boolean; side: SideId }) {
   }, [side]);
 
   return (
-    <div className="relative flex flex-col items-center justify-center">
+    <div className="relative w-full h-full flex flex-col items-center justify-center">
       <Link
         href="/siddes-profile"
         aria-label="Me"
         className={cn(
-          "flex flex-col items-center justify-center gap-1 select-none active:scale-95 transition-transform",
+          "w-full h-full flex flex-col items-center justify-center gap-1 rounded-2xl select-none active:scale-95 transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900/20",
           active ? "text-gray-900" : "text-gray-400"
         )}
       >
@@ -108,7 +108,7 @@ function TabLink({
       href={href}
       aria-label={label}
       className={cn(
-        "flex flex-col items-center justify-center gap-1 select-none active:scale-95 transition-transform",
+        "w-full h-full flex flex-col items-center justify-center gap-1 rounded-2xl select-none active:scale-95 transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900/20",
         active ? "text-gray-900" : "text-gray-400"
       )}
     >
@@ -186,7 +186,7 @@ export function BottomNav() {
           <Link
             href={createHref}
             aria-label="Create"
-            className="flex flex-col items-center justify-center gap-1 select-none"
+            className="w-full h-full flex flex-col items-center justify-center gap-1 rounded-2xl select-none"
             title="Create"
           >
             <span

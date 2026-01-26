@@ -28,6 +28,30 @@ from .trust_gates import enabled as trust_gates_enabled, enforce_public_write_ga
 
 _ALLOWED_SIDES = {"public", "friends", "close", "work"}
 
+# sd_717e_topic_tags_backend: Side-bound topic tags (hashtags as folders)
+TOPIC_TAG_MAX = 12
+_TOPIC_TAG_RE = re.compile(r'(?<![A-Za-z0-9_])#([A-Za-z0-9_]{2,32})')
+
+
+def _extract_topic_tags(text: str) -> list[str]:
+    s = str(text or "")
+    if not s:
+        return []
+    out: list[str] = []
+    seen: set[str] = set()
+    for m in _TOPIC_TAG_RE.finditer(s):
+        raw = (m.group(1) or "").strip().lower()
+        if not raw:
+            continue
+        if raw in seen:
+            continue
+        seen.add(raw)
+        out.append(raw)
+        if len(out) >= TOPIC_TAG_MAX:
+            break
+    return out
+
+
 
 # sd_717d_mentions_backend: Context-safe @mentions (server enforcement + notifications)
 # Siddes rule:
@@ -685,6 +709,11 @@ def _feed_post_from_record(rec, viewer_id: Optional[str] = None) -> Dict[str, An
         out["setId"] = rec.set_id
     if getattr(rec, "urgent", False):
         out["urgent"] = True
+
+    # sd_717e_topic_tags_backend: include derived tags for UI chips
+    tags = _extract_topic_tags(str(getattr(rec, "text", "") or ""))
+    if tags:
+        out["tags"] = tags
 
     if str(getattr(rec, "side", "") or "").strip().lower() == "public":
         out["trustLevel"] = 3 if author_id == "me" else 1

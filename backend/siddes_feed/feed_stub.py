@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import time
 from typing import Any, Dict, List, Optional, Set, Tuple
 
@@ -31,6 +32,32 @@ def _pretty_age(created_at: Any) -> str:
         return f"{int(delta // 86400)}d"
     except Exception:
         return ""
+
+
+
+# sd_717e_topic_tags: Side-bound topic tags (hashtags as private folders)
+# Rule: tags are NOT global discovery; they are local filing labels within a Side.
+TOPIC_TAG_MAX = 12
+_TOPIC_TAG_RE = re.compile(r'(?<![A-Za-z0-9_])#([A-Za-z0-9_]{2,32})')
+
+
+def _extract_topic_tags(text: str) -> List[str]:
+    s = str(text or "")
+    if not s:
+        return []
+    out: List[str] = []
+    seen: set[str] = set()
+    for m in _TOPIC_TAG_RE.finditer(s):
+        raw = (m.group(1) or "").strip().lower()
+        if not raw:
+            continue
+        if raw in seen:
+            continue
+        seen.add(raw)
+        out.append(raw)
+        if len(out) >= TOPIC_TAG_MAX:
+            break
+    return out
 
 
 
@@ -442,6 +469,11 @@ def _hydrate_from_record(
         "echoCount": int(echo_count),
         "echoed": bool(echoed),
     }
+    # sd_717e_topic_tags: include derived tags for UI chips (safe, side-bound)
+    tags = _extract_topic_tags(str(getattr(rec, "text", "") or ""))
+    if tags:
+        out["tags"] = tags
+
 
     if getattr(rec, "set_id", None):
         out["setId"] = rec.set_id
@@ -481,7 +513,7 @@ def _hydrate_from_record(
     return out
 
 
-def list_feed(viewer_id: str, side: SideId, *, topic: str | None = None, set_id: str | None = None, limit: int = 200, cursor: str | None = None) -> Dict[str, Any]:
+def list_feed(viewer_id: str, side: SideId, *, topic: str | None = None, tag: str | None = None, set_id: str | None = None, limit: int = 200, cursor: str | None = None) -> Dict[str, Any]:
     """Cursor-paginated feed (backward compatible).
 
     Inputs (via view query params):
@@ -509,6 +541,12 @@ def list_feed(viewer_id: str, side: SideId, *, topic: str | None = None, set_id:
         t = None
 
     sfilter = str(set_id or '').strip() or None
+
+    # sd_717e_topic_tags: normalize tag filter
+    tag_raw = str(tag or "").strip().lower()
+    if tag_raw.startswith("#"):
+        tag_raw = tag_raw[1:]
+    tag_norm = tag_raw or None
 
     # sd_422_user_hide: per-viewer hidden posts (personal)
     hidden_ids: set[str] = set()
@@ -621,6 +659,15 @@ def list_feed(viewer_id: str, side: SideId, *, topic: str | None = None, set_id:
         for r in recs:
             last_scanned = r
 
+            # sd_717e_topic_tags: side-bound tag filter (hashtags as folders)
+            if tag_norm:
+                try:
+                    tgs = _extract_topic_tags(str(getattr(r, "text", "") or ""))
+                    if tag_norm not in tgs:
+                        continue
+                except Exception:
+                    continue
+
             pid = str(getattr(r, "id", "") or "").strip()
             if pid and pid in hidden_ids:
                 continue
@@ -687,6 +734,19 @@ def list_feed(viewer_id: str, side: SideId, *, topic: str | None = None, set_id:
             items = [it for it in items if _topic_of_item(it) == "general"]
         else:
             items = [it for it in items if _topic_of_item(it) == tt]
+
+    # sd_717e_topic_tags: Final guard for tag filter (should already be filtered)
+    if tag_norm:
+        tn = str(tag_norm).strip().lower()
+        def _has_tag(it: dict) -> bool:
+            arr = it.get("tags")
+            if not isinstance(arr, list):
+                return False
+            for x in arr:
+                if str(x).strip().lower() == tn:
+                    return True
+            return False
+        items = [it for it in items if _has_tag(it)]
 
     next_cursor = None
     if has_more_underlying:

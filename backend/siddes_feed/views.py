@@ -103,8 +103,8 @@ def _feed_cache_ttl() -> int:
     return ttl
 
 
-def _feed_cache_key(*, viewer: str, role: str, side: str, topic: str | None, set_id: str | None, limit: int, cursor: str | None) -> str:
-    raw = f"v1|viewer={viewer}|role={role}|side={side}|topic={topic or ''}|set={set_id or ''}|limit={limit}|cursor={cursor or ''}"
+def _feed_cache_key(*, viewer: str, role: str, side: str, topic: str | None, tag: str | None, set_id: str | None, limit: int, cursor: str | None) -> str:
+    raw = f"v1|viewer={viewer}|role={role}|side={side}|topic={topic or ''}|tag={tag or ''}|set={set_id or ''}|limit={limit}|cursor={cursor or ''}"
     h = hashlib.sha256(raw.encode("utf-8")).hexdigest()
     return f"feed:v1:{h}"
 
@@ -127,6 +127,12 @@ class FeedView(APIView):
 
         topic_raw = str(getattr(request, "query_params", {}).get("topic") or "").strip().lower()
         topic = topic_raw or None
+
+        # sd_717e_topic_tags: Side-bound topic tag filter (hashtags as folders)
+        tag_raw = str(getattr(request, "query_params", {}).get("tag") or "").strip().lower()
+        if tag_raw.startswith("#"):
+            tag_raw = tag_raw[1:]
+        tag = tag_raw or None
 
         set_raw = str(getattr(request, "query_params", {}).get("set") or "").strip()
         set_id = set_raw or None
@@ -155,6 +161,7 @@ class FeedView(APIView):
                 role=role,
                 side=str(side),
                 topic=topic,
+                tag=tag,
                 set_id=set_id,
                 limit=limit,
                 cursor=cursor_raw,
@@ -174,8 +181,7 @@ class FeedView(APIView):
                 return resp
             if cache_key is not None:
                 cache_status = "miss"
-        data = list_feed(viewer_id=viewer, side=side, topic=topic, limit=limit, cursor=cursor_raw)
-
+        data = list_feed(viewer_id=viewer, side=side, topic=topic, tag=tag, set_id=set_id, limit=limit, cursor=cursor_raw)
         if cache_key is not None and cache_status == "miss":
             try:
                 cache.set(cache_key, data, timeout=cache_ttl)

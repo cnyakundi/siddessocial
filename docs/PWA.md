@@ -113,3 +113,14 @@ You’re good when all of these are true:
 - Install guidance works on both Android + iOS
 - Offline fallback works (no white screen)
 - Updates prompt appears when a new SW is waiting
+
+### Terminal copy/paste note (zsh)
+If you paste a line starting with `#` into zsh, it may run it as a command (interactive comments are often off).
+So **don’t paste comment lines**—paste only the commands.
+
+### Tunnels (HTTPS for phone testing)
+You need HTTPS on your phone for service workers (except `localhost`). Pick one:
+- **Cloudflare quick tunnel (no account):** `cloudflared tunnel --url http://localhost:3000`
+- **Localtunnel:** `npx localtunnel --port 3000`
+- **Ngrok:** install then `ngrok http 3000`
+

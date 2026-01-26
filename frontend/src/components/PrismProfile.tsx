@@ -932,7 +932,7 @@ export function PrismIdentityCard(props: {
     </div>
   );
 }
-export function CopyLinkButton({ href, label }: { href: string; label?: string }) {
+export function CopyLinkButton({ href, label, messageHref }: { href: string; label?: string; messageHref?: string | null }) {
   const [copied, setCopied] = useState(false);
   const doCopy = async () => {
     try {
@@ -944,9 +944,16 @@ export function CopyLinkButton({ href, label }: { href: string; label?: string }
     }
   };
   return (
-    <button type="button" onClick={doCopy} className="px-4 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-extrabold text-sm hover:bg-gray-200 transition-all flex items-center gap-2">
-      <Copy size={16} /> {copied ? "Copied" : label || "Copy link"}
-    </button>
+    <>
+      <button type="button" onClick={doCopy} className="px-4 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-extrabold text-sm hover:bg-gray-200 transition-all flex items-center gap-2">
+        <Copy size={16} /> {copied ? "Copied" : label || "Copy link"}
+      </button>
+      {messageHref ? (
+        <Link href={messageHref} className="px-4 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-extrabold text-sm hover:bg-gray-200 transition-all flex items-center gap-2">
+          Message
+        </Link>
+      ) : null}
+    </>
   );
 }
 export function SideActionButtons(props: {

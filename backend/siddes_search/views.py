@@ -130,6 +130,9 @@ class SearchPostsView(APIView):
         set_id = str(getattr(request, "query_params", {}).get("set") or "").strip() or None
         topic = str(getattr(request, "query_params", {}).get("topic") or "").strip() or None
 
+        # sd_717e_topic_tags: side-bound tag filter
+        tag = str(getattr(request, "query_params", {}).get("tag") or "").strip() or None
+
 
         lim_raw = str(getattr(request, "query_params", {}).get("limit") or "").strip()
         try:
@@ -151,6 +154,13 @@ class SearchPostsView(APIView):
             qs = qs.filter(set_id=set_id)
         if side == "public" and topic:
             qs = qs.filter(public_channel=topic)
+        # sd_717e_topic_tags: cheap prefilter (still enforced by extractor in feed hydration)
+        if tag:
+            tn = str(tag).strip()
+            if tn.startswith("#"): tn = tn[1:]
+            tn = tn.strip()
+            if tn:
+                qs = qs.filter(text__icontains="#" + tn)
         # sd_422_user_hide: exclude posts the viewer hid
         try:
             from siddes_safety.models import UserHiddenPost  # type: ignore
@@ -221,7 +231,7 @@ class SearchPostsView(APIView):
                     }
                 )
 
-        return Response({"ok": True, "restricted": False, "q": q, "side": side, "count": len(items), "filters": {"side": side, "set": set_id, "topic": topic}, "items": items, "serverTs": time.time()}, status=status.HTTP_200_OK)
+        return Response({"ok": True, "restricted": False, "q": q, "side": side, "count": len(items), "filters": {"side": side, "set": set_id, "topic": topic, "tag": tag}, "items": items, "serverTs": time.time()}, status=status.HTTP_200_OK)
 
 
 class UserProfileView(APIView):
@@ -287,6 +297,14 @@ class UserPublicPostsView(APIView):
             lim = 80
 
         qs = Post.objects.filter(side="public", is_hidden=False, author_id=author_token).order_by("-created_at")
+        # sd_717e_topic_tags: optional tag filter for profile public posts
+        tag = str(getattr(request, "query_params", {}).get("tag") or "").strip() or None
+        if tag:
+            tn = str(tag).strip()
+            if tn.startswith("#"): tn = tn[1:]
+            tn = tn.strip()
+            if tn:
+                qs = qs.filter(text__icontains="#" + tn)
         # sd_422_user_hide: exclude posts the viewer hid
         try:
             from siddes_safety.models import UserHiddenPost  # type: ignore

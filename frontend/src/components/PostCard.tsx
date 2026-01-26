@@ -646,6 +646,47 @@ export function PostCard({
 }) {
   const router = useRouter();
   const pathname = usePathname();
+
+  // sd_717e_topic_tags: Side-bound topic tags (#) are local filing labels, not global discovery.
+  const topicTags = useMemo(() => {
+    const arr = (post as any)?.tags;
+    if (!Array.isArray(arr)) return [] as string[];
+    const internal = new Set(["urgent"]);
+    const out: string[] = [];
+    for (const raw of arr as any[]) {
+      const t0 = String(raw || "").trim();
+      if (!t0) continue;
+      const t1 = (t0.startsWith("#") ? t0.slice(1) : t0).trim();
+      if (!t1) continue;
+      const t = t1.toLowerCase();
+      if (internal.has(t)) continue;
+      if (out.includes(t)) continue;
+      out.push(t);
+      if (out.length >= 8) break;
+    }
+    return out;
+  }, [post]);
+
+  const onTagClick = React.useCallback(
+    (e: React.MouseEvent, tag: string) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const t = String(tag || "").trim();
+      if (!t) return;
+      try {
+        // Preserve the scroll position so Back feels native.
+        saveReturnScroll(post.id);
+
+        // Side-bound topic tags are local filing labels.
+        // For now we route to the feed with a filter hint (feed may ignore it until a dedicated view exists).
+        router.push(`/siddes-feed?tag=${encodeURIComponent(t)}&side=${encodeURIComponent(side)}`);
+      } catch {
+        // ignore
+      }
+    },
+    [post.id, router, side]
+  );
+
   const isDetail = typeof pathname === "string" && pathname.startsWith("/siddes-post/");
 
   // sd_568: prefetch post routes on intent (instant tap feel)
@@ -906,6 +947,7 @@ export function PostCard({
     }
   };
 
+  // sd_736_fix_postcard_nav_share_restore: restore openPost/openProfile/openReply/doShare blocks (file was syntactically corrupted)
   const openPost = () => {
     if (isDetail) return;
     saveReturnScroll(post.id);
@@ -991,6 +1033,8 @@ export function PostCard({
       toast.error("Could not share link.");
     }
   };
+
+
 
   // Launch-safe: Echo is only offered on Public posts (prevents private re-broadcast leaks).
   const canEcho = side === "public";
@@ -1185,6 +1229,30 @@ export function PostCard({
                 </button>
               ) : null}
             </p>
+          ) : null}
+
+          {/* sd_717e_topic_tags: tag chips (subtle, folder-like) */}
+          {topicTags.length ? (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {topicTags.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={(e) => onTagClick(e, t)}
+                  className={cn(
+                    "text-[11px] px-2 py-1 rounded-full border font-extrabold tracking-wide",
+                    theme.lightBg,
+                    theme.text,
+                    theme.border,
+                    "hover:opacity-90"
+                  )}
+                  aria-label={`Filter by #${t}`}
+                  title={`Filter by #${t}`}
+                >
+                  #{t}
+                </button>
+              ))}
+            </div>
           ) : null}
 
           {isEchoPost && echoOf ? (
@@ -1516,5 +1584,3 @@ export function PostCard({
   );
 }
 
-
-// sd_555_video_duration_pill: applied

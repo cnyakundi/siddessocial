@@ -457,7 +457,6 @@ export default function UserProfilePage() {
                 sharedSets={sharedSets}
                 isOwner={isOwner}
                 viewerSidedAs={viewerSidedAs}
-                messageHref={!isOwner ? ("/siddes-inbox?to=" + encodeURIComponent(user.handle)) : null} // sd_732_profile_v2_message_href
                 actions={
                   isOwner ? (
                     <div className="flex flex-col gap-3">

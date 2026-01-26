@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronDown, MessageCircle } from "lucide-react";
 import { useSide } from "@/src/components/SideProvider";
 import { useReturnScrollRestore } from "@/src/hooks/returnScroll";
@@ -121,6 +121,24 @@ function Divider() {
 export function SideFeed() {
   const { side } = useSide();
   const router = useRouter();
+  const sp = useSearchParams();
+  const activeTagRaw = (sp.get("tag") || "").trim();
+  const activeTagLabel = activeTagRaw ? activeTagRaw.replace(/^#/, "").trim() : "";
+  const activeTag = activeTagLabel ? activeTagLabel.toLowerCase() : null;
+
+  const clearTagFilter = useCallback(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const u = new URL(window.location.href);
+      u.searchParams.delete("tag");
+      u.searchParams.set("r", String(Date.now()));
+      router.replace(u.pathname + u.search);
+    } catch {
+      router.replace("/siddes-feed?r=" + String(Date.now()));
+    }
+  }, [router]);
+
+  // sd_717e_topic_tags: keep feed fetch/caching keyed by tag filter
   const theme = SIDE_THEMES[side];
 
   // sd_573: restore scroll when returning from post detail.
@@ -290,6 +308,7 @@ export function SideFeed() {
       const topic = side === "public" && FLAGS.publicChannels && publicChannel !== "all" ? publicChannel : null;
       const page = await provider.listPage(side, {
         topic,
+        tag: activeTag,
         set: side !== "public" ? (activeSet || null) : null,
         limit: PAGE_LIMIT,
         cursor: nextCursor,
@@ -358,6 +377,7 @@ export function SideFeed() {
           viewerId: String(viewerAtStart),
           side,
           topic,
+          tag: activeTag,
           setId,
           cursor: null,
           limit: PAGE_LIMIT,
@@ -379,7 +399,7 @@ export function SideFeed() {
       }
 
       try {
-        const page = await provider.listPage(side, { topic, set: setId, limit: PAGE_LIMIT, cursor: null });
+        const page = await provider.listPage(side, { topic, tag: activeTag, set: setId, limit: PAGE_LIMIT, cursor: null });
         if (!mounted) return;
 
         setRawPosts(page.items || []);
@@ -802,6 +822,20 @@ export function SideFeed() {
           <div className="mb-2 flex items-center gap-2 text-[11px] text-gray-400" data-testid="feed-refreshing">
             <span className="inline-block h-2 w-2 rounded-full bg-gray-300 animate-pulse" aria-hidden="true" />
             <span>Refreshing…</span>
+          </div>
+        ) : null}
+        {/* sd_717e_topic_tags: Side-bound tag filter UI */}
+        {activeTag ? (
+          <div className={cn("mb-3 px-3 py-2 rounded-2xl border flex items-center justify-between", theme.lightBg, theme.border, theme.text)}>
+            <div className="text-xs font-extrabold truncate">Filtered: <span className="font-black">#{activeTagLabel}</span></div>
+            <button
+              type="button"
+              onClick={clearTagFilter}
+              className="ml-3 px-3 py-1.5 rounded-full bg-white/70 hover:bg-white border border-gray-200 text-xs font-extrabold text-gray-900"
+              aria-label="Clear tag filter"
+            >
+              Clear
+            </button>
           </div>
         ) : null}
         {restricted ? (

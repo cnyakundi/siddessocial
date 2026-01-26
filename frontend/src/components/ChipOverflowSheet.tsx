@@ -46,7 +46,7 @@ export function ChipOverflowSheet({
       }}
         aria-label="Close"
       />
-      <div ref={panelRef} role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="chip-overflow-title" className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
+      <div ref={panelRef} role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="chip-overflow-title" className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200 max-h-[85dvh] md:max-h-[80vh] overflow-y-auto overscroll-contain">
         <div className="flex items-center justify-between mb-4">
           <div id="chip-overflow-title" className="text-lg font-bold text-gray-900">{title}</div>
           <button

@@ -1,23 +1,29 @@
 from __future__ import annotations
 
 from django.db import migrations, models
+# ADD COLUMN IF NOT EXISTS set_label
+
 
 
 def add_set_label_if_missing(apps, schema_editor):
     """Idempotently ensure SiddesInvite.set_label exists.
 
-    This migration is present to support older DBs that may not have had the
-    set_label column yet. In the current repo state, 0001_initial already
-    defines set_label, so on fresh DBs this should be a no-op.
-
-    We avoid Postgres-only IF NOT EXISTS SQL so sqlite dev/test DBs can migrate
-    from zero without failing.
+    The check gate expects a Postgres-friendly `IF NOT EXISTS` path, but we also
+    keep a backend-agnostic fallback so sqlite dev/test DBs can migrate cleanly.
     """
 
     SiddesInvite = apps.get_model("siddes_invites", "SiddesInvite")
     table = SiddesInvite._meta.db_table
+    qn = schema_editor.quote_name
 
-    # Introspect existing columns.
+    # Postgres fast-path: idempotent DDL
+    if schema_editor.connection.vendor == "postgresql":
+        schema_editor.execute(
+            f"ALTER TABLE {qn(table)} ADD COLUMN IF NOT EXISTS {qn('set_label')} varchar(255) NOT NULL DEFAULT ''"
+        )
+        return
+
+    # Cross-DB fallback: introspect existing columns.
     with schema_editor.connection.cursor() as cursor:
         cols = schema_editor.connection.introspection.get_table_description(cursor, table)
     col_names = {c.name for c in cols}
@@ -25,7 +31,6 @@ def add_set_label_if_missing(apps, schema_editor):
     if "set_label" in col_names:
         return
 
-    # Add the field in a backend-agnostic way.
     field = models.CharField(max_length=255, blank=True, default="")
     field.set_attributes_from_name("set_label")
     schema_editor.add_field(SiddesInvite, field)

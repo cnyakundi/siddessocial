@@ -64,11 +64,11 @@ export function FeedComposerRow(props: {
   return (
     <div className="px-4 pt-3 pb-3 bg-white border-b border-gray-50 lg:px-0 lg:pt-6 lg:pb-4">
       <div className="max-w-[760px] mx-auto">
-        <div className="flex items-end gap-2">
+        <div className="flex items-start gap-4">
           {/* Your Prism avatar (per Side) */}
           <div
             className={cn(
-              "w-10 h-10 rounded-full overflow-hidden border-2 flex items-center justify-center text-[10px] font-black shrink-0 select-none",
+              "w-12 h-12 rounded-full overflow-hidden border-2 flex items-center justify-center text-[11px] font-black shrink-0 select-none",
               theme.border,
               meImg ? "bg-gray-100" : cn(theme.lightBg, theme.text)
             )}

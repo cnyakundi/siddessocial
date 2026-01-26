@@ -35,6 +35,27 @@ chmod +x scripts/dev/start_full_stack_docker.sh
 
 The script auto-picks ports if `3000` / `8000` are busy and prints URLs.
 
+
+## PWA phone install test (HTTPS) — sd_734_pwa_phone_test
+To make Siddes feel like a real mobile app, you need to open it on your phone **over HTTPS** and install it from the home screen.
+
+Beginner-safe helper:
+
+```bash
+cd /Users/cn/Downloads/sidesroot
+chmod +x scripts/dev/pwa_phone_test.sh
+PORT=3000 ./scripts/dev/pwa_phone_test.sh
+```
+
+Then open the printed **https://** URL on your phone:
+- **iPhone/iPad:** Safari → Share → Add to Home Screen
+- **Android:** Chrome → Install app
+
+Notes:
+- This runs a **production** Next.js server locally (service worker + install/update banners are production-only).
+- `npx localtunnel` downloads on first run and needs internet access.
+
+
 ## Inbox: what matters architecturally
 - **Sides are modes** (Public/Friends/Close/Work). Context is always visible in the UI.
 - **Default-safe backend**: if viewer cannot be confidently authorized → `restricted: true` and **no content**.

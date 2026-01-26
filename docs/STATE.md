@@ -1,5 +1,5 @@
 # Siddes — STATE (single source of “where we are”)
-**Updated:** 2026-01-19
+**Updated:** 2026-01-25
 
 ## Current milestone
 - **sd_146:** Posts+Replies DB scaffold (models+migrations+SD_POST_STORE=memory|db|auto)
@@ -73,6 +73,14 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 
 ## NEXT overlay
 - Next: TBD
+
+- **sd_736_fix_postcard_nav_share_restore:** Restore PostCard navigation/share helpers after syntax corruption (openPost/openProfile/doShare)
+
+- **sd_734_fix_postcard_share_block_syntax:** Fix PostCard share block syntax (restore text: field)
+
+- **sd_733_fix_postcard_saveReturnScroll_call:** Fix PostCard saveReturnScroll() call signature (no more (path, y) args)
+
+- **sd_731_fix_sets_page_syntax:** Fix Sets detail page JSX syntax (nested conditional rendering)
 
 - **sd_717_profile_v2_shell_header_tabs:** Profile V2 hero header + content tabs shell (Posts tab unchanged; Media/Sets placeholders)
 
