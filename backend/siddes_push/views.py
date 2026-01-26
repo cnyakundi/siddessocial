@@ -275,3 +275,38 @@ class PushDebugSendView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+# sd_743_push_prefs
+from .prefs import normalize_prefs
+from .models import PushPreferences
+
+
+class PushPrefsView(APIView):
+    permission_classes: list = []
+
+    def get(self, request):
+        has_viewer, viewer, role = _viewer_ctx(request)
+        if not has_viewer:
+            return Response({"ok": True, "restricted": True, "prefs": None}, status=status.HTTP_200_OK)
+
+        rec = PushPreferences.objects.filter(viewer_id=viewer).values("prefs").first()
+        prefs = normalize_prefs((rec or {}).get("prefs") or {}) if rec else normalize_prefs({})
+        return Response({"ok": True, "restricted": False, "prefs": prefs}, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        has_viewer, viewer, role = _viewer_ctx(request)
+        if not has_viewer:
+            return Response({"ok": True, "restricted": True, "prefs": None}, status=status.HTTP_200_OK)
+
+        body = _json_body(request)
+        raw = body.get("prefs") if isinstance(body, dict) else None
+        raw = raw if isinstance(raw, dict) else {}
+        prefs = normalize_prefs(raw)
+
+        now = float(time.time())
+        PushPreferences.objects.update_or_create(
+            viewer_id=viewer,
+            defaults={"prefs": prefs, "updated_at": now},
+        )
+        return Response({"ok": True, "restricted": False, "prefs": prefs}, status=status.HTTP_200_OK)
+

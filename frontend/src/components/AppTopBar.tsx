@@ -113,7 +113,7 @@ if (pathname.startsWith("/siddes-profile")) return "Me";
   const canPickSet = showSetScope && side !== "public";
 
   return (
-    <div className="sticky top-0 z-[90] bg-white/90 backdrop-blur border-b border-gray-50 pt-[env(safe-area-inset-top)] relative">
+    <div className="sticky top-0 z-[90] bg-white border-b border-gray-50 pt-[env(safe-area-inset-top)] relative">
       <div className={cn("absolute left-0 right-0 bottom-0 h-[3px]", theme.primaryBg)} aria-hidden />
       <div className="max-w-[430px] mx-auto px-4 h-14 flex items-center justify-between gap-3">
         {/* Left: Brand + Side */}

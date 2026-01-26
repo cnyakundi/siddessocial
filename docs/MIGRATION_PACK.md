@@ -45,3 +45,17 @@ Smoke:
 1) Enable + Subscribe on `/siddes-notifications`
 2) Trigger a notification (like/reply/mention on a post)
 3) You should receive a push
+
+## Push preferences (sd_743_push_prefs)
+
+Siddes supports per-viewer push preferences:
+- Master enable/disable
+- Per-notification-type toggles (mention/reply/like/echo/other)
+- Per-Side toggles (public/friends/close/work)
+
+Where:
+- UI: `/siddes-notifications` (Push preferences card)
+- API: `/api/push/prefs` (GET/POST)
+
+Push sending respects preferences via a best-effort gate inside `siddes_notifications.service.notify()`.
+

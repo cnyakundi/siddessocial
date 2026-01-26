@@ -311,16 +311,10 @@ function MediaGrid({ items }: { items: MediaItem[] }) {
             aria-label="Open media"
           >
             {shown[0].kind === 'video' ? (
-              <div className="relative w-full h-[min(520px,65vh)]">
-                <video
-                  className="absolute inset-0 w-full h-full object-cover"
-                  src={shown[0].url}
-                  muted
-                  playsInline
-                  preload="metadata"
-                />
+              <div className="relative w-full h-[min(520px,65vh)] bg-black">
+                <div className="absolute inset-0 bg-black" aria-hidden />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-14 h-14 rounded-full bg-black/35 backdrop-blur flex items-center justify-center">
+                  <div className="w-14 h-14 rounded-full bg-black/35 flex items-center justify-center">
                     <Play size={26} className="text-white" />
                   </div>
                 </div>
@@ -357,16 +351,10 @@ function MediaGrid({ items }: { items: MediaItem[] }) {
                 aria-label={m.kind === 'video' ? 'Open video' : 'Open image'}
               >
                 {m.kind === 'video' ? (
-                  <div className="relative w-full h-64">
-                    <video
-                      className="w-full h-full object-cover"
-                      src={m.url}
-                      muted
-                      playsInline
-                      preload="metadata"
-                    />
+                  <div className="relative w-full h-64 bg-black">
+                    <div className="w-full h-full bg-black" aria-hidden />
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-12 h-12 rounded-full bg-black/35 backdrop-blur flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-full bg-black/35 flex items-center justify-center">
                         <Play size={22} className="text-white" />
                       </div>
                     </div>
@@ -431,15 +419,9 @@ function MediaGrid({ items }: { items: MediaItem[] }) {
               >
                 {m.kind === 'video' ? (
                   <>
-                    <video
-                      className="absolute inset-0 w-full h-full object-cover"
-                      src={m.url}
-                      muted
-                      playsInline
-                      preload="metadata"
-                    />
+                    <div className="absolute inset-0 bg-black" aria-hidden />
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-12 h-12 rounded-full bg-black/35 backdrop-blur flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-full bg-black/35 flex items-center justify-center">
                         <Play size={22} className="text-white" />
                       </div>
                     </div>
@@ -1057,8 +1039,7 @@ export function PostCard({
       <div className={cn("flex justify-between items-start", isRow ? "mb-2" : "mb-4")}>
         <div
           onMouseEnter={prefetchPost}
-          onTouchStart={prefetchPost}
-          className="flex gap-4 lg:gap-6 text-left"
+className="flex gap-4 lg:gap-6 text-left"
         >
           <button
             type="button"
@@ -1159,8 +1140,7 @@ export function PostCard({
           role="button"
           tabIndex={0}
           onMouseEnter={prefetchPost}
-          onTouchStart={prefetchPost}
-          onClick={
+onClick={
           (e) => {
             // sd_483_action_event_bleed: child actions may call preventDefault/stopPropagation
             if (e.defaultPrevented) return;
