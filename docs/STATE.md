@@ -150,3 +150,6 @@ These are the overlays applied/created during the current session (evidence: ter
 
 ## Server safety (Sets)
 - Set members are normalized to @handles, deduped, and capped server-side.
+
+## PWA (mobile app feel)
+- **sd_741_push_backend_db:** Push subscriptions stored in backend DB + endpoints + UI wiring

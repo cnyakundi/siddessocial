@@ -14,7 +14,7 @@ import {
   RefreshCw,
   Type,
   Users,
-  Lock,
+  Heart,
   Briefcase,
   X,
   type LucideIcon,
@@ -52,7 +52,7 @@ const STUDIO_TOOLS: Record<SideId, StudioTool[]> = {
 
 function SideIcon({ side, size = 14 }: { side: SideId; size?: number }) {
   const icon =
-    side === "public" ? Globe : side === "friends" ? Users : side === "close" ? Lock : Briefcase;
+    side === "public" ? Globe : side === "friends" ? Users : side === "close" ? Heart : Briefcase;
   const Icon = icon;
   return <Icon size={size} />;
 }

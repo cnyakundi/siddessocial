@@ -220,10 +220,13 @@ class InMemoryInboxStore:
 
         v = str(viewer_id or "").strip()
         tok = str(other_token or "").strip().lower()
-        if not v or not tok:
+        uid = str(getattr(participant, "user_id", "") or "").strip()
+        key_tok = str(uid or tok).strip().lower()
+        if not v or not key_tok:
             raise KeyError("restricted")
 
-        key = (v, tok)
+        # sd_741: Prefer stable user_id for idempotency when available.
+        key = (v, key_tok)
         now_ms = _now_ms()
 
         existing = self._dm_index.get(key)

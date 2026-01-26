@@ -124,6 +124,7 @@ INSTALLED_APPS = [
     "siddes_feed.apps.SiddesFeedConfig",
     "siddes_slate.apps.SiddesSlateConfig",
     "siddes_notifications.apps.SiddesNotificationsConfig",
+    "siddes_push.apps.SiddesPushConfig",  # sd_741_push_backend_db
     "siddes_safety.apps.SiddesSafetyConfig",
     "siddes_ml.apps.SiddesMlConfig",
     "siddes_rituals.apps.SiddesRitualsConfig",

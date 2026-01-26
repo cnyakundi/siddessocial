@@ -17,3 +17,15 @@ without being tied to a single product feature.
 - Scripts/checks additions
 - One-time codemods
 - Deprecation notes and cleanup guidance
+
+## Push backend + subscription storage — sd_741_push_backend_db
+Adds backend DB storage + endpoints for PWA push subscriptions, plus frontend proxy routes + UI.
+
+Apply:
+- Frontend: NEXT_PUBLIC_VAPID_PUBLIC_KEY
+- Backend: SIDDES_VAPID_PRIVATE_KEY, SIDDES_VAPID_SUBJECT
+
+Smoke:
+1) Open /siddes-notifications
+2) Enable + Subscribe
+3) In dev, tap Test (calls /api/push/debug/send)

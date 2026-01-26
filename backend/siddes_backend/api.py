@@ -26,6 +26,7 @@ urlpatterns = [
     path("health", readyz),
     path("inbox/", include("siddes_inbox.urls")),
     path("auth/", include("siddes_auth.urls")),
+    path("push/", include("siddes_push.urls")),  # sd_741_push_backend_db
     path("contacts/", include("siddes_contacts.urls")),
     path("", include("siddes_sets.urls")),
     path("", include("siddes_invites.urls")),

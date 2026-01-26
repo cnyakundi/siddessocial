@@ -1475,7 +1475,7 @@ const quickTools = useMemo<QuickTool[]>(() => {
                   onKeyUp={(e) => setCaretPos((e.currentTarget as HTMLTextAreaElement).selectionStart ?? 0)}
                   onClick={(e) => setCaretPos((e.currentTarget as HTMLTextAreaElement).selectionStart ?? 0)}
                   onSelect={(e) => setCaretPos((e.currentTarget as HTMLTextAreaElement).selectionStart ?? 0)}
-                  placeholder={isPulse ? (`Quick check‑in to ${SIDES[side].label}…`) : (side === "public" ? "Share to Public…" : side === "friends" ? "Say something to Friends…" : side === "close" ? "Talk to Close…" : "Note for Work…")}
+                  placeholder={isPulse ? (`Quick check‑in to ${SIDES[side].label}…`) : (side === "public" ? "Share to Public…" : side === "friends" ? "Say something to Friends…" : side === "close" ? "Share with Inner Circle…" : "Note for Work…")}
                   className="w-full h-40 resize-none outline-none text-xl text-gray-900 placeholder:text-gray-300 bg-transparent leading-relaxed"
                   autoFocus
                 />

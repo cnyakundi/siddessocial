@@ -339,10 +339,33 @@ class DbInboxStore(InboxStore):
         if not tok:
             raise KeyError("restricted")
 
+        uid = str(getattr(participant, "user_id", "") or "").strip()
+
         now = timezone.now()
         now_ms = _dt_to_ms(now)
 
-        t = InboxThread.objects.filter(owner_viewer_id=str(viewer_id), participant_handle=str(tok)).first()
+        # sd_741: Prefer stable participant_user_id for idempotency when available.
+        t = None
+        if uid:
+            t = InboxThread.objects.filter(owner_viewer_id=str(viewer_id), participant_user_id=str(uid)).first()
+        if t is None:
+            t = InboxThread.objects.filter(owner_viewer_id=str(viewer_id), participant_handle=str(tok)).first()
+
+        # sd_741: If we found an older thread by handle, migrate it to stable user_id.
+        if t is not None and uid:
+            changed_fields: list[str] = []
+            if not str(getattr(t, "participant_user_id", "") or "").strip():
+                t.participant_user_id = str(uid)
+                changed_fields.append("participant_user_id")
+            if str(getattr(t, "participant_handle", "") or "") != str(tok):
+                t.participant_handle = str(tok)
+                changed_fields.append("participant_handle")
+            if changed_fields:
+                try:
+                    t.save(update_fields=changed_fields)
+                except Exception:
+                    pass
+
         if t is not None:
             thread = self._thread_record(viewer_id=viewer_id, t=t, now_ms=now_ms, unread=0)
             meta = ThreadMetaRecord(locked_side=str(t.locked_side), updated_at=_dt_to_ms(t.updated_at))

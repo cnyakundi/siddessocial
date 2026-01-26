@@ -304,6 +304,8 @@ export default function UserProfilePage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           targetHandle: user.handle,
+          // sd_741: include targetUserId so DM threads remain stable across handle changes
+          targetUserId: (user as any)?.id,
           lockedSide: locked,
           displayName,
         }),

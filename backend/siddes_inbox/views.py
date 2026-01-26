@@ -628,6 +628,12 @@ class InboxThreadsView(APIView):
         if not tok:
             return Response({"ok": False, "error": "invalid_target"}, status=status.HTTP_400_BAD_REQUEST)
 
+        # sd_741: Use targetUserId when available so DM threads stay stable across handle changes.
+        raw_uid = body.get("targetUserId")
+        uid = str(raw_uid).strip() if raw_uid is not None else ""
+        if uid.lower() in ("none", "null", "undefined"):
+            uid = ""
+
         # sd_398: Blocks must hard-stop inbox access.
         if viewer and is_blocked_pair(str(viewer), str(tok)):
             return Response({"ok": True, "restricted": True, "thread": None, "meta": None}, status=status.HTTP_200_OK)
@@ -651,6 +657,7 @@ class InboxThreadsView(APIView):
             display_name=display_name,
             initials=_initials(display_name),
             avatar_seed=tok,
+            user_id=(uid or None),
             handle=tok,
         )
 

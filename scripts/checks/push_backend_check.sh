@@ -1,34 +1,28 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "== Check: Push backend stubs =="
+echo "== Check: Push backend wiring (sd_741_push_backend_db) =="
 
-REQ=(
-  "backend/siddes_push/models_stub.py"
-  "backend/siddes_push/store.py"
-  "backend/siddes_push/payloads.py"
-  "backend/siddes_push/api_stub.py"
-  "docs/PUSH_BACKEND.md"
-  "scripts/dev/push_store_demo.py"
+req=(
+  backend/siddes_push/apps.py
+  backend/siddes_push/models.py
+  backend/siddes_push/views.py
+  backend/siddes_push/urls.py
+  backend/siddes_push/migrations/0001_initial.py
+  frontend/src/app/api/push/status/route.ts
+  frontend/src/app/api/push/subscribe/route.ts
+  frontend/src/app/api/push/unsubscribe/route.ts
+  frontend/src/app/api/push/debug/send/route.ts
+  frontend/src/components/PushNotificationsCard.tsx
 )
 
-missing=0
-for f in "${REQ[@]}"; do
-  if [[ -f "$f" ]]; then
-    echo "✅ $f"
-  else
-    echo "❌ Missing: $f"
-    missing=1
-  fi
+for f in "${req[@]}"; do
+  [[ -f "$f" ]] || { echo "❌ Missing: $f"; exit 1; }
 done
 
-if [[ "$missing" -ne 0 ]]; then
-  exit 1
-fi
+grep -q "siddes_push.apps.SiddesPushConfig" backend/siddes_backend/settings.py || { echo "❌ settings.py does not include siddes_push"; exit 1; }
+grep -q 'path("push/", include("siddes_push.urls"))' backend/siddes_backend/api.py || { echo "❌ api.py does not route /api/push/"; exit 1; }
 
-python3 -m py_compile backend/siddes_push/models_stub.py backend/siddes_push/store.py backend/siddes_push/payloads.py backend/siddes_push/api_stub.py
+grep -q "/api/push/subscribe" frontend/src/components/PushNotificationsCard.tsx || { echo "❌ PushNotificationsCard does not call /api/push/subscribe"; exit 1; }
 
-# Ensure imports work regardless of whether `backend` is a package
-PYTHONPATH="backend" python3 scripts/dev/push_store_demo.py --selftest >/dev/null
-
-echo "✅ push backend selftest passed"
+echo "✅ push backend wiring check passed"
