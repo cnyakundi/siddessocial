@@ -11,9 +11,9 @@ We keep a concrete store object here so the router wiring is real and ready.
 
 from __future__ import annotations
 
-from typing import Optional, Tuple, List
+from typing import List, Optional, Tuple
 
-from .models_stub import SideId, ThreadRecord, ThreadMetaRecord, MessageRecord
+from .models_stub import MessageRecord, ParticipantRecord, SideId, ThreadMetaRecord, ThreadRecord
 
 
 class DevNullInboxStore:
@@ -35,6 +35,17 @@ class DevNullInboxStore:
         limit: int = 30,
         cursor: Optional[str] = None,
     ) -> Tuple[ThreadRecord, ThreadMetaRecord, List[MessageRecord], bool, Optional[str]]:
+        raise NotImplementedError("Inbox store not implemented yet (sd_109+)")
+
+    def ensure_thread(
+        self,
+        *,
+        viewer_id: str,
+        other_token: str,
+        locked_side: SideId,
+        title: str,
+        participant: ParticipantRecord,
+    ) -> Tuple[ThreadRecord, ThreadMetaRecord]:
         raise NotImplementedError("Inbox store not implemented yet (sd_109+)")
 
     def send_message(

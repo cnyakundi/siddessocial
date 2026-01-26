@@ -243,3 +243,42 @@ export async function GET(req: Request) {
   for (const c of setCookies) r.headers.append("set-cookie", c);
   return r;
 }
+
+export async function POST(req: Request) {
+  const isProd = process.env.NODE_ENV === "production";
+  const { req2, viewerId } = withDevViewer(req);
+
+  // Default-safe: in dev, if we don't know who the viewer is, return restricted.
+  if (!isProd && !viewerId) {
+    return sd_558b_json({ ok: true, restricted: true, thread: null, meta: null }, { status: 200 });
+  }
+
+  const body = (await req.json().catch(() => ({}))) as any;
+
+  const out = await proxyJson(req2, "/api/inbox/threads", "POST", body);
+  if (out instanceof NextResponse) return out;
+
+  const { res, data, setCookies } = out;
+
+  // Ensure participant shape for the returned thread.
+  if (data && typeof data === "object" && (data as any).thread && typeof (data as any).thread === "object") {
+    (data as any).thread = fillParticipant((data as any).thread);
+  }
+
+  // Defense-in-depth: enforce deterministic visibility.
+  try {
+    const v = viewerId || "anon";
+    const lockedSide = String((data as any)?.thread?.lockedSide || (data as any)?.thread?.side || "public");
+    if ((data as any)?.restricted !== true && (data as any)?.thread && !viewerAllowed(v, lockedSide)) {
+      (data as any).restricted = true;
+      (data as any).thread = null;
+      (data as any).meta = null;
+    }
+  } catch {
+    // ignore
+  }
+
+  const r = sd_558b_json(data, { status: res.status });
+  for (const c of setCookies) r.headers.append("set-cookie", c);
+  return r;
+}

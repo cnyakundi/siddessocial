@@ -243,3 +243,4 @@ These are the overlays applied/created during the current session (evidence: ter
 - If your shell prompt shows you are inside `frontend/`, then `cd frontend` will fail; run `npm ...` directly.
 - When Django asks for a one-off default during migrations, it expects valid Python: use `'legacy'` not `legacy`.
 | 2026-01-24 10:31:56 | sd_540_graph_docs_and_safety_checks_v0.1.0.zip | Docs: add GRAPH.md (directional Side graph); Checks: guard against legacy follow + Public broadcasts UI |
+| 2026-01-26 03:51:09 | sd_736_profile_message_bootstrap_overlay.zip | Profile V2 now supports **1-tap messaging**. The “Message” button ensures a DM thread exists via `POST /api/inbox/threads` and navigates str |

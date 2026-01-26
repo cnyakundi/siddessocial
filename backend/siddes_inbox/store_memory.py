@@ -82,6 +82,8 @@ class InMemoryInboxStore:
         self._threads: Dict[str, _ThreadCore] = {}
         self._messages: Dict[str, List[MessageRecord]] = {}
         self._unread: DefaultDict[str, Dict[str, int]] = defaultdict(dict)
+        # Idempotent DM mapping: (viewer_id, other_token) -> thread_id
+        self._dm_index: Dict[Tuple[str, str], str] = {}
 
     # --- helpers -----------------------------------------------------
 
@@ -200,6 +202,55 @@ class InMemoryInboxStore:
         thread = self._thread_record(viewer_id=viewer_id, thread_id=thread_id, now_ms=now_ms)
         meta = ThreadMetaRecord(locked_side=self._threads[thread_id].locked_side, updated_at=self._threads[thread_id].updated_at)
         return thread, meta, page, has_more, next_cursor
+
+    def ensure_thread(
+        self,
+        *,
+        viewer_id: str,
+        other_token: str,
+        locked_side: SideId,
+        title: str,
+        participant: ParticipantRecord,
+    ) -> Tuple[ThreadRecord, ThreadMetaRecord]:
+        """Ensure a DM-style thread exists (dev memory store).
+
+        Idempotent per (viewer_id, other_token). If an existing thread is found,
+        we return it without changing locked_side.
+        """
+
+        v = str(viewer_id or "").strip()
+        tok = str(other_token or "").strip().lower()
+        if not v or not tok:
+            raise KeyError("restricted")
+
+        key = (v, tok)
+        now_ms = _now_ms()
+
+        existing = self._dm_index.get(key)
+        if existing and existing in self._threads:
+            core = self._threads[existing]
+            thread = self._thread_record(viewer_id=v, thread_id=existing, now_ms=now_ms)
+            meta = ThreadMetaRecord(locked_side=str(core.locked_side), updated_at=int(core.updated_at))
+            return thread, meta
+
+        tid = f"t_dm_{uuid.uuid4().hex[:10]}"
+        p = participant
+        t = str(title or "").strip() or str(p.display_name or "").strip() or "Message"
+
+        self._threads[tid] = _ThreadCore(
+            id=tid,
+            title=t,
+            participant=p,
+            locked_side=locked_side,
+            updated_at=now_ms,
+        )
+        self._messages[tid] = []
+        self._dm_index[key] = tid
+
+        thread = self._thread_record(viewer_id=v, thread_id=tid, now_ms=now_ms)
+        meta = ThreadMetaRecord(locked_side=str(locked_side), updated_at=int(now_ms))
+        return thread, meta
+
 
     def send_message(
         self,
@@ -408,4 +459,3 @@ class InMemoryInboxStore:
 
         meta = ThreadMetaRecord(locked_side=core.locked_side, updated_at=core.updated_at)
         return msg, meta
-

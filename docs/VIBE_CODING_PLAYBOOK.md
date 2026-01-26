@@ -53,6 +53,68 @@ You vibe-code features, but the project stays:
 
 ---
 
+
+## Test Ladder / Tooling
+
+You don’t want “all tests in the world” every time. You want a ladder that keeps you fast *and* safe.
+
+### Tools in this repo (today)
+
+**L0 — Preflight (always)**
+- `./verify_overlays.sh`  
+  Ensures overlay tooling is sane and required docs/scripts exist.
+
+**L1 — Gates (always)**
+- `bash scripts/run_tests.sh --smoke`  
+  Smoke mode = **verify_overlays + gates** (fast truth).
+- Under the hood, this runs:
+  - Frontend: `npm run typecheck` + `npm run build`
+  - Backend: `python manage.py check` (via docker compose)
+  - P0 sanity: `scripts/dev/p0_gate.sh` (critical Next API routes, proxy invariants, migrations check, optional HTTP smoke)
+
+**L2 — Full harness (often / before push)**
+- `bash scripts/run_tests.sh`  *(default = full)*  
+  Runs:
+  - `./verify_overlays.sh`
+  - every `scripts/checks/*.sh` (strict)
+  - frontend lint/typecheck/test/build
+  - backend compileall + Django check/tests (best-effort depending on env)
+
+**L4 — E2E (already wired)**
+- Playwright:
+  - `cd frontend && npm run e2e`
+  - `cd frontend && npm run e2e:ui` (debug UI)
+
+### Tools we add as we mature (planned)
+
+**Frontend unit tests: Vitest (Vite-powered)**
+- When added, swap `frontend/package.json` `"test"` to run Vitest.
+- Keep a tiny “smoke” suite that stays fast (runs in PRs).
+- Run full unit suite before releases.
+
+**Backend unit tests: Django tests today → pytest later (optional)**
+- Today: `python manage.py test` (or via docker compose).
+- If the suite grows, consider `pytest + pytest-django`.
+
+### When to run what (practical defaults)
+
+**Every change-set (always):**
+```bash
+./verify_overlays.sh
+bash scripts/run_tests.sh --smoke
+```
+
+**When you touch tricky logic or shared UI primitives (often):**
+```bash
+bash scripts/run_tests.sh
+```
+
+**Before release (must):**
+- `bash scripts/run_tests.sh`
+- Playwright golden flows + quick manual 2–5 min “golden run”
+
+Reference: `docs/TESTING.md` is the longer, evolving testing reference. Keep this playbook section short and opinionated.
+
 ## Siddes-specific ship contracts
 - Side truth always visible
 - Widening visibility is hard (explicit confirm)

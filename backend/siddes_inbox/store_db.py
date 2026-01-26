@@ -72,8 +72,19 @@ class DbInboxStore(InboxStore):
         return resolve_viewer_role(viewer_id) or "anon"
 
     def _participant(self, t: InboxThread) -> ParticipantRecord:
+        name = (t.participant_display_name or t.title or "").strip()
+        # Compute safe initials (1-2 chars).
+        parts = [p for p in name.replace("@", "").split() if p]
+        initials = ""
+        for p in parts:
+            initials += p[0].upper()
+            if len(initials) >= 2:
+                break
+        if not initials:
+            initials = "?"
         return ParticipantRecord(
-            display_name=t.participant_display_name or "",
+            display_name=t.participant_display_name or name or "",
+            initials=initials,
             avatar_seed=t.participant_avatar_seed or t.id,
             user_id=t.participant_user_id,
             handle=t.participant_handle,
@@ -305,6 +316,67 @@ class DbInboxStore(InboxStore):
 
         return thread, meta, messages, bool(has_more), next_cursor
 
+    def ensure_thread(
+        self,
+        *,
+        viewer_id: str,
+        other_token: str,
+        locked_side: SideId,
+        title: str,
+        participant: ParticipantRecord,
+    ) -> Tuple[ThreadRecord, ThreadMetaRecord]:
+        """Ensure a DM-style thread exists for (viewer_id, other_token).
+
+        Idempotent per (owner_viewer_id, participant_handle). If an existing thread
+        is found, we return it without changing locked_side.
+        """
+
+        role = self._viewer_role(viewer_id)
+        if role != "me":
+            raise KeyError("restricted")
+
+        tok = str(other_token or "").strip()
+        if not tok:
+            raise KeyError("restricted")
+
+        now = timezone.now()
+        now_ms = _dt_to_ms(now)
+
+        t = InboxThread.objects.filter(owner_viewer_id=str(viewer_id), participant_handle=str(tok)).first()
+        if t is not None:
+            thread = self._thread_record(viewer_id=viewer_id, t=t, now_ms=now_ms, unread=0)
+            meta = ThreadMetaRecord(locked_side=str(t.locked_side), updated_at=_dt_to_ms(t.updated_at))
+            return thread, meta
+
+        p = participant
+        disp = str(p.display_name or "").strip() or str(title or "").strip() or "Message"
+        initials = str(getattr(p, "initials", "") or "").strip()
+        if not initials:
+            parts = [x for x in disp.replace("@", "").split() if x]
+            initials = "".join([x[0].upper() for x in parts])[:2] or "?"
+
+        tid = f"t_{uuid4().hex[:12]}"
+        t = InboxThread.objects.create(
+            id=tid,
+            owner_viewer_id=str(viewer_id or ""),
+            locked_side=str(locked_side),
+            title=str(title or disp),
+            participant_display_name=str(disp),
+            participant_initials=str(initials),
+            participant_avatar_seed=p.avatar_seed or tid,
+            participant_user_id=p.user_id,
+            participant_handle=str(tok),
+            last_text="",
+            last_from_id="",
+        )
+
+        thread = self._thread_record(viewer_id=viewer_id, t=t, now_ms=now_ms, unread=0)
+        meta = ThreadMetaRecord(locked_side=str(t.locked_side), updated_at=_dt_to_ms(t.updated_at))
+        return thread, meta
+
+
+
+
     def send_message(
         self,
         *,
@@ -412,7 +484,7 @@ class DbInboxStore(InboxStore):
 
     # --- dual-write helpers ----------------------------------------
 
-    def ensure_thread(
+    def shadow_upsert_thread(
         self,
         *,
         viewer_id: str,

@@ -87,6 +87,12 @@ def _restricted_send() -> Dict[str, Any]:
 def _restricted_meta() -> Dict[str, Any]:
     return {"ok": True, "restricted": True, "meta": None}
 
+def _restricted_ensure_thread() -> Dict[str, Any]:
+    return {"ok": True, "restricted": True, "thread": None, "meta": None}
+
+
+
+
 
 def list_threads(
     store: InboxStore,
@@ -118,6 +124,37 @@ def list_threads(
         "hasMore": bool(has_more),
         "nextCursor": next_cursor,
     }
+
+
+def ensure_thread(
+    store: InboxStore,
+    *,
+    viewer_id: Optional[str],
+    other_token: str,
+    locked_side: SideId,
+    title: str,
+    participant: ParticipantRecord,
+) -> Dict[str, Any]:
+    """POST /api/inbox/threads (ensure DM thread).
+
+    Contract: if viewer is missing/unauthorized, return restricted with no content.
+    """
+
+    if not viewer_id:
+        return _restricted_ensure_thread()
+
+    try:
+        thread, meta = store.ensure_thread(
+            viewer_id=str(viewer_id),
+            other_token=str(other_token),
+            locked_side=locked_side,
+            title=str(title or ""),
+            participant=participant,
+        )
+    except Exception:
+        return _restricted_ensure_thread()
+
+    return {"ok": True, "restricted": False, "thread": _thread(thread), "meta": _meta(meta)}
 
 
 def get_thread(

@@ -83,6 +83,8 @@ export function ProfileV2Header(props: {
 
   // Optional message button (viewer only)
   messageHref?: string | null;
+  onMessage?: (() => void) | null;
+  messageDisabled?: boolean;
 }) {
   const {
     variant = "hero",
@@ -97,6 +99,8 @@ export function ProfileV2Header(props: {
     sharedSets,
     actions,
     messageHref,
+    onMessage,
+    messageDisabled,
   } = props;
 
   const theme = SIDE_THEMES[displaySide];
@@ -211,7 +215,21 @@ export function ProfileV2Header(props: {
             <div className="mt-6 w-full max-w-sm">
               <div className="flex gap-3">
                 <div className="flex-1">{actions}</div>
-                {messageHref ? (
+                {onMessage ? (
+                  <button
+                    type="button"
+                    onClick={onMessage}
+                    disabled={!!messageDisabled}
+                    className={cn(
+                      "w-12 h-11 rounded-2xl bg-gray-100 text-gray-900 inline-flex items-center justify-center font-extrabold transition-colors",
+                      messageDisabled ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-200"
+                    )}
+                    aria-label="Message"
+                    title="Message"
+                  >
+                    <MessageSquare size={18} />
+                  </button>
+                ) : messageHref ? (
                   <a
                     href={messageHref}
                     className="w-12 h-11 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-900 inline-flex items-center justify-center font-extrabold transition-colors"
@@ -396,7 +414,21 @@ export function ProfileV2Header(props: {
           <div className="mt-5">
             <div className="flex gap-3">
               <div className="flex-1">{actions}</div>
-              {messageHref ? (
+              {onMessage ? (
+                <button
+                  type="button"
+                  onClick={onMessage}
+                  disabled={!!messageDisabled}
+                  className={cn(
+                    "w-12 h-11 rounded-2xl bg-gray-100 text-gray-900 inline-flex items-center justify-center font-extrabold transition-colors",
+                    messageDisabled ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-200"
+                  )}
+                  aria-label="Message"
+                  title="Message"
+                >
+                  <MessageSquare size={18} />
+                </button>
+              ) : messageHref ? (
                 <a
                   href={messageHref}
                   className="w-12 h-11 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-900 inline-flex items-center justify-center font-extrabold transition-colors"

@@ -30,13 +30,14 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .endpoint_stub import get_thread, list_threads, send_message, set_locked_side
+from .endpoint_stub import ensure_thread, get_thread, list_threads, send_message, set_locked_side
 from .store_devnull import DevNullInboxStore
 from .store_db import DbInboxStore
 from .store_memory import InMemoryInboxStore
+from .models_stub import ParticipantRecord, SideId
 from .visibility_stub import resolve_viewer_role
 
-from siddes_safety.policy import is_blocked_pair
+from siddes_safety.policy import is_blocked_pair, normalize_target_token
 
 
 def _truthy(v: str | None) -> bool:
@@ -604,6 +605,72 @@ class InboxThreadsView(APIView):
             resp["X-Siddes-Cache-Ttl"] = str(cache_ttl)
         return resp
 
+
+
+    def post(self, request):
+        """POST /api/inbox/threads
+
+        Siddes DM bootstrap: ensure a DM-style thread exists for a target.
+
+        Body:
+          { targetHandle: string, lockedSide?: SideId, displayName?: string }
+
+        Default-safe:
+        - missing viewer -> restricted:true
+        - blocked pair -> restricted:true (hide existence)
+        """
+
+        viewer = get_viewer_id(request)
+        body: dict[str, Any] = request.data if isinstance(request.data, dict) else {}
+
+        raw_target = str(body.get("targetHandle") or "").strip()
+        tok = normalize_target_token(raw_target)
+        if not tok:
+            return Response({"ok": False, "error": "invalid_target"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # sd_398: Blocks must hard-stop inbox access.
+        if viewer and is_blocked_pair(str(viewer), str(tok)):
+            return Response({"ok": True, "restricted": True, "thread": None, "meta": None}, status=status.HTTP_200_OK)
+
+        raw_side = str(body.get("lockedSide") or "friends").strip()
+        if raw_side not in SIDE_IDS:
+            return Response({"ok": False, "error": "invalid_side"}, status=status.HTTP_400_BAD_REQUEST)
+
+        locked_side: SideId = raw_side  # type: ignore[assignment]
+
+        display_name = str(body.get("displayName") or "").strip()
+        if not display_name:
+            display_name = tok.lstrip("@") or "User"
+
+        def _initials(name: str) -> str:
+            parts = [p for p in str(name or "").replace("@", "").split() if p]
+            out = "".join([p[0].upper() for p in parts])[:2]
+            return out or "?"
+
+        participant = ParticipantRecord(
+            display_name=display_name,
+            initials=_initials(display_name),
+            avatar_seed=tok,
+            handle=tok,
+        )
+
+        data = ensure_thread(
+            store,
+            viewer_id=viewer,
+            other_token=tok,
+            locked_side=locked_side,
+            title=display_name,
+            participant=participant,
+        )
+
+        # sd_582: bump per-viewer version so cached thread/list refreshes after mutations
+        if viewer:
+            _inbox_bump_ver(str(viewer))
+
+        resp = Response(data, status=status.HTTP_200_OK)
+        resp["Cache-Control"] = "private, no-store"
+        resp["Vary"] = "Cookie, Authorization"
+        return resp
 
 @method_decorator(dev_csrf_exempt, name="dispatch")
 class InboxThreadView(APIView):

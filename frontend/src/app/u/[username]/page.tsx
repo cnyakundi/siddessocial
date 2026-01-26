@@ -4,7 +4,7 @@
 export const dynamic = "force-dynamic";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 import { MoreHorizontal } from "lucide-react";
 
@@ -36,6 +36,8 @@ function cn(...parts: Array<string | undefined | false | null>) {
 
 export default function UserProfilePage() {
   const params = useParams() as { username?: string };
+
+  const router = useRouter();
   const raw = String(params?.username || "");
 
   useReturnScrollRestore();
@@ -61,6 +63,8 @@ export default function UserProfilePage() {
 
   const [sideSheet, setSideSheet] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  const [msgBusy, setMsgBusy] = useState(false);
 
   const [actionsOpen, setActionsOpen] = useState(false); // sd_424_profile_actions
   const [lockedSide, setLockedSide] = useState<SideId | null>(null); // sd_529_locked_tab_explainer
@@ -263,6 +267,53 @@ export default function UserProfilePage() {
     }
   };
 
+  const doMessage = async () => {
+    if (!user?.handle) return;
+    if (msgBusy) return;
+
+    setMsgBusy(true);
+    try {
+      // Default-safe: DM thread lives in the side you show them (falls back to Friends).
+      const locked: SideId = viewerSidedAs && viewerSidedAs !== "public" ? viewerSidedAs : "friends";
+
+      const displayName =
+        (facet?.displayName || "").trim() || String(user.handle || "").replace(/^@/, "").trim() || "User";
+
+      const res = await fetch("/api/inbox/threads", {
+        method: "POST",
+        cache: "no-store",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          targetHandle: user.handle,
+          lockedSide: locked,
+          displayName,
+        }),
+      });
+
+      const j = (await res.json().catch(() => null)) as any;
+      if (!res.ok || !j) {
+        toast.error(res.status === 401 ? "Login required." : "Could not start message.");
+        return;
+      }
+      if (j?.restricted) {
+        toast.error("Login required.");
+        return;
+      }
+
+      const tid = String(j?.thread?.id || "").trim();
+      if (!tid) {
+        toast.error("Could not start message.");
+        return;
+      }
+
+      router.push(`/siddes-inbox/${encodeURIComponent(tid)}`);
+    } catch {
+      toast.error("Could not start message.");
+    } finally {
+      setMsgBusy(false);
+    }
+  };
+
 
 
 
@@ -446,7 +497,7 @@ export default function UserProfilePage() {
             /* sd_732_fix_profile_messageHref */}
             {/* sd_722_profile_v2_tab_url_sync */}
             <div className="mt-4">
-              /* sd_727_fix_profile_v2_variant_and_locked_back */
+              {/* sd_727_fix_profile_v2_variant_and_locked_back */}
               <ProfileV2Header
                 displaySide={displaySide}
                 viewSide={viewSide}
@@ -457,6 +508,8 @@ export default function UserProfilePage() {
                 sharedSets={sharedSets}
                 isOwner={isOwner}
                 viewerSidedAs={viewerSidedAs}
+                onMessage={!isOwner ? doMessage : null}
+                messageDisabled={msgBusy}
                 actions={
                   isOwner ? (
                     <div className="flex flex-col gap-3">

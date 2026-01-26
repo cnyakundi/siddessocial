@@ -46,6 +46,16 @@ Backend:
 ---
 
 ## 2) Minimum gate (required for every overlay)
+
+Tip: you can run a faster smoke rung:
+```bash
+bash scripts/run_tests.sh --smoke
+```
+
+Full harness (default):
+```bash
+bash scripts/run_tests.sh
+```
 Every overlay must pass:
 ```bash
 ./verify_overlays.sh

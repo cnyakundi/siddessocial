@@ -1,8 +1,9 @@
 """Inbox store interface (placeholder).
 
-The UI contract needs 4 durable behaviors:
+The UI contract needs durable behaviors:
 - list threads (cursor pagination)
 - get thread (messages pagination)
+- ensure thread (DM bootstrap)
 - send message
 - set locked side (move thread)
 
@@ -14,9 +15,9 @@ This file intentionally avoids Django imports so it stays reusable.
 
 from __future__ import annotations
 
-from typing import Optional, Protocol, Tuple, List
+from typing import List, Optional, Protocol, Tuple
 
-from .models_stub import SideId, ThreadRecord, ThreadMetaRecord, MessageRecord
+from .models_stub import MessageRecord, ParticipantRecord, SideId, ThreadMetaRecord, ThreadRecord
 
 
 class InboxStore(Protocol):
@@ -39,6 +40,21 @@ class InboxStore(Protocol):
         cursor: Optional[str] = None,
     ) -> Tuple[ThreadRecord, ThreadMetaRecord, List[MessageRecord], bool, Optional[str]]:
         """Return (thread, meta, messages, messages_has_more, messages_next_cursor)."""
+
+    def ensure_thread(
+        self,
+        *,
+        viewer_id: str,
+        other_token: str,
+        locked_side: SideId,
+        title: str,
+        participant: ParticipantRecord,
+    ) -> Tuple[ThreadRecord, ThreadMetaRecord]:
+        """Ensure a DM-style thread exists and return (thread, meta).
+
+        Idempotent per (viewer_id, other_token). If the thread already exists,
+        it should be returned without widening context (do not auto-change locked_side).
+        """
 
     def send_message(
         self,

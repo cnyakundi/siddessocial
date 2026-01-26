@@ -1,8 +1,38 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+MODE="full"
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  echo "Usage: bash scripts/run_tests.sh [--smoke|--full]"
+  echo "  --smoke : verify_overlays + gates (fast)"
+  echo "  --full  : full harness (default)"
+  exit 0
+fi
+if [[ "${1:-}" == "--smoke" ]]; then MODE="smoke"; shift; fi
+if [[ "${1:-}" == "--full" ]]; then MODE="full"; shift; fi
+
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROOT}"
+
+if [[ "${MODE}" == "smoke" ]]; then
+  echo "== Siddes Test Harness (SMOKE) =="
+  echo "Root: ${ROOT}"
+  echo ""
+  if [[ -x "./verify_overlays.sh" ]]; then
+    ./verify_overlays.sh
+  fi
+  echo ""
+  echo "== Smoke: gates =="
+  if [[ -x "scripts/run_gates.sh" ]]; then
+    bash scripts/run_gates.sh
+  else
+    echo "ERROR: scripts/run_gates.sh missing"
+    exit 1
+  fi
+  echo ""
+  echo "✅ Smoke completed."
+  exit 0
+fi
 
 echo "== Siddes Test Harness =="
 echo "Root: ${ROOT}"

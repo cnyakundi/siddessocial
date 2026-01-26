@@ -93,17 +93,48 @@ class DualWriteInboxStore:
         try:
             title, participant, locked = self._shadow_thread_snapshot(viewer_id=viewer_id, thread_id=thread_id, side_hint=side_hint)
             locked_side: SideId = (locked or side_hint or "friends")  # type: ignore[assignment]
-            self.shadow_db.ensure_thread(
+            self.shadow_db.shadow_upsert_thread(
                 viewer_id=viewer_id,
                 thread_id=thread_id,
                 locked_side=locked_side,
                 title=str(title or ""),
                 participant=participant,
-                owner_viewer_id=viewer_id,
-            )
+)
         except Exception:
             # swallow
             return
+
+    def ensure_thread(
+        self,
+        *,
+        viewer_id: str,
+        other_token: str,
+        locked_side: SideId,
+        title: str,
+        participant: ParticipantRecord,
+    ) -> Tuple[ThreadRecord, ThreadMetaRecord]:
+        thread, meta = self.primary.ensure_thread(
+            viewer_id=viewer_id,
+            other_token=other_token,
+            locked_side=locked_side,
+            title=title,
+            participant=participant,
+        )
+
+        # Best-effort: mirror into DB with the same thread id.
+        try:
+            self.shadow_db.shadow_upsert_thread(
+                viewer_id=viewer_id,
+                thread_id=thread.id,
+                locked_side=meta.locked_side,  # type: ignore[arg-type]
+                title=str(thread.title or ""),
+                participant=thread.participant,
+            )
+        except Exception:
+            pass
+
+        return thread, meta
+
 
     # --- writes -----------------------------------------------------
 
