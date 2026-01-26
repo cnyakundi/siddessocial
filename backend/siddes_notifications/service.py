@@ -172,27 +172,26 @@ def notify(
             return
 
         
-        # sd_743_push_prefs_gate: respect viewer push preferences (best-effort)
-        try:
-            from siddes_push.models import PushPreferences  # type: ignore
-            from siddes_push.prefs import normalize_prefs  # type: ignore
+# sd_743_push_prefs_gate: respect viewer push preferences (best-effort)
+try:
+    from siddes_push.models import PushPreferences  # type: ignore
+    from siddes_push.prefs import normalize_prefs  # type: ignore
 
-            rec = PushPreferences.objects.filter(viewer_id=vid).values("prefs").first()
-            prefs = normalize_prefs((rec or {}).get("prefs") or {}) if rec else normalize_prefs({})
+    rec = PushPreferences.objects.filter(viewer_id=vid).values("prefs").first()
+    prefs = normalize_prefs((rec or {}).get("prefs") or {}) if rec else normalize_prefs({})
 
-            if not prefs.get("enabled", True):
-                return
+    if not prefs.get("enabled", True):
+        return
+    if not prefs.get("sides", {}).get(sid, True):
+        return
+    tkey = str(t or "").lower()
+    if tkey not in ("mention", "reply", "like", "echo"):
+        tkey = "other"
+    if not prefs.get("types", {}).get(tkey, True):
+        return
+except Exception:
+    pass
 
-            tkey = (t or "other").lower()
-            if tkey not in ("mention", "reply", "like", "echo"):
-                tkey = "other"
-            if not bool(prefs.get("types", {}).get(tkey, True)):
-                return
-
-            if not bool(prefs.get("sides", {}).get(sid, True)):
-                return
-        except Exception:
-            pass
 payload = PushPayload(
             title=push_title,
             body=push_body,

@@ -104,7 +104,7 @@ export function CreateSetSheet(props: {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[99] flex items-end justify-center md:items-center">
+    <div className="fixed inset-0 z-[160] flex items-end justify-center md:items-center">
       {/* Backdrop */}
       <button
         type="button"

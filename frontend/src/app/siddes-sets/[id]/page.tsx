@@ -30,6 +30,7 @@ import { emitSetsChanged, onSetsChanged } from "@/src/lib/setsSignals";
 import { toast } from "@/src/lib/toast";
 import { getStubViewerCookie, isStubMe } from "@/src/lib/stubViewerClient";
 import { SetsJoinedBanner } from "@/src/components/SetsJoinedBanner";
+import { AddPeopleSheet } from "@/src/components/AddPeopleSheet";
 import { SetHubMoreSheet } from "@/src/components/SetHubMoreSheet";
 import { useReturnScrollRestore } from "@/src/hooks/returnScroll";
 
@@ -170,6 +171,7 @@ export default function SiddesSetHubPage({ params }: { params: { id: string } })
 
   // Invites sheet
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [addPeopleOpen, setAddPeopleOpen] = useState(false); // sd_743_sets_v1_1
   const [prefillTo, setPrefillTo] = useState<string | null>(null);
   const [inviteChips, setInviteChips] = useState<string[]>([]);
   const [inviteChipsLoading, setInviteChipsLoading] = useState(false);
@@ -692,10 +694,7 @@ export default function SiddesSetHubPage({ params }: { params: { id: string } })
   <button
     type="button"
     disabled={!item || !canWrite}
-    onClick={() => {
-      setPrefillTo(null);
-      setInviteOpen(true);
-    }}
+    onClick={() => setAddPeopleOpen(true)}
     className={cn(
       "px-3 py-2 rounded-full border font-bold text-sm flex items-center gap-2",
       !item || !canWrite
@@ -986,6 +985,22 @@ export default function SiddesSetHubPage({ params }: { params: { id: string } })
             </div>
           ) : null}
         </div>
+
+<AddPeopleSheet
+  open={addPeopleOpen}
+  onClose={() => setAddPeopleOpen(false)}
+  setId={setId}
+  canWrite={!!item && !!canWrite}
+  existingMembers={item?.members || []}
+  onUpdated={(next) => {
+    if (next) setItem(next);
+  }}
+  onUseInviteLink={() => {
+    setAddPeopleOpen(false);
+    setPrefillTo(null);
+    setInviteOpen(true);
+  }}
+/>
 
 <InviteActionSheet
   open={inviteOpen}

@@ -83,6 +83,7 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 - Next: TBD
 
 - **sd_740_sets_v1_dead_simple:** Sets v1 UX simplification (Sets-as-audience: SetFilterBar on Feed; Set hub = Feed+People with More sheet; read-only banners; scannable set cards)
+- **sd_743_sets_v1_1_inline_create_fast_add:** Sets v1.1 (Inline create in picker + Add People sheet: type/paste + voice stub + invite-link fallback)
 
 - **sd_741_fix_sd740_sets_v1_syntax:** Hotfix: repair sd_740 JSX syntax in Sets page + SideFeed; add MIGRATION_PACK if missing
 

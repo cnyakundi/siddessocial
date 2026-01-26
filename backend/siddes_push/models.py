@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from django.db import models
 
-
 # sd_741_push_backend_db
 class PushSubscription(models.Model):
     """Viewer-scoped push subscriptions.
@@ -28,11 +27,6 @@ class PushSubscription(models.Model):
 
     def __str__(self) -> str:  # pragma: no cover
         return f"PushSubscription(viewer={self.viewer_id}, endpoint={self.endpoint[:40]}...)"
-
-from __future__ import annotations
-
-from django.db import models
-
 
 # sd_743_push_prefs
 class PushPreferences(models.Model):
