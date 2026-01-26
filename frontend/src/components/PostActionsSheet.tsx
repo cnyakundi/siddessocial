@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { useDialogA11y } from "@/src/hooks/useDialogA11y";
@@ -53,15 +54,19 @@ export function PostActionsSheet({
   onEdit?: () => void;
   onDelete?: () => void;
 }) {
-  useLockBodyScroll(open && Boolean(post));
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  useLockBodyScroll(open && Boolean(post) && mounted);
 
   const router = useRouter();
-
   const panelRef = useRef<HTMLDivElement | null>(null);
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
-  useDialogA11y({ open: open && Boolean(post), containerRef: panelRef, initialFocusRef: closeBtnRef, onClose });
+  useDialogA11y({ open: open && Boolean(post) && mounted, containerRef: panelRef, initialFocusRef: closeBtnRef, onClose });
 
-  if (!open || !post) return null;
+  if (!open || !post || !mounted) return null;
 
   const relUrl = `/siddes-post/${post.id}`;
   const absUrl =
@@ -238,20 +243,17 @@ const doBlock = async () => {
     onClose();
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[999] flex items-end justify-center md:items-center">
       <button
         type="button"
         className="absolute inset-0 bg-black/30 backdrop-blur-sm"
         onPointerDown={(e) => {
-          e.preventDefault();
+          // Do NOT preventDefault here — iOS PWA can suppress the click.
           e.stopPropagation();
-          onClose();
         }}
         onTouchStart={(e) => {
-          e.preventDefault();
           e.stopPropagation();
-          onClose();
         }}
         onClick={(e) => {
           e.preventDefault();
@@ -465,5 +467,6 @@ const doBlock = async () => {
         </div>
       </div>
     </div>
+    , document.body
   );
 }
