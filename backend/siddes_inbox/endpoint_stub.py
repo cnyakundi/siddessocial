@@ -90,6 +90,24 @@ def _restricted_meta() -> Dict[str, Any]:
 def _restricted_ensure_thread() -> Dict[str, Any]:
     return {"ok": True, "restricted": True, "thread": None, "meta": None}
 
+# sd_756_inbox_store_errors: distinguish backend/store failures from auth restriction.
+# Store failures should NOT be treated as "Login required".
+
+def _store_unavailable_list() -> Dict[str, Any]:
+    return {
+        "ok": False,
+        "error": "store_unavailable",
+        "restricted": False,
+        "items": [],
+        "hasMore": False,
+        "nextCursor": None,
+    }
+
+
+def _store_unavailable_ensure_thread() -> Dict[str, Any]:
+    return {"ok": False, "error": "store_unavailable", "restricted": False, "thread": None, "meta": None}
+
+
 
 
 
@@ -114,8 +132,10 @@ def list_threads(
             limit=limit,
             cursor=cursor,
         )
-    except Exception:
+    except KeyError:
         return _restricted_list()
+    except Exception:
+        return _store_unavailable_list()
 
     return {
         "ok": True,
@@ -151,8 +171,10 @@ def ensure_thread(
             title=str(title or ""),
             participant=participant,
         )
-    except Exception:
+    except KeyError:
         return _restricted_ensure_thread()
+    except Exception:
+        return _store_unavailable_ensure_thread()
 
     return {"ok": True, "restricted": False, "thread": _thread(thread), "meta": _meta(meta)}
 

@@ -190,6 +190,7 @@ export default function UserProfilePage() {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
+          targetUserId: user?.id || null,
             username: user.handle,
             side: wanted,
             confirm: wanted === "close" || wanted === "work" ? true : undefined,
@@ -256,7 +257,8 @@ export default function UserProfilePage() {
         method: "POST",
         cache: "no-store",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ username: user.handle, side: s }),
+        body: JSON.stringify({
+          targetUserId: user?.id || null, username: user.handle, side: s }),
       });
       const j = (await res.json().catch(() => null)) as any;
       if (!res.ok || !j || j.ok !== true) {
@@ -292,6 +294,7 @@ export default function UserProfilePage() {
         cache: "no-store",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
+          targetUserId: user?.id || null,
           targetHandle: user.handle,
           lockedSide: locked,
           displayName,
@@ -300,7 +303,28 @@ export default function UserProfilePage() {
 
       const j = (await res.json().catch(() => null)) as any;
       if (!res.ok || !j) {
+        const host = (() => {
+          try {
+            return String(window.location.hostname || "").toLowerCase();
+          } catch {
+            return "";
+          }
+        })();
+        const isLocal = host === "localhost" || host === "127.0.0.1" || host === "[::1]";
+
+        // sd_756_inbox_store_unavailable_ui: backend/store failures should not masquerade as login.
+        if (res.status >= 500) {
+          toast.error(isLocal ? "Inbox backend unavailable (run migrations + restart backend)." : "Inbox temporarily unavailable.");
+          return;
+        }
+
         toast.error(res.status === 401 ? "Login required." : "Could not start message.");
+        return;
+      }
+
+      // sd_756_inbox_store_unavailable_ui: explicit store failure payload (rare if server returns 200).
+      if (j?.ok === false && j?.error === "store_unavailable") {
+        toast.error("Inbox backend unavailable. Try again after backend is healthy.");
         return;
       }
       if (j?.restricted) {

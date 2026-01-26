@@ -85,6 +85,9 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 
 ## NEXT overlay
 - Next: TBD
+- **sd_762_compact_other_sheets_max_height:** UI: Reduce max height of common sheets (ChipOverflow/SetPicker/ProfileActions) to 70dvh so they feel less full-screen on mobile.
+- **sd_761_compact_post_actions_sheet:** UI: Make PostActionsSheet ("…") compact on mobile (max height 70dvh + smaller paddings) so it doesn't feel full-screen.
+- **sd_760_post_detail_safe_back_to_list:** UI: Post detail back always returns to the exact list route (uses saved return path; avoids router.back out-of-app in PWA).
 - **sd_759_topbar_alerts_drawer_button:** Mobile AppTopBar bell opens Notifications Drawer (PWA quick alerts)
 - **sd_758_standardize_sheet_backdrops_touchstart:** UI: standardize all sheet backdrops to close on touchstart with preventDefault (consistent, anti-jank).
 - **sd_756_fix_actions_sheet_backdrop_ghosttap:** UI: prevent PostActionsSheet backdrop ghost taps/clickthrough on iOS PWA (touchstart now preventDefault).
@@ -92,6 +95,8 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 - **sd_749_media_picker_local_media_fix:** Media picker reliability (iOS/Safari-safe file inputs + extension-based kind detection)
 - **sd_757_postcard_media_single_image_contain:** PostCard MediaGrid: single-image preview uses object-contain + aspect-aware height (reduced cropping / bad image UI).
 - **sd_758_media_ui_mobile_carousel_aspect:** MediaGrid (PostCard): mobile multi-media carousel uses aspect-ratio containers (no fixed `h-64`) for more stable previews.
+- **sd_759_compose_media_preview_no_crop:** Compose: selected media previews use object-contain (no crop) + black letterbox background.
+- **sd_763_fix_compose_ts2322_sd759_insertion:** Fix Compose TS2322 by repairing sd_759 insertion bug (restore sd_384 JSX comment brace + remove extra '}' on sd_759 comment line).
 
 - **sd_740_sets_v1_dead_simple:** Sets v1 UX simplification (Sets-as-audience: SetFilterBar on Feed; Set hub = Feed+People with More sheet; read-only banners; scannable set cards)
 - **sd_743_sets_v1_1_inline_create_fast_add:** Sets v1.1 (Inline create in picker + Add People sheet: type/paste + voice stub + invite-link fallback)
@@ -191,7 +196,7 @@ These are the overlays applied/created during the current session (evidence: ter
 
 [Creation]
 - ComposeModal: posting + identity gating
-- MediaPicker: local photo/video selection + uploads (sd_757/sd_758)
+- MediaPicker: local photo/video selection + uploads (sd_757/sd_758) (sd_759)
 
 [Social/Comms]
 - Inbox/DMs: threads list + thread view + send/receive + unread
@@ -201,3 +206,5 @@ These are the overlays applied/created during the current session (evidence: ter
 - AuthBootstrap: session bootstrap + me()
 - Profile: user pages + actions
 
+
+- sd_748_inbox_dm_delivery: Inbox DM mirror delivery (two-party messaging)

@@ -28,7 +28,16 @@ function safeJson(x: unknown) {
   }
 }
 
-type StatusResp = { ok: boolean; restricted?: boolean; count?: number; error?: string };
+type StatusResp = {
+  ok: boolean;
+  restricted?: boolean;
+  count?: number;
+  pushEnabled?: boolean;
+  pushOnNotificationsEnabled?: boolean;
+  vapidConfigured?: boolean;
+  pywebpushAvailable?: boolean;
+  error?: string;
+};
 
 export function PushNotificationsCard() {
   const supported = useMemo(() => {
@@ -46,6 +55,12 @@ export function PushNotificationsCard() {
   const [subJson, setSubJson] = useState<string>("");
   const [busy, setBusy] = useState(false);
   const [serverCount, setServerCount] = useState<number | null>(null);
+  const [serverDiag, setServerDiag] = useState<{
+    pushEnabled?: boolean;
+    pushOnNotificationsEnabled?: boolean;
+    vapidConfigured?: boolean;
+    pywebpushAvailable?: boolean;
+  } | null>(null);
 
   async function refreshStatus() {
     try {
@@ -270,6 +285,18 @@ export function PushNotificationsCard() {
           <div className="mt-1 text-xs text-gray-600">
             Permission: <span className="font-semibold">{permission}</span>
             {serverCount !== null ? <span className="ml-2 text-gray-500">Server devices: {serverCount}</span> : null}
+            {serverDiag?.pushEnabled === false ? (
+              <span className="ml-2 text-rose-600 font-semibold">Server push disabled</span>
+            ) : null}
+            {serverDiag?.vapidConfigured === false ? (
+              <span className="ml-2 text-rose-600 font-semibold">Server VAPID missing</span>
+            ) : null}
+            {serverDiag?.pywebpushAvailable === false ? (
+              <span className="ml-2 text-rose-600 font-semibold">Server pywebpush missing</span>
+            ) : null}
+            {serverDiag?.pushOnNotificationsEnabled === false ? (
+              <span className="ml-2 text-rose-600 font-semibold">Auto-push off</span>
+            ) : null}
             {!vapid ? <span className="ml-2 text-rose-600 font-semibold">Missing NEXT_PUBLIC_VAPID_PUBLIC_KEY</span> : null}
           </div>
         </div>

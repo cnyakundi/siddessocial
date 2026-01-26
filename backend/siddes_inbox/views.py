@@ -589,6 +589,14 @@ class InboxThreadsView(APIView):
             limit=limit,
             cursor=cursor if cursor else None,
         )
+
+        # sd_756_inbox_store_errors_http: store failures should return 503 (not restricted/login).
+        if isinstance(data, dict) and data.get("ok") is False:
+            resp = Response(data, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            resp["Cache-Control"] = "private, no-store"
+            resp["Vary"] = "Cookie, Authorization"
+            resp["X-Siddes-Cache"] = "bypass"
+            return resp
         data = _filter_blocked_threads_payload(viewer_id, data)
 
         if cache_key is not None and cache_status == "miss" and isinstance(data, dict) and not data.get("restricted"):
@@ -669,6 +677,13 @@ class InboxThreadsView(APIView):
             title=display_name,
             participant=participant,
         )
+
+        # sd_756_inbox_store_errors_http: store failures should return 503 (not restricted/login).
+        if isinstance(data, dict) and data.get("ok") is False:
+            resp = Response(data, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            resp["Cache-Control"] = "private, no-store"
+            resp["Vary"] = "Cookie, Authorization"
+            return resp
 
         # sd_582: bump per-viewer version so cached thread/list refreshes after mutations
         if viewer:

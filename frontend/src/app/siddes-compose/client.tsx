@@ -73,7 +73,7 @@ function AvatarMe({ side }: { side: SideId }) {
     >
       {img ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={img} alt="" className="w-full h-full object-cover" />
+        <img src={img} alt="" className="w-full h-full object-contain bg-black" />
       ) : (
         initials
       )}
@@ -1596,6 +1596,7 @@ const quickTools = useMemo<QuickTool[]>(() => {
                 )}
 
                                 {/* sd_384_media: selected uploads */}
+                {/* sd_759_compose_media_preview_no_crop: previews should not crop (use object-contain) */}
                 {mediaItems.length > 0 ? (
                   <div className="mt-3">
                     <div className="flex gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-2">
@@ -1613,7 +1614,7 @@ const quickTools = useMemo<QuickTool[]>(() => {
                           >
                             {m.previewUrl ? (
                               m.kind === "video" ? (
-                                <div className="relative w-full h-56 lg:h-64">
+                                <div className="relative w-full h-56 lg:h-64 bg-black">
                                   <video
                                     src={m.previewUrl}
                                     className="w-full h-full object-cover"
@@ -1634,7 +1635,7 @@ const quickTools = useMemo<QuickTool[]>(() => {
                                 </div>
                               ) : (
                                 // eslint-disable-next-line @next/next/no-img-element
-                                <img src={m.previewUrl} alt="" className="w-full h-56 lg:h-64 object-cover" />
+                                <img src={m.previewUrl} alt="" className="w-full h-56 lg:h-64 object-contain bg-black" />
                               )
                             ) : (
                               <div className="w-full h-56 lg:h-64 flex items-center justify-center text-xs font-bold text-gray-400">

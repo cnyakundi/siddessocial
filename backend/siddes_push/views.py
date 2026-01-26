@@ -73,9 +73,36 @@ class PushStatusView(APIView):
                 status=status.HTTP_200_OK,
             )
 
+        def _truthy(v: str | None) -> bool:
+            return str(v or "").strip().lower() in ("1", "true", "yes", "y", "on")
+
+        push_enabled = _truthy(os.environ.get("SIDDES_PUSH_ENABLED", "1"))
+        push_on_notifications_enabled = _truthy(os.environ.get("SIDDES_PUSH_ON_NOTIFICATIONS_ENABLED", "1"))
+
+        priv = str(os.environ.get("SIDDES_VAPID_PRIVATE_KEY") or "").strip()
+        subj = str(os.environ.get("SIDDES_VAPID_SUBJECT") or "").strip()
+        vapid_configured = bool(priv and subj)
+
+        pywebpush_available = True
+        try:
+            import pywebpush  # type: ignore
+        except Exception:
+            pywebpush_available = False
+
         count = PushSubscription.objects.filter(viewer_id=viewer).count()
         return Response(
-            {"ok": True, "restricted": False, "viewer": viewer, "role": role, "count": count},
+            {
+                "ok": True,
+                "restricted": False,
+                "viewer": viewer,
+                "role": role,
+                "count": count,
+                # Diagnostics (safe booleans; no secrets)
+                "pushEnabled": push_enabled,
+                "pushOnNotificationsEnabled": push_on_notifications_enabled,
+                "vapidConfigured": vapid_configured,
+                "pywebpushAvailable": pywebpush_available,
+            },
             status=status.HTTP_200_OK,
         )
 

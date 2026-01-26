@@ -1,13 +1,16 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
-import { ChevronDown, Plus } from "lucide-react";
+import React, { useEffect, useMemo, useRef } from "react";
+import { Plus } from "lucide-react";
 import type { SetDef, SetId } from "@/src/lib/sets";
 import { getSetTheme } from "@/src/lib/setThemes";
-import { SetPickerSheet } from "@/src/components/SetPickerSheet";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
+}
+
+function SetDot({ colorClass }: { colorClass: string }) {
+  return <span className={cn("w-2 h-2 rounded-full bg-current", colorClass)} aria-hidden="true" />;
 }
 
 export function SetFilterBar({
@@ -25,48 +28,82 @@ export function SetFilterBar({
   label?: string;
   allLabel?: string;
 }) {
-  const [open, setOpen] = useState(false);
+  const list = useMemo(() => (Array.isArray(sets) ? sets : []), [sets]);
 
-  const active = useMemo(() => sets.find((s) => s.id === activeSet) ?? null, [sets, activeSet]);
+  // Guard: if the activeSet is stale, fall back to All.
+  const effectiveActive = useMemo<SetId | null>(() => {
+    if (!activeSet) return null;
+    return list.some((s) => s.id === activeSet) ? activeSet : null;
+  }, [activeSet, list]);
 
-  const dotClass = useMemo(() => {
-    if (!active) return "bg-gray-300";
-    const theme = getSetTheme(active.color);
-    return theme.bg;
-  }, [active]);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const activeBtnRef = useRef<HTMLButtonElement | null>(null);
 
-  const title = active ? active.label : allLabel;
+  // PWA ergonomics: keep the active pill visible.
+  useEffect(() => {
+    const el = activeBtnRef.current;
+    if (!el) return;
+    try {
+      el.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    } catch {
+      // ignore
+    }
+  }, [effectiveActive, list.length]);
 
   return (
-    <>
-      <div className="flex items-center justify-between gap-3" data-testid="set-filter-bar">
+    <div data-testid="set-filter-bar" aria-label={`${label} filter`}>
+      <div
+        ref={containerRef}
+        className="flex gap-2 overflow-x-auto no-scrollbar pb-2"
+        role="tablist"
+        aria-orientation="horizontal"
+      >
         <button
           type="button"
-          onClick={() => setOpen(true)}
-          className="flex-1 text-left p-3 rounded-2xl border border-gray-200 bg-white hover:bg-gray-50 flex items-center justify-between gap-3"
-          aria-label={`${label}: ${title}`}
+          ref={(el) => {
+            if (effectiveActive === null) activeBtnRef.current = el;
+          }}
+          onClick={() => onSetChange(null)}
+          className={cn(
+            "px-4 py-1.5 rounded-full text-sm font-bold whitespace-nowrap transition-colors flex items-center gap-2",
+            effectiveActive === null ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+          )}
+          aria-label={`${label}: ${allLabel}`}
+          aria-pressed={effectiveActive === null}
         >
-          <div className="min-w-0">
-            <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">{label}</div>
-            <div className="mt-1 flex items-center gap-2 min-w-0">
-              <span className={cn("w-2.5 h-2.5 rounded-full", dotClass)} />
-              <span className="text-sm font-bold text-gray-900 truncate">{title}</span>
-              {active?.members?.length ? (
-                <span className="text-[11px] px-2 py-0.5 rounded-full border border-gray-200 bg-gray-50 text-gray-600">
-                  {active.members.length}
-                </span>
-              ) : null}
-            </div>
-          </div>
-
-          <ChevronDown size={18} className="text-gray-500" />
+          <SetDot colorClass={effectiveActive === null ? "text-white" : "text-gray-400"} />
+          <span className="truncate max-w-[14rem]">{allLabel}</span>
         </button>
+
+        {list.map((s) => {
+          const active = effectiveActive === s.id;
+          const theme = getSetTheme(s.color);
+          return (
+            <button
+              key={s.id}
+              type="button"
+              ref={(el) => {
+                if (active) activeBtnRef.current = el;
+              }}
+              onClick={() => onSetChange(s.id)}
+              className={cn(
+                "px-4 py-1.5 rounded-full text-sm font-bold whitespace-nowrap transition-colors flex items-center gap-2",
+                active ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              )}
+              aria-label={`${label}: ${s.label}`}
+              aria-pressed={active}
+            >
+              <SetDot colorClass={active ? theme.text : theme.text} />
+              <span className="truncate max-w-[14rem]">{s.label}</span>
+            </button>
+          );
+        })}
 
         {onNewSet ? (
           <button
             type="button"
             onClick={onNewSet}
-            className="px-4 py-3 rounded-2xl border border-dashed border-gray-300 text-gray-700 text-sm font-bold hover:border-gray-400 hover:bg-gray-50 inline-flex items-center gap-2"
+            className="px-3 py-1.5 rounded-full border border-dashed border-gray-300 text-gray-700 text-sm font-bold hover:border-gray-400 hover:bg-gray-50 inline-flex items-center gap-2 whitespace-nowrap"
             aria-label="New Set"
           >
             <Plus size={16} />
@@ -74,17 +111,6 @@ export function SetFilterBar({
           </button>
         ) : null}
       </div>
-
-      <SetPickerSheet
-        open={open}
-        onClose={() => setOpen(false)}
-        sets={sets}
-        activeSet={activeSet}
-        onPick={onSetChange}
-        onNewSet={onNewSet}
-        title="Choose Set"
-        allLabel={allLabel}
-      />
-    </>
+    </div>
   );
 }

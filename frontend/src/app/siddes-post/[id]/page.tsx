@@ -288,6 +288,20 @@ function PostDetailInner() {
   const sp = useSearchParams();
   const router = useRouter();
 
+  // sd_760: In PWA/deep-links, history may point outside the app.
+  // Prefer a saved internal return path (from returnScroll) when available.
+  const [savedReturn, setSavedReturn] = useState<string | null>(null);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const p = window.sessionStorage.getItem("sd.return.path");
+      if (!p) return;
+      if (p.startsWith("/siddes-feed") || p.startsWith("/siddes-sets") || p.startsWith("/siddes-inbox")) {
+        setSavedReturn(p);
+      }
+    } catch {}
+  }, []);
+
   // If this post was opened from Search, provide a clean back-link.
   const backToSearchHref = (() => {
     const from = sp?.get("from") || "";
@@ -301,17 +315,11 @@ function PostDetailInner() {
       return "/siddes-search";
     }
   })();
-  const backHref = backToSearchHref || "/siddes-feed";
-  const backLabel = backToSearchHref ? "Search" : "Feed";
-
+  const backHref = backToSearchHref || savedReturn || "/siddes-feed";
+  const backLabel = backToSearchHref ? "Search" : (savedReturn?.startsWith("/siddes-inbox") ? "Inbox" : savedReturn?.startsWith("/siddes-sets") ? "Sets" : "Feed");
   const goBack = useCallback(() => {
-    try {
-      if (typeof window !== "undefined" && window.history.length > 1) {
-        router.back();
-        return;
-      }
-    } catch {}
-    router.push(backHref);
+    // sd_760: Safer than router.back() — avoids jumping out of the app in PWA/deep-links.
+    router.replace(backHref);
   }, [router, backHref]);
 
 

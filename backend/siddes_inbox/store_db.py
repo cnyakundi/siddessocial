@@ -312,6 +312,75 @@ class DbInboxStore(InboxStore):
 
         now_ms = _dt_to_ms(now_dt)
         thread = self._thread_record(viewer_id=viewer_id, t=t, now_ms=now_ms, unread=0)
+        
+        # sd_748_mirror_delivery: mirror-write into recipient inbox (per-owner threads)
+        try:
+            recip_uid = str(getattr(t, "participant_user_id", "") or "").strip()
+            if recip_uid:
+                recip_viewer = f"me_{recip_uid}"
+
+                # Build sender participant snapshot for recipient thread
+                sender_uid = str(t.owner_viewer_id or "").replace("me_", "")
+                from django.contrib.auth import get_user_model
+                User = get_user_model()
+                try:
+                    u = User.objects.get(id=sender_uid)
+                    disp = (u.get_full_name() or u.get_username() or "User").strip()
+                    handle = u.get_username()
+                except Exception:
+                    disp = "User"
+                    handle = None
+
+                parts = [x for x in disp.split() if x]
+                initials = "".join([x[0].upper() for x in parts])[:2] or "?"
+
+                from .models_stub import ParticipantRecord
+                participant = ParticipantRecord(
+                    display_name=disp,
+                    initials=initials,
+                    avatar_seed=sender_uid or t.id,
+                    user_id=sender_uid,
+                    handle=handle,
+                )
+
+                # Ensure recipient thread
+                r_thread, _ = self.ensure_thread(
+                    viewer_id=recip_viewer,
+                    other_token=handle or sender_uid,
+                    locked_side=str(t.locked_side),
+                    title=disp,
+                    participant=participant,
+                )
+
+                # Insert mirrored message
+                InboxMessage.objects.create(
+                    id=f"m_{uuid4().hex[:18]}",
+                    thread=InboxThread.objects.get(id=r_thread.id),
+                    ts=now,
+                    from_id="them",
+                    text=str(text or ""),
+                    side=str(t.locked_side),
+                    queued=False,
+                    client_key=None,
+                )
+
+                # Touch recipient thread cache
+                rt = InboxThread.objects.get(id=r_thread.id)
+                rt.last_text = str(text or "")
+                rt.last_from_id = "them"
+                rt.updated_at = now
+                rt.save(update_fields=["last_text", "last_from_id", "updated_at"])
+
+                # Ensure unread state exists (unread derives > 0)
+                from .models import InboxThreadReadState
+                InboxThreadReadState.objects.get_or_create(
+                    thread=rt,
+                    viewer_id=recip_viewer,
+                    defaults={"viewer_role": "me", "last_read_ts": None},
+                )
+        except Exception:
+            pass
+
         meta = ThreadMetaRecord(locked_side=str(t.locked_side), updated_at=_dt_to_ms(t.updated_at))
 
         return thread, meta, messages, bool(has_more), next_cursor
@@ -368,7 +437,76 @@ class DbInboxStore(InboxStore):
 
         if t is not None:
             thread = self._thread_record(viewer_id=viewer_id, t=t, now_ms=now_ms, unread=0)
-            meta = ThreadMetaRecord(locked_side=str(t.locked_side), updated_at=_dt_to_ms(t.updated_at))
+            
+        # sd_748_mirror_delivery: mirror-write into recipient inbox (per-owner threads)
+        try:
+            recip_uid = str(getattr(t, "participant_user_id", "") or "").strip()
+            if recip_uid:
+                recip_viewer = f"me_{recip_uid}"
+
+                # Build sender participant snapshot for recipient thread
+                sender_uid = str(t.owner_viewer_id or "").replace("me_", "")
+                from django.contrib.auth import get_user_model
+                User = get_user_model()
+                try:
+                    u = User.objects.get(id=sender_uid)
+                    disp = (u.get_full_name() or u.get_username() or "User").strip()
+                    handle = u.get_username()
+                except Exception:
+                    disp = "User"
+                    handle = None
+
+                parts = [x for x in disp.split() if x]
+                initials = "".join([x[0].upper() for x in parts])[:2] or "?"
+
+                from .models_stub import ParticipantRecord
+                participant = ParticipantRecord(
+                    display_name=disp,
+                    initials=initials,
+                    avatar_seed=sender_uid or t.id,
+                    user_id=sender_uid,
+                    handle=handle,
+                )
+
+                # Ensure recipient thread
+                r_thread, _ = self.ensure_thread(
+                    viewer_id=recip_viewer,
+                    other_token=handle or sender_uid,
+                    locked_side=str(t.locked_side),
+                    title=disp,
+                    participant=participant,
+                )
+
+                # Insert mirrored message
+                InboxMessage.objects.create(
+                    id=f"m_{uuid4().hex[:18]}",
+                    thread=InboxThread.objects.get(id=r_thread.id),
+                    ts=now,
+                    from_id="them",
+                    text=str(text or ""),
+                    side=str(t.locked_side),
+                    queued=False,
+                    client_key=None,
+                )
+
+                # Touch recipient thread cache
+                rt = InboxThread.objects.get(id=r_thread.id)
+                rt.last_text = str(text or "")
+                rt.last_from_id = "them"
+                rt.updated_at = now
+                rt.save(update_fields=["last_text", "last_from_id", "updated_at"])
+
+                # Ensure unread state exists (unread derives > 0)
+                from .models import InboxThreadReadState
+                InboxThreadReadState.objects.get_or_create(
+                    thread=rt,
+                    viewer_id=recip_viewer,
+                    defaults={"viewer_role": "me", "last_read_ts": None},
+                )
+        except Exception:
+            pass
+
+        meta = ThreadMetaRecord(locked_side=str(t.locked_side), updated_at=_dt_to_ms(t.updated_at))
             return thread, meta
 
         p = participant
@@ -394,6 +532,75 @@ class DbInboxStore(InboxStore):
         )
 
         thread = self._thread_record(viewer_id=viewer_id, t=t, now_ms=now_ms, unread=0)
+        
+        # sd_748_mirror_delivery: mirror-write into recipient inbox (per-owner threads)
+        try:
+            recip_uid = str(getattr(t, "participant_user_id", "") or "").strip()
+            if recip_uid:
+                recip_viewer = f"me_{recip_uid}"
+
+                # Build sender participant snapshot for recipient thread
+                sender_uid = str(t.owner_viewer_id or "").replace("me_", "")
+                from django.contrib.auth import get_user_model
+                User = get_user_model()
+                try:
+                    u = User.objects.get(id=sender_uid)
+                    disp = (u.get_full_name() or u.get_username() or "User").strip()
+                    handle = u.get_username()
+                except Exception:
+                    disp = "User"
+                    handle = None
+
+                parts = [x for x in disp.split() if x]
+                initials = "".join([x[0].upper() for x in parts])[:2] or "?"
+
+                from .models_stub import ParticipantRecord
+                participant = ParticipantRecord(
+                    display_name=disp,
+                    initials=initials,
+                    avatar_seed=sender_uid or t.id,
+                    user_id=sender_uid,
+                    handle=handle,
+                )
+
+                # Ensure recipient thread
+                r_thread, _ = self.ensure_thread(
+                    viewer_id=recip_viewer,
+                    other_token=handle or sender_uid,
+                    locked_side=str(t.locked_side),
+                    title=disp,
+                    participant=participant,
+                )
+
+                # Insert mirrored message
+                InboxMessage.objects.create(
+                    id=f"m_{uuid4().hex[:18]}",
+                    thread=InboxThread.objects.get(id=r_thread.id),
+                    ts=now,
+                    from_id="them",
+                    text=str(text or ""),
+                    side=str(t.locked_side),
+                    queued=False,
+                    client_key=None,
+                )
+
+                # Touch recipient thread cache
+                rt = InboxThread.objects.get(id=r_thread.id)
+                rt.last_text = str(text or "")
+                rt.last_from_id = "them"
+                rt.updated_at = now
+                rt.save(update_fields=["last_text", "last_from_id", "updated_at"])
+
+                # Ensure unread state exists (unread derives > 0)
+                from .models import InboxThreadReadState
+                InboxThreadReadState.objects.get_or_create(
+                    thread=rt,
+                    viewer_id=recip_viewer,
+                    defaults={"viewer_role": "me", "last_read_ts": None},
+                )
+        except Exception:
+            pass
+
         meta = ThreadMetaRecord(locked_side=str(t.locked_side), updated_at=_dt_to_ms(t.updated_at))
         return thread, meta
 
@@ -440,7 +647,76 @@ class DbInboxStore(InboxStore):
                     .first()
                 )
                 if ex is not None:
-                    meta = ThreadMetaRecord(locked_side=str(t.locked_side), updated_at=_dt_to_ms(t.updated_at))
+                    
+        # sd_748_mirror_delivery: mirror-write into recipient inbox (per-owner threads)
+        try:
+            recip_uid = str(getattr(t, "participant_user_id", "") or "").strip()
+            if recip_uid:
+                recip_viewer = f"me_{recip_uid}"
+
+                # Build sender participant snapshot for recipient thread
+                sender_uid = str(t.owner_viewer_id or "").replace("me_", "")
+                from django.contrib.auth import get_user_model
+                User = get_user_model()
+                try:
+                    u = User.objects.get(id=sender_uid)
+                    disp = (u.get_full_name() or u.get_username() or "User").strip()
+                    handle = u.get_username()
+                except Exception:
+                    disp = "User"
+                    handle = None
+
+                parts = [x for x in disp.split() if x]
+                initials = "".join([x[0].upper() for x in parts])[:2] or "?"
+
+                from .models_stub import ParticipantRecord
+                participant = ParticipantRecord(
+                    display_name=disp,
+                    initials=initials,
+                    avatar_seed=sender_uid or t.id,
+                    user_id=sender_uid,
+                    handle=handle,
+                )
+
+                # Ensure recipient thread
+                r_thread, _ = self.ensure_thread(
+                    viewer_id=recip_viewer,
+                    other_token=handle or sender_uid,
+                    locked_side=str(t.locked_side),
+                    title=disp,
+                    participant=participant,
+                )
+
+                # Insert mirrored message
+                InboxMessage.objects.create(
+                    id=f"m_{uuid4().hex[:18]}",
+                    thread=InboxThread.objects.get(id=r_thread.id),
+                    ts=now,
+                    from_id="them",
+                    text=str(text or ""),
+                    side=str(t.locked_side),
+                    queued=False,
+                    client_key=None,
+                )
+
+                # Touch recipient thread cache
+                rt = InboxThread.objects.get(id=r_thread.id)
+                rt.last_text = str(text or "")
+                rt.last_from_id = "them"
+                rt.updated_at = now
+                rt.save(update_fields=["last_text", "last_from_id", "updated_at"])
+
+                # Ensure unread state exists (unread derives > 0)
+                from .models import InboxThreadReadState
+                InboxThreadReadState.objects.get_or_create(
+                    thread=rt,
+                    viewer_id=recip_viewer,
+                    defaults={"viewer_role": "me", "last_read_ts": None},
+                )
+        except Exception:
+            pass
+
+        meta = ThreadMetaRecord(locked_side=str(t.locked_side), updated_at=_dt_to_ms(t.updated_at))
                     msg = MessageRecord(
                         id=str(ex.id),
                         thread_id=str(t.id),
@@ -479,6 +755,75 @@ class DbInboxStore(InboxStore):
         # Sender sees unread cleared for their viewer role.
         try:
             self._set_thread_unread(thread=t, viewer_id=viewer_id, unread=0, last_read_ts=now)
+        except Exception:
+            pass
+
+        
+        # sd_748_mirror_delivery: mirror-write into recipient inbox (per-owner threads)
+        try:
+            recip_uid = str(getattr(t, "participant_user_id", "") or "").strip()
+            if recip_uid:
+                recip_viewer = f"me_{recip_uid}"
+
+                # Build sender participant snapshot for recipient thread
+                sender_uid = str(t.owner_viewer_id or "").replace("me_", "")
+                from django.contrib.auth import get_user_model
+                User = get_user_model()
+                try:
+                    u = User.objects.get(id=sender_uid)
+                    disp = (u.get_full_name() or u.get_username() or "User").strip()
+                    handle = u.get_username()
+                except Exception:
+                    disp = "User"
+                    handle = None
+
+                parts = [x for x in disp.split() if x]
+                initials = "".join([x[0].upper() for x in parts])[:2] or "?"
+
+                from .models_stub import ParticipantRecord
+                participant = ParticipantRecord(
+                    display_name=disp,
+                    initials=initials,
+                    avatar_seed=sender_uid or t.id,
+                    user_id=sender_uid,
+                    handle=handle,
+                )
+
+                # Ensure recipient thread
+                r_thread, _ = self.ensure_thread(
+                    viewer_id=recip_viewer,
+                    other_token=handle or sender_uid,
+                    locked_side=str(t.locked_side),
+                    title=disp,
+                    participant=participant,
+                )
+
+                # Insert mirrored message
+                InboxMessage.objects.create(
+                    id=f"m_{uuid4().hex[:18]}",
+                    thread=InboxThread.objects.get(id=r_thread.id),
+                    ts=now,
+                    from_id="them",
+                    text=str(text or ""),
+                    side=str(t.locked_side),
+                    queued=False,
+                    client_key=None,
+                )
+
+                # Touch recipient thread cache
+                rt = InboxThread.objects.get(id=r_thread.id)
+                rt.last_text = str(text or "")
+                rt.last_from_id = "them"
+                rt.updated_at = now
+                rt.save(update_fields=["last_text", "last_from_id", "updated_at"])
+
+                # Ensure unread state exists (unread derives > 0)
+                from .models import InboxThreadReadState
+                InboxThreadReadState.objects.get_or_create(
+                    thread=rt,
+                    viewer_id=recip_viewer,
+                    defaults={"viewer_role": "me", "last_read_ts": None},
+                )
         except Exception:
             pass
 
@@ -714,6 +1059,75 @@ class DbInboxStore(InboxStore):
                     viewer_id=str(viewer_id),
                     viewer_role=str(role),
                     last_read_ts=baseline,
+                )
+        except Exception:
+            pass
+
+        
+        # sd_748_mirror_delivery: mirror-write into recipient inbox (per-owner threads)
+        try:
+            recip_uid = str(getattr(t, "participant_user_id", "") or "").strip()
+            if recip_uid:
+                recip_viewer = f"me_{recip_uid}"
+
+                # Build sender participant snapshot for recipient thread
+                sender_uid = str(t.owner_viewer_id or "").replace("me_", "")
+                from django.contrib.auth import get_user_model
+                User = get_user_model()
+                try:
+                    u = User.objects.get(id=sender_uid)
+                    disp = (u.get_full_name() or u.get_username() or "User").strip()
+                    handle = u.get_username()
+                except Exception:
+                    disp = "User"
+                    handle = None
+
+                parts = [x for x in disp.split() if x]
+                initials = "".join([x[0].upper() for x in parts])[:2] or "?"
+
+                from .models_stub import ParticipantRecord
+                participant = ParticipantRecord(
+                    display_name=disp,
+                    initials=initials,
+                    avatar_seed=sender_uid or t.id,
+                    user_id=sender_uid,
+                    handle=handle,
+                )
+
+                # Ensure recipient thread
+                r_thread, _ = self.ensure_thread(
+                    viewer_id=recip_viewer,
+                    other_token=handle or sender_uid,
+                    locked_side=str(t.locked_side),
+                    title=disp,
+                    participant=participant,
+                )
+
+                # Insert mirrored message
+                InboxMessage.objects.create(
+                    id=f"m_{uuid4().hex[:18]}",
+                    thread=InboxThread.objects.get(id=r_thread.id),
+                    ts=now,
+                    from_id="them",
+                    text=str(text or ""),
+                    side=str(t.locked_side),
+                    queued=False,
+                    client_key=None,
+                )
+
+                # Touch recipient thread cache
+                rt = InboxThread.objects.get(id=r_thread.id)
+                rt.last_text = str(text or "")
+                rt.last_from_id = "them"
+                rt.updated_at = now
+                rt.save(update_fields=["last_text", "last_from_id", "updated_at"])
+
+                # Ensure unread state exists (unread derives > 0)
+                from .models import InboxThreadReadState
+                InboxThreadReadState.objects.get_or_create(
+                    thread=rt,
+                    viewer_id=recip_viewer,
+                    defaults={"viewer_role": "me", "last_read_ts": None},
                 )
         except Exception:
             pass

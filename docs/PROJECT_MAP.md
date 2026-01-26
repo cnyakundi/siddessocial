@@ -7,7 +7,7 @@
 - AppShell: layout + safe chrome exclusions
 
 [Content]
-- FilterBar: Set pills / context chips
+- FilterBar: MVP membership-only Set pills (no Search/Trending)
 - FeedEngine: feed rendering + caching safety
 - PostCard: feed card + actions sheets / overflow
 - PostDetail: /siddes-post/[id]
@@ -25,6 +25,7 @@
 - Profile: user pages + actions
 
 ## Recent windows
+- sd_761_filterbar_pills_mvp: Replace SetFilterBar dropdown/sheet with a horizontal pills row (membership-only).
 - sd_759: AppTopBar bell opens NotificationsDrawer on mobile (quick alerts)
 - sd_756_fix_actions_sheet_backdrop_ghosttap: PostActionsSheet backdrop touchstart now calls preventDefault to stop iOS ghost taps/clickthrough.
 - sd_757_fix_setpicker_member_avatars_no_external_calls: SetPickerSheet member preview no longer hits Dicebear; uses deterministic initials badges.

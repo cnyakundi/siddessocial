@@ -1,5 +1,7 @@
 "use client";
 
+
+// sd_762_compact_other_sheets_max_height
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { useDialogA11y } from "@/src/hooks/useDialogA11y";
@@ -259,7 +261,7 @@ export function SetPickerSheet({
           aria-modal="true"
           tabIndex={-1}
           aria-labelledby="set-picker-title"
-          className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200 max-h-[85dvh] md:max-h-[80vh] overflow-y-auto overscroll-contain"
+          className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200 max-h-[70dvh] md:max-h-[80vh] overflow-y-auto overscroll-contain"
         >
           <div className="flex items-center justify-between gap-3 mb-4">
             <div>

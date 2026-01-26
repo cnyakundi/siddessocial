@@ -267,7 +267,9 @@ const doBlock = async () => {
         aria-label="Close actions"
       />
 
-      <div ref={panelRef} role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="post-actions-title" className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200 max-h-[85dvh] md:max-h-[80vh] overflow-y-auto overscroll-contain">
+      <div ref={panelRef} role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="post-actions-title" className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl px-5 pt-4 pb-[calc(env(safe-area-inset-bottom)+20px)] animate-in slide-in-from-bottom-full duration-200 max-h-[70dvh] md:max-h-[80vh] overflow-y-auto overscroll-contain">
+        {/* sd_761_compact_post_actions_sheet: keep the actions sheet compact on mobile */}
+        <div aria-hidden="true" className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-gray-200" />
         <div className="flex items-center justify-between mb-5">
           <div className="min-w-0">
             <div id="post-actions-title" className="text-sm font-extrabold text-gray-900 truncate">
@@ -292,7 +294,7 @@ const doBlock = async () => {
           <button
             type="button"
             onClick={doOpen}
-            className="w-full p-4 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center gap-4 text-left"
+            className="w-full p-3 sm:p-4 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center gap-4 text-left"
           >
             <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-800 shadow-sm">
               <MessageCircle size={18} />
@@ -308,7 +310,7 @@ const doBlock = async () => {
             <button
               type="button"
               onClick={doEcho}
-              className="w-full p-4 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center gap-4 text-left"
+              className="w-full p-3 sm:p-4 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center gap-4 text-left"
             >
               <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-800 shadow-sm">
                 <Repeat size={18} />
@@ -324,7 +326,7 @@ const doBlock = async () => {
           <button
             type="button"
             onClick={doViewProfile}
-            className="w-full p-4 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center gap-4 text-left"
+            className="w-full p-3 sm:p-4 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center gap-4 text-left"
           >
             <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-800 shadow-sm">
               <User size={18} />
@@ -337,7 +339,7 @@ const doBlock = async () => {
           <button
             type="button"
             onClick={doCopyLink}
-            className="w-full p-4 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center gap-4 text-left"
+            className="w-full p-3 sm:p-4 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center gap-4 text-left"
           >
             <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-800 shadow-sm">
               <Link2 size={18} />
@@ -351,7 +353,7 @@ const doBlock = async () => {
           <button
             type="button"
             onClick={doCopyText}
-            className="w-full p-4 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center gap-4 text-left"
+            className="w-full p-3 sm:p-4 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center gap-4 text-left"
           >
             <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-800 shadow-sm">
               <Copy size={18} />
@@ -367,7 +369,7 @@ const doBlock = async () => {
           <button
             type="button"
             onClick={doShare}
-            className="w-full p-4 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center gap-4 text-left"
+            className="w-full p-3 sm:p-4 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center gap-4 text-left"
           >
             <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-800 shadow-sm">
               <Share2 size={18} />
@@ -383,7 +385,7 @@ const doBlock = async () => {
             <button
               type="button"
               onClick={doEdit}
-              className="w-full p-4 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center gap-4 text-left"
+              className="w-full p-3 sm:p-4 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center gap-4 text-left"
             >
               <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-800 shadow-sm">
                 <Pencil size={18} />
@@ -399,7 +401,7 @@ const doBlock = async () => {
             <button
               type="button"
               onClick={doDelete}
-              className="w-full p-4 rounded-xl bg-rose-50 hover:bg-rose-100 flex items-center gap-4 text-left border border-rose-200"
+              className="w-full p-3 sm:p-4 rounded-xl bg-rose-50 hover:bg-rose-100 flex items-center gap-4 text-left border border-rose-200"
             >
               <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-rose-700 shadow-sm border border-rose-200">
                 <Trash2 size={18} />
@@ -414,7 +416,7 @@ const doBlock = async () => {
           <button
             type="button"
             onClick={doHide}
-            className="w-full p-4 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center gap-4 text-left"
+            className="w-full p-3 sm:p-4 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center gap-4 text-left"
           >
             <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-700 shadow-sm">
               <EyeOff size={18} />
@@ -428,7 +430,7 @@ const doBlock = async () => {
           <button
             type="button"
             onClick={doReport}
-            className="w-full p-4 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center gap-4 text-left"
+            className="w-full p-3 sm:p-4 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center gap-4 text-left"
           >
             <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-800 shadow-sm">
               <Flag size={18} />
@@ -443,7 +445,7 @@ const doBlock = async () => {
           <button
             type="button"
             onClick={doMute}
-            className="w-full p-4 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center gap-4 text-left"
+            className="w-full p-3 sm:p-4 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center gap-4 text-left"
           >
             <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-800 shadow-sm">
               <VolumeX size={18} />
@@ -457,7 +459,7 @@ const doBlock = async () => {
 <button
             type="button"
             onClick={doBlock}
-            className="w-full p-4 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center gap-4 text-left"
+            className="w-full p-3 sm:p-4 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center gap-4 text-left"
           >
             <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-800 shadow-sm">
               <Ban size={18} />

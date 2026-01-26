@@ -1,5 +1,7 @@
 "use client";
 
+
+// sd_762_compact_other_sheets_max_height
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
@@ -165,7 +167,7 @@ export function ProfileActionsSheet(props: {
         }}
         aria-label="Close"
       />
-      <div ref={panelRef} role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="profile-actions-title" className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200 max-h-[85dvh] md:max-h-[80vh] overflow-y-auto overscroll-contain">
+      <div ref={panelRef} role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="profile-actions-title" className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200 max-h-[70dvh] md:max-h-[80vh] overflow-y-auto overscroll-contain">
         <div className="flex items-center justify-between mb-5">
           <div className="min-w-0">
             <div id="profile-actions-title" className="text-sm font-extrabold text-gray-900 truncate">Profile options</div>
