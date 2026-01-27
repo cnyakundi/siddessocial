@@ -303,6 +303,7 @@ export function SideFeed() {
 
   const setsProvider = useMemo(() => getSetsProvider(), []);
   const [sets, setSets] = useState<SetDef[]>(() => DEFAULT_SETS);
+  const [setsLoaded, setSetsLoaded] = useState(false);
 
   const provider = useMemo(() => getFeedProvider(), []);
   const [rawPosts, setRawPosts] = useState<FeedItem[]>([]);
@@ -509,21 +510,35 @@ export function SideFeed() {
     let mounted = true;
     if (side === "public") {
       setSets([]);
+      setSetsLoaded(true);
       return;
     }
+    setSetsLoaded(false);
     setsProvider
       .list({ side })
       .then((items) => {
         if (!mounted) return;
         setSets(items);
+        setSetsLoaded(true);
       })
       .catch(() => {
-        // ignore
+        if (!mounted) return;
+        setSetsLoaded(true);
       });
     return () => {
       mounted = false;
     };
   }, [side, setsProvider]);
+
+  // sd_772: Clear stale setId after Sets load (prevents empty feed when a stored setId is gone).
+  useEffect(() => {
+    if (side === "public") return;
+    if (!setsLoaded) return;
+    if (!activeSet) return;
+    const ok = Array.isArray(sets) && sets.some((s) => s.id === activeSet && s.side === side);
+    if (ok) return;
+    pickSet(null);
+  }, [side, setsLoaded, sets, activeSet, pickSet]);
 
   // Hydration-safe: only read localStorage after mount.
   useEffect(() => {
@@ -765,8 +780,8 @@ export function SideFeed() {
         if (process.env.NODE_ENV !== "production") setImportOpen(true);
         else router.push("/siddes-sets?create=1");
       }}
-      label="Set"
-      allLabel={`All ${SIDES[side].label}`}
+      label="Group"
+      allLabel={SIDES[side].label}
     />
   </div>
 ) : null}

@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import AuthLegal from "@/src/components/auth/AuthLegal";
 import AuthShell from "@/src/components/auth/AuthShell";
 import GoogleGsiButton from "@/src/components/auth/GoogleGsiButton";
+import { shouldShowAdvancedAuthUi } from "@/src/lib/authUiFlags";
 
 function googleClientId(): string {
   return String(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "").trim();
@@ -45,6 +46,7 @@ export default function LoginPage() {
   const [debug, setDebug] = useState<string | null>(null);
   const [backendOk, setBackendOk] = useState<boolean | null>(null);
   const gid = googleClientId();
+  const showAdvanced = shouldShowAdvancedAuthUi();
 
   const sp = useSearchParams();
   const nextParam = safeNextPath(sp?.get("next"));
@@ -116,7 +118,7 @@ export default function LoginPage() {
     }
   }
 
-  const showGidNotice = !gid && process.env.NODE_ENV !== "production";
+  const showGidNotice = showAdvanced && !gid && process.env.NODE_ENV !== "production";
 
   return (
     <AuthShell title="Welcome back" subtitle="Sign in. Your Sides stay safe by design.">
@@ -157,14 +159,20 @@ export default function LoginPage() {
           autoComplete="current-password"
         />
 
-        <div className="flex items-center justify-between">
-          <Link href="/magic-request" className="text-xs font-bold text-gray-600 hover:text-gray-900 hover:underline">
-            Email me a sign-in link
-          </Link>
-          <Link href="/forgot-password" className="text-xs font-bold text-gray-600 hover:text-gray-900 hover:underline">
-            Forgot password?
-          </Link>
-        </div>
+        {showAdvanced ? (
+          <div className="flex items-center justify-between">
+            <Link href="/magic-request" className="text-xs font-bold text-gray-600 hover:text-gray-900 hover:underline">
+              Email me a sign-in link
+            </Link>
+            <Link href="/forgot-password" className="text-xs font-bold text-gray-600 hover:text-gray-900 hover:underline">
+              Forgot password?
+            </Link>
+          </div>
+        ) : (
+          <div className="text-[11px] text-gray-500 text-center">
+            MVP auth: password only (recovery/OAuth hidden pre-prod).
+          </div>
+        )}
 
         {msg ? (
           <div id="login-error" role="alert" className="text-sm text-rose-600 font-medium">
@@ -186,7 +194,7 @@ export default function LoginPage() {
           Sign in
         </button>
 
-        {gid ? (
+        {showAdvanced && gid ? (
           <>
             <div className="text-center text-xs text-gray-500">or</div>
             <GoogleGsiButton

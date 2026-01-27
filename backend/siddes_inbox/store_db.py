@@ -120,16 +120,13 @@ class DbInboxStore(InboxStore):
         out: dict[str, int] = {}
         for tid in thread_ids:
             key = str(tid)
-            if key not in last_read:
-                # Default-safe: if a read-state row doesn't exist yet, treat as read.
-                out[key] = 0
-                continue
-
+            # sd_757_unread_inbound_only: if a read-state row doesn't exist yet, treat as never-read.
+            # Unread counts only inbound messages (from_id="them").
             cutoff = last_read.get(key) or epoch
             if cutoff.tzinfo is None:
                 cutoff = cutoff.replace(tzinfo=dt_tz.utc)
 
-            out[key] = InboxMessage.objects.filter(thread_id=tid, ts__gt=cutoff).count()
+            out[key] = InboxMessage.objects.filter(thread_id=tid, from_id="them", ts__gt=cutoff).count()
 
         return out
 

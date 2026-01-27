@@ -18,7 +18,7 @@ export function SetFilterBar({
   activeSet,
   onSetChange,
   onNewSet,
-  label = "Set",
+  label = "Group",
   allLabel = "All",
 }: {
   sets: SetDef[];
@@ -104,7 +104,7 @@ export function SetFilterBar({
             type="button"
             onClick={onNewSet}
             className="px-3 py-1.5 rounded-full border border-dashed border-gray-300 text-gray-700 text-sm font-bold hover:border-gray-400 hover:bg-gray-50 inline-flex items-center gap-2 whitespace-nowrap"
-            aria-label="New Set"
+            aria-label="New Group"
           >
             <Plus size={16} />
             New

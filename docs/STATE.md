@@ -10,6 +10,7 @@
 
 
 ## Current milestone
+- **sd_770:** Feed: add FLAGS.feedModules + NEXT_PUBLIC_SD_FEED_MODULES env flag (unblocks feed modules framework check)
 - **sd_769:** Feed: add FLAGS.feedModules + NEXT_PUBLIC_SD_FEED_MODULES (fix feed modules framework check + SideFeed TS errors)
 - **sd_767:** Feed: restore feed modules framework files (feedModules.ts + SideFeed.tsx) to fix harness check + TS parse errors
 - **sd_766:** Inbox: fix DB store compile blockers in `store_db.py` (ensure_thread early-return; send_message idempotency block)
@@ -87,7 +88,9 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 - **sd_142:** Feed DRF endpoint + API-base-aware Next proxy (client calls same-origin /api/feed; Next proxies to Django via SD_INTERNAL_API_BASE / NEXT_PUBLIC_API_BASE)
 
 ## NEXT overlay
+- **sd_772:** Groups mode (copy): Sets → Groups in UI; All → Side label; SideFeed clears stale stored setId
 - Next: TBD
+- **sd_766_alerts_drawer_close_icon_chevron:** Alerts drawer: change dismiss icon from X → ChevronDown (reduce icon confusion).
 - **sd_765_desktop_rail_alerts_tab:** Desktop rail: swap Sets → Alerts (alerts are first-class on desktop)
 - **sd_764_fix_icon_tap_targets_44px:** UI: Make key icon-only controls easier to tap (AppTopBar icons → 44×44; Toast dismiss → 44×44; SuggestedSets member remove → bigger hit area without pill blowup).
 - **sd_763_standardize_alerts_label:** UI: Standardize label to “Alerts” across nav + NotificationsDrawer title + a11y strings (removes Notifs/Notifications inconsistency).
@@ -214,3 +217,9 @@ These are the overlays applied/created during the current session (evidence: ter
 
 
 - sd_748_inbox_dm_delivery: Inbox DM mirror delivery (two-party messaging)
+
+- **sd_771:** Fix SetPickerSheet `currentSide` wiring for remaining call sites (compose/etc.)
+
+- **sd_773:** Fix auth pages ESLint rules-of-hooks (forgot-password + magic-request) so `next build` succeeds.
+
+- **sd_757_fix_inbox_unread_missing_readstate:** Inbox unread derives inbound-only; missing read-state no longer hides new DMs.

@@ -90,6 +90,15 @@ if (pathname.startsWith("/siddes-profile")) return "Me";
         if (cancelled) return;
         const filtered = Array.isArray(list) ? list.filter((s) => s.side === side) : [];
         setSets(filtered);
+
+        // sd_770: If localStorage had a stale setId for this Side, clear it.
+        try {
+          if (last && !filtered.some((x) => x.id === last)) {
+            setActiveSet(null);
+            setStoredLastSetForSide(side, null);
+            emitAudienceChanged({ side, setId: null, topic: null, source: "AppTopBar" });
+          }
+        } catch {}
       })
       .catch(() => {
         if (cancelled) return;
@@ -112,9 +121,9 @@ if (pathname.startsWith("/siddes-profile")) return "Me";
 
   const activeSetLabel = useMemo(() => {
     if (side === "public") return "All";
-    if (!activeSet) return "All";
+    if (!activeSet) return SIDES[side].label;
     const s = sets.find((x) => x.id === activeSet);
-    return s ? s.label : "Set";
+    return s ? s.label : SIDES[side].label;
   }, [activeSet, sets, side]);
 
   const canPickSet = showSetScope && side !== "public";
@@ -169,8 +178,8 @@ if (pathname.startsWith("/siddes-profile")) return "Me";
                   "text-sm font-extrabold text-gray-700",
                   "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900/20"
                 )}
-                aria-label="Choose set"
-                title="Choose set"
+                aria-label="Choose group"
+                title="Choose group"
               >
                 <span className="truncate max-w-[180px]">{activeSetLabel}</span>
                 <ChevronDown size={14} className="text-gray-400" aria-hidden />
@@ -261,6 +270,7 @@ if (pathname.startsWith("/siddes-profile")) return "Me";
       {canPickSet ? (
         <SetPickerSheet
           open={setSheetOpen}
+          currentSide={side}
           onClose={() => setSetSheetOpen(false)}
           sets={sets}
           activeSet={activeSet}
@@ -269,8 +279,8 @@ if (pathname.startsWith("/siddes-profile")) return "Me";
             setStoredLastSetForSide(side, next);
             emitAudienceChanged({ side, setId: next, topic: null, source: "AppTopBar" });
           }}
-          title="Set"
-          allLabel="All"
+          title="Group"
+          allLabel={SIDES[side].label}
         />
       ) : null}
     </div>

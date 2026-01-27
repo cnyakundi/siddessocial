@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import AuthLegal from "@/src/components/auth/AuthLegal";
 import AuthShell from "@/src/components/auth/AuthShell";
 import GoogleGsiButton from "@/src/components/auth/GoogleGsiButton";
+import { shouldShowAdvancedAuthUi } from "@/src/lib/authUiFlags";
 
 function googleClientId(): string {
   return String(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "").trim();
@@ -47,6 +48,7 @@ export default function SignupPage() {
   const [debug, setDebug] = useState<string | null>(null);
   const [backendOk, setBackendOk] = useState<boolean | null>(null);
   const gid = googleClientId();
+  const showAdvanced = shouldShowAdvancedAuthUi();
   const sp = useSearchParams();
   const nextParam = safeNextPath(sp?.get("next"));
   const onboardingHref = nextParam ? `/onboarding?next=${encodeURIComponent(nextParam)}` : "/onboarding";
@@ -117,7 +119,7 @@ export default function SignupPage() {
     }
   }
 
-  const showGidNotice = !gid && process.env.NODE_ENV !== "production";
+  const showGidNotice = showAdvanced && !gid && process.env.NODE_ENV !== "production";
 
   return (
     <AuthShell title="Create your Siddes" subtitle="Quick start. Calm onboarding. Context-safe by default.">
@@ -195,7 +197,7 @@ export default function SignupPage() {
           Create account
         </button>
 
-        {gid ? (
+        {showAdvanced && gid ? (
           <>
             <div className="text-center text-xs text-gray-500">or</div>
             <GoogleGsiButton

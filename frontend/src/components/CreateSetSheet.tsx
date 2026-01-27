@@ -139,7 +139,7 @@ export function CreateSetSheet(props: {
         <div className="px-4 pt-4 pb-3 border-b border-gray-100">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <div id="create-set-title" className="text-sm font-black text-gray-900">New Set</div>
+              <div id="create-set-title" className="text-sm font-black text-gray-900">New Group</div>
               <div className="text-[11px] text-gray-500 mt-1">
                 Quick create • Name + optional members
               </div>
@@ -195,7 +195,7 @@ export function CreateSetSheet(props: {
             <div className="p-3 rounded-2xl border border-amber-200 bg-amber-50 text-amber-800 text-sm">
               <div className="font-bold">Create disabled (read-only)</div>
               <div className="text-xs mt-1">
-                Set creation is enforced server-side. If you do not have permission, you will see an error.
+                Group creation is enforced server-side. If you do not have permission, you will see an error.
               </div>
             </div>
           </div>
@@ -223,7 +223,7 @@ export function CreateSetSheet(props: {
               className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold outline-none focus:ring-2 ring-gray-900/10"
             />
             <div className="text-[11px] text-gray-500 mt-2">
-              This Set will be created inside <span className="font-bold">{SIDES[side]?.label ?? side}</span>.
+              This Group will be created inside <span className="font-bold">{SIDES[side]?.label ?? side}</span>.
             </div>
           </div>
 

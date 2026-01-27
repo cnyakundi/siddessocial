@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { Suspense, useEffect, useMemo, useState } from "react";
 import AuthShell from "@/src/components/auth/AuthShell";
+import { shouldShowAdvancedAuthUi } from "@/src/lib/authUiFlags";
 
 function humanizeTokenError(err: string): string {
   const e = String(err || "").trim().toLowerCase();
@@ -20,6 +21,21 @@ function humanizeTokenError(err: string): string {
 type ResetResp = { ok?: boolean; reset?: boolean; error?: string; detail?: string[] };
 
 export default function ResetPasswordPage() {
+  const showAdvanced = shouldShowAdvancedAuthUi();
+  if (!showAdvanced) {
+    return (
+      <AuthShell title="Reset password" subtitle="Hidden in MVP builds (until production).">
+        <div className="space-y-3">
+          <div className="text-sm text-gray-600">
+            Use password sign-in for now. (Re-enable advanced auth UI with NEXT_PUBLIC_AUTH_ADVANCED=1.)
+          </div>
+          <Link href="/login" className="inline-block font-bold text-gray-900 hover:underline">
+            Back to login
+          </Link>
+        </div>
+      </AuthShell>
+    );
+  }
   return (
     <Suspense fallback={<div className="min-h-[60vh] flex items-center justify-center text-sm text-gray-500">Loading…</div>}>
       <ResetPasswordPageInner />

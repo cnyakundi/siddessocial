@@ -223,6 +223,15 @@ export function DesktopTopBar() {
         if (cancelled) return;
         const filtered = Array.isArray(list) ? list.filter((s) => s.side === side) : [];
         setSets(filtered);
+
+        // sd_770: If localStorage had a stale setId for this Side, clear it.
+        try {
+          if (last && !filtered.some((x) => x.id === last)) {
+            setActiveSet(null);
+            setStoredLastSetForSide(side, null);
+            emitAudienceChanged({ side, setId: null, topic: null, source: "DesktopTopBar" });
+          }
+        } catch {}
       })
       .catch(() => {
         if (cancelled) return;
@@ -245,9 +254,9 @@ export function DesktopTopBar() {
 
   const activeSetLabel = useMemo(() => {
     if (side === "public") return "All";
-    if (!activeSet) return "All";
+    if (!activeSet) return SIDES[side].label;
     const s = sets.find((x) => x.id === activeSet);
-    return s ? s.label : "Set";
+    return s ? s.label : SIDES[side].label;
   }, [side, activeSet, sets]);
 
   const canPickSet = isNow && side !== "public";
@@ -331,8 +340,8 @@ export function DesktopTopBar() {
                     "text-sm font-extrabold text-gray-700",
                     "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900/20"
                   )}
-                  aria-label="Choose set"
-                  title="Choose set"
+                  aria-label="Choose group"
+                  title="Choose group"
                 >
                   <span className="truncate max-w-[220px]">{activeSetLabel}</span>
                   <ChevronDown size={14} className={cn("text-gray-400 transition-transform", setOpen ? "rotate-180" : "")} aria-hidden />

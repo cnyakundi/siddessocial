@@ -3,7 +3,7 @@
 
 // sd_763_standardize_alerts_label
 import React, { useRef } from "react";
-import { X } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { NotificationsView } from "@/src/components/NotificationsView";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { useDialogA11y } from "@/src/hooks/useDialogA11y";
@@ -14,6 +14,7 @@ function cn(...parts: Array<string | undefined | false | null>) {
 
 /**
  * sd_500: Mobile-only Notifications Drawer (bottom sheet).
+ * sd_766: Dismiss icon uses ChevronDown to avoid any confusion with Alerts bell.
  * Uses deterministic NotificationsView; no fake counts/percentages.
  */
 export function NotificationsDrawer({
@@ -72,7 +73,7 @@ export function NotificationsDrawer({
             className="w-11 h-11 rounded-2xl border border-gray-200 bg-white text-gray-600 inline-flex items-center justify-center active:scale-95 transition-transform"
             aria-label="Close"
           >
-            <X size={22} strokeWidth={2} />
+            <ChevronDown size={22} strokeWidth={2} />
           </button>
         </div>
 

@@ -119,8 +119,9 @@ export function SetPickerSheet({
   activeSet,
   onPick,
   onNewSet,
-  title = "Set",
+  title = "Group",
   allLabel = "All",
+  currentSide,
 }: {
   open: boolean;
   onClose: () => void;
@@ -131,6 +132,7 @@ export function SetPickerSheet({
   onNewSet?: () => void;
   title?: string;
   allLabel?: string;
+  currentSide: SideId;
 }) {
 
   const [mounted, setMounted] = useState(false);
@@ -149,25 +151,32 @@ export function SetPickerSheet({
     return (byActive?.side || sets[0]?.side || "friends") as SideId;
   }, [sets, activeSet]);
 
+  const contextSide: SideId = useMemo(() => {
+    // Truth: the caller knows which Side is active.
+    // If a Side has 0 sets yet, inferredSide falls back to friends — that was the bug.
+    if (currentSide && currentSide !== "public") return currentSide;
+    return inferredSide;
+  }, [currentSide, inferredSide]);
+
   const viewer = getStubViewerCookie();
   const canWrite = !viewer || isStubMe(viewer);
 
   const recentSets = useMemo(() => {
-    const ids = getStoredRecentSetIdsForSide(inferredSide, 3);
+    const ids = getStoredRecentSetIdsForSide(contextSide, 3);
     const out: SetDef[] = [];
     for (const id of ids) {
       const s = sets.find((x) => x.id === id);
       if (s && !out.find((y) => y.id === s.id)) out.push(s);
     }
     return out;
-  }, [sets, inferredSide]);
+  }, [sets, contextSide]);
 
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [createErr, setCreateErr] = useState<string | null>(null);
   const [label, setLabel] = useState("");
   const [membersRaw, setMembersRaw] = useState("");
-  const [side, setSide] = useState<SideId>(inferredSide);
+  const [side, setSide] = useState<SideId>(contextSide);
   const [color, setColor] = useState<SetColor>("emerald");
 
   useEffect(() => {
@@ -185,17 +194,17 @@ export function SetPickerSheet({
   useEffect(() => {
     if (!createOpen) return;
     // Default create sheet to current side.
-    setSide(inferredSide);
+    setSide(contextSide);
     setColor("emerald");
     setLabel("");
     setMembersRaw("");
     setCreateErr(null);
-  }, [createOpen, inferredSide]);
+  }, [createOpen, contextSide]);
 
   const pick = (next: SetId | null) => {
     try {
-      setStoredLastSetForSide(inferredSide, next);
-      if (next) pushStoredRecentSetForSide(inferredSide, next);
+      setStoredLastSetForSide(contextSide, next);
+      if (next) pushStoredRecentSetForSide(contextSide, next);
     } catch {}
     onPick(next);
     onClose();
@@ -236,7 +245,7 @@ export function SetPickerSheet({
       <div className="fixed inset-0 z-[125] flex items-end justify-center md:items-center">
                 <button
           type="button"
-          aria-label="Close set picker"
+          aria-label="Close group picker"
           className="absolute inset-0 bg-black/40 backdrop-blur-sm"
           onPointerDown={(e) => {
             // sd_713_backdrop_clickthrough: consume pointerdown to prevent ghost taps (close on click/touch)
@@ -268,7 +277,7 @@ export function SetPickerSheet({
               <h3 id="set-picker-title" className="text-lg font-bold text-gray-900">
                 {title}
               </h3>
-              <div className="text-[11px] text-gray-500 mt-1">Pick an audience. Create sets inline.</div>
+              <div className="text-[11px] text-gray-500 mt-1">Pick a group. Create groups inline.</div>
             </div>
             <button
               type="button"
@@ -281,7 +290,7 @@ export function SetPickerSheet({
             </button>
           </div>
 
-          {/* New Set (inline) */}
+          {/* New Group (inline) */}
           <button
             type="button"
             onClick={() => setCreateOpen(true)}
@@ -297,7 +306,7 @@ export function SetPickerSheet({
                 <Plus size={18} />
               </div>
               <div>
-                <div className="font-black text-gray-900">New Set</div>
+                <div className="font-black text-gray-900">New Group</div>
                 <div className="text-[11px] text-gray-500 mt-0.5">Name + optional people</div>
               </div>
             </div>
@@ -388,7 +397,7 @@ export function SetPickerSheet({
             })}
           </div>
 
-          {/* Manage sets (optional) */}
+          {/* Manage groups (optional) */}
           {onNewSet ? (
             <button
               type="button"
@@ -399,7 +408,7 @@ export function SetPickerSheet({
               className="w-full mt-5 py-3 rounded-xl font-bold text-sm border border-gray-200 bg-white hover:bg-gray-50 inline-flex items-center justify-center gap-2"
             >
               <Settings2 size={16} />
-              Manage sets
+              Manage groups
             </button>
           ) : null}
 

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 export default function ForgotPasswordPage() {
+  // IMPORTANT: hooks must be unconditional (Next build runs eslint rules-of-hooks)
   const [identifier, setIdentifier] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -15,6 +16,7 @@ export default function ForgotPasswordPage() {
     if (!canSubmit) return;
     setBusy(true);
     setMsg(null);
+
     try {
       const res = await fetch("/api/auth/password/reset/request", {
         method: "POST",
@@ -22,8 +24,12 @@ export default function ForgotPasswordPage() {
         body: JSON.stringify({ identifier }),
       });
       await res.json().catch(() => ({}));
+      // Privacy posture: always show generic success.
       setSent(true);
       setMsg("If an account exists, we emailed a reset link.");
+      if (!res.ok) {
+        // still keep generic success
+      }
     } catch {
       setSent(true);
       setMsg("If an account exists, we emailed a reset link.");
@@ -56,7 +62,12 @@ export default function ForgotPasswordPage() {
             submit();
           }}
         >
-          <label htmlFor="forgot-identifier" className="text-xs font-bold text-gray-500 uppercase tracking-wider">Email or username</label>
+          <label
+            htmlFor="forgot-identifier"
+            className="text-xs font-bold text-gray-500 uppercase tracking-wider"
+          >
+            Email or username
+          </label>
           <input
             id="forgot-identifier"
             className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:bg-white focus:border-gray-300 focus-visible:ring-2 focus-visible:ring-gray-900/20 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
