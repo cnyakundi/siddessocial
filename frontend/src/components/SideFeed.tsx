@@ -355,7 +355,7 @@ export function SideFeed() {
     } finally {
       setLoadingMore(false);
     }
-  }, [activeSet, hasMore, nextCursor, provider, publicChannel, side, loadingMore, loadingInitial]);
+  }, [activeSet, activeTag, hasMore, nextCursor, provider, publicChannel, side, loadingMore, loadingInitial]);
 
 
     // Reset side-scoped UI state when side changes.
@@ -481,7 +481,7 @@ export function SideFeed() {
     return () => {
       mounted = false;
     };
-  }, [side, provider, publicChannel, activeSet, retryTick]);
+  }, [side, provider, publicChannel, activeSet, activeTag, retryTick]);
 
   useEffect(() => {
     if (!hasMore || !nextCursor) return;

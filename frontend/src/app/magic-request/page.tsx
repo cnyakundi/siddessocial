@@ -14,7 +14,6 @@ function humanizeErr(err: string): string {
 }
 
 export default function MagicRequestPage() {
-  // IMPORTANT: hooks must be unconditional (Next build runs eslint rules-of-hooks)
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);

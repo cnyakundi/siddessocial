@@ -2,7 +2,7 @@
 
 import React from "react";
 import { usePathname } from "next/navigation";
-import { Globe, Users, Heart, Lock, Briefcase, type LucideIcon } from "lucide-react";
+import { Globe, Users, Star, Lock, Briefcase, type LucideIcon } from "lucide-react";
 import { useSide } from "@/src/components/SideProvider";
 import type { SideId } from "@/src/lib/sides";
 import { SIDE_ORDER, SIDES, SIDE_THEMES } from "@/src/lib/sides";
@@ -14,8 +14,8 @@ function cn(...parts: Array<string | undefined | false | null>) {
 const SIDE_ICON: Record<SideId, LucideIcon> = {
   public: Globe,
   friends: Users,
-  // sd_749_pwa_notifs_nav: Close = Inner Circle (Heart), not a "lock" (security is already conveyed elsewhere)
-  close: Heart,
+  // sd_749_pwa_notifs_nav: Close = Inner Circle (Star), not a "lock" (security is already conveyed elsewhere)
+  close: Star,
   work: Briefcase,
 };
 

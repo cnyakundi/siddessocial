@@ -2,7 +2,7 @@
 **Updated:** 2026-01-27
 
 [Shell]
-- Rail: Side switching / navigation + Face banner (“Wearing: X”)
+- Rail: Side switching / navigation + clarified nav labels/icons + Face banner (“Wearing: X”)
 - BottomNav (PWA): primary tabs
 - AppShell: layout + safe chrome exclusions
 
@@ -26,6 +26,10 @@
 - Profile: user pages + actions
 
 ## Recent windows
+
+- sd_767_close_side_icon_star: Close Side icon switched Heart → Star (avoid confusion with Likes/Notifications).
+- sd_769_alerts_copy_cleanup — Standardize Alerts naming (copy + aria).
+- sd_766_rail_iconography_clarity: Desktop rail labels/icons clarified (Now→Feed, Inbox icon reads as chats) + PROJECT_MAP rail line deduped.
 - sd_765_rail_face_banner: Desktop rail shows an always-visible “Wearing: {Side}” face banner (color-coded) so identity is never ambiguous.
 - sd_764_authstub_hide_advanced_auth_ui: Hide OAuth + password reset + magic link UI until real production host (override NEXT_PUBLIC_AUTH_ADVANCED=1).
 - sd_759: AppTopBar bell opens NotificationsDrawer on mobile (quick alerts)
@@ -42,3 +46,4 @@ Notes (Notifications)
 Notes (Feed)
 - Flags: frontend/src/lib/flags.ts includes feedModules (NEXT_PUBLIC_SD_FEED_MODULES) (sd_769)
 - Flags: frontend/src/lib/flags.ts includes feedModules (NEXT_PUBLIC_SD_FEED_MODULES) (sd_770)
+- sd_768_clean_alerts_page_hide_push_debug: Alerts page shows Alerts list first; push tools collapsed into an optional details section.

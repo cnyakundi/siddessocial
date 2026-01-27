@@ -21,7 +21,7 @@ export default function ExportPage() {
       }
       setAuthed(true);
     })();
-  }, []);
+  }, [router]);
 
   async function download() {
     setBusy(true);

@@ -3,7 +3,7 @@
 // sd_338: Ritual Dock (Pulse) above the feed
 
 import React, { useEffect, useMemo, useState } from "react";
-import { BookOpen, Flame, Globe, HelpCircle, Heart, MessageCircle, Smile, Sparkles, Users, Briefcase } from "lucide-react";
+import { BookOpen, Flame, Globe, HelpCircle, Star, MessageCircle, Smile, Sparkles, Users, Briefcase } from "lucide-react";
 import type { SideId } from "@/src/lib/sides";
 import { SIDE_THEMES, SIDES } from "@/src/lib/sides";
 import type { SetId } from "@/src/lib/sets";
@@ -20,7 +20,7 @@ function cn(...parts: Array<string | undefined | false | null>) {
 function sideIcon(side: SideId) {
   if (side === "public") return Globe;
   if (side === "friends") return Users;
-  if (side === "close") return Heart;
+  if (side === "close") return Star;
   return Briefcase;
 }
 

@@ -6,7 +6,7 @@ import React from "react";
 import {
   Globe,
   Users,
-  Heart,
+  Star,
   Briefcase,
   ShieldCheck,
   MapPin,
@@ -44,7 +44,7 @@ function safeWebsiteHref(website: string) {
 const SIDE_ICON: Record<SideId, React.ComponentType<any>> = {
   public: Globe,
   friends: Users,
-  close: Heart,
+  close: Star,
   work: Briefcase,
 };
 

@@ -205,7 +205,7 @@ export function BottomNav() {
         <div className="h-[88px] grid grid-cols-5 items-start pt-2">
           <TabLink href="/siddes-feed" label="Now" Icon={Home} active={isHome} />
 
-          {/* PWA/mobile: surface Notifications as first-class (swap out Sets tab) */}
+          {/* PWA/mobile: surface Alerts as first-class (swap out Sets tab) */}
           <TabLink href="/siddes-notifications" label="Alerts" Icon={Bell} active={isNotifs} badge={unread} />
 
           {/* MAGIC PLUS */}

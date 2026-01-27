@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type SessionRow = {
   id: number;
@@ -32,7 +32,7 @@ export default function AccountSessionsPage() {
 
   const activeRows = useMemo(() => rows.filter((r) => !r.revokedAt), [rows]);
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     setMsg(null);
     try {
@@ -56,11 +56,12 @@ export default function AccountSessionsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  
+  }, [router]);
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   async function revoke(id: number, isCurrent: boolean) {
     if (busy) return;

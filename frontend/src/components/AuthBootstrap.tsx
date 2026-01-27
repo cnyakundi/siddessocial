@@ -124,7 +124,7 @@ export function AuthBootstrap() {
         return;
       }
     });
-  }, [pathname]);
+  }, [pathname, router]);
 
   return null;
 }

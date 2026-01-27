@@ -9,7 +9,7 @@ Globe,
   Users,
   Lock,
   
-  Heart,Briefcase,
+  Star,Briefcase,
   Shield,
   MapPin,
   Link as LinkIcon,
@@ -84,7 +84,7 @@ facet?: PrismFacet;
 const SIDE_ICON: Record<SideId, React.ComponentType<React.SVGProps<SVGSVGElement> & { size?: string | number }>> = {
   public: Globe,
   friends: Users,
-  close: Heart,
+  close: Star,
   work: Briefcase,
 };
 

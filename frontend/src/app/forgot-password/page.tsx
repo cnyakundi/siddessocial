@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useState } from "react";
 
 export default function ForgotPasswordPage() {
-  // IMPORTANT: hooks must be unconditional (Next build runs eslint rules-of-hooks)
   const [identifier, setIdentifier] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -16,7 +15,6 @@ export default function ForgotPasswordPage() {
     if (!canSubmit) return;
     setBusy(true);
     setMsg(null);
-
     try {
       const res = await fetch("/api/auth/password/reset/request", {
         method: "POST",
@@ -24,13 +22,10 @@ export default function ForgotPasswordPage() {
         body: JSON.stringify({ identifier }),
       });
       await res.json().catch(() => ({}));
-      // Privacy posture: always show generic success.
       setSent(true);
       setMsg("If an account exists, we emailed a reset link.");
-      if (!res.ok) {
-        // still keep generic success
-      }
     } catch {
+      // privacy posture: same message regardless
       setSent(true);
       setMsg("If an account exists, we emailed a reset link.");
     } finally {

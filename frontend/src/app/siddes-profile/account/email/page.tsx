@@ -36,7 +36,7 @@ export default function AccountEmailPage() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [router]);
 
   async function requestChange() {
     if (!newEmail.includes("@")) {

@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Globe, Users, Heart, Briefcase, Home, Bell, Inbox, User as UserIcon, Plus, Lock as LockIcon } from "lucide-react";
+import {Globe, Users, Star, Briefcase, Home, Bell, User as UserIcon, Plus, Lock as LockIcon, MessageCircle} from "lucide-react";
 import { useSide } from "@/src/components/SideProvider";
 import { SIDES, SIDE_ORDER, SIDE_THEMES, type SideId } from "@/src/lib/sides";
 
@@ -14,7 +14,7 @@ function cn(...parts: Array<string | undefined | false | null>) {
 const SIDE_ICONS: Record<SideId, React.ComponentType<any>> = {
   public: Globe,
   friends: Users,
-  close: Heart,
+  close: Star,
   work: Briefcase,
 };
 
@@ -28,7 +28,7 @@ type NavItem = {
 const NAV: NavItem[] = [
   {
     href: "/siddes-feed",
-    label: "Now",
+    label: "Feed",
     icon: Home,
     active: (p) => p === "/siddes-feed" || p.startsWith("/siddes-feed/"),
   },
@@ -41,7 +41,7 @@ const NAV: NavItem[] = [
   {
     href: "/siddes-inbox",
     label: "Inbox",
-    icon: Inbox,
+    icon: MessageCircle,
     active: (p) => p.startsWith("/siddes-inbox"),
   },
   {

@@ -1,4 +1,4 @@
-import { Check, Globe, Users, Heart, Lock, Briefcase, type LucideIcon } from "lucide-react";
+import { Check, Globe, Users, Star, Lock, Briefcase, type LucideIcon } from "lucide-react";
 import type { SideId } from "@/src/lib/sides";
 import { SIDE_ORDER, SIDES, SIDE_THEMES } from "@/src/lib/sides";
 import { SIDE_UX } from "@/src/lib/sideUx";
@@ -7,8 +7,8 @@ import { PrimaryButton } from "@/src/components/onboarding/ui";
 const SIDE_ICON: Record<SideId, LucideIcon> = {
   public: Globe,
   friends: Users,
-  // sd_749_pwa_notifs_nav: Close = Inner Circle (Heart)
-  close: Heart,
+  // sd_749_pwa_notifs_nav: Close = Inner Circle (Star)
+  close: Star,
   work: Briefcase,
 };
 

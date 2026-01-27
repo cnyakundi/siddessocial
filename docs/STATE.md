@@ -90,6 +90,9 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 ## NEXT overlay
 - **sd_772:** Groups mode (copy): Sets → Groups in UI; All → Side label; SideFeed clears stale stored setId
 - Next: TBD
+- **sd_769_alerts_copy_cleanup:** Standardize Alerts naming (remove Notifs/Notifications drift + aria-labels).
+- **sd_768_clean_alerts_page_hide_push_debug:** UI: /siddes-notifications shows Alerts first; push settings/debug tools collapsed (optional).
+- **sd_774_fix_build_hooks_and_deps:** Frontend build: fix rules-of-hooks errors + clean hook deps (router/activeTag/load).
 - **sd_766_alerts_drawer_close_icon_chevron:** Alerts drawer: change dismiss icon from X → ChevronDown (reduce icon confusion).
 - **sd_765_desktop_rail_alerts_tab:** Desktop rail: swap Sets → Alerts (alerts are first-class on desktop)
 - **sd_764_fix_icon_tap_targets_44px:** UI: Make key icon-only controls easier to tap (AppTopBar icons → 44×44; Toast dismiss → 44×44; SuggestedSets member remove → bigger hit area without pill blowup).

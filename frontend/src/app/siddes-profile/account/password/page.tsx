@@ -47,7 +47,7 @@ export default function AccountPasswordPage() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [router]);
 
   const match = newPassword.length > 0 && newPassword === confirm;
   const canSubmit = !busy && newPassword.length >= 8 && match;

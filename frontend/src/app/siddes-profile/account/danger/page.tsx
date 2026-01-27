@@ -31,7 +31,7 @@ export default function DangerZonePage() {
       }
       setAuthed(true);
     })();
-  }, []);
+  }, [router]);
 
   async function deactivate() {
     if (!window.confirm("Deactivate your account now? You will be logged out.")) return;
