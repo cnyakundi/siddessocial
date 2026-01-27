@@ -3,7 +3,7 @@
 
 [Shell]
 - Rail: Side switching / navigation + clarified nav labels/icons + Face banner (“Wearing: X”)
-- BottomNav (PWA): primary tabs
+- BottomNav (PWA): primary tabs (Feed, Alerts, Create, Inbox, Me)
 - AppShell: layout + safe chrome exclusions
 
 [Content]
@@ -26,6 +26,10 @@
 - Profile: user pages + actions
 
 ## Recent windows
+
+- sd_769_pwa_topbar_wearing_label: AppTopBar shows a small 'Wearing' label so the active Side (Face) is always explicit on mobile.
+
+- sd_768_pwa_bottomnav_nav_clarity: BottomNav renamed Now → Feed and Inbox icon changed to chat bubble (MessageCircle).
 
 - sd_767_close_side_icon_star: Close Side icon switched Heart → Star (avoid confusion with Likes/Notifications).
 - sd_769_alerts_copy_cleanup — Standardize Alerts naming (copy + aria).

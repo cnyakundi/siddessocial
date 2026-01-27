@@ -5,7 +5,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, ChevronDown, RefreshCw, Search as SearchIcon } from "lucide-react";
+import { Bell, ChevronDown, RefreshCw, Search as SearchIcon, Lock as LockIcon } from "lucide-react";
 
 import { SideSwitcherSheet } from "@/src/components/SideSwitcherSheet";
 import { SetPickerSheet } from "@/src/components/SetPickerSheet";
@@ -32,16 +32,17 @@ function cn(...parts: Array<string | undefined | false | null>) {
 /**
  * AppTopBar (Mobile) — MVP Utility Header
  * - One header layer only (no stacked bars).
- * - Left: Side chip → opens SideSwitcherSheet.
+ * - Left: Side chip (Wearing label) → opens SideSwitcherSheet.
  * - Right: Set chip only on /siddes-feed; otherwise a calm page title.
  * - Alerts bell opens the Notifications drawer (mobile); Search stays as a route (MVP utility).
  */
 export function AppTopBar(_props: { onOpenNotificationsDrawer?: () => void } = {}) {
   const pathname = usePathname() || "/";
   const router = useRouter(); // sd_746_pwa_refresh
-  const { side, setSide } = useSide();
+  const { side, setSide, sideLock } = useSide();
   const theme = SIDE_THEMES[side];
   const activity = useSideActivity(side);
+  const lockedSide = Boolean(sideLock?.enabled);
   const { unread } = useNotificationsActivity();
 
   const isSiddes = pathname.startsWith("/siddes-");
@@ -151,15 +152,21 @@ if (pathname.startsWith("/siddes-profile")) return "Me";
               setSideSheetOpen(true);
             }}
             className={cn(
-              "flex items-center gap-2 px-3 py-2 rounded-full",
+              "flex items-center gap-2 px-3 py-1.5 rounded-full",
               "bg-gray-50 hover:bg-gray-100 transition-colors",
               "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900/20"
             )}
             aria-label="Change Side"
             title="Change Side"
           >
-            <span className={cn("w-2.5 h-2.5 rounded-full", theme.primaryBg)} aria-hidden />
-            <span className="text-sm font-black tracking-tight text-gray-900">{SIDES[side].label}</span>
+            <span className="flex flex-col leading-none">
+              <span className="text-[8px] font-black uppercase tracking-[0.22em] text-gray-400">Wearing</span>
+              <span className="mt-1 flex items-center gap-2">
+                <span className={cn("w-2.5 h-2.5 rounded-full", theme.primaryBg)} aria-hidden />
+                <span className="text-[12px] font-black tracking-tight text-gray-900">{SIDES[side].label}</span>
+                {lockedSide ? <LockIcon size={12} className="text-gray-300" aria-hidden /> : null}
+              </span>
+            </span>
             <ChevronDown size={14} className="text-gray-400" aria-hidden />
           </button>
           </div>

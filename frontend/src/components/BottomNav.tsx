@@ -8,7 +8,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Home, Inbox, Plus, type LucideIcon } from "lucide-react";
+import { Bell, Home, MessageCircle, Plus, type LucideIcon } from "lucide-react";
 import { useSide } from "@/src/components/SideProvider";
 import { SIDE_THEMES, type SideId } from "@/src/lib/sides";
 import { getStoredLastPublicTopic, getStoredLastSetForSide } from "@/src/lib/audienceStore";
@@ -147,7 +147,7 @@ function TabLink({
 
 /**
  * sd_494: Mobile Measurement Protocol v1.3 Toolbelt
- * Order: [Now] [Alerts] [MAGIC PLUS] [Inbox] [Me]
+ * Order: [Feed] [Alerts] [MAGIC PLUS] [Inbox] [Me]
  * - Tabs are neutral (black/gray). Only MAGIC PLUS uses Side color.
  * - Baseline height: 88px + safe-area padding.
  */
@@ -203,7 +203,7 @@ export function BottomNav() {
     >
       <div className="max-w-[430px] mx-auto px-4">
         <div className="h-[88px] grid grid-cols-5 items-start pt-2">
-          <TabLink href="/siddes-feed" label="Now" Icon={Home} active={isHome} />
+          <TabLink href="/siddes-feed" label="Feed" Icon={Home} active={isHome} />
 
           {/* PWA/mobile: surface Alerts as first-class (swap out Sets tab) */}
           <TabLink href="/siddes-notifications" label="Alerts" Icon={Bell} active={isNotifs} badge={unread} />
@@ -236,7 +236,7 @@ export function BottomNav() {
             </span>
           </Link>
 
-          <TabLink href="/siddes-inbox" label="Inbox" Icon={Inbox} active={isInbox} />
+          <TabLink href="/siddes-inbox" label="Inbox" Icon={MessageCircle} active={isInbox} />
 
           <MeTabLink active={isMe} side={side} />
         </div>
