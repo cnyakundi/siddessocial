@@ -88,6 +88,7 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 
 ## NEXT overlay
 - Next: TBD
+- **sd_765_desktop_rail_alerts_tab:** Desktop rail: swap Sets → Alerts (alerts are first-class on desktop)
 - **sd_764_fix_icon_tap_targets_44px:** UI: Make key icon-only controls easier to tap (AppTopBar icons → 44×44; Toast dismiss → 44×44; SuggestedSets member remove → bigger hit area without pill blowup).
 - **sd_763_standardize_alerts_label:** UI: Standardize label to “Alerts” across nav + NotificationsDrawer title + a11y strings (removes Notifs/Notifications inconsistency).
 - **sd_762_compact_other_sheets_max_height:** UI: Reduce max height of common sheets (ChipOverflow/SetPicker/ProfileActions) to 70dvh so they feel less full-screen on mobile.

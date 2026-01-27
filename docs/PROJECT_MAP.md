@@ -25,6 +25,8 @@
 - Profile: user pages + actions
 
 ## Recent windows
+- sd_765: Desktop rail — swap Sets → Alerts (make alerts first-class on desktop; Inbox no longer owns notifications)
+
 - sd_764_fix_icon_tap_targets_44px: Improve tap targets for key icon-only controls (TopBar icons, Toast dismiss, tiny remove-X buttons).
 - sd_762_feedengine_chrono_strip_modules: Remove injected feed modules so SideFeed is only chronological posts.
 - sd_759: AppTopBar bell opens NotificationsDrawer on mobile (quick alerts)
