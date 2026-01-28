@@ -1432,6 +1432,9 @@ onClick={
             >
               <MessageCircle size={18} strokeWidth={2.5} />
               Reply
+              {!hideCounts && replyCount ? (
+                <span className="text-xs font-extrabold tabular-nums text-gray-500">{replyCount}</span>
+              ) : null}
             </button>
 
             <button
@@ -1455,6 +1458,9 @@ onClick={
                 <Heart size={18} strokeWidth={2.5} fill={liked ? "currentColor" : "none"} />
               )}
               {side === "work" ? "Ack" : "Like"}
+              {!hideCounts && likeCount ? (
+                <span className="text-xs font-extrabold tabular-nums text-gray-500">{likeCount}</span>
+              ) : null}
             </button>
                       </div>
           </>
@@ -1477,7 +1483,7 @@ onClick={
                   <MessageCircle size={22} strokeWidth={2} />
                   {!hideCounts && replyCount ? (
                     <span className="inline-flex items-baseline gap-1">
-                      <span className="text-xs font-extrabold tabular-nums text-gray-500">{replyCount}</span>
+                      <span className="text-[11px] font-extrabold tabular-nums text-gray-500">{replyCount} {replyCount === 1 ? "Reply" : "Replies"}</span>
                       <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                         {replyCount === 1 ? "reply" : "replies"}
                       </span>
@@ -1510,7 +1516,7 @@ onClick={
                   )}
                   {!hideCounts && likeCount ? (
                     <span className="inline-flex items-baseline gap-1">
-                      <span className="text-xs font-extrabold tabular-nums text-gray-500">{likeCount}</span>
+                      <span className="text-[11px] font-extrabold tabular-nums text-gray-500">{likeCount} {side === "work" ? (likeCount === 1 ? "Ack" : "Acks") : (likeCount === 1 ? "Like" : "Likes")}</span>
                       <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                         {side === "work" ? "acks" : likeCount === 1 ? "like" : "likes"}
                       </span>
