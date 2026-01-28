@@ -166,7 +166,7 @@ function MediaViewerModal({
 
   return (
     <div
-      className="fixed inset-0 z-[220] bg-black/95"
+      className="fixed inset-0 z-[220] bg-black"
       role="dialog"
       aria-modal="true"
       aria-label="Media viewer"
@@ -198,7 +198,7 @@ function MediaViewerModal({
       {/* Close */}
       <button
         type="button"
-        className="absolute top-4 left-4 z-[230] w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white inline-flex items-center justify-center transition-colors"
+        className="absolute top-4 left-4 z-[230] w-11 h-11 rounded-full bg-white/5 hover:bg-white/10 text-white inline-flex items-center justify-center transition-colors"
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -222,7 +222,7 @@ function MediaViewerModal({
         <>
           <button
             type="button"
-            className="hidden md:inline-flex absolute left-3 top-1/2 -translate-y-1/2 z-[230] w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white items-center justify-center transition-colors"
+            className="hidden md:inline-flex absolute left-3 top-1/2 -translate-y-1/2 z-[230] w-11 h-11 rounded-full bg-white/5 hover:bg-white/10 text-white items-center justify-center transition-colors"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -235,7 +235,7 @@ function MediaViewerModal({
           </button>
           <button
             type="button"
-            className="hidden md:inline-flex absolute right-3 top-1/2 -translate-y-1/2 z-[230] w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white items-center justify-center transition-colors"
+            className="hidden md:inline-flex absolute right-3 top-1/2 -translate-y-1/2 z-[230] w-11 h-11 rounded-full bg-white/5 hover:bg-white/10 text-white items-center justify-center transition-colors"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -255,12 +255,12 @@ function MediaViewerModal({
         onMouseDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="max-w-[min(1200px,calc(100vw-32px))] max-h-[calc(100dvh-120px)]">
+        <div className="max-w-[min(960px,calc(100vw-32px))] max-h-[calc(100dvh-120px)]">
           {active.kind === 'video' ? (
             <div className="relative">
               <video
                 ref={videoRef}
-                className="max-w-full max-h-[calc(100dvh-120px)] rounded-xl bg-black"
+                className="max-w-full max-h-[calc(100dvh-120px)] bg-black"
                 src={active.url}
                 controls
                 playsInline
@@ -283,7 +283,7 @@ function MediaViewerModal({
             </div>
           ) : (
             <img
-              className="max-w-full max-h-[calc(100dvh-120px)] object-contain rounded-xl"
+              className="max-w-full max-h-[calc(100dvh-120px)] object-contain"
               src={active.url}
               alt=""
               draggable={false}
@@ -404,10 +404,12 @@ function MediaGrid({ items, ownerId }: { items: MediaItem[]; ownerId: string }) 
     }
   };
 
-  // sd_780_threads_style_media_grid:
-  // - Single: preserve media aspect (contain) + pick a gentle height from metadata.
-  // - Multi: square tiles in a tight grid across ALL breakpoints (Threads-like feed on desktop).
-  const cardBase = "rounded-3xl border border-gray-100 bg-gray-50 overflow-hidden";
+  // sd_783_threads_exact_media_clean:
+  // (marker) sd_783_threads_exact_media_clean
+  // Threads/IG rule: the FIRST attachment defines the container aspect for a multi-attachment post.
+  // We clamp to IG bounds so the row/grid always looks clean on desktop (like Threads web).
+  const tileBase = "overflow-hidden rounded-2xl ring-1 ring-black/5 bg-gray-100";
+  const tileGap = "gap-[6px]"; // tighter than gap-2
 
   const singleSize = (() => {
     const m = shown[0];
@@ -417,6 +419,17 @@ function MediaGrid({ items, ownerId }: { items: MediaItem[]; ownerId: string }) 
     if (r && r < 0.8) return "h-[min(680px,72vh)]"; // portrait
     if (r && r > 1.35) return "h-[min(420px,55vh)]"; // wide
     return "h-[min(520px,65vh)]"; // default
+  })();
+
+  const tileAspect = (() => {
+    const m = shown[0];
+    const w = typeof (m as any)?.width === "number" ? Number((m as any).width) : 0;
+    const h = typeof (m as any)?.height === "number" ? Number((m as any).height) : 0;
+    const r0 = w > 0 && h > 0 ? w / h : 1;
+    const r = Number.isFinite(r0) && r0 > 0 ? r0 : 1;
+    const MIN = 0.8; // 4:5 portrait clamp
+    const MAX = 1.91; // 1.91:1 landscape clamp
+    return Math.max(MIN, Math.min(MAX, r));
   })();
 
   const gridCols = shown.length === 2 ? "grid-cols-2" : shown.length === 3 ? "grid-cols-3" : "grid-cols-2";
@@ -430,7 +443,7 @@ function MediaGrid({ items, ownerId }: { items: MediaItem[]; ownerId: string }) 
       >
         {isSingle ? (
           <div
-            className={cn(cardBase, "w-full cursor-zoom-in sm:max-w-[520px] sm:mx-auto")}
+            className={cn(tileBase, "w-full cursor-zoom-in sm:max-w-[520px] sm:mx-auto")}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => onKey(e, 0)}
@@ -453,21 +466,23 @@ function MediaGrid({ items, ownerId }: { items: MediaItem[]; ownerId: string }) 
             ) : (
               <div className={cn("relative w-full bg-black", singleSize)}>
                 <img
-                  className="absolute inset-0 w-full h-full object-contain"
+                  className="absolute inset-0 w-full h-full object-contain pointer-events-none"
                   src={shown[0].url}
                   alt=""
                   loading="lazy"
+                  decoding="async"
                   draggable={false}
                 />
               </div>
             )}
           </div>
         ) : (
-          <div className={cn("grid gap-2", gridCols)}>
+          <div className={cn("grid", tileGap, gridCols, "sm:max-w-[520px] sm:mx-auto")}>
             {shown.map((m, i) => (
               <div
                 key={m.id || m.url}
-                className={cn(cardBase, "relative cursor-zoom-in aspect-square")}
+                className={cn(tileBase, "relative cursor-zoom-in")}
+                style={{ aspectRatio: tileAspect }}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => onKey(e, i)}
@@ -480,24 +495,32 @@ function MediaGrid({ items, ownerId }: { items: MediaItem[]; ownerId: string }) 
               >
                 {m.kind === "video" ? (
                   <>
-                    <div className="absolute inset-0 bg-black" aria-hidden />
+                    <video
+                      className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                      src={m.url}
+                      preload="metadata"
+                      muted
+                      playsInline
+                    />
+                    <div className="absolute inset-0 bg-black/10" aria-hidden />
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-12 h-12 rounded-full bg-black/35 flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-full bg-black/45 flex items-center justify-center">
                         <Play size={22} className="text-white" />
                       </div>
                     </div>
                     {typeof m.durationMs === "number" && m.durationMs > 0 ? (
-                      <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-black/45 text-white text-xs font-semibold">
+                      <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-black/55 text-white text-xs font-semibold">
                         {formatDurationMs(m.durationMs)}
                       </div>
                     ) : null}
                   </>
                 ) : (
                   <img
-                    className="absolute inset-0 w-full h-full object-cover"
+                    className="absolute inset-0 w-full h-full object-cover pointer-events-none"
                     src={m.url}
                     alt=""
                     loading="lazy"
+                    decoding="async"
                     draggable={false}
                   />
                 )}
