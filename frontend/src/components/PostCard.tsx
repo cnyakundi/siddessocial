@@ -71,19 +71,21 @@ function MediaViewerModal({
   open,
   items,
   index,
+  ownerId,
   onClose,
   onIndexChange,
 }: {
   open: boolean;
   items: MediaItem[];
   index: number;
+  ownerId?: string;
   onClose: () => void;
   onIndexChange: React.Dispatch<React.SetStateAction<number>>;
 }) {
   useLockBodyScroll(open);
 
   const count = Array.isArray(items) ? items.length : 0;
-const safeIndex = Math.max(0, Math.min(count - 1, Math.floor(index || 0)));
+  const safeIndex = Math.max(0, Math.min(count - 1, Math.floor(index || 0)));
   const active = items[safeIndex];
 
   const [muted, setMuted] = useState(true);
@@ -109,6 +111,36 @@ const safeIndex = Math.max(0, Math.min(count - 1, Math.floor(index || 0)));
     if (count < 2) return;
     onIndexChange((prev) => (prev + 1) % count);
   }, [count, onIndexChange]);
+
+
+
+  // sd_781_media_viewer_history_preload: preload adjacent images for instant Next/Prev.
+  React.useEffect(() => {
+    if (!open || count < 2) return;
+    const preload = (m?: MediaItem) => {
+      if (!m || m.kind !== "image") return;
+      try {
+        const img = new Image();
+        img.src = m.url;
+      } catch {}
+    };
+    preload(items[(safeIndex + 1) % count]);
+    preload(items[(safeIndex - 1 + count) % count]);
+  }, [open, safeIndex, count, items]);
+
+  // sd_781_media_viewer_history_preload: keep URL index in sync (deep-linkable media).
+  React.useEffect(() => {
+    if (!open) return;
+    if (typeof window === "undefined") return;
+    const postId = String(ownerId || "");
+    if (!postId) return;
+    try {
+      const u = new URL(window.location.href);
+      if (u.searchParams.get("sdm") != postId) return;
+      u.searchParams.set("sdmi", String(safeIndex));
+      window.history.replaceState(window.history.state, "", u.toString());
+    } catch {}
+  }, [open, safeIndex, ownerId]);
 
   const touchRef = React.useRef<{ x: number; y: number } | null>(null);
 
@@ -263,20 +295,105 @@ const safeIndex = Math.max(0, Math.min(count - 1, Math.floor(index || 0)));
   );
 }
 
-function MediaGrid({ items }: { items: MediaItem[] }) {
+function MediaGrid({ items, ownerId }: { items: MediaItem[]; ownerId: string }) {
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
+  const owner = String(ownerId || "");
+  const pushedRef = React.useRef(false);
 
   const all = Array.isArray(items) ? items.filter((m) => Boolean(m?.url)) : [];
-  if (all.length === 0) return null;
+  const count = all.length;
+
+  const readUrlIndex = React.useCallback((): number | null => {
+    if (typeof window === "undefined") return null;
+    if (!owner) return null;
+    if (count <= 0) return null;
+    try {
+      const u = new URL(window.location.href);
+      if (u.searchParams.get("sdm") !== owner) return null;
+      const raw = u.searchParams.get("sdmi");
+      const n = raw ? parseInt(raw, 10) : 0;
+      const k = Number.isFinite(n) ? n : 0;
+      return Math.max(0, Math.min(count - 1, k));
+    } catch {
+      return null;
+    }
+  }, [owner, count]);
+
+  const pushUrl = React.useCallback(
+    (i: number) => {
+      if (typeof window === "undefined") return;
+      if (!owner) return;
+      try {
+        const u = new URL(window.location.href);
+        u.searchParams.set("sdm", owner);
+        u.searchParams.set("sdmi", String(i));
+        window.history.pushState({ sd_media: 1 }, "", u.toString());
+      } catch {}
+    },
+    [owner]
+  );
+
+  const requestClose = React.useCallback(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const u = new URL(window.location.href);
+        if (u.searchParams.get("sdm") === owner) {
+          if (pushedRef.current) {
+            // Close by popping the pushed URL state (Back button behavior).
+            window.history.back();
+            return;
+          }
+          // Deep-link/no-push case: just remove params in-place.
+          u.searchParams.delete("sdm");
+          u.searchParams.delete("sdmi");
+          window.history.replaceState(window.history.state, "", u.toString());
+        }
+      } catch {}
+    }
+    pushedRef.current = false;
+    setOpen(false);
+  }, [owner]);
+
+  // Open from URL state (deep-link / back-button).
+  React.useEffect(() => {
+    const idx = readUrlIndex();
+    if (idx === null) return;
+    if (open) return;
+    setIndex(idx);
+    setOpen(true);
+    pushedRef.current = false;
+  }, [readUrlIndex, open]);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onPop = () => {
+      const idx = readUrlIndex();
+      if (idx === null) {
+        setOpen(false);
+        pushedRef.current = false;
+        return;
+      }
+      setIndex(idx);
+      setOpen(true);
+      pushedRef.current = false;
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [readUrlIndex]);
+
+  if (count === 0) return null;
 
   const shown = all.slice(0, 4);
-  const more = Math.max(0, all.length - shown.length);
+  const more = Math.max(0, count - shown.length);
   const isSingle = shown.length === 1;
 
   const openAt = (i: number) => {
-    setIndex(Math.max(0, Math.min(all.length - 1, i)));
+    const safe = Math.max(0, Math.min(count - 1, i));
+    setIndex(safe);
     setOpen(true);
+    pushedRef.current = true;
+    pushUrl(safe);
   };
 
   const onKey = (e: React.KeyboardEvent, i: number) => {
@@ -402,7 +519,8 @@ function MediaGrid({ items }: { items: MediaItem[] }) {
         open={open}
         items={all}
         index={index}
-        onClose={() => setOpen(false)}
+        ownerId={owner}
+        onClose={requestClose}
         onIndexChange={setIndex}
       />
     </>
@@ -1212,7 +1330,7 @@ onClick={
           ) : null}
 
           {mediaItems.length ? (
-            <MediaGrid items={mediaItems} />
+            <MediaGrid items={mediaItems} ownerId={post.id} />
           ) : null}
 
           {linkInfo ? (
