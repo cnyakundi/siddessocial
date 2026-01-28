@@ -172,7 +172,14 @@ function SentReplies({ postId, onReplyTo }: { postId: string; onReplyTo?: (paren
   return (
     <div className="mt-6" data-testid="sent-replies">
       <div className="flex items-center justify-between mb-3">
-        <div className="text-[11px] font-black text-gray-900">Replies</div>
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="text-[11px] font-black text-gray-900">Replies</div>
+          {replies.length ? (
+            <span className="text-[11px] font-extrabold text-gray-400 tabular-nums">
+              {replies.length} {replies.length === 1 ? "reply" : "replies"}
+            </span>
+          ) : null}
+        </div>
         <button
           type="button"
           className="text-xs font-extrabold text-gray-600 hover:underline"
@@ -184,13 +191,16 @@ function SentReplies({ postId, onReplyTo }: { postId: string; onReplyTo?: (paren
       </div>
 
       {replies.length ? (
-        <div className="space-y-1">
-          {replies.map((r, idx) => {
+        <div className="space-y-2">
+          {replies.map((r) => {
             const mine = viewerId ? r.authorId === viewerId : isStubMe(r.authorId);
-            const who = mine ? "You" : (r.author || r.handle || r.authorId || "Unknown");
+
+            const handle = String(r.handle || "").replace(/^@/, "").trim();
+            const profileHref = !mine && handle ? `/u/${encodeURIComponent(handle)}` : null;
+
+            const name = mine ? "You" : String(r.author || handle || r.authorId || "Unknown");
             const depth = Math.max(0, Math.min(3, Number((r as any).depth || 0)));
             const indentPx = depth * 18;
-            const isLast = idx === replies.length - 1;
 
             const when = (() => {
               try {
@@ -200,35 +210,59 @@ function SentReplies({ postId, onReplyTo }: { postId: string; onReplyTo?: (paren
               }
             })();
 
+            const avatarLabel = mine ? "You" : (handle ? `@${handle}` : name);
+
             return (
-              <div key={r.id} className="relative" style={{ marginLeft: indentPx }}>
-                {!isLast ? (
-                  <div className="absolute left-[15px] top-9 bottom-0 w-[2px] bg-gray-100" aria-hidden="true" />
-                ) : null}
-
-                <div className="flex gap-3 relative">
-                  <div className="shrink-0 z-10">
-                    <ReplyAvatar label={who} tone="neutral" />
-                  </div>
-
-                  <div className="flex-1 pb-6 min-w-0">
-                    <div className="flex items-baseline justify-between gap-3">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="font-extrabold text-gray-900 text-sm truncate">{who}</span>
-                        {when ? <span className="text-gray-400 text-xs tabular-nums">{when}</span> : null}
-                      </div>
+              <div key={r.id} style={{ marginLeft: indentPx }}>
+                <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                  <div className="flex gap-3">
+                    <div className="shrink-0">
+                      {profileHref ? (
+                        <Link
+                          href={profileHref}
+                          className="inline-flex rounded-full focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-900/20"
+                          aria-label={`View ${name} profile`}
+                        >
+                          <ReplyAvatar label={avatarLabel} tone="neutral" />
+                        </Link>
+                      ) : (
+                        <ReplyAvatar label={avatarLabel} tone="neutral" />
+                      )}
                     </div>
 
-                    <div className="text-sm text-gray-900 leading-relaxed mt-1 whitespace-pre-wrap">{r.text}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline justify-between gap-3">
+                        <div className="flex items-center gap-2 min-w-0">
+                          {profileHref ? (
+                            <Link
+                              href={profileHref}
+                              className="font-extrabold text-gray-900 text-sm truncate hover:underline"
+                            >
+                              {name}
+                            </Link>
+                          ) : (
+                            <span className="font-extrabold text-gray-900 text-sm truncate">{name}</span>
+                          )}
 
-                    <div className="mt-2 flex items-center gap-6 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">
-                      <button
-                        type="button"
-                        className="hover:text-gray-900"
-                        onClick={() => onReplyTo?.(r.id, who)}
-                      >
-                        Reply
-                      </button>
+                          {!mine && handle && name !== handle ? (
+                            <span className="text-xs text-gray-500 font-mono truncate">@{handle}</span>
+                          ) : null}
+
+                          {when ? <span className="text-gray-400 text-xs tabular-nums">{when}</span> : null}
+                        </div>
+                      </div>
+
+                      <div className="text-sm text-gray-900 leading-relaxed mt-1 whitespace-pre-wrap">{r.text}</div>
+
+                      <div className="mt-2 flex items-center gap-6 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">
+                        <button
+                          type="button"
+                          className="hover:text-gray-900"
+                          onClick={() => onReplyTo?.(r.id, name)}
+                        >
+                          Reply
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

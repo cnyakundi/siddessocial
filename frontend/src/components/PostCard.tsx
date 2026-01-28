@@ -1406,7 +1406,12 @@ onClick={
                 <span className="inline-flex items-center gap-1">
                   <MessageCircle size={22} strokeWidth={2} />
                   {!hideCounts && replyCount ? (
-                    <span className="text-xs font-extrabold tabular-nums text-gray-500">{replyCount}</span>
+                    <span className="inline-flex items-baseline gap-1">
+                      <span className="text-xs font-extrabold tabular-nums text-gray-500">{replyCount}</span>
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                        {replyCount === 1 ? "reply" : "replies"}
+                      </span>
+                    </span>
                   ) : null}
                 </span>
               </button>
@@ -1434,7 +1439,12 @@ onClick={
                     <Heart size={22} strokeWidth={2} fill={liked ? "currentColor" : "none"} />
                   )}
                   {!hideCounts && likeCount ? (
-                    <span className="text-xs font-extrabold tabular-nums text-gray-500">{likeCount}</span>
+                    <span className="inline-flex items-baseline gap-1">
+                      <span className="text-xs font-extrabold tabular-nums text-gray-500">{likeCount}</span>
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                        {side === "work" ? "acks" : likeCount === 1 ? "like" : "likes"}
+                      </span>
+                    </span>
                   ) : null}
                 </span>
               </button>

@@ -88,6 +88,7 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 - **sd_142:** Feed DRF endpoint + API-base-aware Next proxy (client calls same-origin /api/feed; Next proxies to Django via SD_INTERNAL_API_BASE / NEXT_PUBLIC_API_BASE)
 
 ## NEXT overlay
+- **sd_777_reply_counts_labels_and_reply_profile_links:** UI: label reply/like counts + make reply authors clickable in post detail.
 - **sd_772:** Groups mode (copy): Sets → Groups in UI; All → Side label; SideFeed clears stale stored setId
 - Next: TBD
 - **sd_769_alerts_copy_cleanup:** Standardize Alerts naming (remove Notifs/Notifications drift + aria-labels).
