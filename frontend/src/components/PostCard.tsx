@@ -1123,9 +1123,9 @@ export function PostCard({
     <div
       className={cn(
         isRow
-          ? "group py-5 border-b border-gray-100 hover:bg-gray-50/40 transition-colors"
+          ? "group py-4 border-b border-gray-100 hover:bg-gray-50/40 transition-colors"
           : cn(
-              isRow ? "px-4 sm:px-0 py-5 border-b border-slate-100 hover:bg-slate-50/40 transition-colors" : "bg-white p-5 sm:p-6 rounded-3xl shadow-sm border border-gray-100 border-l-4 transition-shadow hover:shadow-md",
+              "bg-white p-5 sm:p-6 rounded-3xl shadow-sm border border-gray-100 border-l-4 transition-shadow hover:shadow-md",
               theme.accentBorder
             )
       )}
@@ -1133,10 +1133,7 @@ export function PostCard({
     >
       {/* Header */}
       <div className={cn("flex justify-between items-start", isRow ? "mb-2" : "mb-4")}>
-        <div
-          onMouseEnter={prefetchPost}
-className="flex gap-4 lg:gap-6 text-left"
-        >
+        <div onMouseEnter={prefetchPost} className="flex items-start gap-3 lg:gap-4 text-left">
           <button
             type="button"
             onClick={(e) => {
@@ -1236,8 +1233,7 @@ className="flex gap-4 lg:gap-6 text-left"
           role="button"
           tabIndex={0}
           onMouseEnter={prefetchPost}
-onClick={
-          (e) => {
+          onClick={(e) => {
             // sd_483_action_event_bleed: child actions may call preventDefault/stopPropagation
             if (e.defaultPrevented) return;
             // Selection-safe: don't navigate when the user is highlighting text.
@@ -1285,7 +1281,7 @@ onClick={
           ) : null}
 
           {!isEchoPost || isQuoteEcho || hasText ? (
-            <p className={cn("text-gray-800 leading-relaxed mb-4 whitespace-pre-wrap", isRow ? "text-[15px]" : "text-[15px] lg:text-[20px]")}>
+            <p className={cn("text-gray-800 leading-relaxed whitespace-pre-wrap", isRow ? "text-[15px] mb-3" : "text-[15px] lg:text-[20px] mb-4")}>
               {shownText}
               {isLongText ? (
                 <button
@@ -1405,47 +1401,18 @@ onClick={
           ) : null}
         </div>
 
-        {/* Tags */}
-        {post.tags?.length ? (
-          <div className="flex flex-wrap gap-2 mb-3">
-            {post.tags.map((t) => (
-              <span key={t} className="text-sm text-gray-500 font-medium">
-                #{t}
-              </span>
-            ))}
-          </div>
-        ) : null}
-
         {/* Footer: actions (feed: Reply + React only; detail: full) */}
         {isRow ? (
-          <>
-            {!hideCounts && (replyCount || likeCount) ? (
-              <div className="mt-2 flex items-center gap-2 text-[11px] font-extrabold text-gray-500">
-                {replyCount ? (
-                  <span className="tabular-nums">
-                    {replyCount} {replyCount === 1 ? "reply" : "replies"}
-                  </span>
-                ) : null}
-                {replyCount && likeCount ? <span className="text-gray-300">•</span> : null}
-                {likeCount ? (
-                  <span className="tabular-nums">
-                    {likeCount}{" "}
-                    {side === "work" ? (likeCount === 1 ? "ack" : "acks") : likeCount === 1 ? "like" : "likes"}
-                  </span>
-                ) : null}
-              </div>
-            ) : null}
-
-            <div
-              className={cn(
-                "mt-1 flex items-center gap-6 transition-opacity duration-200",
-                hideCounts ? "opacity-100 lg:opacity-0 lg:group-hover:opacity-100" : "opacity-100"
-              )}
-            >
+          <div
+            className={cn(
+              "mt-3 pt-2 border-t border-gray-100 flex items-center gap-2",
+              hideCounts ? "opacity-100 lg:opacity-0 lg:group-hover:opacity-100" : "opacity-100"
+            )}
+          >
             <button
               type="button"
-              className="min-w-[44px] min-h-[44px] px-2 rounded-full inline-flex items-center gap-2 text-xs font-extrabold text-gray-400 hover:text-gray-900 hover:bg-gray-50 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-900/20"
-              aria-label="Reply"
+              className="min-h-[44px] px-2.5 rounded-full inline-flex items-center gap-1.5 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-900/20 active:scale-[0.98] text-gray-400 hover:text-gray-700 hover:bg-gray-50"
+              aria-label={replyCount ? `Reply (${replyCount})` : "Reply"}
               title="Reply"
               onClick={(e) => {
                 e.preventDefault();
@@ -1454,24 +1421,26 @@ onClick={
               }}
             >
               <MessageCircle size={18} strokeWidth={2.5} />
-              <span className="inline-flex items-center gap-1">
-                <span>Reply</span>
-                {!hideCounts && replyCount ? (
-                  <span className="text-xs font-extrabold tabular-nums text-gray-500">{replyCount}</span>
-                ) : null}
-              </span>
               {!hideCounts && replyCount ? (
-                <span className="text-xs font-extrabold tabular-nums text-gray-500">{replyCount}</span>
+                <span className="text-[12px] font-extrabold tabular-nums text-gray-500">{replyCount}</span>
               ) : null}
             </button>
 
             <button
               type="button"
               className={cn(
-                "min-w-[44px] min-h-[44px] px-2 rounded-full inline-flex items-center gap-2 text-xs font-extrabold hover:bg-gray-50 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-900/20 disabled:opacity-60",
-                liked ? theme.text : "text-gray-400 hover:text-gray-900"
+                "min-h-[44px] px-2.5 rounded-full inline-flex items-center gap-1.5 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-900/20 active:scale-[0.98] hover:bg-gray-50 disabled:opacity-60",
+                liked ? theme.text : "text-gray-400 hover:text-gray-700"
               )}
-              aria-label={side === "work" ? "Acknowledge" : "Like"}
+              aria-label={
+                side === "work"
+                  ? likeCount
+                    ? `Acknowledge (${likeCount})`
+                    : "Acknowledge"
+                  : likeCount
+                    ? `Like (${likeCount})`
+                    : "Like"
+              }
               title={side === "work" ? "Acknowledge" : "Like"}
               onClick={(e) => {
                 e.preventDefault();
@@ -1485,20 +1454,11 @@ onClick={
               ) : (
                 <Heart size={18} strokeWidth={2.5} fill={liked ? "currentColor" : "none"} />
               )}
-              {/* label + count */}
-              <span className="inline-flex items-center gap-1">
-                <span>{side === "work" ? "Ack" : "Like"}</span>
-                {!hideCounts && likeCount ? (
-                  <span className="text-xs font-extrabold tabular-nums text-gray-500">{likeCount}</span>
-                ) : null}
-              </span>
               {!hideCounts && likeCount ? (
-                <span className="text-xs font-extrabold tabular-nums text-gray-500">{likeCount}</span>
+                <span className="text-[12px] font-extrabold tabular-nums text-gray-500">{likeCount}</span>
               ) : null}
             </button>
-                      </div>
-          </>
-
+          </div>
         ) : (
           <div className="flex items-center justify-between pt-6 border-t border-gray-100">
             <div className="flex items-center gap-5">
