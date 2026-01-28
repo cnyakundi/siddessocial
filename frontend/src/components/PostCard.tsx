@@ -1545,7 +1545,7 @@ onClick={
         title="More context"
       />
 
-      {!isRow && canEcho ? (
+      {canEcho ? (
         <>
       <EchoSheet
         open={openEcho}
@@ -1590,6 +1590,7 @@ onClick={
         post={post}
         side={side}
         onOpen={openPost}
+        onEcho={canEcho ? () => setOpenEcho(true) : undefined}
         onHide={() => {
           const pid = String((post as any)?.id || "").trim();
           if (!pid) {
