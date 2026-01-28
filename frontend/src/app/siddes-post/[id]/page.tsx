@@ -365,10 +365,6 @@ function PostDetailInner() {
   })();
   const backHref = backToSearchHref || savedReturn || "/siddes-feed";
   const backLabel = backToSearchHref ? "Search" : (savedReturn?.startsWith("/siddes-inbox") ? "Inbox" : savedReturn?.startsWith("/siddes-sets") ? "Sets" : "Feed");
-  const goBack = useCallback(() => {
-    // sd_760: Safer than router.back() — avoids jumping out of the app in PWA/deep-links.
-    router.replace(backHref);
-  }, [router, backHref]);
 
 
   const id = (params?.id as string) || "";
@@ -729,9 +725,9 @@ useEffect(() => {
             <p className="text-sm text-gray-500 mt-2">
               It may have been deleted, or you might not have access in your current Side.
             </p>
-            <button type="button" onClick={goBack} className="inline-block mt-4 text-sm font-extrabold text-gray-700 hover:underline">
+            <Link href={backHref} className="inline-block mt-4 text-sm font-extrabold text-gray-700 hover:underline">
               ← Back to {backLabel}
-            </button>
+            </Link>
           </div>
         </ContentColumn>
       </div>
@@ -754,9 +750,9 @@ useEffect(() => {
       <ContentColumn>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">
-            <button type="button" onClick={goBack} className="text-sm font-extrabold text-gray-700 hover:underline">
+            <Link href={backHref} className="text-sm font-extrabold text-gray-700 hover:underline">
               ← {backLabel}
-            </button>
+            </Link>
             <Badge n={queuedCount} />
           </div>
 

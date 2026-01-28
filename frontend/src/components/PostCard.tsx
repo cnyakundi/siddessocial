@@ -1199,7 +1199,7 @@ className="flex gap-4 lg:gap-6 text-left"
           }}
           className={cn(
             "text-gray-400 hover:text-gray-600 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-900/20",
-            isRow ? "opacity-100 lg:opacity-0 lg:group-hover:opacity-100" : "-mr-2"
+            isRow ? (hideCounts ? "opacity-100 lg:opacity-0 lg:group-hover:opacity-100" : "opacity-100") : "-mr-2"
           )}
           aria-label="Post options"
         >
@@ -1395,12 +1395,30 @@ onClick={
 
         {/* Footer: actions (feed: Reply + React only; detail: full) */}
         {isRow ? (
-          <div
-            className={cn(
-              "mt-2 flex items-center gap-6 transition-opacity duration-200",
-              "opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
-            )}
-          >
+          <>
+            {!hideCounts && (replyCount || likeCount) ? (
+              <div className="mt-2 flex items-center gap-2 text-[11px] font-extrabold text-gray-500">
+                {replyCount ? (
+                  <span className="tabular-nums">
+                    {replyCount} {replyCount === 1 ? "reply" : "replies"}
+                  </span>
+                ) : null}
+                {replyCount && likeCount ? <span className="text-gray-300">•</span> : null}
+                {likeCount ? (
+                  <span className="tabular-nums">
+                    {likeCount}{" "}
+                    {side === "work" ? (likeCount === 1 ? "ack" : "acks") : likeCount === 1 ? "like" : "likes"}
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
+
+            <div
+              className={cn(
+                "mt-1 flex items-center gap-6 transition-opacity duration-200",
+                hideCounts ? "opacity-100 lg:opacity-0 lg:group-hover:opacity-100" : "opacity-100"
+              )}
+            >
             <button
               type="button"
               className="min-w-[44px] min-h-[44px] px-2 rounded-full inline-flex items-center gap-2 text-xs font-extrabold text-gray-400 hover:text-gray-900 hover:bg-gray-50 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-900/20"
@@ -1438,7 +1456,9 @@ onClick={
               )}
               {side === "work" ? "Ack" : "Like"}
             </button>
-          </div>
+                      </div>
+          </>
+
         ) : (
           <div className="flex items-center justify-between pt-6 border-t border-gray-100">
             <div className="flex items-center gap-5">

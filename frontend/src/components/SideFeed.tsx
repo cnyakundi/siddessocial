@@ -570,7 +570,7 @@ export function SideFeed() {
     savePublicTrustMode(m);
   };
 
-  const countsShown = publicCalm?.showCounts ?? false;
+  const countsShown = publicCalm?.showCounts ?? true;
 
   const toggleCounts = () => {
     const next = { showCounts: !countsShown };
