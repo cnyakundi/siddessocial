@@ -563,6 +563,17 @@ const tid = String(j?.thread?.id || "").trim();
                         <CopyLinkButton href={href}
               />
                         <button
+                  type="button"
+                  onClick={() => {
+                    try {
+                      router.push("/siddes-profile/connections");
+                    } catch {}
+                  }}
+                  className="px-4 py-3 rounded-2xl bg-white border border-gray-200 text-gray-900 font-extrabold text-sm hover:bg-gray-50 transition-all flex items-center justify-center"
+                >
+                  Connections
+                </button>
+<button
                           type="button"
                           onClick={() => setActionsOpen(true)}
                           className="px-4 py-3 rounded-2xl bg-gray-100 text-gray-700 font-extrabold text-sm hover:bg-gray-200 transition-all flex items-center justify-center gap-2"

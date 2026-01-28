@@ -1,15 +1,14 @@
 # Siddes — STATE (single source of “where we are”)
-**Updated:** 2026-01-26
+**Updated:** 2026-01-28
 
 ## Baseline (active truth)
 - Branch:
 - Commit:
 - Zip/Overlay ID:
 - Environment: local | prod
-- Last overlay applied:
-
-
+- Last overlay applied: sd_784_connections_followers_mutuals_v3_apply_helper.sh
 ## Current milestone
+- **sd_784:** Connections: Followers/Following/Mutuals (incoming SideMembership via /api/followers + UI at /siddes-profile/connections)
 - **sd_781:** Feed UX: show row engagement actions without hover traps + show reply/like counts on the timeline; default Public engagement counts to shown.
 - **sd_770:** Feed: add FLAGS.feedModules + NEXT_PUBLIC_SD_FEED_MODULES env flag (unblocks feed modules framework check)
 - **sd_769:** Feed: add FLAGS.feedModules + NEXT_PUBLIC_SD_FEED_MODULES (fix feed modules framework check + SideFeed TS errors)
