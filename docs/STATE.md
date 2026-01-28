@@ -88,6 +88,7 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 - **sd_142:** Feed DRF endpoint + API-base-aware Next proxy (client calls same-origin /api/feed; Next proxies to Django via SD_INTERNAL_API_BASE / NEXT_PUBLIC_API_BASE)
 
 ## NEXT overlay
+- **sd_779:** UI: Post detail Replies — labeled reply count, consistent reply cards, and handle-based profile links (avatar + name).
 - **sd_782:** UI: Label reply/like counts in PostCard actions (feed + detail) to fix unlabeled numbers.
 - **sd_778:** UI: Post detail back is reliable (Link-based); feed engagement is visible without hover when counts are shown (Public Visual Calm defaults to Shown).
 - **sd_777_reply_counts_labels_and_reply_profile_links:** UI: label reply/like counts + make reply authors clickable in post detail.
@@ -233,3 +234,4 @@ These are the overlays applied/created during the current session (evidence: ter
 - **sd_757_fix_inbox_unread_missing_readstate:** Inbox unread derives inbound-only; missing read-state no longer hides new DMs.
 
 - **sd_776:** Public share post (/p/[id]) — add an escape header (Home/Search/Open in app) + make author profile clickable.
+- **sd_782_fix_post_detail_freeze_side_lock:** Fix Post Detail freeze: SideProvider sideLock setters are stable (useCallback) + no-op when unchanged (prevents infinite render loop).

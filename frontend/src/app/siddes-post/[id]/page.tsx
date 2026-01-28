@@ -199,16 +199,26 @@ function SentReplies({ postId, onReplyTo, onCountChange }: { postId: string; onR
       </div>
 
       {replies.length ? (
-        <div className="space-y-1">
-          {replies.map((r, idx) => {
+        <div className="space-y-2">
+          {replies.map((r) => {
             const mine = viewerId ? r.authorId === viewerId : isStubMe(r.authorId);
-            const handle = String(r.handle || "").trim();
-            const who = mine ? "You" : (String(r.author || "").trim() || handle || r.authorId || "Unknown");
-            const showHandle = !mine && !!handle && !!String(r.author || "").trim();
-            const profileHref = toProfileHref(handle || r.authorId);
+
+            const name = mine
+              ? "You"
+              : (r.author || (r.handle ? String(r.handle).replace(/^@/, "") : "") || "Unknown");
+
+            const handleRaw = !mine ? String(r.handle || "").trim() : "";
+            const handle = handleRaw ? (handleRaw.startsWith("@") ? handleRaw : "@" + handleRaw) : "";
+
+            const profileSlug = (() => {
+              const raw = String(r.handle || "").trim();
+              const u = raw.replace(/^@/, "").split(/\s+/)[0];
+              return u ? u : null;
+            })();
+            const profileHref = profileSlug ? `/u/${encodeURIComponent(profileSlug)}` : null;
+
             const depth = Math.max(0, Math.min(3, Number((r as any).depth || 0)));
             const indentPx = depth * 18;
-            const isLast = idx === replies.length - 1;
 
             const when = (() => {
               try {
@@ -218,65 +228,64 @@ function SentReplies({ postId, onReplyTo, onCountChange }: { postId: string; onR
               }
             })();
 
-            return (
-              <div key={r.id} className="relative" style={{ marginLeft: indentPx }}>
-                {!isLast ? (
-                  <div className="absolute left-[15px] top-9 bottom-0 w-[2px] bg-gray-100" aria-hidden="true" />
-                ) : null}
+            const header = (
+              <div className="flex items-baseline gap-2 min-w-0">
+                <span className="font-extrabold text-gray-900 text-sm truncate">{name}</span>
+                {handle ? <span className="text-xs font-bold text-gray-400 truncate">{handle}</span> : null}
+              </div>
+            );
 
-                <div className="flex gap-3 relative">
-                  <div className="shrink-0 z-10">
+            return (
+              <div key={r.id} style={{ marginLeft: indentPx }}>
+                <div
+                  className={cn(
+                    "rounded-2xl border p-4",
+                    mine ? "bg-gray-50 border-gray-200" : "bg-white border-gray-200"
+                  )}
+                >
+                  <div className="flex items-start gap-3">
                     {profileHref ? (
-                      <Link
-                        href={profileHref}
-                        className="rounded-full focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-900/20"
-                        aria-label={"Open profile " + String(handle || who || "user")}
-                        title="View profile"
-                      >
-                        <ReplyAvatar label={who} tone="neutral" />
+                      <Link href={profileHref} className="shrink-0" title="View profile">
+                        <ReplyAvatar label={name} tone="neutral" />
                       </Link>
                     ) : (
-                      <ReplyAvatar label={who} tone="neutral" />
-                    )}
-                  </div>
-
-                  <div className="flex-1 pb-6 min-w-0">
-                    <div className="flex items-baseline justify-between gap-3">
-                      <div className="flex items-center gap-2 min-w-0">
-                        {profileHref ? (
-                          <Link
-                            href={profileHref}
-                            className="flex items-center gap-2 min-w-0 text-left"
-                            aria-label={"Open profile " + String(handle || who || "user")}
-                            title="View profile"
-                          >
-                            <span className="font-extrabold text-gray-900 text-sm truncate hover:underline">{who}</span>
-                            {showHandle ? (
-                              <span className="text-gray-400 text-[12px] font-bold truncate hover:underline">{handle}</span>
-                            ) : null}
-                          </Link>
-                        ) : (
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className="font-extrabold text-gray-900 text-sm truncate">{who}</span>
-                            {showHandle ? (
-                              <span className="text-gray-400 text-[12px] font-bold truncate">{handle}</span>
-                            ) : null}
-                          </div>
-                        )}
-                        {when ? <span className="text-gray-400 text-xs tabular-nums">{when}</span> : null}
+                      <div className="shrink-0">
+                        <ReplyAvatar label={name} tone="neutral" />
                       </div>
-                    </div>
+                    )}
 
-                    <div className="text-sm text-gray-900 leading-relaxed mt-1 whitespace-pre-wrap">{r.text}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline justify-between gap-3">
+                        <div className="min-w-0">
+                          {profileHref ? (
+                            <Link
+                              href={profileHref}
+                              className="inline-flex items-baseline gap-2 min-w-0 hover:underline"
+                              title="View profile"
+                            >
+                              {header}
+                            </Link>
+                          ) : (
+                            header
+                          )}
+                        </div>
 
-                    <div className="mt-2 flex items-center gap-6 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">
-                      <button
-                        type="button"
-                        className="hover:text-gray-900"
-                        onClick={() => onReplyTo?.(r.id, who)}
-                      >
-                        Reply
-                      </button>
+                        {when ? (
+                          <span className="text-gray-400 text-xs tabular-nums shrink-0">{when}</span>
+                        ) : null}
+                      </div>
+
+                      <div className="text-sm text-gray-900 leading-relaxed mt-1 whitespace-pre-wrap">{r.text}</div>
+
+                      <div className="mt-3">
+                        <button
+                          type="button"
+                          className="text-xs font-extrabold text-gray-500 hover:text-gray-900 hover:underline"
+                          onClick={() => onReplyTo?.(r.id, name)}
+                        >
+                          Reply
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

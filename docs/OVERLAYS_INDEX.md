@@ -5,6 +5,7 @@ Rule: Apply overlays with `scripts/apply_overlay.sh`. The script appends a row a
 
 | Applied (UTC) | Overlay Zip | Summary |
 |---|---|---|
+| 2026-01-28 07:10:42 | sd_782_fix_post_detail_freeze_side_lock_apply_helper.sh | Fix Post Detail freeze: stabilize SideProvider sideLock setters (prevents infinite render loop). |
 | 2026-01-26 18:20:52 | sd_763_fix_compose_ts2322_sd759_insertion_apply_helper.sh | Fix Compose TS2322: repair sd_759 insertion brace bug around sd_384 selected uploads comment. |
 | 2026-01-26 17:15:34 | sd_759_compose_media_preview_no_crop_apply_helper.sh | Compose: selected media previews use object-contain + black letterbox background (no crop). |
 | 2026-01-26 17:03:56 | sd_758_media_ui_mobile_carousel_aspect_apply_helper.sh | MediaGrid (PostCard): replace fixed h-64 in mobile multi-media carousel with aspect-ratio containers for stable previews. |

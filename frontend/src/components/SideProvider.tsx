@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import {
   ACTIVE_SIDE_STORAGE_KEY,
   getStoredActiveSide,
@@ -62,13 +62,21 @@ export function SideProvider({ children }: { children: React.ReactNode }) {
     if (s !== "public") setStoredLastNonPublicSide(s);
   };
 
-  const setSideLock = (lock: { side: SideId; reason?: string }) => {
-    setSideLockState({ enabled: true, side: lock.side, reason: lock.reason || null });
-  };
+  // sd_782_fix_post_detail_freeze_side_lock: avoid infinite render loops on pages that set a route-level side lock
+  // (e.g., /siddes-post/[id], /siddes-sets/[id]).
+  // We make setters stable (useCallback) && no-op when the lock is unchanged.
+  const setSideLock = useCallback((lock: { side: SideId; reason?: string }) => {
+    const next: SideLock = { enabled: true, side: lock.side, reason: lock.reason || null };
+    setSideLockState((prev) =>
+      prev.enabled == next.enabled && prev.side == next.side && prev.reason == next.reason
+      ? prev
+      : next
+    );
+  }, []);
 
-  const clearSideLock = () => {
-    setSideLockState({ enabled: false, side: null, reason: null });
-  };
+  const clearSideLock = useCallback(() => {
+    setSideLockState((prev) => (prev.enabled ? { enabled: false, side: null, reason: null } : prev));
+  }, []);
 
   const setSide = (next: SideId, opts?: SideSwitchOptions) => {
     const afterConfirm = opts?.afterConfirm;
