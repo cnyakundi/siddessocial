@@ -766,7 +766,7 @@ export function PostCard({
   const theme = SIDE_THEMES[side];
   const isRow = variant === "row";
 
-  const hideCounts = calmHideCounts !== false;
+  const hideCounts = Boolean(calmHideCounts);
 
   const allChips: Chip[] = useMemo(() => buildChips(chipsFromPost(post), { side }), [post, side]);
 
@@ -1454,7 +1454,12 @@ onClick={
               }}
             >
               <MessageCircle size={18} strokeWidth={2.5} />
-              Reply
+              <span className="inline-flex items-center gap-1">
+                <span>Reply</span>
+                {!hideCounts && replyCount ? (
+                  <span className="text-xs font-extrabold tabular-nums text-gray-500">{replyCount}</span>
+                ) : null}
+              </span>
               {!hideCounts && replyCount ? (
                 <span className="text-xs font-extrabold tabular-nums text-gray-500">{replyCount}</span>
               ) : null}
@@ -1480,7 +1485,13 @@ onClick={
               ) : (
                 <Heart size={18} strokeWidth={2.5} fill={liked ? "currentColor" : "none"} />
               )}
-              {side === "work" ? "Ack" : "Like"}
+              {/* label + count */}
+              <span className="inline-flex items-center gap-1">
+                <span>{side === "work" ? "Ack" : "Like"}</span>
+                {!hideCounts && likeCount ? (
+                  <span className="text-xs font-extrabold tabular-nums text-gray-500">{likeCount}</span>
+                ) : null}
+              </span>
               {!hideCounts && likeCount ? (
                 <span className="text-xs font-extrabold tabular-nums text-gray-500">{likeCount}</span>
               ) : null}

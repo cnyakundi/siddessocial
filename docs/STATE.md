@@ -10,6 +10,7 @@
 
 
 ## Current milestone
+- **sd_781:** Feed UX: show row engagement actions without hover traps + show reply/like counts on the timeline; default Public engagement counts to shown.
 - **sd_770:** Feed: add FLAGS.feedModules + NEXT_PUBLIC_SD_FEED_MODULES env flag (unblocks feed modules framework check)
 - **sd_769:** Feed: add FLAGS.feedModules + NEXT_PUBLIC_SD_FEED_MODULES (fix feed modules framework check + SideFeed TS errors)
 - **sd_767:** Feed: restore feed modules framework files (feedModules.ts + SideFeed.tsx) to fix harness check + TS parse errors
@@ -235,3 +236,4 @@ These are the overlays applied/created during the current session (evidence: ter
 
 - **sd_776:** Public share post (/p/[id]) — add an escape header (Home/Search/Open in app) + make author profile clickable.
 - **sd_782_fix_post_detail_freeze_side_lock:** Fix Post Detail freeze: SideProvider sideLock setters are stable (useCallback) + no-op when unchanged (prevents infinite render loop).
+- **sd_783_tab_scroll_memory:** Tab/page scroll memory: remember scroll positions across navigation (FB-like), restoring on return to Feed/Inbox/Sets/Search/Notifications.

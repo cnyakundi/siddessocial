@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
+import { useTabScrollMemory } from "@/src/hooks/useTabScrollMemory";
+
 import { AppTopBar } from "@/src/components/AppTopBar";
 import { BottomNav } from "@/src/components/BottomNav";
 import { MobileAirlockOverlay } from "@/src/components/MobileAirlockOverlay";
@@ -16,6 +18,9 @@ import { PanicBanner } from "@/src/components/PanicBanner";
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [notifsOpen, setNotifsOpen] = useState(false);
   const pathname = usePathname() || "/";
+
+  // sd_783_tab_scroll_memory: FB-like “remember where I was” across tabs/pages
+  useTabScrollMemory(pathname);
 
   // sd_770: close drawer on navigation (prevents lingering overlay)
   useEffect(() => {
