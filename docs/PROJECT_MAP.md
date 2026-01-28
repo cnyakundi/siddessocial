@@ -8,7 +8,7 @@
 
 [Content]
 - FilterBar: Set pills / context chips
-- FeedEngine: feed rendering + caching safety
+- FeedEngine: posts-only chronological feed rendering + caching safety
 - PostCard: feed card + actions sheets / overflow
 - PostDetail: /siddes-post/[id]
 
@@ -26,6 +26,10 @@
 - Profile: user pages + actions
 
 ## Recent windows
+- sd_777_feedengine_posts_only_strip_feed_modules_v3: FeedEngine stripped to posts-only (chronological). Removed feed-modules framework + flag.
+- sd_775_feedengine_posts_only_strip_feed_modules: FeedEngine stripped to posts-only (chronological). Removed feed-modules framework + flag.
+- sd_771_move_push_settings_to_account_notifications: Alerts feed lives in Inbox → Alerts; push settings moved to Profile → Account → Notifications.
+- sd_770_pwa_alerts_drawer_tab: BottomNav Alerts toggles NotificationsDrawer (no navigation), drawer close icon uses ChevronDown.
 
 - sd_769_pwa_topbar_wearing_label: AppTopBar shows a small 'Wearing' label so the active Side (Face) is always explicit on mobile.
 
@@ -48,6 +52,4 @@ Notes (Notifications)
 - sd_766: Alerts drawer — replace close icon X with ChevronDown (avoid confusion with Alerts bell).
 
 Notes (Feed)
-- Flags: frontend/src/lib/flags.ts includes feedModules (NEXT_PUBLIC_SD_FEED_MODULES) (sd_769)
-- Flags: frontend/src/lib/flags.ts includes feedModules (NEXT_PUBLIC_SD_FEED_MODULES) (sd_770)
 - sd_768_clean_alerts_page_hide_push_debug: Alerts page shows Alerts list first; push tools collapsed into an optional details section.

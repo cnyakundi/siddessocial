@@ -226,3 +226,5 @@ These are the overlays applied/created during the current session (evidence: ter
 - **sd_773:** Fix auth pages ESLint rules-of-hooks (forgot-password + magic-request) so `next build` succeeds.
 
 - **sd_757_fix_inbox_unread_missing_readstate:** Inbox unread derives inbound-only; missing read-state no longer hides new DMs.
+
+- **sd_776:** Public share post (/p/[id]) — add an escape header (Home/Search/Open in app) + make author profile clickable.

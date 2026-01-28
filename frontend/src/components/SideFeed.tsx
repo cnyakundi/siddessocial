@@ -35,9 +35,6 @@ import { toast } from "@/src/lib/toast";
 
 import { enqueuePost } from "@/src/lib/offlineQueue";
 import { isRestrictedError, isRestrictedPayload, restrictedMessage } from "@/src/lib/restricted";
-import { FeedModuleCard } from "@/src/components/feedModules/FeedModuleCard";
-import type { FeedModulePlanEntry } from "@/src/lib/feedModules";
-import { EVT_FEED_MODULES_CHANGED, planFeedModules } from "@/src/lib/feedModules";
 import {
   EVT_PUBLIC_TRUST_DIAL_CHANGED,
   loadPublicTrustMode,
@@ -54,8 +51,6 @@ const MemoPostCard = React.memo(PostCard);
 const PAGE_LIMIT = 20;
 
 // sd_745_public_browse_readonly: Public feed browseable when logged-out (read-only).
-
-
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -137,7 +132,6 @@ export function SideFeed() {
   const activeTagLabel = activeTagRaw ? activeTagRaw.replace(/^#/, "").trim() : "";
   const activeTag = activeTagLabel ? activeTagLabel.toLowerCase() : null;
 
-
   // sd_745_public_browse_readonly: show Public feed for logged-out users (read-only).
   // We re-render when session identity changes so the composer appears immediately after login.
   const [sessionTick, setSessionTick] = useState(0);
@@ -149,7 +143,6 @@ export function SideFeed() {
   const identNow = getSessionIdentity();
   const isAuthed = Boolean(identNow.authed && identNow.viewerId);
   void sessionTick;
-
 
   const clearTagFilter = useCallback(() => {
     if (typeof window === "undefined") return;
@@ -176,7 +169,6 @@ export function SideFeed() {
   const [publicTuneOpen, setPublicTuneOpen] = useState(false);
   const [trustMode, setTrustMode] = useState<PublicTrustMode>("standard");
   const [importOpen, setImportOpen] = useState(false);
-
 
   // Audience sync (TopBar <-> Feed <-> Compose)
   useEffect(() => {
@@ -290,8 +282,6 @@ export function SideFeed() {
     [activeSet, publicChannel, side]
   );
 
-
-
   // Public Granular Siding state (hydration-safe: loaded after mount)
   const [publicSiding, setPublicSiding] = useState<PublicSidingState | null>(null);
 
@@ -299,8 +289,6 @@ export function SideFeed() {
   const [publicCalm, setPublicCalm] = useState<PublicCalmUiState | null>(null);
 
   // Feed modules tick: bumped when a module is dismissed/undismissed
-  const [modulesTick, setModulesTick] = useState(0);
-
   const setsProvider = useMemo(() => getSetsProvider(), []);
   const [sets, setSets] = useState<SetDef[]>(() => DEFAULT_SETS);
   const [setsLoaded, setSetsLoaded] = useState(false);
@@ -356,7 +344,6 @@ export function SideFeed() {
       setLoadingMore(false);
     }
   }, [activeSet, activeTag, hasMore, nextCursor, provider, publicChannel, side, loadingMore, loadingInitial]);
-
 
     // Reset side-scoped UI state when side changes.
   // Part 2: "instant feel" cache (stale-while-revalidate) scoped by viewer + auth-epoch + side.
@@ -504,7 +491,6 @@ export function SideFeed() {
     return () => obs.disconnect();
   }, [side, hasMore, nextCursor, loadMore]);
 
-
   // Side-scoped Sets load (hydration-safe)
   useEffect(() => {
     let mounted = true;
@@ -579,14 +565,6 @@ export function SideFeed() {
     }
   }, []);
 
-  // Feed modules: listen for dismissed/undismissed updates (hydration-safe)
-  useEffect(() => {
-    if (!FLAGS.feedModules) return;
-    const onChanged = () => setModulesTick((x) => x + 1);
-    window.addEventListener(EVT_FEED_MODULES_CHANGED, onChanged);
-    return () => window.removeEventListener(EVT_FEED_MODULES_CHANGED, onChanged);
-  }, []);
-
   const applyTrustMode = (m: PublicTrustMode) => {
     setTrustMode(m);
     savePublicTrustMode(m);
@@ -656,30 +634,6 @@ export function SideFeed() {
     return out;
   }, [rawPosts, sets, side, activeSet, publicChannel, publicSiding, trustMode]);
 
-  const modulePlan = useMemo(() => {
-    // modulesTick is a deliberate recompute trigger when modules are dismissed/undismissed
-    void modulesTick;
-    if (!FLAGS.feedModules) return [] as FeedModulePlanEntry[];
-    const activeSetDef = activeSet ? sets.find((s) => s.id === activeSet) || null : null;
-    return planFeedModules({
-      side,
-      sets,
-      activeSet: activeSetDef,
-      publicChannel,
-      postCount: posts.length,
-    });
-  }, [side, sets, activeSet, publicChannel, posts.length, modulesTick]);
-
-  const modulesAfter = useMemo(() => {
-    const m = new Map<number, any[]>();
-    for (const e of modulePlan) {
-      const arr = m.get(e.after) || [];
-      arr.push(e.module);
-      m.set(e.after, arr);
-    }
-    return m;
-  }, [modulePlan]);
-
   const lastSeenId = useMemo(() => getLastSeenId(side), [side]);
   const dividerIndex = useMemo(() => {
     if (!lastSeenId) return posts.length ? 0 : -1;
@@ -688,12 +642,10 @@ export function SideFeed() {
     return idx;
   }, [posts, lastSeenId]);
 
-
   // sd_365: Flatten feed output into "rows" so we can window-virtualize.
   type FeedRow =
     | { kind: "divider"; key: string }
-    | { kind: "post"; key: string; post: FeedItem; postIndex: number }
-    | { kind: "module"; key: string; module: any };
+    | { kind: "post"; key: string; post: FeedItem; postIndex: number };
 
   const rows = useMemo(() => {
     const out: FeedRow[] = [];
@@ -705,18 +657,10 @@ export function SideFeed() {
 
       const p = posts[i] as any;
       out.push({ kind: "post", key: `post:${p.id}`, post: p as any, postIndex: i });
-
-      if (FLAGS.feedModules) {
-        const mods = modulesAfter.get(i) || [];
-        for (const m of mods) {
-          const mid = String((m as any)?.id || `${i}-${out.length}`);
-          out.push({ kind: "module", key: `module:${mid}:after:${p.id}`, module: m });
-        }
-      }
     }
 
     return out;
-  }, [posts, dividerIndex, lastSeenId, modulesAfter]);
+  }, [posts, dividerIndex, lastSeenId]);
 
   // sd_365: Window virtualizer needs the list's distance from the top of the document.
   useEffect(() => {
@@ -800,7 +744,6 @@ export function SideFeed() {
         countsShown={countsShown}
         onToggleCounts={toggleCounts}
 />
-
 
 {/* Composer (in-feed) */}
       {side === "public" && !isAuthed ? (
@@ -929,10 +872,8 @@ export function SideFeed() {
                   >
                     {row.kind === "divider" ? (
                       <Divider />
-                    ) : row.kind === "post" ? (
-                      <MemoPostCard post={row.post as any} side={side} calmHideCounts={calmHideCounts} variant="row" />
                     ) : (
-                      <FeedModuleCard module={row.module} />
+                      <MemoPostCard post={row.post as any} side={side} calmHideCounts={calmHideCounts} variant="row" />
                     )}
                   </div>
                 );
@@ -941,13 +882,6 @@ export function SideFeed() {
           </div>
         ) : (
           <>
-            {FLAGS.feedModules && modulePlan.length ? (
-              <div className="space-y-3 mb-6">
-                {modulePlan.map((e) => (
-                  <FeedModuleCard key={e.module.id} module={e.module} />
-                ))}
-              </div>
-            ) : null}
             <EmptyState side={side} canPost={side !== "public" || isAuthed} composeHref={composeHref} onCreateSet={() => {
               if (process.env.NODE_ENV !== "production") setImportOpen(true);
               else router.push("/siddes-sets?create=1");

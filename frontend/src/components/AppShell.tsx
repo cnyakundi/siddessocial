@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
 import { AppTopBar } from "@/src/components/AppTopBar";
@@ -16,6 +16,12 @@ import { PanicBanner } from "@/src/components/PanicBanner";
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [notifsOpen, setNotifsOpen] = useState(false);
   const pathname = usePathname() || "/";
+
+  // sd_770: close drawer on navigation (prevents lingering overlay)
+  useEffect(() => {
+    setNotifsOpen(false);
+  }, [pathname]);
+
 
   const CHROME_HIDDEN_PREFIXES = [
     "/login",
@@ -57,7 +63,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="pb-[calc(88px+env(safe-area-inset-bottom))]">
           <div className="max-w-[430px] mx-auto">{children}</div>
         </div>
-        <BottomNav />
+        <BottomNav onToggleNotificationsDrawer={() => setNotifsOpen((v) => !v)} notificationsDrawerOpen={notifsOpen} />
       </div>
 
             {/* Desktop (MVP skeleton) */}

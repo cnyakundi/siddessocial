@@ -200,11 +200,19 @@ export default function SiddesAccountPage() {
 
         <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Link
-            href="/siddes-notifications"
+            href="/siddes-inbox?tab=alerts"
             className="rounded-2xl border border-gray-200 bg-white hover:bg-gray-50 p-4"
           >
             <div className="text-sm font-extrabold text-gray-900">Alerts</div>
             <div className="text-xs text-gray-500 mt-1">Mentions, replies, invites</div>
+          </Link>
+
+          <Link
+            href="/siddes-profile/account/notifications"
+            className="rounded-2xl border border-gray-200 bg-white hover:bg-gray-50 p-4"
+          >
+            <div className="text-sm font-extrabold text-gray-900">Notifications</div>
+            <div className="text-xs text-gray-500 mt-1">Push settings + preferences</div>
           </Link>
 
           <Link
@@ -222,6 +230,7 @@ export default function SiddesAccountPage() {
             <div className="text-sm font-extrabold text-gray-900">Sets</div>
             <div className="text-xs text-gray-500 mt-1">Groups inside each Side</div>
           </Link>
+
           {!onboarded ? (
             <Link
               href="/onboarding"

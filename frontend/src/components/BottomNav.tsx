@@ -145,13 +145,66 @@ function TabLink({
   );
 }
 
+
+function TabButton({
+  label,
+  Icon,
+  active,
+  badge,
+  onClick,
+}: {
+  label: string;
+  Icon: LucideIcon;
+  active: boolean;
+  badge?: number;
+  onClick: () => void;
+}) {
+  const sw = active ? 2.5 : 2;
+  const n = Number.isFinite(badge as any) ? Math.max(0, Math.floor(badge as any)) : 0;
+  const showDot = n > 0 && n < 10;
+  const showCount = n >= 10;
+  const display = n > 99 ? "99+" : String(n);
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      className={cn(
+        "w-full h-full flex flex-col items-center justify-center gap-1 rounded-2xl select-none active:scale-95 transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900/20",
+        active ? "text-gray-900" : "text-gray-400"
+      )}
+    >
+      <div className="relative">
+        <Icon size={24} strokeWidth={sw} />
+        {showDot ? (
+          <span
+            className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-red-500 border-2 border-white"
+            aria-label="New notifications"
+          />
+        ) : null}
+        {showCount ? (
+          <span
+            className="absolute -top-2 -right-3 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center border-2 border-white"
+            aria-label={display + " unread notifications"}
+          >
+            {display}
+          </span>
+        ) : null}
+      </div>
+      <span className={cn("text-[9px] font-black uppercase tracking-tighter", active ? "opacity-100" : "opacity-60")}>
+        {label}
+      </span>
+    </button>
+  );
+}
+
 /**
  * sd_494: Mobile Measurement Protocol v1.3 Toolbelt
  * Order: [Feed] [Alerts] [MAGIC PLUS] [Inbox] [Me]
  * - Tabs are neutral (black/gray). Only MAGIC PLUS uses Side color.
  * - Baseline height: 88px + safe-area padding.
  */
-export function BottomNav() {
+export function BottomNav({ onToggleNotificationsDrawer, notificationsDrawerOpen = false }: { onToggleNotificationsDrawer?: () => void; notificationsDrawerOpen?: boolean } = {}) {
   const pathname = usePathname() || "";
   const { side } = useSide();
   const theme = SIDE_THEMES[side];
@@ -191,7 +244,7 @@ export function BottomNav() {
 
   const isHome = pathname === "/siddes-feed";
   const isCompose = pathname.startsWith("/siddes-compose");
-  const isNotifs = pathname.startsWith("/siddes-notifications");
+  const isNotifs = Boolean(notificationsDrawerOpen) || pathname.startsWith("/siddes-notifications");
   const isInbox = pathname.startsWith("/siddes-inbox");
   const isMe = pathname.startsWith("/siddes-profile");
 
@@ -206,7 +259,17 @@ export function BottomNav() {
           <TabLink href="/siddes-feed" label="Feed" Icon={Home} active={isHome} />
 
           {/* PWA/mobile: surface Alerts as first-class (swap out Sets tab) */}
-          <TabLink href="/siddes-notifications" label="Alerts" Icon={Bell} active={isNotifs} badge={unread} />
+          {onToggleNotificationsDrawer ? (
+            <TabButton
+              label="Alerts"
+              Icon={Bell}
+              active={isNotifs}
+              badge={unread}
+              onClick={() => onToggleNotificationsDrawer()}
+            />
+          ) : (
+            <TabLink href="/siddes-notifications" label="Alerts" Icon={Bell} active={isNotifs} badge={unread} />
+          )}
 
           {/* MAGIC PLUS */}
           <Link

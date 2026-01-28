@@ -8,7 +8,5 @@ export const FLAGS = {
   publicTrustGates: process.env.NEXT_PUBLIC_SD_PUBLIC_TRUST_GATES === "1",
   publicSlate: process.env.NEXT_PUBLIC_SD_PUBLIC_SLATE === "1",
   publicCalmUi: process.env.NEXT_PUBLIC_SD_PUBLIC_CALM_UI === "1",
-  // Remixed feed modules (UI-only cards injected into SideFeed)
-  feedModules: process.env.NEXT_PUBLIC_SD_FEED_MODULES === "1",
 
 } as const;

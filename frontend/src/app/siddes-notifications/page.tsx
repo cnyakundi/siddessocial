@@ -1,29 +1,34 @@
 "use client";
 
-import React from "react";
-import { PushNotificationsCard } from "@/src/components/PushNotificationsCard";
-import { PushPreferencesCard } from "@/src/components/PushPreferencesCard";
-import { NotificationsView } from "@/src/components/NotificationsView";
-import { useReturnScrollRestore } from "@/src/hooks/returnScroll";
+import React, { useEffect } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
-export default function SiddesNotificationsPage() {
-  useReturnScrollRestore();
+// sd_771_alerts_alias: keep /siddes-notifications as an alias to the unified Inbox Alerts tab.
+// Push settings live in Profile → Account → Notifications.
+const TARGET = "/siddes-inbox?tab=alerts";
+
+export default function SiddesNotificationsAliasPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace(TARGET);
+  }, [router]);
+
   return (
-    <div className="px-4 py-4 space-y-4">
-      {/* sd_768_clean_alerts_page_hide_push_debug: show Alerts first; keep push tools optional */}
-      <NotificationsView embedded />
-
-      <details className="rounded-2xl border border-gray-200 bg-white overflow-hidden">
-        <summary className="px-4 py-3 cursor-pointer select-none text-sm font-black text-gray-900 flex items-center justify-between list-none">
-          Push settings
-          <span className="text-[11px] font-bold text-gray-400">Optional</span>
-        </summary>
-        <div className="px-4 pb-4 space-y-3">
-          {/* sd_741_push_backend_db */}
-          <PushPreferencesCard />
-          <PushNotificationsCard />
+    <div className="p-4">
+      <div className="max-w-md mx-auto rounded-2xl border border-gray-200 bg-white p-5">
+        <div className="text-sm font-black text-gray-900">Redirecting…</div>
+        <div className="text-xs text-gray-500 mt-1">Opening Alerts.</div>
+        <div className="mt-3">
+          <Link
+            href={TARGET}
+            className="inline-flex px-4 py-2.5 rounded-xl text-sm font-extrabold bg-gray-900 text-white"
+          >
+            Continue
+          </Link>
         </div>
-      </details>
+      </div>
     </div>
   );
 }
