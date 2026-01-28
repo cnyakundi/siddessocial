@@ -947,6 +947,92 @@ class SidersLedgerView(APIView):
         return Response(out, status=status.HTTP_200_OK)
 
 @method_decorator(dev_csrf_exempt, name="dispatch")
+# sd_784_connections_followers_mutuals
+@method_decorator(dev_csrf_exempt, name="dispatch")
+class FollowersLedgerView(APIView):
+    """Self-only roster: who has sided YOU in each Side.
+
+    GET /api/followers
+
+    Returns people who have placed you into Friends/Close/Work (owner=them → member=you).
+    """
+
+    def get(self, request):
+        viewer = _user_from_request(request)
+        if not viewer:
+            return Response({"ok": False, "error": "restricted"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # Incoming edges: owner -> viewer
+        rels = (
+            SideMembership.objects.filter(member=viewer)
+            .select_related("owner")
+            .order_by("-updated_at")
+        )
+
+        buckets = {"friends": [], "close": [], "work": []}
+        owner_ids = []
+        for r in rels:
+            s = str(getattr(r, "side", "") or "").strip().lower()
+            if s not in buckets:
+                continue
+            o = getattr(r, "owner", None)
+            if not o:
+                continue
+            buckets[s].append((o, getattr(r, "updated_at", None)))
+            try:
+                owner_ids.append(int(getattr(o, "id")))
+            except Exception:
+                pass
+
+        facet_by_uid = {}
+        if owner_ids:
+            try:
+                for f in PrismFacet.objects.filter(user_id__in=owner_ids, side="public"):
+                    facet_by_uid[int(f.user_id)] = f
+            except Exception:
+                facet_by_uid = {}
+
+        def pack(u, side: str, updated_at):
+            uid = int(getattr(u, "id"))
+            username = str(getattr(u, "username", "") or "").strip()
+            handle = "@" + username if username else ""
+            f = facet_by_uid.get(uid)
+            display = ""
+            avatar = ""
+            if f is not None:
+                display = str(getattr(f, "display_name", "") or "").strip()
+                avatar = str(getattr(f, "avatar_image_url", "") or "").strip()
+            if not display:
+                display = username or handle or ""
+            ts = None
+            try:
+                ts = updated_at.isoformat() if updated_at is not None else None
+            except Exception:
+                ts = None
+            return {
+                "id": uid,
+                "handle": handle,
+                "displayName": display,
+                "avatarImage": avatar,
+                "side": side,
+                "updatedAt": ts,
+            }
+
+        out = {
+            "ok": True,
+            "counts": {
+                "friends": len(buckets["friends"]),
+                "close": len(buckets["close"]),
+                "work": len(buckets["work"]),
+            },
+            "sides": {
+                "friends": [pack(u, "friends", ts) for (u, ts) in buckets["friends"]],
+                "close": [pack(u, "close", ts) for (u, ts) in buckets["close"]],
+                "work": [pack(u, "work", ts) for (u, ts) in buckets["work"]],
+            },
+        }
+        return Response(out, status=status.HTTP_200_OK)
+
 class AccessRequestsView(APIView):
     # GET: list inbound pending requests for the viewer (owner)
     # POST: create/update a request from viewer -> target owner
