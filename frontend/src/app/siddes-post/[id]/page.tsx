@@ -76,6 +76,14 @@ function whoLabel(authorId: string): string {
 }
 
 
+function toProfileHref(handleOrId?: string | null): string | null {
+  const raw = String(handleOrId || "").trim();
+  if (!raw) return null;
+  const u = raw.replace(/^@/, "").split(/\s+/)[0]?.trim() || "";
+  return u ? `/u/${encodeURIComponent(u)}` : null;
+}
+
+
 function QueuedReplies({ postId }: { postId: string }) {
   const [replies, setReplies] = useState(() => listQueuedRepliesForPost(postId));
 
@@ -117,7 +125,7 @@ function QueuedReplies({ postId }: { postId: string }) {
   );
 }
 
-function SentReplies({ postId, onReplyTo }: { postId: string; onReplyTo?: (parentId: string, label: string) => void }) {
+function SentReplies({ postId, onReplyTo, onCountChange }: { postId: string; onReplyTo?: (parentId: string, label: string) => void; onCountChange?: (n: number) => void }) {
   const [replies, setReplies] = useState<StoredReply[]>([]);
   const [loading, setLoading] = useState(false);
   const [viewerId, setViewerId] = useState<string | null>(null);
@@ -129,14 +137,21 @@ function SentReplies({ postId, onReplyTo }: { postId: string; onReplyTo?: (paren
       const res = await fetch(`/api/post/${encodeURIComponent(postId)}/replies`, { cache: "no-store" });
       if (!res.ok) {
         setReplies([]);
+        try {
+          onCountChange?.(0);
+        } catch {}
         return;
       }
       const data = await res.json();
-      setReplies((data.replies || []) as StoredReply[]);
+      const rs = ((data.replies || []) as StoredReply[]);
+      setReplies(rs);
+      try {
+        onCountChange?.(rs.length);
+      } catch {}
     } finally {
       setLoading(false);
     }
-  }, [postId]);
+  }, [postId, onCountChange]);
 
   useEffect(() => {
     let mounted = true;
@@ -172,14 +187,7 @@ function SentReplies({ postId, onReplyTo }: { postId: string; onReplyTo?: (paren
   return (
     <div className="mt-6" data-testid="sent-replies">
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="text-[11px] font-black text-gray-900">Replies</div>
-          {replies.length ? (
-            <span className="text-[11px] font-extrabold text-gray-400 tabular-nums">
-              {replies.length} {replies.length === 1 ? "reply" : "replies"}
-            </span>
-          ) : null}
-        </div>
+        <div className="text-[11px] font-black text-gray-900">{replies.length === 1 ? "1 Reply" : `${replies.length} Replies`}</div>
         <button
           type="button"
           className="text-xs font-extrabold text-gray-600 hover:underline"
@@ -191,16 +199,16 @@ function SentReplies({ postId, onReplyTo }: { postId: string; onReplyTo?: (paren
       </div>
 
       {replies.length ? (
-        <div className="space-y-2">
-          {replies.map((r) => {
+        <div className="space-y-1">
+          {replies.map((r, idx) => {
             const mine = viewerId ? r.authorId === viewerId : isStubMe(r.authorId);
-
-            const handle = String(r.handle || "").replace(/^@/, "").trim();
-            const profileHref = !mine && handle ? `/u/${encodeURIComponent(handle)}` : null;
-
-            const name = mine ? "You" : String(r.author || handle || r.authorId || "Unknown");
+            const handle = String(r.handle || "").trim();
+            const who = mine ? "You" : (String(r.author || "").trim() || handle || r.authorId || "Unknown");
+            const showHandle = !mine && !!handle && !!String(r.author || "").trim();
+            const profileHref = toProfileHref(handle || r.authorId);
             const depth = Math.max(0, Math.min(3, Number((r as any).depth || 0)));
             const indentPx = depth * 18;
+            const isLast = idx === replies.length - 1;
 
             const when = (() => {
               try {
@@ -210,59 +218,65 @@ function SentReplies({ postId, onReplyTo }: { postId: string; onReplyTo?: (paren
               }
             })();
 
-            const avatarLabel = mine ? "You" : (handle ? `@${handle}` : name);
-
             return (
-              <div key={r.id} style={{ marginLeft: indentPx }}>
-                <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
-                  <div className="flex gap-3">
-                    <div className="shrink-0">
-                      {profileHref ? (
-                        <Link
-                          href={profileHref}
-                          className="inline-flex rounded-full focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-900/20"
-                          aria-label={`View ${name} profile`}
-                        >
-                          <ReplyAvatar label={avatarLabel} tone="neutral" />
-                        </Link>
-                      ) : (
-                        <ReplyAvatar label={avatarLabel} tone="neutral" />
-                      )}
+              <div key={r.id} className="relative" style={{ marginLeft: indentPx }}>
+                {!isLast ? (
+                  <div className="absolute left-[15px] top-9 bottom-0 w-[2px] bg-gray-100" aria-hidden="true" />
+                ) : null}
+
+                <div className="flex gap-3 relative">
+                  <div className="shrink-0 z-10">
+                    {profileHref ? (
+                      <Link
+                        href={profileHref}
+                        className="rounded-full focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-900/20"
+                        aria-label={"Open profile " + String(handle || who || "user")}
+                        title="View profile"
+                      >
+                        <ReplyAvatar label={who} tone="neutral" />
+                      </Link>
+                    ) : (
+                      <ReplyAvatar label={who} tone="neutral" />
+                    )}
+                  </div>
+
+                  <div className="flex-1 pb-6 min-w-0">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <div className="flex items-center gap-2 min-w-0">
+                        {profileHref ? (
+                          <Link
+                            href={profileHref}
+                            className="flex items-center gap-2 min-w-0 text-left"
+                            aria-label={"Open profile " + String(handle || who || "user")}
+                            title="View profile"
+                          >
+                            <span className="font-extrabold text-gray-900 text-sm truncate hover:underline">{who}</span>
+                            {showHandle ? (
+                              <span className="text-gray-400 text-[12px] font-bold truncate hover:underline">{handle}</span>
+                            ) : null}
+                          </Link>
+                        ) : (
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="font-extrabold text-gray-900 text-sm truncate">{who}</span>
+                            {showHandle ? (
+                              <span className="text-gray-400 text-[12px] font-bold truncate">{handle}</span>
+                            ) : null}
+                          </div>
+                        )}
+                        {when ? <span className="text-gray-400 text-xs tabular-nums">{when}</span> : null}
+                      </div>
                     </div>
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline justify-between gap-3">
-                        <div className="flex items-center gap-2 min-w-0">
-                          {profileHref ? (
-                            <Link
-                              href={profileHref}
-                              className="font-extrabold text-gray-900 text-sm truncate hover:underline"
-                            >
-                              {name}
-                            </Link>
-                          ) : (
-                            <span className="font-extrabold text-gray-900 text-sm truncate">{name}</span>
-                          )}
+                    <div className="text-sm text-gray-900 leading-relaxed mt-1 whitespace-pre-wrap">{r.text}</div>
 
-                          {!mine && handle && name !== handle ? (
-                            <span className="text-xs text-gray-500 font-mono truncate">@{handle}</span>
-                          ) : null}
-
-                          {when ? <span className="text-gray-400 text-xs tabular-nums">{when}</span> : null}
-                        </div>
-                      </div>
-
-                      <div className="text-sm text-gray-900 leading-relaxed mt-1 whitespace-pre-wrap">{r.text}</div>
-
-                      <div className="mt-2 flex items-center gap-6 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">
-                        <button
-                          type="button"
-                          className="hover:text-gray-900"
-                          onClick={() => onReplyTo?.(r.id, name)}
-                        >
-                          Reply
-                        </button>
-                      </div>
+                    <div className="mt-2 flex items-center gap-6 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">
+                      <button
+                        type="button"
+                        className="hover:text-gray-900"
+                        onClick={() => onReplyTo?.(r.id, who)}
+                      >
+                        Reply
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -366,10 +380,11 @@ function PostDetailInner() {
 
   const [replyText, setReplyText] = useState("");
   const [replyTo, setReplyTo] = useState<{ parentId: string | null; label: string } | null>(null);
-  const replyInputRef = React.useRef<HTMLInputElement | null>(null);
+  const replyInputRef = React.useRef<HTMLTextAreaElement | null>(null);
   const [replyBusy, setReplyBusy] = useState(false);
   const [replyError, setReplyError] = useState<ReplySendError | null>(null);
   const [queuedCount, setQueuedCount] = useState(0);
+  const [sentReplyCount, setSentReplyCount] = useState<number | null>(null);
 
 const sendReplyNow = useCallback(async () => {
   if (!found) return;
@@ -770,7 +785,7 @@ useEffect(() => {
         <div className="mt-4 rounded-3xl border border-gray-100 bg-white p-5">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Replies</div>
+              <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Replies{typeof sentReplyCount === "number" ? ` (${sentReplyCount})` : ""}</div>
               <div className="text-xs text-gray-500 mt-1">Replies stay in the same Side.</div>
             </div>
             {mismatch ? (
@@ -823,18 +838,33 @@ useEffect(() => {
               <div className="flex gap-3 py-4 border-t border-b border-gray-100">
                 <ReplyAvatar label="You" tone="neutral" />
                 <div className="flex-1 min-w-0">
-                  <input
+
+                  <textarea
                     ref={replyInputRef}
                     value={replyText}
-                    onChange={(e) => setReplyText(e.target.value)}
+                    onChange={(e) => {
+                      setReplyText(e.target.value);
+                      try {
+                        const el = e.target as HTMLTextAreaElement;
+                        el.style.height = "auto";
+                        el.style.height = Math.min(el.scrollHeight, 160) + "px";
+                      } catch {}
+                    }}
                     placeholder="Add a reply…"
-                    className="w-full py-2 bg-transparent outline-none text-base font-bold placeholder:text-gray-400"
+                    className="w-full py-2 resize-none bg-transparent outline-none text-base font-bold placeholder:text-gray-400 leading-5"
+                    rows={1}
                     onKeyDown={(e) => {
+                      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                        e.preventDefault();
+                        sendReplyNow();
+                        return;
+                      }
                       if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
                         sendReplyNow();
                       }
                     }}
+                    aria-label="Write a reply"
                   />
                 </div>
                 <button
@@ -863,6 +893,7 @@ useEffect(() => {
       // ignore
     }
   }}
+  onCountChange={setSentReplyCount}
 />
         </div>
       </ContentColumn>
@@ -878,4 +909,3 @@ export default function SiddesPostDetailPage() {
     </Suspense>
   );
 }
-

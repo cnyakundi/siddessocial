@@ -273,23 +273,25 @@ function MediaGrid({ items }: { items: MediaItem[] }) {
   const shown = all.slice(0, 4);
   const more = Math.max(0, all.length - shown.length);
   const isSingle = shown.length === 1;
+
   const openAt = (i: number) => {
     setIndex(Math.max(0, Math.min(all.length - 1, i)));
     setOpen(true);
   };
 
   const onKey = (e: React.KeyboardEvent, i: number) => {
-    if (e.key === 'Enter' || e.key === ' ') {
+    if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       e.stopPropagation();
       openAt(i);
     }
   };
 
-  const cardBase = "rounded-3xl border-2 border-gray-100 bg-gray-50 overflow-hidden";
+  // sd_780_threads_style_media_grid:
+  // - Single: preserve media aspect (contain) + pick a gentle height from metadata.
+  // - Multi: square tiles in a tight grid across ALL breakpoints (Threads-like feed on desktop).
+  const cardBase = "rounded-3xl border border-gray-100 bg-gray-50 overflow-hidden";
 
-  // sd_757_media_ui: single media should not crop; pick a gentle height from metadata when available.
-  // (We keep it as a class string so Tailwind can see all possible values.)
   const singleSize = (() => {
     const m = shown[0];
     const w = typeof (m as any)?.width === "number" ? Number((m as any).width) : 0;
@@ -300,17 +302,18 @@ function MediaGrid({ items }: { items: MediaItem[] }) {
     return "h-[min(520px,65vh)]"; // default
   })();
 
+  const gridCols = shown.length === 2 ? "grid-cols-2" : shown.length === 3 ? "grid-cols-3" : "grid-cols-2";
 
   return (
     <>
       <div
-        className={cn('w-full mb-3 lg:mb-4', isSingle ? '' : '')}
+        className={cn("w-full mb-3 lg:mb-4")}
         onMouseDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
       >
         {isSingle ? (
           <div
-            className={cn(cardBase, 'w-full cursor-zoom-in sm:max-w-[520px] sm:mx-auto')}
+            className={cn(cardBase, "w-full cursor-zoom-in sm:max-w-[520px] sm:mx-auto")}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => onKey(e, 0)}
@@ -321,7 +324,7 @@ function MediaGrid({ items }: { items: MediaItem[] }) {
             }}
             aria-label="Open media"
           >
-            {shown[0].kind === 'video' ? (
+            {shown[0].kind === "video" ? (
               <div className={cn("relative w-full bg-black", singleSize)}>
                 <div className="absolute inset-0 bg-black" aria-hidden />
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -343,14 +346,11 @@ function MediaGrid({ items }: { items: MediaItem[] }) {
             )}
           </div>
         ) : (
-                    <>                    <div className="md:hidden flex gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-2">
+          <div className={cn("grid gap-2", gridCols)}>
             {shown.map((m, i) => (
               <div
                 key={m.id || m.url}
-                className={cn(
-                  'snap-start shrink-0 w-[78%] max-w-[420px] cursor-zoom-in',
-                  cardBase
-                )}
+                className={cn(cardBase, "relative cursor-zoom-in aspect-square")}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => onKey(e, i)}
@@ -359,76 +359,9 @@ function MediaGrid({ items }: { items: MediaItem[] }) {
                   e.stopPropagation();
                   openAt(i);
                 }}
-                aria-label={m.kind === 'video' ? 'Open video' : 'Open image'}
+                aria-label={m.kind === "video" ? "Open video" : "Open image"}
               >
-                {m.kind === 'video' ? (
-                  <div className={cn("relative w-full bg-black", shown.length >= 4 ? "aspect-square" : "aspect-[4/5]")}>
-                    <div className="w-full h-full bg-black" aria-hidden />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-12 h-12 rounded-full bg-black/35 flex items-center justify-center">
-                        <Play size={22} className="text-white" />
-                      </div>
-                    </div>
-                    {typeof m.durationMs === 'number' && m.durationMs > 0 ? (
-                      <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-black/45 text-white text-xs font-semibold">
-                        {formatDurationMs(m.durationMs)}
-                      </div>
-                    ) : null}
-                    {more > 0 && i === shown.length - 1 ? (
-                      <div className="absolute inset-0 bg-black/35 flex items-center justify-center">
-                        <div className="px-3 py-1.5 rounded-full bg-black/45 text-white text-sm font-extrabold">
-                          +{more}
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-                ) : (
-                  <div className={cn("relative w-full bg-black", shown.length >= 4 ? "aspect-square" : "aspect-[4/5]")}>
-                    <img
-                      className="w-full h-full object-cover"
-                      src={m.url}
-                      alt=""
-                      loading="lazy"
-                      draggable={false}
-                    />
-                    {more > 0 && i === shown.length - 1 ? (
-                      <div className="absolute inset-0 bg-black/35 flex items-center justify-center">
-                        <div className="px-3 py-1.5 rounded-full bg-black/45 text-white text-sm font-extrabold">
-                          +{more}
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          <div
-            className={cn(
-              'hidden md:grid gap-2',
-              shown.length === 2 ? 'md:grid-cols-2' : shown.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'
-            )}
-          >
-            {shown.map((m, i) => (
-              <div
-                key={m.id || m.url}
-                className={cn(
-                  cardBase,
-                  'relative cursor-zoom-in',
-                  shown.length >= 4 ? 'aspect-square' : 'aspect-[4/5]'
-                )}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => onKey(e, i)}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  openAt(i);
-                }}
-                aria-label={m.kind === 'video' ? 'Open video' : 'Open image'}
-              >
-                {m.kind === 'video' ? (
+                {m.kind === "video" ? (
                   <>
                     <div className="absolute inset-0 bg-black" aria-hidden />
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -436,7 +369,7 @@ function MediaGrid({ items }: { items: MediaItem[] }) {
                         <Play size={22} className="text-white" />
                       </div>
                     </div>
-                    {typeof m.durationMs === 'number' && m.durationMs > 0 ? (
+                    {typeof m.durationMs === "number" && m.durationMs > 0 ? (
                       <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-black/45 text-white text-xs font-semibold">
                         {formatDurationMs(m.durationMs)}
                       </div>
@@ -462,7 +395,6 @@ function MediaGrid({ items }: { items: MediaItem[] }) {
               </div>
             ))}
           </div>
-          </>
         )}
       </div>
 
