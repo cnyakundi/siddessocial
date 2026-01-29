@@ -177,6 +177,15 @@ function SiddesProfileHomeInner() {
         <div className="mt-4">
           <div className="text-2xl font-black text-gray-900">{displayName}</div>
           {handle ? <div className="text-sm text-gray-400 mt-1">{handle}</div> : null}
+          {username ? (
+            <Link
+              href={`/u/${encodeURIComponent(username)}`}
+              className="mt-4 inline-flex items-center justify-center px-5 py-2.5 rounded-full border border-gray-200 bg-white text-sm font-extrabold hover:bg-gray-50 active:bg-gray-50 transition-colors"
+              title="View my posts"
+            >
+              View my posts
+            </Link>
+          ) : null}
         </div>
 
         {/* Side identity tag */}

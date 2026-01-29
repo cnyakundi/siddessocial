@@ -57,10 +57,10 @@ const NAV: NavItem[] = [
     active: (p) => p.startsWith("/siddes-inbox"),
   },
   {
-    href: "/siddes-profile",
+    href: "/me",
     label: "Me",
     icon: UserIcon,
-    active: (p) => p.startsWith("/siddes-profile"),
+    active: (p) => p.startsWith("/siddes-profile") || p.startsWith("/me"),
   },
 ];
 

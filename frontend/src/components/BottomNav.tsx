@@ -29,9 +29,10 @@ function initialsFromName(nameOrHandle: string) {
   return ((parts[0][0] || 'U') + (parts[parts.length - 1][0] || 'U')).toUpperCase();
 }
 
-function MeTabLink({ href = "/siddes-profile", active, side }: { href?: string; active: boolean; side: SideId }) {
+function MeTabLink({ href = "/me", active, side }: { href?: string; active: boolean; side: SideId }) {
   const [img, setImg] = useState<string | null>(null);
   const [initials, setInitials] = useState<string>("U");
+  const [meUsername, setMeUsername] = useState<string>("");
 
   useEffect(() => {
     let cancelled = false;
@@ -42,10 +43,12 @@ function MeTabLink({ href = "/siddes-profile", active, side }: { href?: string; 
         const items = Array.isArray(j?.items) ? j.items : [];
         const f = items.find((x: any) => x?.side === side) || null;
         const name = String(f?.displayName || j?.user?.username || "You");
+        const uname = String(j?.user?.username || "").trim();
         const av = (f?.avatarImage && String(f.avatarImage).trim()) || "";
         if (!cancelled) {
           setInitials(initialsFromName(name));
           setImg(av || null);
+          setMeUsername(uname);
         }
       } catch {}
     };
@@ -70,26 +73,45 @@ function MeTabLink({ href = "/siddes-profile", active, side }: { href?: string; 
     };
   }, [side]);
 
+  // sd_797_me_tab_resolve: Me tab should open your /u/:username (posts) when known.
+  const resolvedHref = (() => {
+    const u = String(meUsername || "").trim();
+    return u ? `/u/${encodeURIComponent(u)}` : href;
+  })();
+
+  const activeLocal = (() => {
+    if (active) return true;
+    const u = String(meUsername || "").trim();
+    if (!u) return false;
+    try {
+      const p = typeof window !== "undefined" ? String(window.location.pathname || "") : "";
+      const pref = `/u/${encodeURIComponent(u)}`;
+      return p === pref || p.startsWith(pref + "/");
+    } catch {
+      return false;
+    }
+  })();
+
   return (
     <div className="relative w-full h-full flex flex-col items-center justify-center">
       <Link
-        href={href}
+        href={resolvedHref}
         aria-label="Me"
         className={cn(
           "w-full h-full flex flex-col items-center justify-center gap-1 rounded-2xl select-none active:scale-95 transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900/20",
-          active ? "text-gray-900" : "text-gray-400"
+          activeLocal ? "text-gray-900" : "text-gray-400"
         )}
       >
         <div
           className={cn(
             "w-6 h-6 rounded-full overflow-hidden flex items-center justify-center text-[10px] font-black border-2",
-            active ? "border-gray-900" : "border-transparent",
+            activeLocal ? "border-gray-900" : "border-transparent",
             img ? "bg-gray-100" : "bg-gray-200"
           )}
         >
           {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : initials}
         </div>
-        <span className={cn("text-[9px] font-black uppercase tracking-tighter", active ? "opacity-100" : "opacity-60")}>
+        <span className={cn("text-[9px] font-black uppercase tracking-tighter", activeLocal ? "opacity-100" : "opacity-60")}>
           Me
         </span>
       </Link>
@@ -117,7 +139,7 @@ function TabLink({
   const display = n > 99 ? "99+" : String(n);
   return (
     <Link
-      href={href}
+      href={resolvedHref}
       aria-label={label}
       className={cn(
         "w-full h-full flex flex-col items-center justify-center gap-1 rounded-2xl select-none active:scale-95 transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900/20",

@@ -275,7 +275,7 @@ const openNotification = (n: NotificationItem) => {
     <Wrapper>
       <div className="mb-4">
         <div className="flex items-center justify-between">
-          <div className="text-sm font-bold text-gray-900">Alerts</div>
+          <div className="text-sm font-bold text-gray-900">{embedded ? meta.label : "Alerts"}</div>
           {/* sd_768_clean_alerts_page_hide_push_debug */}
           <button
             type="button"
