@@ -1,13 +1,13 @@
 export type PublicCalmUiState = {
   // When true, engagement counts are always visible.
-  // When false (default), counts are hidden until hover/tap (Visual Calm).
+  // When false, counts are hidden until hover/tap (Visual Calm).
   showCounts: boolean;
 };
 
 const KEY = "sd.publicCalmUi.v0";
 export const EVT_PUBLIC_CALM_UI_CHANGED = "sd.publicCalmUi.changed";
 
-const DEFAULT_STATE: PublicCalmUiState = { showCounts: false };
+const DEFAULT_STATE: PublicCalmUiState = { showCounts: true };
 
 export function loadPublicCalmUi(): PublicCalmUiState {
   if (typeof window === "undefined") return DEFAULT_STATE;

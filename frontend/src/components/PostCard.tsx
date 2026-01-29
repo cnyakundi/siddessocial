@@ -1479,7 +1479,25 @@ export function PostCard({
 
         {/* Footer: actions (feed: Reply + React only; detail: full) */}
         {isRow ? (
-          <div
+          <>
+
+          {/* sd_792_row_counts_summary: show clear counts without clutter (X-style) */}
+          {!hideCounts && (replyCount || likeCount) ? (
+            <div className="mt-2 flex items-center gap-2 text-[11px] font-extrabold text-gray-500">
+              {replyCount ? (
+                <span className="tabular-nums">
+                  {replyCount} {replyCount === 1 ? "reply" : "replies"}
+                </span>
+              ) : null}
+              {replyCount && likeCount ? <span className="text-gray-300">•</span> : null}
+              {likeCount ? (
+                <span className="tabular-nums">
+                  {likeCount} {side === "work" ? (likeCount === 1 ? "ack" : "acks") : likeCount === 1 ? "like" : "likes"}
+                </span>
+              ) : null}
+            </div>
+          ) : null}
+<div
             className={cn(
               "mt-3 pt-2 border-t border-gray-100 flex items-center gap-2",
               hideCounts ? "opacity-100" : "opacity-100"
@@ -1535,6 +1553,7 @@ export function PostCard({
               ) : null}
             </button>
           </div>
+          </>
         ) : (
           <div className="flex items-center justify-between pt-6 border-t border-gray-100">
             <div className="flex items-center gap-5">

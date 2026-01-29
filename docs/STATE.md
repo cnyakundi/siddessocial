@@ -248,3 +248,5 @@ These are the overlays applied/created during the current session (evidence: ter
 - **sd_782_fix_post_detail_freeze_side_lock:** Fix Post Detail freeze: SideProvider sideLock setters are stable (useCallback) + no-op when unchanged (prevents infinite render loop).
 - **sd_783_tab_scroll_memory:** Tab/page scroll memory: remember scroll positions across navigation (FB-like), restoring on return to Feed/Inbox/Sets/Search/Notifications.
 - **sd_785_tab_route_memory:** FB-like tab stacks: BottomNav + DesktopSideDock return you to the last route you visited within each tab (Feed includes /siddes-post).
+
+- sd_786 — Inbox DM mirror delivery guardrails (doc sync for checks)

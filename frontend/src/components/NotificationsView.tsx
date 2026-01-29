@@ -90,14 +90,26 @@ function Section({
               type="button"
               data-post-id={postId ? String(postId) : undefined}
               onClick={() => onOpen(n)}
-              className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-start gap-3 border-b border-gray-50 last:border-b-0"
+              className={cn(
+                "w-full text-left px-4 py-3 flex items-start gap-3 border-b border-gray-50 last:border-b-0 transition-colors",
+                !n?.read ? "bg-gray-50" : "bg-white",
+                "hover:bg-gray-50 active:bg-gray-50/60"
+              )}
             >
               <div className={cn("w-9 h-9 rounded-full flex items-center justify-center border", theme.lightBg, theme.border, theme.text)}>
                 <IconForType t={n.type} />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-3">
-                  <div className="text-sm font-bold text-gray-900 truncate">{n.actor}</div>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="text-sm font-bold text-gray-900 truncate">{n.actor}</div>
+                    {!n?.read ? (
+                      <>
+                        <span className={cn("w-2 h-2 rounded-full", theme.primaryBg)} aria-hidden />
+                        <span className="sr-only">Unread</span>
+                      </>
+                    ) : null}
+                  </div>
                   <div className="text-[11px] text-gray-400">{new Date(n.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>
                 </div>
                 <div className="text-xs text-gray-600 mt-1">
@@ -130,6 +142,16 @@ export function NotificationsView({ embedded = false }: { embedded?: boolean }) 
   const [retryTick, setRetryTick] = useState(0); // sd_716: retry without full reload
 
   const [itemsRaw, setItemsRaw] = useState<NotificationItem[]>([]);
+
+  // sd_795_truthful_filters: only show filter chips when data exists (avoid "dead" filters)
+  const hasMentions = useMemo(() => itemsRaw.some((n) => n.type === "mention"), [itemsRaw]);
+  const hasReplies = useMemo(() => itemsRaw.some((n) => n.type === "reply"), [itemsRaw]);
+
+  useEffect(() => {
+    if (filter === "mentions" && !hasMentions) setFilter("all");
+    if (filter === "replies" && !hasReplies) setFilter("all");
+  }, [filter, hasMentions, hasReplies]);
+
 
   // sd_801: keep bell badge in sync with local read state
   useEffect(() => {
@@ -268,38 +290,52 @@ const openNotification = (n: NotificationItem) => {
           </button>
         </div>
 
+        
         <div className="flex gap-2 mt-3 overflow-x-auto no-scrollbar">
           <button
             type="button"
             onClick={() => setFilter("all")}
             className={cn(
               "px-3 py-1.5 rounded-full text-xs font-bold border",
-              filter === "all" ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+              filter === "all"
+                ? "bg-gray-900 text-white border-gray-900"
+                : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
             )}
           >
             All
           </button>
-          <button
-            type="button"
-            onClick={() => setFilter("mentions")}
-            className={cn(
-              "px-3 py-1.5 rounded-full text-xs font-bold border",
-              filter === "mentions" ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
-            )}
-          >
-            Mentions
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilter("replies")}
-            className={cn(
-              "px-3 py-1.5 rounded-full text-xs font-bold border",
-              filter === "replies" ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
-            )}
-          >
-            Replies
-          </button>
+
+          {hasMentions ? (
+            <button
+              type="button"
+              onClick={() => setFilter("mentions")}
+              className={cn(
+                "px-3 py-1.5 rounded-full text-xs font-bold border",
+                filter === "mentions"
+                  ? "bg-gray-900 text-white border-gray-900"
+                  : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+              )}
+            >
+              Mentions
+            </button>
+          ) : null}
+
+          {hasReplies ? (
+            <button
+              type="button"
+              onClick={() => setFilter("replies")}
+              className={cn(
+                "px-3 py-1.5 rounded-full text-xs font-bold border",
+                filter === "replies"
+                  ? "bg-gray-900 text-white border-gray-900"
+                  : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+              )}
+            >
+              Replies
+            </button>
+          ) : null}
         </div>
+
       </div>
 
       {loading ? (
@@ -330,8 +366,16 @@ const openNotification = (n: NotificationItem) => {
           <Section title="Earlier" items={earlierItems} theme={theme} onOpen={openNotification} />
           {!items.length ? (
             <div className={cn("p-10 rounded-2xl border text-center", theme.lightBg, theme.border)}>
-              <div className={cn("text-sm font-extrabold", theme.text)}>All caught up</div>
-              <div className="text-xs text-gray-600 mt-1">No alerts in {meta.label}.</div>
+              <div className={cn("text-sm font-extrabold", theme.text)}>
+                {filter === "replies" ? "No replies yet" : filter === "mentions" ? "No mentions yet" : "All caught up"}
+              </div>
+              <div className="text-xs text-gray-600 mt-1">
+                {filter === "replies"
+                  ? `No one has replied in ${meta.label}.`
+                  : filter === "mentions"
+                    ? `No mentions in ${meta.label}.`
+                    : `No alerts in ${meta.label}.`}
+              </div>
             </div>
           ) : null}
         </>
