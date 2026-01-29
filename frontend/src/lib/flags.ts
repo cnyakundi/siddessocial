@@ -15,4 +15,7 @@ export const FLAGS = {
   // PWA: background feed revalidate (default ON). Set NEXT_PUBLIC_SD_FEED_REVALIDATE=0 to disable.
   feedRevalidate: process.env.NEXT_PUBLIC_SD_FEED_REVALIDATE !== "0",
 
+  // PWA: "New posts" pill (default ON). Set NEXT_PUBLIC_SD_NEW_POSTS_PILL=0 to disable.
+  newPostsPill: process.env.NEXT_PUBLIC_SD_NEW_POSTS_PILL !== "0",
+
 } as const;

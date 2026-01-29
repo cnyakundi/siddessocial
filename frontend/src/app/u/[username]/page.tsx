@@ -603,6 +603,29 @@ const tid = String(j?.thread?.id || "").trim();
                 }
               />
 
+
+              {/* sd_816_pinned_identity_card */}
+              <div className="mt-3 rounded-3xl border border-gray-200 bg-white p-4">
+                <div className="flex items-center justify-between">
+                  <div className="text-[10px] font-extrabold uppercase tracking-wider text-gray-500">Pinned</div>
+                  <div className="text-[10px] font-bold text-gray-400">{SIDES[displaySide]?.label || displaySide}</div>
+                </div>
+
+                <div className="mt-2 text-sm font-semibold text-gray-900">
+                  {String((facet as any)?.headline || "").trim()
+                    ? String((facet as any)?.headline || "").trim()
+                    : (SIDES[displaySide]?.privacyHint
+                        ? `Audience: ${SIDES[displaySide]?.privacyHint}`
+                        : "This identity is for this Side.")}
+                </div>
+
+                {String((facet as any)?.bio || "").trim() ? (
+                  <div className="mt-1 text-xs text-gray-600">
+                    {String((facet as any)?.bio || "").trim()}
+                  </div>
+                ) : null}
+              </div>
+
               {/* sd_814_about_sheet */}
               <button
                 type="button"

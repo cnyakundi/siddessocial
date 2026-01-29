@@ -20,7 +20,7 @@ import { DEFAULT_SETS } from "@/src/lib/sets";
 import { getSetsProvider } from "@/src/lib/setsProvider";
 import { getLastSeenId, setLastSeenId } from "@/src/lib/lastSeen";
 import { fetchMe } from "@/src/lib/authMe";
-import type { FeedItem } from "@/src/lib/feedProvider";
+import type { FeedItem, FeedPage } from "@/src/lib/feedProvider";
 import { getFeedProvider } from "@/src/lib/feedProvider";
 import { EVT_SESSION_IDENTITY_CHANGED, getSessionIdentity, touchSessionConfirmed, updateSessionFromMe } from "@/src/lib/sessionIdentity";
 import { getCachedFeedPage, makeFeedCacheKey, setCachedFeedPage } from "@/src/lib/feedInstantCache";
@@ -296,6 +296,23 @@ export function SideFeed() {
 
   const provider = useMemo(() => getFeedProvider(), []);
   const [rawPosts, setRawPosts] = useState<FeedItem[]>([]);
+  // sd_912_new_posts_pill: show a "new posts" pill when background revalidate finds newer first-page items.
+  const [newPostsCount, setNewPostsCount] = useState(0);
+  const pendingFirstPageRef = useRef<FeedPage | null>(null);
+  const pendingFirstPageIdentRef = useRef<{ viewerId: string | null; epoch: string | null } | null>(null);
+  const topPostIdRef = useRef<string | null>(null);
+  const topPostIdsRef = useRef<string[]>([]);
+  useEffect(() => {
+    try {
+      const ids = (rawPosts || []).slice(0, 30).map((p: any) => String(p?.id || "")).filter(Boolean);
+      topPostIdsRef.current = ids;
+      topPostIdRef.current = ids.length ? ids[0] : null;
+    } catch {
+      topPostIdsRef.current = [];
+      topPostIdRef.current = null;
+    }
+  }, [rawPosts]);
+
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [loadingInitial, setLoadingInitial] = useState(false);
@@ -313,6 +330,50 @@ export function SideFeed() {
 
   const [restricted, setRestricted] = useState(false);
   const [loadErr, setLoadErr] = useState<string | null>(null);
+
+  const clearNewPostsPill = useCallback(() => {
+    setNewPostsCount(0);
+    pendingFirstPageRef.current = null;
+    pendingFirstPageIdentRef.current = null;
+  }, []);
+
+  const applyNewPostsPill = useCallback(() => {
+    try {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    } catch {}
+
+    const page = pendingFirstPageRef.current;
+    if (!page) {
+      clearNewPostsPill();
+      // Fallback: re-run first-page load (will hit caches if warmed).
+      try { setRetryTick((x) => x + 1); } catch {}
+      return;
+    }
+
+    // For private sides, only apply if identity matches the fetch that produced the pending page.
+    if (side !== "public") {
+      try {
+        const identNow = getSessionIdentity();
+        const meta = pendingFirstPageIdentRef.current;
+        if (!meta || identNow.viewerId !== meta.viewerId || identNow.epoch !== meta.epoch || !identNow.authed) {
+          clearNewPostsPill();
+          return;
+        }
+      } catch {
+        clearNewPostsPill();
+        return;
+      }
+    }
+
+    try { feedRevalLastRef.current = Date.now(); } catch {}
+    setLoadErr(null);
+    setRawPosts(page.items || []);
+    setNextCursor(page.nextCursor ?? null);
+    setHasMore(Boolean(page.hasMore));
+    setRefreshing(false);
+    clearNewPostsPill();
+  }, [clearNewPostsPill, side]);
+
 
   const loadMore = useCallback(async () => {
     if (loadingMore || loadingInitial) return;
@@ -362,6 +423,11 @@ export function SideFeed() {
       setNextCursor(null);
       setHasMore(false);
       setRefreshing(false);
+
+      // sd_912_new_posts_pill: clear pending pill on scope change
+      setNewPostsCount(0);
+      pendingFirstPageRef.current = null;
+      pendingFirstPageIdentRef.current = null;
 
       const topic = side === "public" && FLAGS.publicChannels && publicChannel !== "all" ? publicChannel : null;
       const setId = side !== "public" ? (activeSet || null) : null;
@@ -667,6 +733,33 @@ export function SideFeed() {
           setRawPosts(page.items || []);
           setNextCursor(page.nextCursor ?? null);
           setHasMore(Boolean(page.hasMore));
+
+          // sd_912_new_posts_pill: applying fresh first-page clears any pending pill.
+          setNewPostsCount(0);
+          pendingFirstPageRef.current = null;
+          pendingFirstPageIdentRef.current = null;
+        } else if (FLAGS.newPostsPill) {
+          // sd_912_new_posts_pill: we warmed caches, but user is mid-scroll. Offer a pill instead of jumping the feed.
+          try {
+            const curTop = topPostIdRef.current;
+            const nextItems = Array.isArray(page.items) ? page.items : [];
+            if (curTop && nextItems.length) {
+              const idx = nextItems.findIndex((p: any) => p?.id === curTop);
+              let n = 0;
+              if (idx > 0) n = idx;
+              else if (idx === 0) n = 0;
+              else {
+                const seen = new Set((topPostIdsRef.current || []).filter(Boolean));
+                n = nextItems.filter((p: any) => p?.id && !seen.has(p.id)).length;
+              }
+              if (n > 0) {
+                const capped = Math.min(99, Math.max(1, n));
+                setNewPostsCount((prev) => Math.min(99, Math.max(prev, capped)));
+                pendingFirstPageRef.current = page;
+                pendingFirstPageIdentRef.current = { viewerId: viewerAtStart || null, epoch: epochAtStart || null };
+              }
+            }
+          } catch {}
         }
       } catch (e: any) {
         if (!mounted) return;
@@ -710,6 +803,28 @@ export function SideFeed() {
       try { window.clearInterval(i); } catch {}
     };
   }, [side, provider, publicChannel, activeSet, activeTag, restricted, rawPosts.length, loadingInitial, loadingMore, refreshing]);
+
+  // sd_912_new_posts_pill: if user reaches top naturally, clear the pill.
+  useEffect(() => {
+    if (!FLAGS.newPostsPill) return;
+    if (typeof window === "undefined") return;
+    if (newPostsCount <= 0) return;
+
+    let last = 0;
+    const onScroll = () => {
+      const now = Date.now();
+      if (now - last < 160) return;
+      last = now;
+      try {
+        if ((window.scrollY || 0) < 60) {
+          clearNewPostsPill();
+        }
+      } catch {}
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll as any);
+  }, [newPostsCount, clearNewPostsPill]);
 
   useEffect(() => {
     if (!hasMore || !nextCursor) return;
@@ -1026,6 +1141,29 @@ export function SideFeed() {
 
 {/* Feed content */}
       <div className="pt-2 px-4 lg:px-0">
+
+        {/* sd_912_new_posts_pill */}
+        {FLAGS.newPostsPill && newPostsCount > 0 && !restricted && !loadErr ? (
+          <div
+            className="fixed left-0 right-0 z-[85] flex justify-center pointer-events-none"
+            style={{ top: "calc(env(safe-area-inset-top) + 60px)" }}
+            data-testid="feed-new-posts-pill"
+          >
+            <button
+              type="button"
+              className={cn(
+                "pointer-events-auto px-4 py-2 rounded-full text-xs font-extrabold shadow-lg border",
+                theme.primaryBg,
+                "text-white border-black/10 hover:opacity-95 active:scale-[0.99]"
+              )}
+              aria-label="Show new posts"
+              onClick={() => applyNewPostsPill()}
+            >
+              {newPostsCount >= 99 ? "99+ new posts" : `${newPostsCount} new ${newPostsCount === 1 ? "post" : "posts"}`} • Tap to view
+            </button>
+          </div>
+        ) : null}
+
         {refreshing && !restricted && !loadErr ? (
           <div className="mb-2 flex items-center gap-2 text-[11px] text-gray-400" data-testid="feed-refreshing">
             <span className="inline-block h-2 w-2 rounded-full bg-gray-300 animate-pulse" aria-hidden="true" />
