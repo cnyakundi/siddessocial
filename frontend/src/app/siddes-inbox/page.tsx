@@ -19,6 +19,9 @@ import { isRestrictedError, restrictedMessage } from "@/src/lib/restricted";
 import { InboxStubDebugPanel } from "@/src/components/InboxStubDebugPanel";
 import { useInboxStubViewer } from "@/src/lib/useInboxStubViewer";
 import { loadUnreadMap } from "@/src/lib/inboxState";
+import { usePullToRefresh } from "@/src/hooks/usePullToRefresh";
+import { FLAGS } from "@/src/lib/flags";
+
 type InboxFilter = "all" | "this" | "mismatch" | "unread";
 
 // sd_573: sort threads by most recent activity (server updatedAt + local threadStore meta)
@@ -213,6 +216,11 @@ function SiddesInboxPageInner() {
   // sd_543b: unlock power tools only when explicitly requested
 
   const advanced = params.get("advanced") === "1";
+
+  // sd_913_pull_to_refresh_inbox: messages vs alerts view
+  const tabParam = params.get("tab");
+  const tab: "messages" | "alerts" = tabParam === "alerts" ? "alerts" : "messages";
+
   const debug = params.get("debug") === "1";
   // sd_464d1: restore scroll when returning from thread detail
   useReturnScrollRestore();
@@ -226,6 +234,7 @@ function SiddesInboxPageInner() {
 
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [refreshTick, setRefreshTick] = useState(0); // sd_913_pull_to_refresh_inbox
   const [error, setError] = useState<string | null>(null);
   const [restricted, setRestricted] = useState(false);
 
@@ -298,7 +307,7 @@ function SiddesInboxPageInner() {
       try { ac.abort(); } catch {}
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [provider, side, viewer]);
+  }, [provider, side, viewer, refreshTick]);
 
   const unreadMap = useMemo(() => {
     const ids = threads.map((t) => String((t as any)?.id || ""));
@@ -430,9 +439,64 @@ const filtered = useMemo(() => {
       setLoadingMore(false);
     }
   };
+  // sd_913_pull_to_refresh_inbox: pull-to-refresh threads (Facebook/TikTok feel).
+  // Disabled when viewing Alerts tab (NotificationsView handles its own pull-to-refresh).
+  const pullEnabled = Boolean(FLAGS.pullToRefresh) && (typeof tab !== "undefined" ? tab !== "alerts" : true);
+
+  const doPullRefresh = async () => {
+    if (!pullEnabled) return;
+    if (loading || loadingMore) return;
+    try {
+      if (typeof window !== "undefined" && (window.scrollY || 0) > 8) return;
+    } catch {}
+    setRefreshTick((x) => x + 1);
+  };
+
+  const { pullY, phase: pullPhase } = usePullToRefresh({
+    enabled: pullEnabled,
+    refreshing: loading,
+    onRefresh: doPullRefresh,
+    canStart: () => {
+      if (!pullEnabled) return false;
+      if (loading || loadingMore) return false;
+      return true;
+    },
+  });
+
+  const pullTransition = pullPhase === "pulling" || pullPhase === "armed" ? "none" : "transform 180ms ease-out";
+  const pullStyle =
+    pullY > 0 || pullPhase === "refreshing"
+      ? { transform: `translate3d(0, ${pullY}px, 0)`, transition: pullTransition, willChange: "transform" as const }
+      : undefined;
+
+
 
   return (
-    <div className="p-4">
+    <div className="p-4 relative" style={pullStyle}>
+      {/* sd_913_pull_to_refresh_inbox indicator */}
+      {pullEnabled ? (
+        <div className="pointer-events-none flex justify-center" style={{ height: 0 }}>
+          <div
+            className={cn(
+              "px-3 py-1.5 rounded-full text-[11px] font-extrabold border shadow-sm",
+              pullPhase === "armed"
+                ? "bg-gray-900 text-white border-gray-900"
+                : pullPhase === "refreshing"
+                ? "bg-white text-gray-700 border-gray-200"
+                : "bg-white text-gray-500 border-gray-200"
+            )}
+            style={{
+              transform: `translate3d(0, ${Math.max(-48, pullY - 48)}px, 0)`,
+              transition: pullTransition,
+              opacity: pullY > 2 || pullPhase !== "idle" ? 1 : 0,
+            }}
+            aria-hidden
+          >
+            {pullPhase === "refreshing" ? "Refreshing…" : pullPhase === "armed" ? "Release to refresh" : "Pull to refresh"}
+          </div>
+        </div>
+      ) : null}
+
       {debug ? <InboxStubDebugPanel viewer={viewerInput} onViewer={setViewerInput} /> : null}
       <div className="mb-4 px-1">
         <p className="text-xs font-medium text-gray-400 flex items-center gap-1.5">

@@ -18,6 +18,9 @@ import { getSetTheme } from "@/src/lib/setThemes";
 import { onSetsChanged } from "@/src/lib/setsSignals";
 import { getStubViewerCookie, isStubMe } from "@/src/lib/stubViewerClient";
 import { useReturnScrollRestore } from "@/src/hooks/returnScroll";
+import { usePullToRefresh } from "@/src/hooks/usePullToRefresh";
+import { FLAGS } from "@/src/lib/flags";
+
 import { useSide } from "@/src/components/SideProvider";
 
 function cn(...parts: Array<string | undefined | false | null>) {
@@ -197,6 +200,37 @@ function SiddesSetsPageInner() {
       setCreating(false);
     }
   };
+  // sd_913_pull_to_refresh_sets: pull-to-refresh Sets list.
+  const pullEnabled = Boolean(FLAGS.pullToRefresh);
+
+  const doPullRefresh = async () => {
+    if (!pullEnabled) return;
+    if (loading || creating) return;
+    try {
+      if (typeof window !== "undefined" && (window.scrollY || 0) > 8) return;
+    } catch {}
+    await refresh();
+  };
+
+  const { pullY, phase: pullPhase } = usePullToRefresh({
+    enabled: pullEnabled,
+    refreshing: loading,
+    onRefresh: doPullRefresh,
+    canStart: () => {
+      if (!pullEnabled) return false;
+      if (loading || creating) return false;
+      if (importOpen || createOpen) return false;
+      return true;
+    },
+  });
+
+  const pullTransition = pullPhase === "pulling" || pullPhase === "armed" ? "none" : "transform 180ms ease-out";
+  const pullStyle =
+    pullY > 0 || pullPhase === "refreshing"
+      ? { transform: `translate3d(0, ${pullY}px, 0)`, transition: pullTransition, willChange: "transform" as const }
+      : undefined;
+
+
 
   return (
     <>

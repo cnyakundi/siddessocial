@@ -18,4 +18,7 @@ export const FLAGS = {
   // PWA: "New posts" pill (default ON). Set NEXT_PUBLIC_SD_NEW_POSTS_PILL=0 to disable.
   newPostsPill: process.env.NEXT_PUBLIC_SD_NEW_POSTS_PILL !== "0",
 
+  // PWA: pull-to-refresh (default ON). Set NEXT_PUBLIC_SD_PULL_TO_REFRESH=0 to disable.
+  pullToRefresh: process.env.NEXT_PUBLIC_SD_PULL_TO_REFRESH !== "0",
+
 } as const;
