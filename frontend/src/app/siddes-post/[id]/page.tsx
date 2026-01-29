@@ -277,15 +277,20 @@ function SentReplies({ postId, onReplyTo, onCountChange }: { postId: string; onR
 
                       <div className="text-sm text-gray-900 leading-relaxed mt-1 whitespace-pre-wrap">{r.text}</div>
 
-                      <div className="mt-3">
-                        <button
+                      {/* sd_924_no_nested_reply_action: backend limits nesting; hide Reply on depth>0 */}
+
+                      {depth === 0 ? (
+
+                        <div className="mt-3"><button
                           type="button"
                           className="text-xs font-extrabold text-gray-500 hover:text-gray-900 hover:underline"
                           onClick={() => onReplyTo?.(r.id, name)}
                         >
                           Reply
-                        </button>
-                      </div>
+                        </button></div>
+
+                      ) : null}
+
                     </div>
                   </div>
                 </div>

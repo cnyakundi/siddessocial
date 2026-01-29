@@ -89,6 +89,8 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 - **sd_142:** Feed DRF endpoint + API-base-aware Next proxy (client calls same-origin /api/feed; Next proxies to Django via SD_INTERNAL_API_BASE / NEXT_PUBLIC_API_BASE)
 
 ## NEXT overlay
+- **sd_924_post_detail_no_nested_reply_action:** Post detail: hide Reply action on nested replies (backend max-depth truth; prevents parent_too_deep UI lie).
+
 - **sd_779:** UI: Post detail Replies — labeled reply count, consistent reply cards, and handle-based profile links (avatar + name).
 - **sd_782:** UI: Label reply/like counts in PostCard actions (feed + detail) to fix unlabeled numbers.
 - **sd_778:** UI: Post detail back is reliable (Link-based); feed engagement is visible without hover when counts are shown (Public Visual Calm defaults to Shown).
