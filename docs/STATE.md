@@ -6,7 +6,7 @@
 - Commit:
 - Zip/Overlay ID:
 - Environment: local | prod
-- Last overlay applied: sd_784_connections_followers_mutuals_v3_apply_helper.sh
+- Last overlay applied: sd_785_inbox_dm_delivery_handle_fallback_apply_helper.sh
 ## Current milestone
 - **sd_784:** Connections: Followers/Following/Mutuals (incoming SideMembership via /api/followers + UI at /siddes-profile/connections)
 - **sd_781:** Feed UX: show row engagement actions without hover traps + show reply/like counts on the timeline; default Public engagement counts to shown.
@@ -236,3 +236,4 @@ These are the overlays applied/created during the current session (evidence: ter
 - **sd_776:** Public share post (/p/[id]) — add an escape header (Home/Search/Open in app) + make author profile clickable.
 - **sd_782_fix_post_detail_freeze_side_lock:** Fix Post Detail freeze: SideProvider sideLock setters are stable (useCallback) + no-op when unchanged (prevents infinite render loop).
 - **sd_783_tab_scroll_memory:** Tab/page scroll memory: remember scroll positions across navigation (FB-like), restoring on return to Feed/Inbox/Sets/Search/Notifications.
+- **sd_785_tab_route_memory:** FB-like tab stacks: BottomNav + DesktopSideDock return you to the last route you visited within each tab (Feed includes /siddes-post).
