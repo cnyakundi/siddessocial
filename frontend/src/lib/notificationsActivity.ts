@@ -3,62 +3,75 @@
 import { getStoredActiveSide } from "./sideStore";
 
 /**
- * Notifications Activity (singleton) — deterministic unread badge for the bell.
+ * Notifications Activity (singleton) — deterministic unread badge.
  *
- * - Source of truth: /api/notifications (DB-backed)
- * - We compute unread = count(items where read === false)
- * - This is NOT a vibe meter. It's a deterministic signal only.
+ * KEY RULE:
+ * - Backend notifications are Side-scoped (public/friends/close/work).
+ * - Therefore unread counts MUST be Side-scoped too.
+ *
+ * This module keeps a per-side cache and a tiny poll engine.
+ * It is intentionally boring: no vibes, no fake counters.
  */
 
 export type NotificationsActivity = { unread: number };
 
+type SideId = "public" | "friends" | "close" | "work";
+const SIDES: SideId[] = ["public", "friends", "close", "work"];
+
 type NotifItem = { read?: boolean | null };
-
-type NotifsResp = {
-  ok?: boolean;
-  restricted?: boolean;
-  items?: NotifItem[];
-};
-
-let CACHE: NotificationsActivity = { unread: 0 };
-let inFlight: Promise<void> | null = null;
+type NotifsResp = { ok?: boolean; restricted?: boolean; items?: NotifItem[] };
 
 type Listener = (a: NotificationsActivity) => void;
-const LISTENERS = new Set<Listener>();
 
-function notify() {
-  for (const fn of LISTENERS) {
+const CACHE: Record<SideId, NotificationsActivity> = {
+  public: { unread: 0 },
+  friends: { unread: 0 },
+  close: { unread: 0 },
+  work: { unread: 0 },
+};
+
+const LISTENERS: Record<SideId, Set<Listener>> = {
+  public: new Set(),
+  friends: new Set(),
+  close: new Set(),
+  work: new Set(),
+};
+
+const IN_FLIGHT: Record<SideId, Promise<void> | null> = {
+  public: null,
+  friends: null,
+  close: null,
+  work: null,
+};
+
+function normalizeSide(x: unknown): SideId {
+  const v = String(x || "").trim().toLowerCase();
+  if (v === "public" || v === "friends" || v === "close" || v === "work") return v as SideId;
+  return "friends";
+}
+
+function inferredSide(): SideId {
+  try {
+    const s = getStoredActiveSide();
+    return normalizeSide(s);
+  } catch {
+    return "friends";
+  }
+}
+
+function notify(side: SideId) {
+  for (const fn of LISTENERS[side]) {
     try {
-      fn(CACHE);
+      fn(CACHE[side]);
     } catch {
       // ignore
     }
   }
 }
 
-export function subscribeNotificationsActivity(fn: Listener): () => void {
-  LISTENERS.add(fn);
-  try {
-    fn(CACHE);
-  } catch {
-    // ignore
-  }
-  return () => { LISTENERS.delete(fn); };
-}
-
-export function getNotificationsActivity(): NotificationsActivity {
-  return CACHE;
-}
-
-export function setNotificationsUnread(unread: number) {
-  const n = Number.isFinite(unread) ? Math.max(0, Math.floor(unread)) : 0;
-  CACHE = { unread: n };
-  notify();
-}
-
 function computeUnread(items: NotifItem[]): number {
   let unread = 0;
-  for (const it of items) {
+  for (const it of items || []) {
     if (!it) continue;
     if (it.read === true) continue;
     unread += 1;
@@ -66,41 +79,83 @@ function computeUnread(items: NotifItem[]): number {
   return unread;
 }
 
-function _notifSide(): string {
+// ---- Backward-compatible API surface ----
+// subscribeNotificationsActivity(fn)  OR  subscribeNotificationsActivity(side, fn)
+export function subscribeNotificationsActivity(a: any, b?: any): () => void {
+  let side: SideId = inferredSide();
+  let fn: Listener | null = null;
+
+  if (typeof a === "function") {
+    fn = a as Listener;
+  } else {
+    side = normalizeSide(a);
+    fn = (typeof b === "function") ? (b as Listener) : null;
+  }
+
+  if (!fn) return () => {};
+
+  LISTENERS[side].add(fn);
   try {
-    const s = getStoredActiveSide();
-    const v = String(s || "").trim();
-    if (v === "public" || v === "friends" || v === "close" || v === "work") return v;
-  } catch {}
-  return "friends";
+    fn(CACHE[side]);
+  } catch {
+    // ignore
+  }
+  return () => LISTENERS[side].delete(fn!);
 }
 
-export async function refreshNotificationsActivity(opts?: { force?: boolean }): Promise<void> {
-  if (inFlight) return inFlight;
+// getNotificationsActivity() OR getNotificationsActivity(side)
+export function getNotificationsActivity(side?: any): NotificationsActivity {
+  const s = (side === undefined) ? inferredSide() : normalizeSide(side);
+  return CACHE[s];
+}
 
-  inFlight = (async () => {
+// setNotificationsUnread(unread) OR setNotificationsUnread(side, unread)
+export function setNotificationsUnread(a: any, b?: any): void {
+  let side: SideId = inferredSide();
+  let unread: number = 0;
+
+  if (typeof a === "string") {
+    side = normalizeSide(a);
+    unread = Number(b);
+  } else {
+    unread = Number(a);
+  }
+
+  const n = Number.isFinite(unread) ? Math.max(0, Math.floor(unread)) : 0;
+  CACHE[side] = { unread: n };
+  notify(side);
+}
+
+// refreshNotificationsActivity() OR refreshNotificationsActivity({side, force}) OR refreshNotificationsActivity(side)
+export async function refreshNotificationsActivity(opts?: any): Promise<void> {
+  const side: SideId = (typeof opts === "string") ? normalizeSide(opts) : normalizeSide(opts?.side ?? inferredSide());
+  if (IN_FLIGHT[side]) return IN_FLIGHT[side] as Promise<void>;
+
+  IN_FLIGHT[side] = (async () => {
     try {
-      const side = _notifSide();
-      const res = await fetch("/api/notifications", { cache: "no-store", headers: { "x-sd-side": side } });
+      const res = await fetch("/api/notifications", {
+        cache: "no-store",
+        headers: { "x-sd-side": side },
+      });
       if (!res.ok) return;
 
       const j = (await res.json().catch(() => ({}))) as NotifsResp;
       if (j?.restricted) {
-        setNotificationsUnread(0);
+        setNotificationsUnread(side, 0);
         return;
       }
 
       const items = Array.isArray(j?.items) ? j.items : [];
-      setNotificationsUnread(computeUnread(items));
+      setNotificationsUnread(side, computeUnread(items));
     } catch {
       // keep old cache
     }
   })();
 
   try {
-    await inFlight;
+    await IN_FLIGHT[side];
   } finally {
-    inFlight = null;
+    IN_FLIGHT[side] = null;
   }
 }
 
@@ -111,19 +166,31 @@ function isVisible(): boolean {
 
 let ENGINE_STARTED = false;
 let ENGINE_TIMER: number | null = null;
+let ENGINE_SIDE: SideId = inferredSide();
 
 // Poll every 45s; also refresh on focus/visibility restore.
 const POLL_MS = 45_000;
 
-export function startNotificationsActivityEngine(): void {
-  if (ENGINE_STARTED) return;
+// startNotificationsActivityEngine() OR startNotificationsActivityEngine(side)
+export function startNotificationsActivityEngine(side?: any): void {
+  if (typeof side !== "undefined") {
+    ENGINE_SIDE = normalizeSide(side);
+  } else {
+    ENGINE_SIDE = inferredSide();
+  }
+
+  if (ENGINE_STARTED) {
+    // Side may have changed — refresh best-effort.
+    refreshNotificationsActivity({ force: true, side: ENGINE_SIDE }).catch(() => {});
+    return;
+  }
   if (typeof window === "undefined") return;
 
   ENGINE_STARTED = true;
 
   const tick = () => {
     if (!isVisible()) return;
-    refreshNotificationsActivity().catch(() => {});
+    refreshNotificationsActivity({ side: ENGINE_SIDE }).catch(() => {});
   };
 
   // First tick
@@ -131,11 +198,22 @@ export function startNotificationsActivityEngine(): void {
 
   ENGINE_TIMER = window.setInterval(tick, POLL_MS);
 
-  const onWake = () => refreshNotificationsActivity({ force: true }).catch(() => {});
+  const onWake = () => refreshNotificationsActivity({ force: true, side: ENGINE_SIDE }).catch(() => {});
   window.addEventListener("focus", onWake);
   document.addEventListener("visibilitychange", () => {
     if (isVisible()) onWake();
   });
 
   void ENGINE_TIMER;
+}
+
+// Convenience: allow callers to pre-warm all sides (optional).
+export async function warmAllSides(): Promise<void> {
+  for (const s of SIDES) {
+    try {
+      await refreshNotificationsActivity({ side: s, force: true });
+    } catch {
+      // ignore
+    }
+  }
 }

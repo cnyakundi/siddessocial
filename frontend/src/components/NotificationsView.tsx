@@ -134,7 +134,7 @@ export function NotificationsView({ embedded = false }: { embedded?: boolean }) 
   // sd_801: keep bell badge in sync with local read state
   useEffect(() => {
     try {
-      setNotificationsUnread(itemsRaw.filter((n) => !n?.read).length);
+      setNotificationsUnread(side, itemsRaw.filter((n) => !n?.read).length);
     } catch {}
   }, [itemsRaw]);
   const unreadCount = useMemo(() => itemsRaw.filter((n) => !n?.read).length, [itemsRaw]);
@@ -150,7 +150,7 @@ export function NotificationsView({ embedded = false }: { embedded?: boolean }) 
         return;
       }
       setItemsRaw((prev) => prev.map((n) => ({ ...n, read: true })));
-      setNotificationsUnread(0);
+      setNotificationsUnread(side, 0);
       toast("Marked all read.");
     } catch {
       toast("Unable to mark read (network error).");
@@ -217,7 +217,7 @@ const openNotification = (n: NotificationItem) => {
           try {
             const rows = Array.isArray(j?.items) ? j.items : [];
             const unread = rows.filter((n) => !n?.read).length;
-            setNotificationsUnread(unread);
+            setNotificationsUnread(side, unread);
           } catch {
             // ignore
           }

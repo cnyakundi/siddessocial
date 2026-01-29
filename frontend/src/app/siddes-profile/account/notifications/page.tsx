@@ -41,7 +41,7 @@ export default function AccountNotificationsPage() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [router]);
 
   if (loading) {
     return <div className="p-4 text-xs text-gray-500">Loading…</div>;

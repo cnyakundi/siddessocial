@@ -383,7 +383,6 @@ function MediaGrid({ items, ownerId }: { items: MediaItem[]; ownerId: string }) 
     return () => window.removeEventListener("popstate", onPop);
   }, [readUrlIndex]);
 
-  if (count === 0) return null;
 
   const shown = all.slice(0, 4);
   const more = Math.max(0, count - shown.length);
@@ -481,6 +480,9 @@ function MediaGrid({ items, ownerId }: { items: MediaItem[]; ownerId: string }) 
       try { obs.disconnect(); } catch {}
     };
   }, [prefetchOnce]);
+
+  if (count === 0) return null;
+
 
 
   const singleSize = (() => {
@@ -1743,3 +1745,6 @@ export function PostCard({
   );
 }
 
+
+
+// sd_813_fix_postcard_media_prefetch_hooks
