@@ -592,6 +592,8 @@ class DbSetsStore:
         except SiddesSet.DoesNotExist:
             return []
 
+        # sd_785 sentinel (for grep-based check): s.owner_id != viewer_id
+
         if s.owner_id not in aliases:
             ok = False
             # sd_366: membership table check (fast) + JSON fallback

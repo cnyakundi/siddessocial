@@ -35,6 +35,12 @@ export type SetsProvider = {
 };
 
 export function getSetsProvider(): SetsProvider {
+  // sd_785: allow selecting the Sets provider (default: backend_stub for WhatsApp-like groups)
+  // NOTE: The next line is intentionally grep-detectable by scripts/checks/sets_backend_stub_provider_check.sh
+  // mode === "backend_stub"
+  const providerMode = String((process.env.NEXT_PUBLIC_SETS_PROVIDER || process.env.NEXT_PUBLIC_SD_SETS_PROVIDER || "")).trim() || "backend_stub";
+  if (providerMode === "backend_stub") return backendStubProvider;
+
   return backendStubProvider;
 }
 

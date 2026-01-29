@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Image as ImageIcon,
@@ -33,6 +33,7 @@ import { EchoSheet } from "@/src/components/EchoSheet";
 import { QuoteEchoComposer } from "@/src/components/QuoteEchoComposer";
 import { PostActionsSheet } from "@/src/components/PostActionsSheet";
 import { EditPostSheet } from "@/src/components/EditPostSheet";
+import { ProfilePeekSheet } from "@/src/components/ProfilePeekSheet";
 import { toast } from "@/src/lib/toast";
 import { saveReturnScroll } from "@/src/hooks/returnScroll";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
@@ -1114,6 +1115,46 @@ export function PostCard({
     saveReturnScroll(post.id);
     router.push(`/u/${encodeURIComponent(u)}?side=${encodeURIComponent(side)}`);
   };
+
+  // sd_920_profile_peek: long-press the author row to preview their profile without leaving the feed.
+  const profilePeekUsername = useMemo(() => {
+    const raw = String(post.handle || post.author || "").trim();
+    const u = raw.replace(/^@/, "").split(/\s+/)[0];
+    return u;
+  }, [post.handle, post.author]);
+
+  const [profilePeekOpen, setProfilePeekOpen] = useState(false);
+
+  const profilePeekTimerRef = useRef<number | null>(null);
+  const didProfilePeekRef = useRef(false);
+
+  const startProfilePeek = () => {
+    if (!profilePeekUsername) return;
+    didProfilePeekRef.current = false;
+    if (profilePeekTimerRef.current) window.clearTimeout(profilePeekTimerRef.current);
+    profilePeekTimerRef.current = window.setTimeout(() => {
+      didProfilePeekRef.current = true;
+      setProfilePeekOpen(true);
+    }, 500);
+  };
+
+  const endProfilePeek = () => {
+    if (profilePeekTimerRef.current) {
+      window.clearTimeout(profilePeekTimerRef.current);
+      profilePeekTimerRef.current = null;
+    }
+  };
+
+  const openProfileOrSwallowPeek = (handleOrName?: string) => {
+    // If long-press fired, swallow the click to avoid double actions.
+    if (didProfilePeekRef.current) {
+      didProfilePeekRef.current = false;
+      return;
+    }
+    openProfile(handleOrName);
+  };
+
+
   const openReply = () => {
     saveReturnScroll(post.id);
     try {
@@ -1215,11 +1256,16 @@ export function PostCard({
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              openProfile(post.handle || post.author);
+              openProfileOrSwallowPeek(post.handle || post.author);
             }}
             className="rounded-full focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-900/20"
             aria-label={"Open profile " + String(post.handle || post.author || "user")}
-            title="View profile"
+            title="View profile (hold to peek)"
+              onMouseDown={startProfilePeek}
+              onMouseUp={endProfilePeek}
+              onMouseLeave={endProfilePeek}
+              onTouchStart={startProfilePeek}
+              onTouchEnd={endProfilePeek}
           >
             <Avatar name={post.author} handle={post.handle} avatarUrl={avatarUrl || post.authorAvatarUrl || null} />
           </button>
@@ -1229,11 +1275,16 @@ export function PostCard({
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                openProfile(post.handle || post.author);
+                openProfileOrSwallowPeek(post.handle || post.author);
               }}
               className="flex items-center gap-2 min-w-0 text-left"
               aria-label={"Open profile " + String(post.handle || post.author || "user")}
-              title="View profile"
+              title="View profile (hold to peek)"
+              onMouseDown={startProfilePeek}
+              onMouseUp={endProfilePeek}
+              onMouseLeave={endProfilePeek}
+              onTouchStart={startProfilePeek}
+              onTouchEnd={endProfilePeek}
             >
               <span className={cn("font-black text-gray-900 truncate hover:underline", isRow ? "text-[15px]" : "text-[15px] lg:text-[20px]")}>{post.author}</span>
               <span className="text-gray-400 truncate hover:underline text-[12px] font-bold">{post.handle}</span>
@@ -1415,7 +1466,12 @@ export function PostCard({
                 }}
                 className="text-left w-full"
                 aria-label={"Open profile " + String(echoOf.handle || echoOf.author || "user")}
-                title="View profile"
+                title="View profile (hold to peek)"
+              onMouseDown={startProfilePeek}
+              onMouseUp={endProfilePeek}
+              onMouseLeave={endProfilePeek}
+              onTouchStart={startProfilePeek}
+              onTouchEnd={endProfilePeek}
               >
                 <div className="text-sm font-semibold text-gray-900 hover:underline">{echoOf.author}</div>
                 <div className="text-xs text-gray-400 hover:underline">{echoOf.handle}</div>
@@ -1479,81 +1535,81 @@ export function PostCard({
 
         {/* Footer: actions (feed: Reply + React only; detail: full) */}
         {isRow ? (
-          <>
-
-          {/* sd_792_row_counts_summary: show clear counts without clutter (X-style) */}
-          {!hideCounts && (replyCount || likeCount) ? (
-            <div className="mt-2 flex items-center gap-2 text-[11px] font-extrabold text-gray-500">
-              {replyCount ? (
-                <span className="tabular-nums">
-                  {replyCount} {replyCount === 1 ? "reply" : "replies"}
-                </span>
-              ) : null}
-              {replyCount && likeCount ? <span className="text-gray-300">•</span> : null}
-              {likeCount ? (
-                <span className="tabular-nums">
-                  {likeCount} {side === "work" ? (likeCount === 1 ? "ack" : "acks") : likeCount === 1 ? "like" : "likes"}
+          <div className="mt-3 pt-2 border-t border-gray-100 grid grid-cols-[1fr_auto] items-center gap-2">
+            {/* Counts (secondary, readable) */}
+            <div className="min-w-0 min-h-[18px] text-[11px] font-semibold text-gray-500 tabular-nums truncate">
+              {!hideCounts && (replyCount || likeCount) ? (
+                <span className="inline-flex items-center gap-1.5">
+                  {replyCount ? (
+                    <span>
+                      {replyCount} {replyCount === 1 ? "reply" : "replies"}
+                    </span>
+                  ) : null}
+                  {replyCount && likeCount ? <span className="text-gray-300">•</span> : null}
+                  {likeCount ? (
+                    <span>
+                      {likeCount}{" "}
+                      {side === "work"
+                        ? likeCount === 1
+                          ? "ack"
+                          : "acks"
+                        : likeCount === 1
+                          ? "like"
+                          : "likes"}
+                    </span>
+                  ) : null}
                 </span>
               ) : null}
             </div>
-          ) : null}
-<div
-            className={cn(
-              "mt-3 pt-2 border-t border-gray-100 flex items-center gap-2",
-              hideCounts ? "opacity-100" : "opacity-100"
-            )}
-          >
-            <button
-              type="button"
-              className="min-h-[44px] px-2.5 rounded-full inline-flex items-center gap-1.5 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-900/20 active:scale-[0.98] text-gray-400 hover:text-gray-700 hover:bg-gray-50"
-              aria-label={replyCount ? `Reply (${replyCount})` : "Reply"}
-              title="Reply"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                openReply();
-              }}
-            >
-              <MessageCircle size={18} strokeWidth={2.5} />
-              {!hideCounts && replyCount ? (
-                <span className="text-[12px] font-extrabold tabular-nums text-gray-500">{replyCount}</span>
-              ) : null}
-            </button>
 
-            <button
-              type="button"
-              className={cn(
-                "min-h-[44px] px-2.5 rounded-full inline-flex items-center gap-1.5 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-900/20 active:scale-[0.98] hover:bg-gray-50 disabled:opacity-60",
-                liked ? theme.text : "text-gray-400 hover:text-gray-700"
-              )}
-              aria-label={
-                side === "work"
-                  ? likeCount
-                    ? `Acknowledge (${likeCount})`
-                    : "Acknowledge"
-                  : likeCount
-                    ? `Like (${likeCount})`
-                    : "Like"
-              }
-              title={side === "work" ? "Acknowledge" : "Like"}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                toggleLike();
-              }}
-              disabled={likeBusy}
-            >
-              {side === "work" ? (
-                <CheckCircle2 size={18} strokeWidth={2.5} />
-              ) : (
-                <Heart size={18} strokeWidth={2.5} fill={liked ? "currentColor" : "none"} />
-              )}
-              {!hideCounts && likeCount ? (
-                <span className="text-[12px] font-extrabold tabular-nums text-gray-500">{likeCount}</span>
-              ) : null}
-            </button>
+            {/* Actions (primary, always visible) */}
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                className={cn(ACTION_BASE, "text-gray-400 hover:text-gray-700 hover:bg-gray-50")}
+                aria-label={replyCount ? `Reply (${replyCount})` : "Reply"}
+                title="Reply"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  openReply();
+                }}
+              >
+                <MessageCircle size={18} strokeWidth={2.5} />
+              </button>
+
+              <button
+                type="button"
+                className={cn(
+                  ACTION_BASE,
+                  "hover:bg-gray-50 disabled:opacity-60",
+                  liked ? theme.text : "text-gray-400 hover:text-gray-700"
+                )}
+                aria-label={
+                  side === "work"
+                    ? likeCount
+                      ? `Acknowledge (${likeCount})`
+                      : "Acknowledge"
+                    : likeCount
+                      ? `Like (${likeCount})`
+                      : "Like"
+                }
+                title={side === "work" ? "Acknowledge" : "Like"}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleLike();
+                }}
+                disabled={likeBusy}
+              >
+                {side === "work" ? (
+                  <CheckCircle2 size={18} strokeWidth={2.5} />
+                ) : (
+                  <Heart size={18} strokeWidth={2.5} fill={liked ? "currentColor" : "none"} />
+                )}
+              </button>
+            </div>
           </div>
-          </>
         ) : (
           <div className="flex items-center justify-between pt-6 border-t border-gray-100">
             <div className="flex items-center gap-5">
@@ -1632,6 +1688,17 @@ export function PostCard({
           </div>
         )}
 </div>
+
+      <ProfilePeekSheet
+        open={profilePeekOpen}
+        onClose={() => setProfilePeekOpen(false)}
+        username={profilePeekUsername}
+        side={side}
+        onOpenProfile={() => {
+          setProfilePeekOpen(false);
+          if (profilePeekUsername) openProfile(profilePeekUsername);
+        }}
+      />
 
       <ChipOverflowSheet
         open={openOverflow}

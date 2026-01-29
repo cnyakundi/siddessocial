@@ -115,6 +115,8 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 - **sd_759_compose_media_preview_no_crop:** Compose: selected media previews use object-contain (no crop) + black letterbox background.
 - **sd_780_threads_style_media_grid:** MediaGrid (PostCard): Threads-style square tiles for multi-media across breakpoints (no mobile carousel).
 - **sd_781_media_viewer_history_preload:** Media viewer: URL state (?sdm/&sdmi=) + Back closes viewer + preload adjacent images for instant navigation.
+- **sd_919_post_detail_reply_composer_fb_clean:** Post detail: calm “Replying to …” bar + FB-style inline reply input (remove duplicate mismatch prompts).
+
 - **sd_763_fix_compose_ts2322_sd759_insertion:** Fix Compose TS2322 by repairing sd_759 insertion bug (restore sd_384 JSX comment brace + remove extra '}' on sd_759 comment line).
 
 - **sd_740_sets_v1_dead_simple:** Sets v1 UX simplification (Sets-as-audience: SetFilterBar on Feed; Set hub = Feed+People with More sheet; read-only banners; scannable set cards)
