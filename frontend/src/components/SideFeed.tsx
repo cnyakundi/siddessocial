@@ -923,7 +923,7 @@ export function SideFeed() {
             const s = await setsProvider.create({ side, label: name, members });
             addSetToState(s);
             pickSet(s.id);
-            toast.success(`Created Set \"${s.label}\" with ${s.members.length} members.`);
+            toast.success(`Created Set "${s.label}" with ${s.members.length} members.`);
           })();
         }}
         onCreateSuggested={({ label, color, members, side: suggestedSide }) => {

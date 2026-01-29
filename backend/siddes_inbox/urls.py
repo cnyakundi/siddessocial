@@ -5,6 +5,8 @@ from __future__ import annotations
 from django.urls import path
 
 from .views import (
+from .views_typing import InboxTypingView
+
     InboxDebugIncomingView,
     InboxDebugResetUnreadView,
     InboxThreadView,
@@ -12,6 +14,7 @@ from .views import (
 )
 
 urlpatterns = [
+    path("typing", InboxTypingView.as_view()),
     path("threads", InboxThreadsView.as_view(), name="inbox_threads"),
     path("thread/<str:thread_id>", InboxThreadView.as_view(), name="inbox_thread"),
 

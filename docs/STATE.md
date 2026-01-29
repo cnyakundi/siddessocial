@@ -6,7 +6,7 @@
 - Commit:
 - Zip/Overlay ID:
 - Environment: local | prod
-- Last overlay applied: sd_791_inbox_dm_outbox_truthful_send_apply_helper.sh
+- Last overlay applied: sd_793_inbox_push_on_dm_apply_helper.sh
 ## Current milestone
 - **sd_784:** Connections: Followers/Following/Mutuals (incoming SideMembership via /api/followers + UI at /siddes-profile/connections)
 - **sd_781:** Feed UX: show row engagement actions without hover traps + show reply/like counts on the timeline; default Public engagement counts to shown.
@@ -189,6 +189,7 @@ These are the overlays applied/created during the current session (evidence: ter
 - Set members are normalized to @handles, deduped, and capped server-side.
 
 ## PWA (mobile app feel)
+- **sd_900_perf_pwa_speed_pack_v1:** PWA speed pack — SW caches ONLY public+immutable /m images, lazy-loads global chrome, enables feed row content-visibility.
 - **sd_741_push_backend_db:** Push subscriptions stored in backend DB + endpoints + UI wiring
 - **sd_742_push_auto_dispatch_on_notifications:** push is automatically dispatched when notifications are created (reply/like/mention/echo)
 

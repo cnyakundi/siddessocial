@@ -30,7 +30,7 @@ fi
 python3 - <<'PY'
 from __future__ import annotations
 from pathlib import Path
-import re, sys
+import sys
 
 crit: list[str] = []
 warn: list[str] = []
@@ -58,20 +58,33 @@ if "API_CACHE" in sw or "siddes-api-" in sw:
 if "IMG_CACHE" in sw or "siddes-img-" in sw:
     c("Service Worker still has IMG_CACHE / siddes-img cache (generic image caching can store private /m/*).")
 
-# Must explicitly NetworkOnly /api and /m (fetch passthrough).
+# Must explicitly guard /api and /m (SW caches are shared across browser profile).
 if ('url.pathname.startsWith("/api/")' not in sw
     and 'pathname.startsWith("/api/")' not in sw
     and "pathname.startsWith('/api/')" not in sw):
-    c("Service Worker missing explicit /api NetworkOnly guard.")
+    c("Service Worker missing explicit /api guard.")
 
 if ('url.pathname.startsWith("/m/")' not in sw
     and 'pathname.startsWith("/m/")' not in sw
     and "pathname.startsWith('/m/')" not in sw):
-    c("Service Worker missing explicit /m NetworkOnly guard.")
+    c("Service Worker missing explicit /m guard.")
 
-# Disallow generic SW caching strategies (Siddes safe baseline is shell/static cache only).
+# Disallow generic unsafe strategy helpers (names used in older Workbox-style scripts).
 if "staleWhileRevalidate" in sw or "networkFirst" in sw:
-    c("Service Worker still contains unsafe caching strategies (expected: shell/static cacheFirst only).")
+    c("Service Worker contains unsafe generic caching strategy helpers (expected: custom minimal code).")
+
+# sd_900: allow public-only immutable /m image caching IF header-gated.
+has_sd900 = "sd_900_public_media_cache" in sw
+if has_sd900:
+    must = ["MEDIA_CACHE", "cache-control", "immutable", "public", "no-store", "private"]
+    missing = [m for m in must if m not in sw]
+    if missing:
+        c(f"sd_900 SW public media cache gate missing expected tokens: {missing}")
+    else:
+        ok("Service Worker: /m/* is cached ONLY when response is public+immutable (private/no-store never cached).")
+else:
+    # Baseline: /m is NetworkOnly (safe but slower)
+    ok("Service Worker: /m/* is NetworkOnly (safe baseline).")
 
 # Navigations: should be NetworkOnly + /offline.html fallback (never cached HTML/RSC).
 if ('request.mode === "navigate"' not in sw
@@ -82,13 +95,14 @@ if ('request.mode === "navigate"' not in sw
 if "/offline.html" not in sw:
     c("Service Worker missing /offline.html fallback for offline navigation.")
 
-# Nice-to-have: delete old caches so legacy API caches are purged.
+# Nice-to-have: delete old caches so legacy caches are purged.
 if "caches.keys" in sw and "siddes-" in sw and "caches.delete" in sw:
-    ok("Service Worker deletes old siddes-* caches on activate (purges legacy API/media caches).")
+    ok("Service Worker deletes old siddes-* caches on activate (purges legacy caches).")
 else:
     w("Could not confirm SW purge of old caches on activate (recommended).")
 
-ok("Service Worker does not cache /api/* or /m/* (expected NetworkOnly).")
+# /api must never be cached.
+ok("Service Worker: /api/* is NetworkOnly (never cached).")
 
 # ----------------------------
 # 2) /sw.js anti-stuck headers (Next.js)

@@ -104,6 +104,82 @@ function AvatarBubble({
   const theme = sideId ? SIDE_THEMES[sideId] : null;
   const overlayStyle = avatarOverlayStyle(seed);
 
+  
+  // sd_792_typing_indicator: send typing pings while user is composing.
+  useEffect(() => {
+    if (restricted) return;
+    if (typeof window === "undefined") return;
+
+    const v = String(text || "");
+    const has = v.trim().length > 0;
+    const now = Date.now();
+
+    // When cleared, send one "typing: false" to end the indicator quickly.
+    if (!has) {
+      if (!typingEmptySentRef.current) {
+        typingEmptySentRef.current = true;
+        fetch("/api/inbox/typing", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ threadId: id, typing: false }),
+        }).catch(() => {});
+      }
+      return;
+    }
+
+    typingEmptySentRef.current = false;
+
+    if (now - typingPingRef.current < 1100) return;
+    typingPingRef.current = now;
+
+    fetch("/api/inbox/typing", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ threadId: id, typing: true }),
+    }).catch(() => {});
+  }, [id, restricted, text]);
+
+  // sd_792_typing_indicator: poll whether the other participant is typing.
+  useEffect(() => {
+    if (restricted) return;
+    if (typeof window === "undefined") return;
+
+    let stopped = false;
+
+    const tick = async () => {
+      if (stopped) return;
+      try {
+        if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+        const res = await fetch(`/api/inbox/typing?threadId=${encodeURIComponent(id)}`, { cache: "no-store" });
+        if (!res.ok) return;
+        const j = (await res.json().catch(() => ({}))) as any;
+        if (j?.restricted) {
+          setOtherTyping(false);
+          return;
+        }
+        setOtherTyping(Boolean(j?.typing));
+      } catch {
+        // ignore
+      }
+    };
+
+    void tick();
+    const t = window.setInterval(() => void tick(), 1500);
+
+    const onWake = () => void tick();
+    window.addEventListener("focus", onWake);
+    document.addEventListener("visibilitychange", onWake);
+
+    return () => {
+      stopped = true;
+      try {
+        window.clearInterval(t);
+      } catch {}
+      window.removeEventListener("focus", onWake);
+      document.removeEventListener("visibilitychange", onWake);
+    };
+  }, [id, restricted]);
+
   return (
     <div
       className={cn(
@@ -431,6 +507,11 @@ function SiddesThreadPageInner() {
   const [participantSeed, setParticipantSeed] = useState<string | null>(null);
   const [msgs, setMsgs] = useState<ThreadMessage[]>([]);
   const [text, setText] = useState("");
+
+  // sd_792_typing_indicator: ephemeral typing indicator (polling)
+  const [otherTyping, setOtherTyping] = useState(false);
+  const typingPingRef = useRef<number>(0);
+  const typingEmptySentRef = useRef<boolean>(true);
 
   const [msgHasMore, setMsgHasMore] = useState(false);
   const [msgCursor, setMsgCursor] = useState<string | null>(null);
@@ -1049,6 +1130,10 @@ function SiddesThreadPageInner() {
           ) : null}
 
           <div className="mt-4 flex items-center gap-2">
+            {otherTyping ? (
+              <div className="mb-2 text-[12px] font-semibold text-gray-500">Typing…</div>
+            ) : null}
+
             <input
               ref={inputRef}
               value={text}

@@ -2,15 +2,25 @@
  *
  * SAFETY RULES (Siddes non-negotiables):
  *  - Never cache /api/* (NetworkOnly). Service Worker caches are shared across a browser profile.
- *  - Never cache /m/* (NetworkOnly). Rely on HTTP caching for truly public media.
+ *  - /m/*: MAY cache ONLY truly-public immutable images (header-gated). Never cache private media.
  *  - Never cache navigations or Next.js RSC/flight payloads (NetworkOnly + offline fallback for navigations only).
  *
  * Result: instant app shell + offline fallback, without any cross-user/Side cache contamination.
  */
 
-const VERSION = "0.1.2";
+const VERSION = "ac8eb16f83f7";
 const CORE_CACHE = `siddes-core-${VERSION}`;
 const STATIC_CACHE = `siddes-static-${VERSION}`;
+
+// sd_900_public_media_cache: cache truly-public immutable images from /m/* only.
+// Guardrails:
+// - Never cache private/no-store responses.
+// - Only cache same-origin, basic (non-opaque) image responses.
+// - Require Cache-Control: public + immutable.
+// - Cap by entry count and content-length.
+const MEDIA_CACHE = `siddes-media-public-${VERSION}`;
+const MEDIA_MAX_ENTRIES = 80;
+const MEDIA_MAX_BYTES = 5 * 1024 * 1024; // 5MB
 
 const CORE_ASSETS = [
   "/offline.html",
@@ -42,6 +52,106 @@ async function networkOnly(request, fallbackUrl) {
   }
 }
 
+function _lc(v) {
+  try { return String(v || "").toLowerCase(); } catch { return ""; }
+}
+
+function _hasToken(h, token) {
+  const s = _lc(h);
+  const t = _lc(token);
+  return s.includes(t);
+}
+
+function _parseBytes(v) {
+  const n = Number(String(v || "").trim());
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.floor(n));
+}
+
+async function pruneCache(cacheName, maxEntries) {
+  try {
+    const cache = await caches.open(cacheName);
+    const keys = await cache.keys();
+    if (keys.length <= maxEntries) return;
+    const drop = keys.slice(0, Math.max(0, keys.length - maxEntries));
+    await Promise.all(drop.map((req) => cache.delete(req)));
+  } catch {
+    // ignore
+  }
+}
+
+function isCacheablePublicImageResponse(res) {
+  try {
+    if (!res) return false;
+    if (!res.ok) return false;
+    if (res.status !== 200) return false;
+    // Only cache readable same-origin responses (avoid opaque redirect-to-R2 cases).
+    if (res.type !== "basic") return false;
+
+    const ct = _lc(res.headers.get("content-type") || "");
+    if (!ct.startsWith("image/")) return false;
+
+    const cc = _lc(res.headers.get("cache-control") || "");
+    // MUST be explicitly public+immutable; MUST NOT be private/no-store.
+    if (!_hasToken(cc, "public")) return false;
+    if (!_hasToken(cc, "immutable")) return false;
+    if (_hasToken(cc, "private")) return false;
+    if (_hasToken(cc, "no-store")) return false;
+
+    const vary = _lc(res.headers.get("vary") || "");
+    if (_hasToken(vary, "cookie") || _hasToken(vary, "authorization")) return false;
+
+    const len = _parseBytes(res.headers.get("content-length") || "");
+    if (!len) return false; // if unknown, skip caching (keeps SW cache small)
+    if (len > MEDIA_MAX_BYTES) return false;
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function publicMedia(event, request) {
+  try {
+    const url = new URL(request.url);
+
+    // Never cache tokenized URLs or ranges (keeps cache keys clean and avoids partial caching).
+    if (url.search) return fetch(request);
+    if (request.headers.get("range")) return fetch(request);
+
+    // Only cache true image destinations (videos/audio are left to the browser cache).
+    if (request.destination && request.destination !== "image") return fetch(request);
+
+    const cache = await caches.open(MEDIA_CACHE);
+    const cached = await cache.match(request);
+
+    // If cached, return immediately and refresh in background.
+    if (cached) {
+      event.waitUntil((async () => {
+        try {
+          const res = await fetch(request);
+          if (isCacheablePublicImageResponse(res)) {
+            await cache.put(request, res.clone());
+            await pruneCache(MEDIA_CACHE, MEDIA_MAX_ENTRIES);
+          }
+        } catch {}
+      })());
+      return cached;
+    }
+
+    const res = await fetch(request);
+    if (isCacheablePublicImageResponse(res)) {
+      try {
+        await cache.put(request, res.clone());
+        event.waitUntil(pruneCache(MEDIA_CACHE, MEDIA_MAX_ENTRIES));
+      } catch {}
+    }
+    return res;
+  } catch {
+    return fetch(request);
+  }
+}
+
 self.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {
@@ -59,7 +169,7 @@ self.addEventListener("activate", (event) => {
       const keys = await caches.keys();
       await Promise.all(
         keys.map((k) => {
-          if (k.startsWith("siddes-") && ![CORE_CACHE, STATIC_CACHE].includes(k)) {
+          if (k.startsWith("siddes-") && ![CORE_CACHE, STATIC_CACHE, MEDIA_CACHE].includes(k)) {
             return caches.delete(k);
           }
           return Promise.resolve();
@@ -109,9 +219,15 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Private/personalized: NEVER cache in SW.
-  if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/m/")) {
+  // Private/personalized JSON: NEVER cache in SW.
+  if (url.pathname.startsWith("/api/")) {
     event.respondWith(fetch(request));
+    return;
+  }
+
+  // Media (/m/*): cache ONLY truly public immutable images (header-gated). Never cache private.
+  if (url.pathname.startsWith("/m/")) {
+    event.respondWith(publicMedia(event, request));
     return;
   }
 

@@ -598,6 +598,21 @@ class DbInboxStore(InboxStore):
                     viewer_id=recip_viewer,
                     defaults={"viewer_role": "me", "last_read_ts": None},
                 )
+
+                # sd_793_push_on_dm: best-effort device push to recipient (never breaks send)
+                try:
+                    from .dm_push import send_dm_push_best_effort  # local import
+                    if str(recip_viewer) != str(viewer_id):
+                        send_dm_push_best_effort(
+                            viewer_id=str(recip_viewer),
+                            side=str(t.locked_side),
+                            thread_id=str(r_thread.id),
+                            actor=str(handle or disp or "Siddes"),
+                            text=str(text or ""),
+                            badge=1,
+                        )
+                except Exception:
+                    pass
         except Exception:
             pass
 
