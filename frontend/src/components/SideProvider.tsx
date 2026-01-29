@@ -39,7 +39,16 @@ const SideContext = createContext<SideContextValue | null>(null);
 const PUBLIC_ENTER_CONFIRM_MARK = "__sd_public_enter_confirm_v1";
 
 export function SideProvider({ children }: { children: React.ReactNode }) {
-  const [side, setSideState] = useState<SideId>("friends");
+  const [side, setSideState] = useState<SideId>(() => {
+    const stored = getStoredActiveSide();
+    if (stored) return stored;
+    // sd_901: persist a safe default immediately so FTUE pickers don't block first paint (and Lighthouse runs).
+    try {
+      setStoredActiveSide("friends");
+      setStoredLastNonPublicSide("friends");
+    } catch {}
+    return "friends";
+  });
   const [sideLock, setSideLockState] = useState<SideLock>({ enabled: false, side: null, reason: null });
 
   // Public entry confirm (centralized)

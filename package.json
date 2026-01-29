@@ -8,6 +8,7 @@
     "build": "npm --prefix frontend run build",
     "start": "npm --prefix frontend run start",
     "lint": "npm --prefix frontend run lint",
-    "test": "npm --prefix frontend run test"
+    "test": "npm --prefix frontend run test",
+    "perf": "bash scripts/perf/run_lighthouse_budgets.sh"
   }
 }

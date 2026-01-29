@@ -43,6 +43,12 @@ Backend:
 - offline fallback
 - Lighthouse budgets
 
+Run:
+```bash
+bash scripts/pwa_check.sh
+bash scripts/perf/run_lighthouse_budgets.sh
+```
+
 ---
 
 ## 2) Minimum gate (required for every overlay)

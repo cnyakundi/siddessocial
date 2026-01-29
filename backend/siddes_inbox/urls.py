@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 from django.urls import path
-
-from .views import (
 from .views_typing import InboxTypingView
-
+from .views import (
     InboxDebugIncomingView,
     InboxDebugResetUnreadView,
     InboxThreadView,
