@@ -215,7 +215,8 @@ export const backendStubProvider: InboxProvider = {
     const identAtStart = getSessionIdentity();
     const viewerAtStart = identAtStart.viewerId ? String(identAtStart.viewerId) : "";
     const epochAtStart = identAtStart.epoch ? String(identAtStart.epoch) : "";
-    const canUseCache = Boolean(identAtStart.authed && viewerAtStart && epochAtStart);
+    const bypassCache = Boolean((opts as any)?.bypassCache);
+    const canUseCache = Boolean(!bypassCache && identAtStart.authed && viewerAtStart && epochAtStart);
 
     const key = canUseCache
       ? makeThreadCacheKey({

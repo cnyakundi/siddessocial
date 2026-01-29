@@ -627,6 +627,80 @@ function SiddesThreadPageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, provider, viewer]);
 
+  // sd_790_inbox_live_poll: lightweight live refresh so inbound DMs appear while the thread is open.
+  // This is polling (no websockets yet). We bypass the 30s session cache to keep it truly fresh.
+  useEffect(() => {
+    if (restricted) return;
+    if (typeof window === "undefined") return;
+
+    let stopped = false;
+
+    const tick = async () => {
+      if (stopped) return;
+      try {
+        if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+        if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+
+        const view = await provider.getThread(id, { viewer, limit: MSG_PAGE, bypassCache: true });
+        if (!view?.thread) return;
+
+        const incoming = (view?.messages ?? []) as ThreadMessage[];
+        if (!incoming.length) return;
+
+        setMsgs((prev) => {
+          const seen = new Set(prev.map((m) => m.id));
+          const merged = [...prev];
+          let added = false;
+
+          for (const m of incoming) {
+            if (!m || !(m as any).id) continue;
+            const mid = String((m as any).id);
+            if (!mid || seen.has(mid)) continue;
+            merged.push(m);
+            seen.add(mid);
+            added = true;
+          }
+
+          if (!added) return prev;
+          merged.sort((a, b) => a.ts - b.ts);
+          try {
+            saveThread(id, merged);
+          } catch {}
+          return merged;
+        });
+
+        // Keep local unread cleared while open.
+        try {
+          clearThreadUnread(id);
+        } catch {}
+      } catch {
+        // ignore
+      }
+    };
+
+    // First tick + then poll.
+    void tick();
+    const t = window.setInterval(() => {
+      void tick();
+    }, 2500);
+
+    const onWake = () => {
+      void tick();
+    };
+    window.addEventListener("focus", onWake);
+    document.addEventListener("visibilitychange", onWake);
+
+    return () => {
+      stopped = true;
+      try {
+        window.clearInterval(t);
+      } catch {}
+      window.removeEventListener("focus", onWake);
+      document.removeEventListener("visibilitychange", onWake);
+    };
+  }, [id, provider, viewer, restricted]);
+
+
   const loadEarlier = async () => {
     if (provider.name !== "backend_stub") return;
     if (!msgHasMore || !msgCursor) return;

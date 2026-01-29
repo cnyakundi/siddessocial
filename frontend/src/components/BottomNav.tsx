@@ -15,6 +15,7 @@ import { useSide } from "@/src/components/SideProvider";
 import { SIDE_THEMES, type SideId } from "@/src/lib/sides";
 import { getStoredLastPublicTopic, getStoredLastSetForSide } from "@/src/lib/audienceStore";
 import { useNotificationsActivity } from "@/src/hooks/useNotificationsActivity";
+import { useInboxActivity } from "@/src/hooks/useInboxActivity";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -128,13 +129,13 @@ function TabLink({
         {showDot ? (
           <span
             className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-red-500 border-2 border-white"
-            aria-label="New alerts"
+            aria-label={"New " + label}
           />
         ) : null}
         {showCount ? (
           <span
             className="absolute -top-2 -right-3 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center border-2 border-white"
-            aria-label={display + " unread alerts"}
+            aria-label={display + " unread " + label}
           >
             {display}
           </span>
@@ -181,13 +182,13 @@ function TabButton({
         {showDot ? (
           <span
             className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-red-500 border-2 border-white"
-            aria-label="New notifications"
+            aria-label={"New " + label}
           />
         ) : null}
         {showCount ? (
           <span
             className="absolute -top-2 -right-3 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center border-2 border-white"
-            aria-label={display + " unread notifications"}
+            aria-label={display + " unread " + label}
           >
             {display}
           </span>
@@ -211,6 +212,7 @@ export function BottomNav({ onToggleNotificationsDrawer, notificationsDrawerOpen
   const { side } = useSide();
   const theme = SIDE_THEMES[side];
   const { unread } = useNotificationsActivity();
+  const inbox = useInboxActivity();
 
   // sd_525: Create inherits the current room (Side + Set/Topic)
   // - If you are inside a specific Set hub, Create targets that Set
@@ -358,7 +360,7 @@ export function BottomNav({ onToggleNotificationsDrawer, notificationsDrawerOpen
             </span>
           </Link>
 
-          <TabLink href={tabHrefs.inbox} label="Inbox" Icon={MessageCircle} active={isInbox} />
+          <TabLink href={tabHrefs.inbox} label="Inbox" Icon={MessageCircle} active={isInbox} badge={inbox.unreadThreads} />
 
           <MeTabLink active={isMe} side={side} href={tabHrefs.me} />
         </div>

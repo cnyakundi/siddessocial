@@ -849,6 +849,43 @@ class InboxThreadView(APIView):
         # sd_582: bump per-viewer version so cached thread/list refreshes after mutations
         if viewer:
             _inbox_bump_ver(str(viewer))
+        # sd_790_inbox_bump_recipient_ver: bust recipient inbox cache on inbound DM delivery.
+        # Without this, the recipient may see a stale inbox list for up to SIDDES_INBOX_CACHE_TTL_SECS.
+        try:
+            recip_viewer = None
+
+            # Prefer DB snapshot participant_user_id when available.
+            try:
+                from .models import InboxThread  # local import (db store)
+                t = InboxThread.objects.filter(id=str(thread_id)).first()
+                if t is not None:
+                    uid = str(getattr(t, "participant_user_id", "") or "").strip()
+                    if uid:
+                        recip_viewer = f"me_{uid}"
+            except Exception:
+                recip_viewer = None
+
+            if not recip_viewer:
+                tok = str(other_token or _counterparty_token_for_thread_id(thread_id) or "").strip()
+                if tok:
+                    if tok.startswith("me_"):
+                        recip_viewer = tok
+                    elif tok.isdigit():
+                        recip_viewer = f"me_{tok}"
+                    else:
+                        # Map @handle -> me_<id> best-effort
+                        h = tok
+                        if not h.startswith("@"):
+                            h = "@" + h
+                        h = h.strip().lower()
+                        h2m, _ = _sd_609_handle_maps({h})
+                        recip_viewer = h2m.get(h)
+
+            if recip_viewer:
+                _inbox_bump_ver(str(recip_viewer))
+        except Exception:
+            pass
+
 
         resp = Response(data, status=status.HTTP_200_OK)
         resp["Cache-Control"] = "private, no-store"

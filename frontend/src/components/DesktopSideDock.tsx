@@ -16,6 +16,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { useSide } from "@/src/components/SideProvider";
+import { useInboxActivity } from "@/src/hooks/useInboxActivity";
 import { SIDES, SIDE_ORDER, SIDE_THEMES, type SideId } from "@/src/lib/sides";
 
 function cn(...parts: Array<string | undefined | false | null>) {
@@ -63,7 +64,24 @@ const NAV: NavItem[] = [
   },
 ];
 
-function RailLink({ href, label, Icon, active }: { href: string; label: string; Icon: any; active: boolean }) {
+function RailLink({
+  href,
+  label,
+  Icon,
+  active,
+  badge,
+}: {
+  href: string;
+  label: string;
+  Icon: any;
+  active: boolean;
+  badge?: number;
+}) {
+  const n = Number.isFinite(badge as any) ? Math.max(0, Math.floor(badge as any)) : 0;
+  const showDot = n > 0 && n < 10;
+  const showCount = n >= 10;
+  const display = n > 99 ? "99+" : String(n);
+
   return (
     <Link
       href={href}
@@ -75,8 +93,28 @@ function RailLink({ href, label, Icon, active }: { href: string; label: string; 
         active ? "text-gray-900" : "text-gray-300 hover:text-gray-900 hover:bg-gray-50"
       )}
     >
-      {active ? <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[1.5px] h-8 bg-gray-900 rounded-r-full" /> : null}
+      {active ? (
+        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[1.5px] h-8 bg-gray-900 rounded-r-full" />
+      ) : null}
+
       <Icon size={22} strokeWidth={active ? 2.5 : 2} />
+
+      {showDot ? (
+        <span
+          className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-red-500 border-2 border-white"
+          aria-label={"New " + label}
+        />
+      ) : null}
+
+      {showCount ? (
+        <span
+          className="absolute -top-2 -right-3 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center border-2 border-white"
+          aria-label={display + " unread " + label}
+        >
+          {display}
+        </span>
+      ) : null}
+
       <div className="absolute left-14 px-3 py-1.5 bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all pointer-events-none whitespace-nowrap z-50 shadow-xl">
         {label}
       </div>
@@ -84,7 +122,7 @@ function RailLink({ href, label, Icon, active }: { href: string; label: string; 
   );
 }
 
-/**
+ /**
  * DesktopSideDock (MVP skeleton rail)
  * - Top: brand mark
  * - Hero: Side switcher (Mode)
@@ -96,6 +134,7 @@ function RailLink({ href, label, Icon, active }: { href: string; label: string; 
 export function DesktopSideDock() {
   const pathname = usePathname() || "/";
   const { side, setSide, sideLock } = useSide();
+  const inbox = useInboxActivity();
   const lockedSide = sideLock?.enabled ? sideLock.side : null;
   const lockReason = sideLock?.enabled ? sideLock.reason : null;
   const currentMeta = SIDES[side];
@@ -193,7 +232,7 @@ export function DesktopSideDock() {
       {/* Primary navigation */}
       <div className="flex flex-col items-center gap-2 w-full pb-6">
         {NAV.map((it) => (
-          <RailLink key={it.href} href={it.href} label={it.label} Icon={it.icon} active={it.active(pathname)} />
+          <RailLink key={it.href} href={it.href} label={it.label} Icon={it.icon} active={it.active(pathname)} badge={it.href === "/siddes-inbox" ? inbox.unreadThreads : undefined} />
         ))}
       </div>
 

@@ -43,6 +43,9 @@ export type InboxProviderThreadOpts = {
   signal?: AbortSignal;
   timeoutMs?: number;
 
+  // sd_790: allow callers (thread live poll) to bypass the 30s session cache.
+  bypassCache?: boolean;
+
   limit?: number;
   cursor?: string;
 };
