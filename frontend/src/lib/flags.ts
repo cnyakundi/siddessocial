@@ -24,4 +24,7 @@ export const FLAGS = {
   // Perf: fast-scroll mode (default ON). Set NEXT_PUBLIC_SD_FAST_SCROLL_MODE=0 to disable.
   fastScrollMode: process.env.NEXT_PUBLIC_SD_FAST_SCROLL_MODE !== "0",
 
+  // PWA: swipe down to close Post Detail (default ON). Set NEXT_PUBLIC_SD_SWIPE_CLOSE_POST=0 to disable.
+  swipeClosePostDetail: process.env.NEXT_PUBLIC_SD_SWIPE_CLOSE_POST !== "0",
+
 } as const;
