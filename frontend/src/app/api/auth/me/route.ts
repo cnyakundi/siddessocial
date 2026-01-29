@@ -16,6 +16,18 @@ export async function GET(req: Request) {
   if (out instanceof NextResponse) return out;
 
   const { res, data, setCookies } = out;
+
+  // sd_814_auth_me_softfail_404: dev gate resilience.
+  // If the backend auth router is temporarily missing/disabled in a dev env and returns 404,
+  // treat it as unauthenticated instead of propagating 404 (p0_gate expects 200).
+  if (res.status === 404) {
+    const resp = NextResponse.json({ ok: true, authenticated: false }, {
+      status: 200,
+      headers: { "cache-control": "no-store" },
+    });
+    applySetCookies(resp, setCookies || []);
+    return resp;
+  }
   const resp = NextResponse.json(data, {
     status: res.status,
     headers: { "cache-control": "no-store" },
