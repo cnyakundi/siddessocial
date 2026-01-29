@@ -136,6 +136,10 @@ export function NotificationsView({ embedded = false }: { embedded?: boolean }) 
     embedded ? <>{children}</> : <div className="px-4 py-6">{children}</div>;
 
   const [filter, setFilter] = useState<"all" | "mentions" | "replies">("all");
+
+  // sd_824_reset_filter_on_side
+  useEffect(() => { setFilter("all"); }, [side]);
+
   const [loading, setLoading] = useState(true);
   const [restricted, setRestricted] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -277,7 +281,7 @@ const openNotification = (n: NotificationItem) => {
         <div className="flex items-center justify-between">
           <div className="text-sm font-bold text-gray-900">{embedded ? meta.label : "Alerts"}</div>
           {/* sd_768_clean_alerts_page_hide_push_debug */}
-          <button
+          {/* sd_824_markallread_gate */}\n          {canMarkAllRead ? (\n<button
             type="button"
             onClick={markAllRead}
             disabled={!canMarkAllRead}
@@ -287,7 +291,7 @@ const openNotification = (n: NotificationItem) => {
             )}
           >
             Mark all read{unreadCount ? " (" + unreadCount + ")" : ""}
-          </button>
+          </button>\n          ) : null}
         </div>
 
         

@@ -56,7 +56,7 @@ export function DesktopUserMenu({
         </div>
 
         <div className="p-2">
-          <Link href="/siddes-profile" ref={firstItemRef} className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-gray-50 text-sm font-bold text-gray-700">
+          <Link href="/me" ref={firstItemRef} className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-gray-50 text-sm font-bold text-gray-700">
             <User size={16} className="text-gray-500" /> Me
           </Link>
           <Link href="/siddes-profile/prism" className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-gray-50 text-sm font-bold text-gray-700">

@@ -27,7 +27,8 @@ function titleFor(pathname: string): string {
   if (pathname.startsWith("/siddes-profile/prism")) return "Identity";
   if (pathname.startsWith("/siddes-profile/account")) return "Account";
   if (pathname.startsWith("/siddes-profile/people")) return "People";
-if (pathname.startsWith("/siddes-profile")) return "Me";
+if (pathname.startsWith("/me")) return "Me";
+  if (pathname.startsWith("/siddes-profile")) return "Me";
   if (pathname.startsWith("/siddes-compose")) return "Create";
   if (pathname.startsWith("/siddes-search") || pathname.startsWith("/search")) return "Search";
   return "";

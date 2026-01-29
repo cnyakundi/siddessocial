@@ -2,7 +2,7 @@
 
 
 // sd_763_standardize_alerts_label
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { ChevronDown } from "lucide-react";
 import { NotificationsView } from "@/src/components/NotificationsView";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
@@ -28,6 +28,46 @@ export function NotificationsDrawer({
   const panelRef = useRef<HTMLDivElement | null>(null);
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
   useDialogA11y({ open, containerRef: panelRef, initialFocusRef: closeBtnRef, onClose });
+
+  // sd_915: In installed PWA, device Back should close this drawer (not exit the whole app).
+  useEffect(() => {
+    if (!open) return;
+    if (typeof window === "undefined") return;
+
+    const KEY = "__sd_notifs_drawer_state__";
+    let handled = false;
+
+    // Add a lightweight history entry so Back closes the drawer first.
+    try {
+      const prev =
+        window.history && window.history.state && typeof window.history.state === "object"
+          ? window.history.state
+          : {};
+      window.history.pushState({ ...(prev as any), [KEY]: true }, "");
+    } catch {}
+
+    const onPop = () => {
+      if (handled) return;
+      handled = true;
+      try {
+        onClose();
+      } catch {}
+    };
+
+    window.addEventListener("popstate", onPop);
+    return () => {
+      window.removeEventListener("popstate", onPop);
+
+      // If closed via UI (tap backdrop / chevron), pop our synthetic state.
+      try {
+        const st = (window.history && window.history.state) as any;
+        if (st && typeof st === "object" && st[KEY]) {
+          window.history.back();
+        }
+      } catch {}
+    };
+  }, [open, onClose]);
+
 
   if (!open) return null;
 

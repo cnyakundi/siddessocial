@@ -248,7 +248,7 @@ export function BottomNav({ onToggleNotificationsDrawer, notificationsDrawerOpen
     feed: "/siddes-feed",
     alerts: "/siddes-notifications",
     inbox: "/siddes-inbox",
-    me: "/siddes-profile",
+    me: "/me",
   });
 
   useEffect(() => {
@@ -257,7 +257,7 @@ export function BottomNav({ onToggleNotificationsDrawer, notificationsDrawerOpen
 
     const classify = (path: string) => {
       if (path.startsWith("/siddes-inbox")) return "inbox";
-      if (path.startsWith("/siddes-profile")) return "me";
+      if (path.startsWith("/me")) return "me";
       if (path.startsWith("/siddes-notifications")) return "alerts";
       if (path.startsWith("/siddes-feed") || path.startsWith("/siddes-post")) return "feed";
       return null;
@@ -294,7 +294,7 @@ export function BottomNav({ onToggleNotificationsDrawer, notificationsDrawerOpen
       feed: typeof j.feed === "string" && j.feed.startsWith("/siddes-") ? j.feed : "/siddes-feed",
       alerts: typeof j.alerts === "string" && j.alerts.startsWith("/siddes-") ? j.alerts : "/siddes-notifications",
       inbox: typeof j.inbox === "string" && j.inbox.startsWith("/siddes-") ? j.inbox : "/siddes-inbox",
-      me: typeof j.me === "string" && j.me.startsWith("/siddes-") ? j.me : "/siddes-profile",
+      me: typeof j.me === "string" && (j.me.startsWith("/siddes-") || j.me.startsWith("/me")) ? j.me : "/me",
     });
   }, [pathname]);
 
@@ -329,7 +329,7 @@ export function BottomNav({ onToggleNotificationsDrawer, notificationsDrawerOpen
   const isCompose = pathname.startsWith("/siddes-compose");
   const isNotifs = Boolean(notificationsDrawerOpen) || pathname.startsWith("/siddes-notifications");
   const isInbox = pathname.startsWith("/siddes-inbox");
-  const isMe = pathname.startsWith("/siddes-profile");
+  const isMe = pathname.startsWith("/me") || pathname.startsWith("/siddes-profile");
 
   return (
     <nav
