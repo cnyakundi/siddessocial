@@ -190,6 +190,7 @@ These are the overlays applied/created during the current session (evidence: ter
 - Set members are normalized to @handles, deduped, and capped server-side.
 
 ## PWA (mobile app feel)
+- **sd_904_pwa_media_prefetch_decode_v1:** Media prefetch+decode for PostCard MediaGrid (near-viewport, throttled, Save-Data/2G guarded). Disable with NEXT_PUBLIC_SD_MEDIA_PREFETCH=0.
 - **sd_903_pwa_warm_feed_cache_v1:** Warm-start feed cache (IndexedDB) — Public always, Private only when session confirmed recently; cleared on logout/invalidation.
 - **sd_900_perf_pwa_speed_pack_v1:** PWA speed pack — SW caches ONLY public+immutable /m images, lazy-loads global chrome, enables feed row content-visibility.
 - **sd_741_push_backend_db:** Push subscriptions stored in backend DB + endpoints + UI wiring

@@ -38,6 +38,7 @@ import { saveReturnScroll } from "@/src/hooks/returnScroll";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { getSessionIdentity } from "@/src/lib/sessionIdentity";
 import { makePostCacheKey, setCachedPost } from "@/src/lib/postInstantCache";
+import { prefetchImages } from "@/src/lib/mediaPrefetch";
 
 // Tailwind-safe hover text tokens (static strings)
 const HOVER_TEXT: Record<SideId, string> = {
@@ -411,6 +412,77 @@ function MediaGrid({ items, ownerId }: { items: MediaItem[]; ownerId: string }) 
   const tileBase = "overflow-hidden rounded-2xl ring-1 ring-black/5 bg-gray-100";
   const tileGap = "gap-[6px]"; // tighter than gap-2
 
+  // sd_904_media_prefetch: prefetch/decode images slightly ahead of viewport for smoother scroll.
+  // (marker) sd_904_media_prefetch
+  // Guardrails live in mediaPrefetch.ts (Save-Data/2G/offline/throttle).
+  const prefetchOnceRef = React.useRef(false);
+  const prefetchRootRef = React.useRef<HTMLDivElement | null>(null);
+
+  const prefetchKey = (() => {
+    try {
+      const urls = shown
+        .filter((m) => m && m.kind === "image" && Boolean(m.url))
+        .map((m) => String(m.url))
+        .slice(0, 2);
+      return JSON.stringify(urls);
+    } catch {
+      return "[]";
+    }
+  })();
+
+  const prefetchOnce = React.useCallback(() => {
+    if (prefetchOnceRef.current) return;
+    if (typeof window === "undefined") return;
+
+    let urls: string[] = [];
+    try {
+      const parsed = JSON.parse(prefetchKey || "[]");
+      urls = Array.isArray(parsed) ? parsed.map((u) => String(u || "")).filter(Boolean) : [];
+    } catch {
+      urls = [];
+    }
+    if (!urls.length) return;
+
+    prefetchOnceRef.current = true;
+    try {
+      prefetchImages(urls, { decode: true });
+    } catch {}
+  }, [prefetchKey]);
+
+  React.useEffect(() => {
+    if (prefetchOnceRef.current) return;
+    if (typeof window === "undefined") return;
+
+    const el = prefetchRootRef.current;
+    if (!el) return;
+
+    const IO = (window as any).IntersectionObserver;
+    if (!IO) {
+      // Older browsers: best-effort prefetch immediately.
+      prefetchOnce();
+      return;
+    }
+
+    const obs = new IO(
+      (entries: any[]) => {
+        for (const e of entries) {
+          if (e && e.isIntersecting) {
+            prefetchOnce();
+            try { obs.disconnect(); } catch {}
+            break;
+          }
+        }
+      },
+      { rootMargin: "900px 0px" }
+    );
+
+    obs.observe(el);
+    return () => {
+      try { obs.disconnect(); } catch {}
+    };
+  }, [prefetchOnce]);
+
+
   const singleSize = (() => {
     const m = shown[0];
     const w = typeof (m as any)?.width === "number" ? Number((m as any).width) : 0;
@@ -437,7 +509,10 @@ function MediaGrid({ items, ownerId }: { items: MediaItem[]; ownerId: string }) 
   return (
     <>
       <div
-        className={cn("w-full mb-3 lg:mb-4")}
+         ref={prefetchRootRef}
+         className={cn("w-full mb-3 lg:mb-4")}
+         onMouseEnter={() => prefetchOnce()}
+         onTouchStart={() => prefetchOnce()}
         onMouseDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
       >

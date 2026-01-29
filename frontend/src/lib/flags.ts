@@ -9,4 +9,7 @@ export const FLAGS = {
   publicSlate: process.env.NEXT_PUBLIC_SD_PUBLIC_SLATE === "1",
   publicCalmUi: process.env.NEXT_PUBLIC_SD_PUBLIC_CALM_UI === "1",
 
+  // Performance tuning (default ON). Set NEXT_PUBLIC_SD_MEDIA_PREFETCH=0 to disable.
+  mediaPrefetch: process.env.NEXT_PUBLIC_SD_MEDIA_PREFETCH !== "0",
+
 } as const;
