@@ -199,6 +199,17 @@ function SiddesProfileHomeInner() {
           Edit {SIDES[side].label} identity
         </Link>
 
+        
+        {username ? (
+          <Link
+            href={`/u/${encodeURIComponent(username)}`}
+            className="mt-3 inline-flex items-center justify-center px-6 py-2.5 rounded-full border border-gray-200 bg-gray-50 text-sm font-extrabold text-gray-900 hover:bg-gray-100 active:bg-gray-100 transition-colors"
+            title="View my profile as others see it"
+          >
+            View my profile as others see it
+          </Link>
+        ) : null}
+
         {/* Small privacy hint (truthful, no hype) */}
         <div className="mt-4 text-xs text-gray-400 flex items-center gap-2">
           <Icon className={cn("w-3.5 h-3.5", theme.text)} />
@@ -222,7 +233,14 @@ function SiddesProfileHomeInner() {
           Account <ChevronRight className="w-4 h-4 text-gray-300" />
         </Link>
 
+
         <Link
+          href="/siddes-profile/siders"
+          className="w-full flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 text-gray-700 hover:text-gray-900 font-semibold transition-colors"
+        >
+          Access list <ChevronRight className="w-4 h-4 text-gray-300" />
+        </Link>
+<Link
           href="/about"
           className="w-full flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 text-gray-700 hover:text-gray-900 font-semibold transition-colors"
         >
