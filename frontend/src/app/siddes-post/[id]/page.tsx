@@ -353,7 +353,16 @@ function PostDetailInner() {
     try {
       const p = window.sessionStorage.getItem("sd.return.path");
       if (!p) return;
-      if (p.startsWith("/siddes-feed") || p.startsWith("/siddes-sets") || p.startsWith("/siddes-inbox")) {
+      if (
+        p.startsWith("/siddes-feed") ||
+        p.startsWith("/siddes-sets") ||
+        p.startsWith("/siddes-inbox") ||
+        p.startsWith("/siddes-notifications") ||
+        p.startsWith("/siddes-search") ||
+        p.startsWith("/search") ||
+        p.startsWith("/u/") ||
+        p.startsWith("/siddes-profile")
+      ) {
         setSavedReturn(p);
       }
     } catch {}
@@ -373,7 +382,17 @@ function PostDetailInner() {
     }
   })();
   const backHref = backToSearchHref || savedReturn || "/siddes-feed";
-  const backLabel = backToSearchHref ? "Search" : (savedReturn?.startsWith("/siddes-inbox") ? "Inbox" : savedReturn?.startsWith("/siddes-sets") ? "Sets" : "Feed");
+  const backLabel = (() => {
+    if (backToSearchHref) return "Search";
+    const r = String(savedReturn || "");
+    if (r.startsWith("/siddes-inbox")) return r.includes("tab=alerts") ? "Alerts" : "Inbox";
+    if (r.startsWith("/siddes-notifications")) return "Alerts";
+    if (r.startsWith("/siddes-sets")) return "Sets";
+    if (r.startsWith("/siddes-search") || r.startsWith("/search")) return "Search";
+    if (r.startsWith("/u/")) return "Profile";
+    if (r.startsWith("/siddes-profile")) return "Me";
+    return "Feed";
+  })();
 
 
   const id = (params?.id as string) || "";
