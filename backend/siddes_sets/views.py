@@ -171,6 +171,8 @@ class SetsView(APIView):
             side = None
 
         items = _get_store().list(owner_id=viewer, side=side)
+
+        items = _store.list(owner_id=viewer, side=side)
         return Response({"ok": True, "restricted": False, "viewer": viewer, "role": role, "items": items}, status=status.HTTP_200_OK)
 
     def post(self, request):

@@ -1,5 +1,6 @@
 "use client";
 
+/* eslint-disable @next/next/no-img-element */
 // sd_920_profile_peek: long-press author row on the feed to preview profile in-place (no navigation)
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
