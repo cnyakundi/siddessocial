@@ -27,13 +27,11 @@ function loggedOut200(setCookies?: string[] | null) {
 export async function GET(req: Request) {
   const out = await proxyJson(req, "/api/auth/me", "GET");
 
-  // If proxyJson returns a NextResponse directly (e.g. base missing / fetch failed)
   if (out instanceof NextResponse) {
     try {
       out.headers.set("cache-control", "no-store");
     } catch {}
 
-    // Dev-safe: treat these as “logged out”
     if (out.status === 401 || out.status === 403 || out.status === 404) {
       return loggedOut200();
     }

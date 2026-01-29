@@ -95,7 +95,7 @@ function MeTabLink({ href = "/me", active, side }: { href?: string; active: bool
   return (
     <div className="relative w-full h-full flex flex-col items-center justify-center">
       <Link
-        href={resolvedHref}
+        href={href}
         aria-label="Me"
         className={cn(
           "w-full h-full flex flex-col items-center justify-center gap-1 rounded-2xl select-none active:scale-95 transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900/20",
@@ -139,7 +139,7 @@ function TabLink({
   const display = n > 99 ? "99+" : String(n);
   return (
     <Link
-      href={resolvedHref}
+      href={href}
       aria-label={label}
       className={cn(
         "w-full h-full flex flex-col items-center justify-center gap-1 rounded-2xl select-none active:scale-95 transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900/20",
