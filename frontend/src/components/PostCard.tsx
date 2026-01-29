@@ -481,9 +481,8 @@ function MediaGrid({ items, ownerId }: { items: MediaItem[]; ownerId: string }) 
     };
   }, [prefetchOnce]);
 
+  // hook-safe: return after hooks
   if (count === 0) return null;
-
-
 
   const singleSize = (() => {
     const m = shown[0];

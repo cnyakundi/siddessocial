@@ -157,11 +157,10 @@ export function ProfileV2Header(props: {
             {bio || "No bio yet."}
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 mt-4 text-xs text-gray-500 font-medium">
-            {location ? (
-              <div className="flex items-center gap-1">
-                <MapPin size={14} /> {location}
-              </div>
+          <div className="mt-4 inline-flex items-center gap-1 px-3 py-1 rounded-full border text-xs font-semibold bg-gray-50 border-gray-100 text-gray-600">
+            {SIDES[displaySide]?.isPrivate ? <Lock size={12} /> : <ShieldCheck size={12} />} {SIDES[displaySide]?.privacyHint || "Visible"}
+          </div>
+
             ) : null}
             {website ? (
               <a
