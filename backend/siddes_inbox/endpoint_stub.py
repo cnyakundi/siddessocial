@@ -202,9 +202,8 @@ def get_thread(
     except KeyError:
         # Hide existence details for safety (still ok:false would also be fine in dev)
         return _restricted_thread()
-
-    return {
-        "ok": True,
+    out = {
+"ok": True,
         "restricted": False,
         "thread": _thread(thread),
         "meta": _meta(meta),
@@ -213,7 +212,16 @@ def get_thread(
         "messagesNextCursor": next_cursor,
     }
 
+    # sd_801_read_receipts: optional read receipts (safe extra field)
+    try:
+        fn = getattr(store, "other_last_read_at_ms", None)
+        if callable(fn):
+            ms = fn(viewer_id=str(viewer_id), thread_id=str(thread_id))
+            out["read"] = {"otherLastReadAt": int(ms) if ms is not None else None}
+    except Exception:
+        pass
 
+    return out
 def send_message(
     store: InboxStore,
     *,

@@ -757,6 +757,58 @@ class DbInboxStore(InboxStore):
 
         InboxThread.objects.create(**kwargs)
 
+
+
+    # sd_801_read_receipts: read receipts ("Seen")
+    # Return the other participant's last_read_ts (ms since epoch) for this DM thread.
+    # Default-safe: returns None if we can't resolve safely.
+    def other_last_read_at_ms(self, *, viewer_id: str, thread_id: str) -> Optional[int]:
+        try:
+            if not str(viewer_id or "").startswith("me_"):
+                return None
+
+            try:
+                t = InboxThread.objects.get(id=str(thread_id))
+            except Exception:
+                return None
+
+            # Owner scoping (avoid leaking existence)
+            if str(getattr(t, "owner_viewer_id", "") or "") != str(viewer_id):
+                return None
+
+            my_uid = str(viewer_id).replace("me_", "").strip()
+            other_uid = str(getattr(t, "participant_user_id", "") or "").strip()
+
+            if not (my_uid.isdigit() and other_uid.isdigit()):
+                return None
+
+            other_viewer = "me_" + other_uid
+
+            # Find counterpart thread owned by the other viewer.
+            ot = (
+                InboxThread.objects.filter(
+                    owner_viewer_id=str(other_viewer),
+                    participant_user_id=str(my_uid),
+                    locked_side=str(getattr(t, "locked_side", "") or ""),
+                )
+                .only("id")
+                .first()
+            )
+            if not ot:
+                return None
+
+            ts = (
+                InboxThreadReadState.objects.filter(thread_id=str(ot.id), viewer_id=str(other_viewer))
+                .values_list("last_read_ts", flat=True)
+                .first()
+            )
+            if not ts:
+                return None
+
+            return _dt_to_ms(ts)
+        except Exception:
+            return None
+
     # --- dev debug helpers ------------------------------------------
 
     def debug_reset_unread(self, *, viewer_id: str, thread_id: str) -> None:

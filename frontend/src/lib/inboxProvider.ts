@@ -15,6 +15,9 @@ export type InboxThreadView = {
   // Optional message pagination metadata (backend_stub)
   messagesHasMore?: boolean;
   messagesNextCursor?: string | null;
+
+  // sd_801_read_receipts: optional read receipt info (ms since epoch)
+  read?: { otherLastReadAt?: number | null } | null;
 };
 
 export type InboxThreadsPage = {

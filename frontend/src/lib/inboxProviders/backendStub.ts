@@ -181,6 +181,8 @@ type ThreadResp = {
   messagesHasMore?: boolean;
   messagesNextCursor?: string | null;
   message?: ThreadMessage;
+  // sd_801_read_receipts
+  read?: { otherLastReadAt?: number | null } | null;
 };
 
 export const backendStubProvider: InboxProvider = {
@@ -257,6 +259,8 @@ export const backendStubProvider: InboxProvider = {
             messages: (data.messages ?? []) as ThreadMessage[],
             messagesHasMore: Boolean(data?.messagesHasMore),
             messagesNextCursor: (data?.messagesNextCursor ?? null) as string | null,
+            // sd_801_read_receipts
+            read: ((data as any)?.read ?? null) as any,
           };
 
           // Only store into the same identity that initiated this load.
@@ -304,6 +308,8 @@ const res = await fetchWithFallback(`/api/inbox/thread/${encodeURIComponent(id)}
       messages: (data.messages ?? []) as ThreadMessage[],
       messagesHasMore: Boolean(data?.messagesHasMore),
       messagesNextCursor: (data?.messagesNextCursor ?? null) as string | null,
+      // sd_801_read_receipts
+      read: ((data as any)?.read ?? null) as any,
     };
 
     // Don't cache restricted / empty, and only cache when identity is stable.

@@ -6,7 +6,7 @@
 - Commit:
 - Zip/Overlay ID:
 - Environment: local | prod
-- Last overlay applied: sd_798_fix_typing_system_apply_helper.sh
+- Last overlay applied: sd_801_inbox_seen_receipts_apply_helper.sh
 ## Current milestone
 - **sd_902:** Fix typing-indicator hook scope (move useEffects into thread page) + fix Inbox urls.py SyntaxError (views_typing import).
 - **sd_784:** Connections: Followers/Following/Mutuals (incoming SideMembership via /api/followers + UI at /siddes-profile/connections)

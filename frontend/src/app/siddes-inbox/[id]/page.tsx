@@ -437,6 +437,10 @@ const [msgHasMore, setMsgHasMore] = useState(false);
 
   const [restricted, setRestricted] = useState(false);
 
+  // sd_801_seen: other participant last read (ms since epoch)
+  const [otherLastReadAt, setOtherLastReadAt] = useState<number | null>(null);
+  // sd_801_seen marker
+
   // sd_795_typing: derived from polling hook (keeps thread page clean)
   const otherTyping = useInboxTypingIndicator({ threadId: id, restricted, text });
 
@@ -578,6 +582,7 @@ const [msgHasMore, setMsgHasMore] = useState(false);
           setMsgs([]);
           setParticipantDisplayName(null);
           setParticipantSeed(null);
+        setOtherLastReadAt(null);
           return;
         }
 
@@ -588,6 +593,13 @@ const [msgHasMore, setMsgHasMore] = useState(false);
         setParticipantSeed(String(t?.participant?.avatarSeed || t?.id || id || "").trim() || null);
 
         const loaded = (view?.messages ?? []) as ThreadMessage[];
+
+        // sd_801_seen: pull read receipt info
+        try {
+          const otherRead = (view as any)?.read?.otherLastReadAt;
+          setOtherLastReadAt(typeof otherRead === "number" ? otherRead : null);
+        } catch {}
+
         setMsgs(loaded);
         saveThread(id, loaded);
 
@@ -647,6 +659,13 @@ const [msgHasMore, setMsgHasMore] = useState(false);
         if (typeof navigator !== "undefined" && navigator.onLine === false) return;
 
         const view = await provider.getThread(id, { viewer, limit: MSG_PAGE, bypassCache: true });
+
+        // sd_801_seen: refresh read receipt info while open
+        try {
+          const otherRead = (view as any)?.read?.otherLastReadAt;
+          setOtherLastReadAt(typeof otherRead === "number" ? otherRead : null);
+        } catch {}
+
         if (!view?.thread) return;
 
         const incoming = (view?.messages ?? []) as ThreadMessage[];
@@ -757,6 +776,12 @@ const [msgHasMore, setMsgHasMore] = useState(false);
   };
 
   const sideMismatch = lockedSide !== side;
+
+  // sd_801_seen: compute Seen status for last outgoing message
+  const lastMe = [...msgs].reverse().find((m) => m.from === "me" && !m.queued);
+  const seen = typeof otherLastReadAt === "number" && !!lastMe && otherLastReadAt >= (lastMe?.ts ?? 0);
+  const seenLabel = seen ? "Seen" : "";
+
 
   const isPrivacyDowngrade = (from: SideId, to: SideId) => {
     return SIDES[from]?.isPrivate && !SIDES[to]?.isPrivate;
@@ -1045,6 +1070,9 @@ const [msgHasMore, setMsgHasMore] = useState(false);
               </div>
             ))}
             {!msgs.length ? <div className="text-sm text-gray-400">No messages yet.</div> : null}
+            {seenLabel ? (
+              <div data-testid="thread-seen" className="mt-1 text-[11px] text-gray-400 text-right">{seenLabel}</div>
+            ) : null}
           </div>
 
           {!isOnline ? (
