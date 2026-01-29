@@ -41,6 +41,7 @@ export function QueueIndicator() {
 
   const posts = loadQueue().filter((x) => x.kind === "post").length;
   const replies = loadQueue().filter((x) => x.kind === "reply").length;
+  const dms = loadQueue().filter((x) => x.kind === "dm").length;
 
   return (
     <div className="fixed top-20 right-3 z-[120]">
@@ -49,7 +50,7 @@ export function QueueIndicator() {
         <div className="text-xs text-gray-500 mt-1">
           {flushing
             ? "Back online — sending queued items now."
-            : `${count} item${count === 1 ? "" : "s"} queued • ${posts} posts • ${replies} replies`}
+            : `${count} item${count === 1 ? "" : "s"} queued • ${posts} posts • ${replies} replies • ${dms} messages`}
         </div>
         {!flushing ? (
           <button

@@ -10,6 +10,7 @@ import { AlertTriangle, CheckCircle2, ChevronRight, Send, X } from "lucide-react
 import { InboxBanner } from "@/src/components/InboxBanner";
 import { InboxStubDebugPanel } from "@/src/components/InboxStubDebugPanel";
 import { toast } from "@/src/lib/toastBus";
+import { isRestrictedError } from "@/src/lib/restricted";
 import { fetchMe } from "@/src/lib/authMe";
 import { MentionPicker } from "@/src/components/MentionPicker";
 import { useSide } from "@/src/components/SideProvider";
@@ -28,6 +29,7 @@ import {
 } from "@/src/lib/threadStore";
 import { clearThreadUnread } from "@/src/lib/inboxState";
 import { loadRecentMoveSides, pushRecentMoveSide } from "@/src/lib/inboxMoveRecents";
+import { enqueueDm } from "@/src/lib/offlineQueue";
 import type { MentionCandidate } from "@/src/lib/mentions";
 function hashSeed(s: string): number {
   let x = 2166136261;
@@ -648,20 +650,42 @@ function SiddesThreadPageInner() {
         if (!incoming.length) return;
 
         setMsgs((prev) => {
-          const seen = new Set(prev.map((m) => m.id));
+          // sd_791_dedupe_clientKey: if server returns a message with a clientKey
+          // matching a queued local bubble, replace it (prevents duplicates after flush).
+          const seenIds = new Set(prev.map((m) => m.id));
+          const byClient = new Map<string, number>();
+          prev.forEach((m, idx) => {
+            const ck = String((m as any)?.clientKey || "").trim();
+            if (ck) byClient.set(ck, idx);
+          });
+
           const merged = [...prev];
-          let added = false;
+          let changed = false;
 
           for (const m of incoming) {
             if (!m || !(m as any).id) continue;
             const mid = String((m as any).id);
-            if (!mid || seen.has(mid)) continue;
+            if (!mid) continue;
+
+            const ck = String((m as any)?.clientKey || "").trim();
+            if (ck && byClient.has(ck)) {
+              const idx = byClient.get(ck);
+              if (typeof idx === "number") {
+                merged[idx] = m as any;
+                seenIds.add(mid);
+                changed = true;
+                continue;
+              }
+            }
+
+            if (seenIds.has(mid)) continue;
             merged.push(m);
-            seen.add(mid);
-            added = true;
+            seenIds.add(mid);
+            if (ck) byClient.set(ck, merged.length - 1);
+            changed = true;
           }
 
-          if (!added) return prev;
+          if (!changed) return prev;
           merged.sort((a, b) => a.ts - b.ts);
           try {
             saveThread(id, merged);
@@ -839,22 +863,32 @@ function SiddesThreadPageInner() {
   };
 
   const send = async () => {
-    const v = text.trim();
+    const v = String(text || "").trim();
     if (!v) return;
 
     if (restricted) {
-      if (toast?.warning) toast.warning("Thread unavailable");
+      toast?.warning?.("Thread unavailable");
       return;
     }
 
+    // Match backend guard (sd_360): 2000 chars.
+    if (v.length > 2000) {
+      setError("Too long. Max 2000 characters.");
+      toast?.error?.("Too long (max 2000)");
+      return;
+    }
+
+    // Offline: queue to Outbox and show a queued bubble (truth UI).
     if (!isOnline) {
-      const item = appendMessage(id, { from: "me", text: v, queued: true, side: lockedSide });
+      const q = enqueueDm(lockedSide as any, id, v);
+      const item = appendMessage(id, { from: "me", text: v, queued: true, side: lockedSide, clientKey: q.id } as any);
       const next = [...msgs, item];
       setMsgs(next);
-      saveThread(id, next);
+      try { saveThread(id, next); } catch {}
       setText("");
       setMentionOpen(false);
       setMentionQuery("");
+      toast?.info?.("Message queued (offline).");
       setTimeout(() => inputRef.current?.focus(), 0);
       return;
     }
@@ -863,25 +897,45 @@ function SiddesThreadPageInner() {
       const item = await provider.sendMessage(id, v, "me", { viewer });
       if (!(item as any)?.id) {
         setRestricted(true);
-        if (toast?.warning) toast.warning("Thread became restricted");
+        toast?.warning?.("Thread became restricted");
         return;
       }
       const next = [...msgs, item];
       setMsgs(next);
-      saveThread(id, next);
-    } catch {
-      setError("Failed to send message.");
-      if (toast?.error) toast.error("Failed to send");
-
-      const item = appendMessage(id, { from: "me", text: v, queued: false, side: lockedSide });
-      const next = [...msgs, item];
-      setMsgs(next);
-      saveThread(id, next);
-    } finally {
+      try { saveThread(id, next); } catch {}
       setText("");
       setMentionOpen(false);
       setMentionQuery("");
       setTimeout(() => inputRef.current?.focus(), 0);
+      return;
+    } catch (e: any) {
+      // If access changed, do NOT queue (avoid leaking / fake-send).
+      if (isRestrictedError(e)) {
+        setRestricted(true);
+        toast?.warning?.("Restricted — sign in to continue.");
+        return;
+      }
+
+      const msg = String(e?.message || "").trim();
+      if (msg === "rate_limited") {
+        setError("Slow down — try again in a moment.");
+        toast?.error?.("Slow down.");
+        return;
+      }
+
+      // Network/server failure: queue and keep UI truthful.
+      setError(null);
+      toast?.error?.("Send failed — queued for retry.");
+      const q = enqueueDm(lockedSide as any, id, v);
+      const local = appendMessage(id, { from: "me", text: v, queued: true, side: lockedSide, clientKey: q.id } as any);
+      const next = [...msgs, local];
+      setMsgs(next);
+      try { saveThread(id, next); } catch {}
+      setText("");
+      setMentionOpen(false);
+      setMentionQuery("");
+      setTimeout(() => inputRef.current?.focus(), 0);
+      return;
     }
   };
 

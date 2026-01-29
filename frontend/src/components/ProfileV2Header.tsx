@@ -192,25 +192,6 @@ export function ProfileV2Header(props: {
             </div>
           ) : null}
 
-          {/* Stats */}
-          <div className="mt-6 flex gap-8 pb-6 border-b border-gray-100">
-            <div className="flex flex-col items-center">
-              <span className="text-lg font-black text-gray-900 leading-none tabular-nums">{shownPosts ?? "—"}</span>
-              <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-1">Posts</span>
-            </div>
-            {showAccessStat ? (
-              <div className="flex flex-col items-center">
-                <span className="text-lg font-black text-gray-900 leading-none tabular-nums">Close Vault</span>
-                <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-1">Private Set</span>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center">
-                <span className="text-lg font-black text-gray-900 leading-none tabular-nums">{siders ?? "—"}</span>
-                <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-1">Siders</span>
-              </div>
-            )}
-          </div>
-
           {actions ? (
             <div className="mt-6 w-full max-w-sm">
               <div className="flex gap-3">
@@ -243,41 +224,6 @@ export function ProfileV2Header(props: {
             </div>
           ) : null}
 
-          {sharedSets && sharedSets.length > 0 ? (
-            <div className="mt-6 w-full max-w-md">
-              <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-2">Shared Sets</div>
-              <div className="flex flex-wrap gap-1.5 justify-center">
-                {sharedSets.slice(0, 8).map((s) => (
-                  <span
-                    key={s}
-                    className="px-2 py-1 rounded-full bg-gray-100 text-[10px] font-extrabold text-gray-700 border border-gray-200"
-                  >
-                    {s}
-                  </span>
-                ))}
-                {sharedSets.length > 8 ? (
-                  <span className="px-2 py-1 rounded-full bg-gray-50 text-[10px] font-extrabold text-gray-500 border border-gray-200">
-                    +{sharedSets.length - 8}
-                  </span>
-                ) : null}
-              </div>
-            </div>
-          ) : null}
-
-          {/* Pulse */}
-          {pulse && (pulse.label || pulse.text) ? (
-            <div className="mt-6 w-full max-w-md text-left">
-              <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-2">
-                {displaySide === "public" ? "Recent Town Hall" : "Recent Pulse"}
-              </div>
-              <div className={cn("p-4 rounded-2xl bg-gray-50 border-l-4", theme.accentBorder)}>
-                <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                  <Mic size={10} /> {pulse.label || (displaySide === "public" ? "Town Hall" : "Pulse")}
-                </div>
-                <div className="text-sm font-extrabold text-gray-900">{pulse.text ? `“${pulse.text}”` : ""}</div>
-              </div>
-            </div>
-          ) : null}
         </div>
       </div>
     );

@@ -22,6 +22,15 @@ export type QueuedReply = {
   parentId?: string;
 };
 
+export type QueuedDm = {
+  id: string;
+  createdAt: number;
+  kind: "dm";
+  threadId: string;
+  side: "public" | "friends" | "close" | "work";
+  text: string;
+};
+
 export type QueueItem = QueuedPost | QueuedReply;
 
 const STORAGE_KEY = "sd.offlineQueue.v0";
@@ -103,6 +112,22 @@ export function enqueueReply(side: QueuedReply["side"], postId: string, text: st
   return item;
 }
 
+export function enqueueDm(side: QueuedDm["side"], threadId: string, text: string): QueuedDm {
+  const tid = String(threadId || "").trim();
+  const t = String(text || "").trim();
+  const item: QueuedDm = {
+    id: makeId("qdm"),
+    createdAt: Date.now(),
+    kind: "dm",
+    side,
+    threadId: tid,
+    text: t,
+  };
+  const next = [item, ...loadQueue()];
+  saveQueue(next);
+  return item;
+}
+
 
 export function removeQueuedItem(id: string): boolean {
   const items = loadQueue();
@@ -170,12 +195,33 @@ async function sendQueuedReply(item: QueuedReply): Promise<boolean> {
   }
 }
 
-export async function flushQueue(): Promise<{ sent: number; sentPosts: number; sentReplies: number; remaining: number }> {
+async function sendQueuedDm(item: QueuedDm): Promise<boolean> {
+  try {
+    const threadId = String(item.threadId || "").trim();
+    if (!threadId) return false;
+    const res = await fetch(`/api/inbox/thread/${encodeURIComponent(threadId)}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ text: item.text, clientKey: item.id }),
+    });
+    const j = (await res.json().catch(() => null)) as any;
+    if (!res.ok || !j) return false;
+    if (j.ok === false) return false;
+    if (j.restricted) return false;
+    if (!j.message) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function flushQueue(): Promise<{ sent: number; sentPosts: number; sentReplies: number; sentDms: number; remaining: number }> {
   const items = loadQueue();
   if (!items.length) return { sent: 0, sentPosts: 0, sentReplies: 0, remaining: 0 };
 
   let sentPosts = 0;
   let sentReplies = 0;
+  let sentDms = 0;
 
   if (USE_API && typeof fetch !== "undefined") {
     const remaining: QueueItem[] = [];
@@ -185,23 +231,28 @@ export async function flushQueue(): Promise<{ sent: number; sentPosts: number; s
         const ok = await sendQueuedPost(it);
         if (ok) sentPosts += 1;
         else remaining.push(it);
-      } else {
+      } else if (it.kind === "reply") {
         const ok = await sendQueuedReply(it);
         if (ok) sentReplies += 1;
+        else remaining.push(it);
+      } else {
+        const ok = await sendQueuedDm(it as any);
+        if (ok) sentDms += 1;
         else remaining.push(it);
       }
     }
 
     saveQueue(remaining);
-    return { sent: sentPosts + sentReplies, sentPosts, sentReplies, remaining: remaining.length };
+    return { sent: sentPosts + sentReplies + sentDms, sentPosts, sentReplies, sentDms, remaining: remaining.length };
   }
 
   sentPosts = items.filter((x) => x.kind === "post").length;
   sentReplies = items.filter((x) => x.kind === "reply").length;
+  sentDms = items.filter((x) => (x as any).kind === "dm").length;
 
   await new Promise((r) => setTimeout(r, 350));
   clearQueue();
-  return { sent: items.length, sentPosts, sentReplies, remaining: 0 };
+  return { sent: items.length, sentPosts, sentReplies, sentDms, remaining: 0 };
 }
 
 export function queueChangedEventName() {

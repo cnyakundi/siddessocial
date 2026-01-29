@@ -4,14 +4,12 @@
 export const dynamic = "force-dynamic";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 import { MoreHorizontal } from "lucide-react";
 
 import { SIDES, type SideId } from "@/src/lib/sides";
 import {
-  CopyLinkButton,
-  PrismIdentityCard,
   PrismSideTabs,
   SideActionButtons,
   SideWithSheet,
@@ -19,19 +17,13 @@ import {
 } from "@/src/components/PrismProfile";
 
 import { ProfileV2Header } from "@/src/components/ProfileV2Header";
-import { ProfileV2Tabs, type ProfileV2TabId } from "@/src/components/ProfileV2Tabs";
-
 import { PostCard } from "@/src/components/PostCard";
 
 import { useReturnScrollRestore } from "@/src/hooks/returnScroll";
 
 import { ProfileActionsSheet } from "@/src/components/ProfileActionsSheet";
-import { AccessRequestsPanel } from "@/src/components/AccessRequestsPanel";
 import { toast } from "@/src/lib/toast";
 
-function cn(...parts: Array<string | undefined | false | null>) {
-  return parts.filter(Boolean).join(" ");
-}
 
 export default function UserProfilePage() {
   const params = useParams() as { username?: string };
@@ -69,35 +61,6 @@ export default function UserProfilePage() {
   const [lockedSide, setLockedSide] = useState<SideId | null>(null);
   const [accessReqBusy, setAccessReqBusy] = useState(false);
   const [accessReqSentFor, setAccessReqSentFor] = useState<SideId | null>(null);
-
-  const [contentTab, setContentTab] = useState<ProfileV2TabId>("posts");
-
-  const searchParams = useSearchParams();
-
-  useEffect(() => {
-    const t = searchParams.get("tab");
-    if (t === "posts" || t === "media" || t === "sets") {
-      setContentTab(t as ProfileV2TabId);
-    }
-  }, [searchParams]);
-
-  const pickContentTab = (tab: ProfileV2TabId) => {
-    setContentTab(tab);
-
-    // Update URL without navigation
-    try {
-      const url = new URL(window.location.href);
-      if (tab === "posts") url.searchParams.delete("tab");
-      else url.searchParams.set("tab", tab);
-      window.history.replaceState({}, "", url.toString());
-    } catch {}
-
-    // Nudge scroll so the tabs stay in view
-    try {
-      const el = document.getElementById("profile-v2-tabs");
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-    } catch {}
-  };
 
   useEffect(() => {
     let mounted = true;
@@ -159,7 +122,6 @@ export default function UserProfilePage() {
   const isOwner = !!(data as any)?.isOwner;
 
   const viewerSidedAs = (data?.viewerSidedAs || null) as SideId | null;
-  const sharedSets = data?.sharedSets || [];
 
   const postsPayload = data?.posts || null;
   const posts = postsPayload?.items || [];
@@ -167,16 +129,6 @@ export default function UserProfilePage() {
   const postsCount = typeof postsPayload?.count === "number" ? postsPayload.count : posts.length;
 
   const avatarUrl = String((facet as any)?.avatarImage || "").trim() || null;
-
-  useEffect(() => {
-    setContentTab("posts");
-
-    try {
-      const url = new URL(window.location.href);
-      url.searchParams.delete("tab");
-      window.history.replaceState({}, "", url.toString());
-    } catch {}
-  }, [displaySide]);
 
   const doPickSide = async (side: SideId | "public", opts?: { silent?: boolean }) => {
     if (!user?.handle) return;
@@ -534,20 +486,20 @@ const tid = String(j?.thread?.id || "").trim();
             <div className="mt-4">
 
               <ProfileV2Header
+                variant="clean"
                 displaySide={displaySide}
                 viewSide={viewSide}
                 handle={user.handle}
                 facet={facet}
                 siders={data?.siders ?? null}
                 postsCount={postsCount}
-                sharedSets={sharedSets}
                 isOwner={isOwner}
                 viewerSidedAs={viewerSidedAs}
                 onMessage={!isOwner ? doMessage : null}
                 messageDisabled={msgBusy}
                 actions={
                   isOwner ? (
-                    <div className="flex flex-col gap-3">
+                    <div className="flex gap-3">
                       <button
                         type="button"
                         onClick={() => {
@@ -555,102 +507,70 @@ const tid = String(j?.thread?.id || "").trim();
                             router.replace("/siddes-profile/prism");
                           } catch {}
                         }}
-                        className="w-full py-3 rounded-2xl font-extrabold text-sm text-white shadow-md active:scale-95 transition-all bg-slate-800 hover:bg-slate-900"
+                        className="flex-1 py-3 rounded-2xl font-extrabold text-sm text-white shadow-md active:scale-95 transition-all bg-slate-800 hover:bg-slate-900"
                       >
                         Edit identities
                       </button>
-                      <div className="flex gap-3">
-                        <CopyLinkButton href={href}
-              />
-                        <button
-                  type="button"
-                  onClick={() => {
-                    try {
-                      router.push("/siddes-profile/connections");
-                    } catch {}
-                  }}
-                  className="px-4 py-3 rounded-2xl bg-white border border-gray-200 text-gray-900 font-extrabold text-sm hover:bg-gray-50 transition-all flex items-center justify-center"
-                >
-                  Connections
-                </button>
-<button
-                          type="button"
-                          onClick={() => setActionsOpen(true)}
-                          className="px-4 py-3 rounded-2xl bg-gray-100 text-gray-700 font-extrabold text-sm hover:bg-gray-200 transition-all flex items-center justify-center gap-2"
-                          aria-label="More actions"
-                        >
-                          <MoreHorizontal size={18} />
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setActionsOpen(true)}
+                        className="w-12 h-11 rounded-2xl bg-gray-100 text-gray-700 font-extrabold text-sm hover:bg-gray-200 transition-all flex items-center justify-center"
+                        aria-label="More actions"
+                      >
+                        <MoreHorizontal size={18} />
+                      </button>
                     </div>
                   ) : (
-                    <div className="flex flex-col gap-3">
-                      <div className="flex gap-3">
+                    <div className="flex gap-3">
+                      <div className="flex-1">
                         <SideActionButtons viewerSidedAs={viewerSidedAs} onOpenSheet={() => setSideSheet(true)} />
                       </div>
-                      <div className="flex gap-3">
-                        <CopyLinkButton href={href} />
-                        <button
-                          type="button"
-                          onClick={() => setActionsOpen(true)}
-                          className="px-4 py-3 rounded-2xl bg-gray-100 text-gray-700 font-extrabold text-sm hover:bg-gray-200 transition-all flex items-center justify-center gap-2"
-                          aria-label="More actions"
-                        >
-                          <MoreHorizontal size={18} />
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setActionsOpen(true)}
+                        className="w-12 h-11 rounded-2xl bg-gray-100 text-gray-700 font-extrabold text-sm hover:bg-gray-200 transition-all flex items-center justify-center"
+                        aria-label="More actions"
+                      >
+                        <MoreHorizontal size={18} />
+                      </button>
                     </div>
                   )
                 }
               />
 
-              <div id="profile-v2-tabs">
-              <ProfileV2Tabs side={displaySide} active={contentTab} onPick={pickContentTab} />
-            </div>
 
-              {/* Content */}
+              {/* Posts */}
               <div className="mt-4">
-                {contentTab === "posts" ? (
-                  <div className="bg-white">
-                    {posts.length ? (
-                      <>
-                        {posts.map((post) => (
-                          <PostCard key={post.id} post={post} side={displaySide} variant="row" avatarUrl={avatarUrl} />
-                        ))}
-                        {postsPayload?.hasMore ? (
-                          <div className="py-4 flex justify-center border-t border-gray-100 bg-white">
-                            <button
-                              type="button"
-                              onClick={loadMore}
-                              disabled={loadingMore}
-                              className="px-4 py-2.5 rounded-xl bg-gray-900 text-white font-extrabold text-sm shadow-sm hover:opacity-90 disabled:opacity-50"
-                            >
-                              {loadingMore ? "Loading…" : "Load more"}
-                            </button>
-                          </div>
-                        ) : null}
-                      </>
-                    ) : (
-                      <div className="py-14 text-center px-6 rounded-3xl border border-gray-200 bg-white">
-                        <div className="text-sm font-extrabold text-gray-900">No posts visible</div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          Nothing visible in {SIDES[displaySide]?.label || displaySide}.
+                <div className="bg-white">
+                  {posts.length ? (
+                    <>
+                      {posts.map((post) => (
+                        <PostCard key={post.id} post={post} side={displaySide} variant="row" avatarUrl={avatarUrl} />
+                      ))}
+                      {postsPayload?.hasMore ? (
+                        <div className="py-4 flex justify-center border-t border-gray-100 bg-white">
+                          <button
+                            type="button"
+                            onClick={loadMore}
+                            disabled={loadingMore}
+                            className="px-4 py-2.5 rounded-xl bg-gray-900 text-white font-extrabold text-sm shadow-sm hover:opacity-90 disabled:opacity-50"
+                          >
+                            {loadingMore ? "Loading…" : "Load more"}
+                          </button>
                         </div>
+                      ) : null}
+                    </>
+                  ) : (
+                    <div className="py-14 text-center px-6 rounded-3xl border border-gray-200 bg-white">
+                      <div className="text-sm font-extrabold text-gray-900">No posts visible</div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        Nothing visible in {SIDES[displaySide]?.label || displaySide}.
                       </div>
-                    )}
-                  </div>
-                ) : contentTab === "media" ? (
-                  <div className="py-14 text-center px-6 rounded-3xl border border-gray-200 bg-white">
-                    <div className="text-sm font-extrabold text-gray-900">Media</div>
-                    <div className="text-xs text-gray-500 mt-1">Media grid coming soon.</div>
-                  </div>
-                ) : (
-                  <div className="py-14 text-center px-6 rounded-3xl border border-gray-200 bg-white">
-                    <div className="text-sm font-extrabold text-gray-900">Sets</div>
-                    <div className="text-xs text-gray-500 mt-1">Sets tab coming soon.</div>
-                  </div>
-                )}
+                    </div>
+                  )}
+                </div>
               </div>
+
             </div>
 
 {!isOwner ? (

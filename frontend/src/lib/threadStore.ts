@@ -8,6 +8,7 @@ export type ThreadMessage = {
   from: "me" | "them";
   text: string;
   queued?: boolean;
+  clientKey?: string | null; // idempotency key for de-dupe (sd_791)
   side?: SideId; // which side this message was sent under (locked side)
 };
 

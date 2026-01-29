@@ -41,8 +41,9 @@ export function ProfileActionsSheet(props: {
   handle: string;
   displayName?: string;
   href?: string;
+  isOwner?: boolean;
 }) {
-  const { open, onClose, handle, displayName, href } = props;
+  const { open, onClose, handle, displayName, href, isOwner } = props;
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -194,6 +195,8 @@ export function ProfileActionsSheet(props: {
               <div className="text-xs text-gray-500">Copy {who}</div>
             </div>
           </button>
+          {!isOwner ? (
+            <>
 
           <button type="button" onClick={doReport} className="w-full p-4 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center gap-4 text-left">
             <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-800 shadow-sm"><Flag size={18} /></div>
@@ -218,6 +221,8 @@ export function ProfileActionsSheet(props: {
               <div className="text-xs text-rose-700/80">Hard stop: no view, no messages</div>
             </div>
           </button>
+            </>
+          ) : null}
         </div>
       </div>
     </div>
