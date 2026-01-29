@@ -80,8 +80,10 @@ function hasReturnScrollFor(path: string) {
 /**
  * sd_783_tab_scroll_memory:
  * Keep tab/page scroll positions across navigation (FB-like “remember where I was”).
- * - Stores scrollY for trackable surfaces on scroll (throttled).
- * - Restores on navigation into that surface (unless returnScroll is active).
+ * - Stores scrollY for trackable surfaces on scroll (throttled)
+ * - Restores on navigation into that surface (unless returnScroll is active)
+ *
+ * sd_909: also persist on pagehide/visibilitychange so PWA backgrounding doesn't lose the latest position.
  */
 export function useTabScrollMemory(depKey: string) {
   const pathRef = useRef<string>("");
@@ -117,17 +119,39 @@ export function useTabScrollMemory(depKey: string) {
       }
     };
 
+    const persistNow = () => {
+      try {
+        // Ensure pathRef is current before persisting.
+        pathRef.current = getPath();
+      } catch {}
+      try {
+        onScroll();
+      } catch {}
+    };
+
+    const onVis = () => {
+      try {
+        if (typeof document !== "undefined" && document.visibilityState === "hidden") persistNow();
+      } catch {}
+    };
+
     window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("pagehide", persistNow);
+    window.addEventListener("beforeunload", persistNow);
+    document.addEventListener("visibilitychange", onVis);
 
     // Save once on mount too (in case user doesn't scroll).
     window.setTimeout(() => {
       try {
-        onScroll();
+        persistNow();
       } catch {}
     }, 0);
 
     return () => {
       window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("pagehide", persistNow);
+      window.removeEventListener("beforeunload", persistNow);
+      document.removeEventListener("visibilitychange", onVis);
     };
   }, []);
 

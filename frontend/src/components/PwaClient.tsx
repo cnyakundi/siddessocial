@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 type InstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -32,6 +32,14 @@ function isStandaloneMode() {
   return iosStandalone || dmStandalone;
 }
 
+function safeNow() {
+  try {
+    return Date.now();
+  } catch {
+    return 0;
+  }
+}
+
 export function PwaClient() {
   const IS_PROD = process.env.NODE_ENV === "production";
   const DEV_SW = process.env.NEXT_PUBLIC_PWA_DEV === "1";
@@ -49,6 +57,10 @@ export function PwaClient() {
   // Update prompt
   const [waitingReg, setWaitingReg] = useState<ServiceWorkerRegistration | null>(null);
   const updateAvailable = Boolean(waitingReg?.waiting);
+
+  // sd_905_pwa_update_now_and_autocheck
+  const updateRequestedRef = useRef(false);
+  const [updating, setUpdating] = useState(false);
 
   const isIOS = useMemo(() => isIOSPlatform(), []);
   const standalone = useMemo(() => isStandaloneMode(), []);
@@ -93,27 +105,90 @@ export function PwaClient() {
     }
   }, [isIOS, standalone]);
 
-  // Service worker registration + update detection
+  // Service worker registration + update detection + periodic update checks
   useEffect(() => {
     if (!ENABLE_SW) return;
     if (!("serviceWorker" in navigator)) return;
 
     let mounted = true;
+    let regRef: ServiceWorkerRegistration | null = null;
 
-    // Reload once when the new SW takes control (after SKIP_WAITING).
+    // Throttle update checks so multiple tabs don't spam update().
+    const THROTTLE_KEY = "siddes.pwa.last_update_check_ms";
+    const MIN_CHECK_MS = 10 * 60 * 1000; // 10 min
+    const INTERVAL_MS = 30 * 60 * 1000; // 30 min
+
+    const shouldCheck = () => {
+      if (!mounted) return false;
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") return false;
+      if (typeof navigator !== "undefined" && navigator.onLine === false) return false;
+      return true;
+    };
+
+    const canRunNow = () => {
+      try {
+        const t = safeNow();
+        const last = Number(window.localStorage.getItem(THROTTLE_KEY) || "0");
+        if (!Number.isFinite(last)) return true;
+        return t - last >= MIN_CHECK_MS;
+      } catch {
+        return true;
+      }
+    };
+
+    const markRun = () => {
+      try {
+        window.localStorage.setItem(THROTTLE_KEY, String(safeNow()));
+      } catch {
+        // ignore
+      }
+    };
+
+    const maybeUpdate = async () => {
+      const r = regRef;
+      if (!r) return;
+      if (!shouldCheck()) return;
+      if (!canRunNow()) return;
+      markRun();
+      try {
+        await r.update();
+      } catch {
+        // ignore
+      }
+    };
+
+    // Reload once when the new SW takes control (after SKIP_WAITING), but only if user requested it.
     // Guarded to prevent reload loops (dev/hot reload can trigger multiple controllerchange events).
     let refreshing = false;
     const onControllerChange = () => {
       if (refreshing) return;
       refreshing = true;
-      // no hard reload (apply update on next open)
+
+      if (updateRequestedRef.current) {
+        try {
+          window.location.reload();
+        } catch {
+          // ignore
+        }
+      }
     };
     navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
+
+    const onFocusLike = () => {
+      void maybeUpdate();
+    };
+    window.addEventListener("focus", onFocusLike);
+    window.addEventListener("online", onFocusLike);
+    document.addEventListener("visibilitychange", onFocusLike);
+
+    let intervalId: number | null = null;
 
     (async () => {
       try {
         const reg = await navigator.serviceWorker.register("/sw.js");
         if (!mounted) return;
+
+        regRef = reg;
 
         // If there's already a waiting worker, surface update
         if (reg.waiting) setWaitingReg(reg);
@@ -129,6 +204,12 @@ export function PwaClient() {
             }
           });
         });
+
+        // Kick one check shortly after mount (helps “new deploy picked up”).
+        window.setTimeout(() => void maybeUpdate(), 2500);
+
+        // Background periodic check (throttled).
+        intervalId = window.setInterval(() => void maybeUpdate(), INTERVAL_MS);
       } catch {
         // SW registration can fail in some environments; ignore.
       }
@@ -139,11 +220,18 @@ export function PwaClient() {
       try {
         navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
       } catch {}
+      try {
+        window.removeEventListener("focus", onFocusLike);
+        window.removeEventListener("online", onFocusLike);
+        document.removeEventListener("visibilitychange", onFocusLike);
+      } catch {}
+      try {
+        if (intervalId) window.clearInterval(intervalId);
+      } catch {}
     };
   }, [ENABLE_SW]);
 
   const showBar = offline || installAvailable || updateAvailable || iosInstallHint;
-
   if (!showBar) return null;
 
   const dismissLabel = iosInstallHint && !installAvailable && !updateAvailable && !offline ? "Got it" : "Dismiss";
@@ -159,8 +247,8 @@ export function PwaClient() {
             </>
           ) : updateAvailable ? (
             <>
-              <div className="text-sm font-bold text-gray-900">Update ready</div>
-              <div className="text-xs text-gray-500 truncate">Applies next time you open Siddes.</div>
+              <div className="text-sm font-bold text-gray-900">{updating ? "Updating…" : "Update ready"}</div>
+              <div className="text-xs text-gray-500 truncate">{updating ? "Reloading the app with the latest build." : "Tap Update to reload now."}</div>
             </>
           ) : installAvailable ? (
             <>
@@ -179,13 +267,40 @@ export function PwaClient() {
           {updateAvailable ? (
             <button
               type="button"
-              className="px-3 py-2 rounded-full bg-gray-900 text-white text-xs font-bold hover:opacity-90"
+              className={cn(
+                "px-3 py-2 rounded-full text-xs font-bold",
+                updating ? "bg-gray-200 text-gray-500 cursor-not-allowed" : "bg-gray-900 text-white hover:opacity-90"
+              )}
+              disabled={updating}
+              aria-disabled={updating}
               onClick={() => {
+                if (updating) return;
+                setUpdating(true);
+                updateRequestedRef.current = true;
+
                 const w = waitingReg?.waiting;
-                if (w) w.postMessage({ type: "SKIP_WAITING" });
-                              setWaitingReg(null);
-}}
-            >Update</button>
+                try {
+                  if (w) w.postMessage({ type: "SKIP_WAITING" });
+                } catch {
+                  // ignore
+                }
+
+                // Fallback: if controllerchange doesn't fire (rare), reload anyway.
+                window.setTimeout(() => {
+                  if (!updateRequestedRef.current) return;
+                  try {
+                    window.location.reload();
+                  } catch {
+                    // ignore
+                  }
+                }, 4500);
+
+                // Hide the bar (we’re reloading imminently).
+                setWaitingReg(null);
+              }}
+            >
+              {updating ? "Updating…" : "Update"}
+            </button>
           ) : installAvailable ? (
             <button
               type="button"
@@ -195,10 +310,9 @@ export function PwaClient() {
                 try {
                   await installEvt.prompt();
                   await installEvt.userChoice;
-                  // Regardless of choice, hide prompt.
-                  setInstallEvt(null);
-                  setInstallAvailable(false);
                 } catch {
+                  // ignore
+                } finally {
                   setInstallEvt(null);
                   setInstallAvailable(false);
                 }

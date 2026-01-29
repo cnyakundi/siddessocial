@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, ArrowLeft, Share2, X } from "lucide-react";
 
 import { SIDES, type SideId } from "@/src/lib/sides";
 import {
@@ -377,6 +377,60 @@ const tid = String(j?.thread?.id || "").trim();
     return window.location.href;
   }, []);
 
+  const shareProfile = async () => {
+    const url =
+      href ||
+      (() => {
+        try {
+          return typeof window !== "undefined" ? String(window.location.href || "") : "";
+        } catch {
+          return "";
+        }
+      })();
+
+    if (!url) {
+      toast.error("No link yet.");
+      return;
+    }
+
+    // Try native share first (mobile/PWA)
+    try {
+      const nav: any = typeof navigator !== "undefined" ? (navigator as any) : null;
+      if (nav && typeof nav.share === "function") {
+        await nav.share({ url });
+        return;
+      }
+    } catch {
+      // fall through to copy
+    }
+
+    // Clipboard copy
+    try {
+      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+        toast.success("Link copied.");
+        return;
+      }
+    } catch {}
+
+    // Fallback copy
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = url;
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      toast.success("Link copied.");
+      return;
+    } catch {
+      toast.error("Couldn't copy link.");
+    }
+  };
+
+
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-xl mx-auto px-4 py-6">
@@ -400,7 +454,7 @@ const tid = String(j?.thread?.id || "").trim();
               onLockedPick={(side) => setLockedSide(side)}
             />
 
-            {!isOwner && lockedSide ? (
+{!isOwner && lockedSide ? (
               <div className="fixed inset-0 z-[97] flex items-end justify-center md:items-center">
                 <button
                   type="button"
@@ -425,19 +479,20 @@ const tid = String(j?.thread?.id || "").trim();
                       aria-label="Close"
                     >
                       <span className="sr-only">Close</span>
-                      <MoreHorizontal size={18} className="text-gray-400" />
+                      <X size={18} className="text-gray-500" />
                     </button>
                   </div>
 
                   <div className="mt-4 space-y-3">
                     <div className="p-4 rounded-2xl border border-gray-200 bg-gray-50 text-sm text-gray-700">
-                      <div className="font-extrabold text-gray-900">How this works</div>
+                      <div className="font-extrabold text-gray-900">Locked</div>
                       <div className="text-xs text-gray-600 mt-1 leading-relaxed">
-                        Only <span className="font-bold">{user?.handle}</span> can place you into their {SIDES[lockedSide]?.label || lockedSide} Side.
-                        Nothing you click here unlocks it.
+                        Only <span className="font-bold">{user?.handle}</span> can add you to their{" "}
+                        <span className="font-bold">{SIDES[lockedSide]?.label || lockedSide}</span> Side.
                       </div>
                       <div className="mt-2 text-xs text-gray-600">
-                        They currently show you: <span className="font-black text-gray-900">{SIDES[viewSide]?.label || viewSide}</span>
+                        You can currently see:{" "}
+                        <span className="font-black text-gray-900">{SIDES[viewSide]?.label || viewSide}</span>
                       </div>
                     </div>
 
@@ -452,35 +507,19 @@ const tid = String(j?.thread?.id || "").trim();
                       </button>
                     ) : null}
 
-                    <div className="flex gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setLockedSide(null)}
-                        className="flex-1 py-3 rounded-xl bg-gray-900 text-white font-extrabold text-sm shadow-md active:scale-95 transition-all"
-                      >
-                        Got it
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setLockedSide(null);
-                          setSideSheet(true);
-                        }}
-                        className="px-4 py-3 rounded-xl bg-white border border-gray-200 text-gray-800 font-extrabold text-sm hover:bg-gray-50"
-                      >
-                        Manage what you show them
-                      </button>
-                    </div>
-
-                    <div className="text-[11px] text-gray-500">
-                      Tip: Your <span className="font-bold">Side</span> action controls what <span className="font-bold">they</span> can access of you.
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setLockedSide(null)}
+                      className="w-full py-3 rounded-xl bg-gray-900 text-white font-extrabold text-sm shadow-md active:scale-95 transition-all"
+                    >
+                      Close
+                    </button>
                   </div>
                 </div>
               </div>
             ) : null}
 
-            {/* sd_717_profile_v2_shell_header_tabs */
+{/* sd_717_profile_v2_shell_header_tabs */
             /* sd_732_fix_profile_messageHref */}
 
             <div className="mt-4">

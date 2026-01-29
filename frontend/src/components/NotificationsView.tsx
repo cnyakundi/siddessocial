@@ -70,12 +70,12 @@ function Section({
   title,
   items,
   theme,
-  router,
+  onOpen,
 }: {
   title: string;
   items: NotificationItem[];
   theme: any;
-  router: any;
+  onOpen: (n: NotificationItem) => void;
 }) {
   if (!items.length) return null;
   return (
@@ -89,11 +89,7 @@ function Section({
               key={n.id}
               type="button"
               data-post-id={postId ? String(postId) : undefined}
-              onClick={() => {
-                if (!postId) return toast("No post attached yet.");
-                try { saveReturnScroll(String(postId)); } catch {}
-                router.push(`/siddes-post/${encodeURIComponent(postId)}`);
-              }}
+              onClick={() => onOpen(n)}
               className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-start gap-3 border-b border-gray-50 last:border-b-0"
             >
               <div className={cn("w-9 h-9 rounded-full flex items-center justify-center border", theme.lightBg, theme.border, theme.text)}>
@@ -134,6 +130,13 @@ export function NotificationsView({ embedded = false }: { embedded?: boolean }) 
   const [retryTick, setRetryTick] = useState(0); // sd_716: retry without full reload
 
   const [itemsRaw, setItemsRaw] = useState<NotificationItem[]>([]);
+
+  // sd_801: keep bell badge in sync with local read state
+  useEffect(() => {
+    try {
+      setNotificationsUnread(itemsRaw.filter((n) => !n?.read).length);
+    } catch {}
+  }, [itemsRaw]);
   const unreadCount = useMemo(() => itemsRaw.filter((n) => !n?.read).length, [itemsRaw]);
   const canMarkAllRead = !loading && !restricted && !error && unreadCount > 0;
 
@@ -154,6 +157,33 @@ export function NotificationsView({ embedded = false }: { embedded?: boolean }) 
     }
   };
 
+
+const markRead = async (ids: string[]) => {
+  const clean = (ids || []).map((x) => String(x || "").trim()).filter(Boolean);
+  if (!clean.length) return;
+  try {
+    await fetch("/api/notifications/mark-read", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-sd-side": side },
+      body: JSON.stringify({ ids: clean }),
+    });
+  } catch {
+    // best-effort
+  }
+};
+
+const openNotification = (n: NotificationItem) => {
+  const nid = String(n?.id || "").trim();
+  if (nid && !n?.read) {
+    setItemsRaw((prev) => prev.map((x) => (x.id === nid ? { ...x, read: true } : x)));
+    void markRead([nid]);
+  }
+
+  const postId = n.postId || null;
+  if (!postId) return toast("No post attached yet.");
+  try { saveReturnScroll(String(postId)); } catch {}
+  router.push(`/siddes-post/${encodeURIComponent(postId)}`);
+};
 
   useEffect(() => {
     let alive = true;
@@ -296,8 +326,8 @@ export function NotificationsView({ embedded = false }: { embedded?: boolean }) 
         </div>
       ) : (
         <>
-          <Section title="Today" items={todayItems} theme={theme} router={router} />
-          <Section title="Earlier" items={earlierItems} theme={theme} router={router} />
+          <Section title="Today" items={todayItems} theme={theme} onOpen={openNotification} />
+          <Section title="Earlier" items={earlierItems} theme={theme} onOpen={openNotification} />
           {!items.length ? (
             <div className={cn("p-10 rounded-2xl border text-center", theme.lightBg, theme.border)}>
               <div className={cn("text-sm font-extrabold", theme.text)}>All caught up</div>

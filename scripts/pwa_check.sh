@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="$(pwd)"
 echo "== PWA checks =="
+
+PYBIN="python3"
+command -v "$PYBIN" >/dev/null 2>&1 || PYBIN="python"
+command -v "$PYBIN" >/dev/null 2>&1 || { echo "❌ python3 (or python) required"; exit 1; }
 
 PUBLIC_DIR=""
 for d in "frontend/public" "public"; do
@@ -37,17 +40,21 @@ for icon in "${PUBLIC_DIR}/icons/icon-192.png" "${PUBLIC_DIR}/icons/icon-512.png
 done
 
 # Validate manifest JSON using python (works everywhere)
-python3 - <<'PY'
-import json, pathlib
-p = pathlib.Path(__import__("sys").argv[1])
+"$PYBIN" - "${MANIFEST}" <<'PY'
+import json, pathlib, sys
+
+p = pathlib.Path(sys.argv[1])
 data = json.loads(p.read_text(encoding="utf-8"))
+
 required = ["name","short_name","start_url","scope","display","icons"]
 missing = [k for k in required if k not in data]
 if missing:
     raise SystemExit(f"Manifest missing keys: {missing}")
+
 if not isinstance(data.get("icons"), list) or len(data["icons"]) < 2:
     raise SystemExit("Manifest icons list is missing/too small")
+
 print("✅ manifest.webmanifest JSON valid")
-PY "${MANIFEST}"
+PY
 
 echo "✅ PWA assets present in ${PUBLIC_DIR}"

@@ -4,6 +4,8 @@ import React, { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
 import { useTabScrollMemory } from "@/src/hooks/useTabScrollMemory";
+import { useManualScrollRestoration } from "@/src/hooks/useManualScrollRestoration";
+import { useAppRoutePrefetch } from "@/src/hooks/useAppRoutePrefetch";
 
 import { AppTopBar } from "@/src/components/AppTopBar";
 import { BottomNav } from "@/src/components/BottomNav";
@@ -19,8 +21,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [notifsOpen, setNotifsOpen] = useState(false);
   const pathname = usePathname() || "/";
 
+  // sd_909_scroll_restoration: prevent browser auto-restoring (Siddes hooks own scroll restore)
+  useManualScrollRestoration(pathname);
+
   // sd_783_tab_scroll_memory: FB-like “remember where I was” across tabs/pages
   useTabScrollMemory(pathname);
+
+  // sd_907_pwa_route_prefetch: warm tab routes on idle so BottomNav feels instant.
+  useAppRoutePrefetch(pathname);
 
   // sd_770: close drawer on navigation (prevents lingering overlay)
   useEffect(() => {

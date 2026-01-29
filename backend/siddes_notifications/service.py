@@ -186,7 +186,7 @@ def notify(
         # Badge = unread notifications count (best-effort).
         badge: int | None = None
         try:
-            badge = int(Notification.objects.filter(viewer_id=vid, read_at__isnull=True).count())
+            badge = int(Notification.objects.filter(viewer_id=vid, side=sid, read_at__isnull=True).count())
         except Exception:
             badge = None
 

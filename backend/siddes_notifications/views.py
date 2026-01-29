@@ -127,3 +127,49 @@ class NotificationsMarkAllReadView(APIView):
             updated = 0
 
         return Response({"ok": True, "viewer": viewer, "role": role, "marked": int(updated)}, status=status.HTTP_200_OK)
+
+class NotificationsMarkReadView(APIView):
+    permission_classes: list = []
+
+    def post(self, request):
+        has_viewer, viewer, role = _viewer_ctx(request)
+        if not has_viewer:
+            return Response({"ok": False, "restricted": True, "error": "restricted"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        now = float(time.time())
+
+        body = request.data if isinstance(getattr(request, "data", None), dict) else {}
+        ids = body.get("ids") if isinstance(body, dict) else None
+        if ids is None and isinstance(body, dict):
+            ids = body.get("id")
+
+        if isinstance(ids, str):
+            ids = [ids]
+        if not isinstance(ids, list):
+            ids = []
+
+        clean = []
+        for x in ids:
+            try:
+                v = str(x or "").strip()
+            except Exception:
+                v = ""
+            if v:
+                clean.append(v)
+            if len(clean) >= 200:
+                break
+
+        side = str(request.headers.get("x-sd-side") or request.query_params.get("side") or "").strip().lower()
+        if side not in ("public", "friends", "close", "work"):
+            side = "public"
+
+        updated = 0
+        try:
+            if clean:
+                updated = Notification.objects.filter(
+                    viewer_id=viewer, side=side, id__in=clean, read_at__isnull=True
+                ).update(read_at=now)
+        except Exception:
+            updated = 0
+
+        return Response({"ok": True, "viewer": viewer, "role": role, "marked": int(updated), "ids": clean}, status=status.HTTP_200_OK)
