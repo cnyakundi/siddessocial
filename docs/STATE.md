@@ -6,7 +6,7 @@
 - Commit:
 - Zip/Overlay ID:
 - Environment: local | prod
-- Last overlay applied: sd_816_compose_intent_scaffold_apply_helper.sh
+- Last overlay applied: sd_817_restore_profilev2header_notificationsview_and_add_compose_suggestion_bar_apply_helper.sh
 ## Current milestone
 - **sd_902:** Fix typing-indicator hook scope (move useEffects into thread page) + fix Inbox urls.py SyntaxError (views_typing import).
 - **sd_784:** Connections: Followers/Following/Mutuals (incoming SideMembership via /api/followers + UI at /siddes-profile/connections)
