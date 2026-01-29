@@ -190,6 +190,7 @@ These are the overlays applied/created during the current session (evidence: ter
 - Set members are normalized to @handles, deduped, and capped server-side.
 
 ## PWA (mobile app feel)
+- **sd_910_pwa_feed_silent_revalidate_v1:** Background feed revalidate (wake + interval) that warms caches silently; only updates UI when near top. Disable with NEXT_PUBLIC_SD_FEED_REVALIDATE=0.
 - **sd_909_pwa_scroll_restoration_hardening_v1:** Force `history.scrollRestoration=manual` + persist tab scroll on pagehide/visibilitychange for smoother Back/Forward + PWA resume.
 - **sd_907_pwa_tab_route_prefetch_v1:** Prefetch core tab routes on idle (uses sd.tabroute.map.v1) so tab switching feels instant. Disable with NEXT_PUBLIC_SD_ROUTE_PREFETCH=0.
 - **sd_905_pwa_update_now_and_autocheck_v1:** PWA update UX — tap Update triggers SKIP_WAITING + reload; periodic SW update checks on focus/online + interval (throttled).

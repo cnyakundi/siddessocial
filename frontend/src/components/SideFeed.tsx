@@ -304,6 +304,9 @@ export function SideFeed() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadMoreErr, setLoadMoreErr] = useState<string | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  // sd_910_pwa_feed_revalidate: background revalidate throttles (avoid spam)
+  const feedRevalInFlightRef = useRef(false);
+  const feedRevalLastRef = useRef(0);
   // sd_365: True list virtualization (window virtualizer)
   const listTopRef = useRef<HTMLDivElement | null>(null);
   const [scrollMargin, setScrollMargin] = useState(0);
@@ -462,6 +465,9 @@ export function SideFeed() {
 
         networkCommitted = true;
 
+        // sd_910_pwa_feed_revalidate: record last successful network commit (prevents immediate redundant revalidate)
+        try { feedRevalLastRef.current = Date.now(); } catch {}
+
         // sd_903_warm_feed_cache: store durable warm cache for Public.
         try {
           if (side === "public" && warmKey) void setWarmFeedPage(warmKey, page);
@@ -523,6 +529,187 @@ export function SideFeed() {
       mounted = false;
     };
   }, [side, provider, publicChannel, activeSet, activeTag, retryTick]);
+
+  // sd_910_pwa_feed_revalidate: silent background revalidate on wake (focus/online/visible) + interval.
+  // - Warms caches without UI jumps while the user is mid-scroll.
+  // - If user is near top, we may refresh the visible list (uses existing subtle "Refreshing…" UI).
+  useEffect(() => {
+    if (!FLAGS.feedRevalidate) return;
+    if (typeof window === "undefined") return;
+    if (restricted) return;
+
+    // If we haven't rendered any feed yet, let the main loader do its job.
+    if (!rawPosts.length) return;
+
+    // Don't compete with active loads.
+    if (loadingInitial || loadingMore || refreshing) return;
+
+    let mounted = true;
+
+    const canRunNow = () => {
+      try {
+        if (typeof document !== "undefined" && document.visibilityState !== "visible") return false;
+        if (typeof navigator !== "undefined" && navigator.onLine === false) return false;
+
+        const nav: any = navigator as any;
+        const conn = nav?.connection || nav?.mozConnection || nav?.webkitConnection;
+        if (conn?.saveData) return false;
+
+        const et = String(conn?.effectiveType || "").toLowerCase();
+        if (et.includes("2g") || et.includes("slow-2g")) return false;
+
+        return true;
+      } catch {
+        return true;
+      }
+    };
+
+    const shouldThrottle = () => {
+      try {
+        const now = Date.now();
+        const last = Number(feedRevalLastRef.current || 0);
+        if (!Number.isFinite(last)) return false;
+        // 90s min interval
+        return now - last < 90_000;
+      } catch {
+        return false;
+      }
+    };
+
+    const revalidate = async (reason: string) => {
+      if (!mounted) return;
+      if (!canRunNow()) return;
+      if (feedRevalInFlightRef.current) return;
+      if (shouldThrottle()) return;
+
+      feedRevalInFlightRef.current = true;
+      try {
+        feedRevalLastRef.current = Date.now();
+
+        // Only update visible UI when near top; otherwise just warm caches.
+        let nearTop = true;
+        try {
+          nearTop = (window.scrollY || 0) < 80;
+        } catch {}
+
+        const showSpinner = nearTop;
+
+        if (showSpinner) {
+          try { setRefreshing(true); } catch {}
+        }
+
+        const topic = side === "public" && FLAGS.publicChannels && publicChannel !== "all" ? publicChannel : null;
+        const setId = side !== "public" ? (activeSet || null) : null;
+
+        // Do not background-fetch private feeds for logged-out users.
+        const ident = getSessionIdentity();
+        if (side !== "public" && !ident.authed) return;
+
+        const viewerAtStart = ident.viewerId;
+        const epochAtStart = ident.epoch;
+        const authedAtStart = ident.authed;
+
+        const canUseCache = !!viewerAtStart && !!epochAtStart && authedAtStart;
+        const cacheKey = canUseCache
+          ? makeFeedCacheKey({
+              epoch: String(epochAtStart),
+              viewerId: String(viewerAtStart),
+              side,
+              topic,
+              tag: activeTag,
+              setId,
+              cursor: null,
+              limit: PAGE_LIMIT,
+            })
+          : null;
+
+        const confirmedAt = typeof (ident as any)?.confirmedAt === "number" ? (ident as any).confirmedAt : null;
+        const confirmedFresh = !!confirmedAt && Date.now() - confirmedAt < 600_000; // 10 minutes
+
+        const warmKey =
+          side === "public"
+            ? makePublicFeedWarmKey({ topic, tag: activeTag, cursor: null, limit: PAGE_LIMIT })
+            : cacheKey;
+
+        // Fetch latest first page (network truth).
+        const page = await provider.listPage(side, { topic, tag: activeTag, set: setId, limit: PAGE_LIMIT, cursor: null });
+        if (!mounted) return;
+
+        // For private sides, never apply results if identity changed mid-flight.
+        if (side !== "public") {
+          const identNow = getSessionIdentity();
+          if (identNow.viewerId !== viewerAtStart || identNow.epoch !== epochAtStart || !identNow.authed) return;
+        }
+
+        // Warm caches (always safe for public warmKey; private only if scoped).
+        try {
+          if (side === "public" && warmKey) void setWarmFeedPage(warmKey, page);
+        } catch {}
+
+        if (cacheKey && viewerAtStart && epochAtStart) {
+          const identNow = getSessionIdentity();
+          if (identNow.viewerId === viewerAtStart && identNow.epoch === epochAtStart && identNow.authed) {
+            setCachedFeedPage(cacheKey, page);
+            try {
+              if (side !== "public" && confirmedFresh && warmKey) void setWarmFeedPage(warmKey, page);
+            } catch {}
+          }
+        }
+
+        // Successful authed fetch -> confirm session freshness (enables warm cache for private).
+        if (authedAtStart) {
+          try { touchSessionConfirmed(); } catch {}
+        }
+
+        // Only update UI if user is near top (avoid scroll-jumps mid-feed).
+        if (showSpinner) {
+          setLoadErr(null);
+          setRawPosts(page.items || []);
+          setNextCursor(page.nextCursor ?? null);
+          setHasMore(Boolean(page.hasMore));
+        }
+      } catch (e: any) {
+        if (!mounted) return;
+
+        // If access is restricted, fail closed (don't show stale private content).
+        if (isRestrictedError(e)) {
+          setRestricted(true);
+          setLoadErr(null);
+          return;
+        }
+
+        // Silent: keep current UI; just skip.
+        // (We already have a visible loadErr path for initial loads.)
+      } finally {
+        feedRevalInFlightRef.current = false;
+        try { setRefreshing(false); } catch {}
+      }
+    };
+
+    const onWake = () => void revalidate("wake");
+    const onVis = () => {
+      try {
+        if (document.visibilityState === "visible") onWake();
+      } catch {}
+    };
+
+    window.addEventListener("focus", onWake);
+    window.addEventListener("online", onWake);
+    document.addEventListener("visibilitychange", onVis);
+
+    // Delay the first wake check so it doesn't interfere with initial load (and perf budgets).
+    const t = window.setTimeout(onWake, 9000);
+    const i = window.setInterval(onWake, 5 * 60 * 1000);
+
+    return () => {
+      mounted = false;
+      try { window.removeEventListener("focus", onWake); } catch {}
+      try { window.removeEventListener("online", onWake); } catch {}
+      try { document.removeEventListener("visibilitychange", onVis); } catch {}
+      try { window.clearTimeout(t); } catch {}
+      try { window.clearInterval(i); } catch {}
+    };
+  }, [side, provider, publicChannel, activeSet, activeTag, restricted, rawPosts.length, loadingInitial, loadingMore, refreshing]);
 
   useEffect(() => {
     if (!hasMore || !nextCursor) return;

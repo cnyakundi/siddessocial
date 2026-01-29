@@ -433,6 +433,29 @@ const tid = String(j?.thread?.id || "").trim();
 
   return (
     <div className="min-h-screen bg-white">
+      <div className="sticky top-0 z-[80] bg-white/90 backdrop-blur border-b border-gray-100">
+        <div className="max-w-xl mx-auto px-4 py-3 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => { try { router.back(); } catch {} }}
+            className="w-11 h-11 rounded-full hover:bg-gray-100 inline-flex items-center justify-center transition-colors"
+            aria-label="Back"
+          >
+            <ArrowLeft size={20} className="text-gray-700" />
+          </button>
+
+          <div className="text-sm font-black text-gray-900 truncate max-w-[60%]">{handle}</div>
+
+          <button
+            type="button"
+            onClick={() => void shareProfile()}
+            className="w-11 h-11 rounded-full hover:bg-gray-100 inline-flex items-center justify-center transition-colors"
+            aria-label="Share profile"
+          >
+            <Share2 size={18} className="text-gray-700" />
+          </button>
+        </div>
+      </div>
       <div className="max-w-xl mx-auto px-4 py-6">
         {loading ? (
           <div className="rounded-3xl border border-gray-200 bg-white p-6">

@@ -12,4 +12,7 @@ export const FLAGS = {
   // Performance tuning (default ON). Set NEXT_PUBLIC_SD_MEDIA_PREFETCH=0 to disable.
   mediaPrefetch: process.env.NEXT_PUBLIC_SD_MEDIA_PREFETCH !== "0",
 
+  // PWA: background feed revalidate (default ON). Set NEXT_PUBLIC_SD_FEED_REVALIDATE=0 to disable.
+  feedRevalidate: process.env.NEXT_PUBLIC_SD_FEED_REVALIDATE !== "0",
+
 } as const;
