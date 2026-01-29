@@ -992,9 +992,10 @@ export function SideFeed() {
 
   const lastSeenId = useMemo(() => getLastSeenId(side), [side]);
   const dividerIndex = useMemo(() => {
-    if (!lastSeenId) return posts.length ? 0 : -1;
+    // Only show the divider when we can place it meaningfully.
+    if (!lastSeenId) return -1;
     const idx = posts.findIndex((p) => p.id === lastSeenId);
-    if (idx === -1) return posts.length ? 0 : -1;
+    if (idx <= 0) return -1; // 0 => nothing new; -1 => unknown
     return idx;
   }, [posts, lastSeenId]);
 
@@ -1081,8 +1082,26 @@ export function SideFeed() {
         else router.push("/siddes-sets?create=1");
       }}
       label="Group"
-      allLabel={SIDES[side].label}
+      allLabel={`All ${SIDES[side].label}`}
     />
+  </div>
+) : null}
+
+{/* Public tune */}
+
+
+{side === "public" && (FLAGS.publicChannels || FLAGS.publicTrustDial || FLAGS.publicCalmUi) ? (
+  <div className="px-3 pt-3">
+    <button
+      type="button"
+      onClick={() => setPublicTuneOpen(true)}
+      className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 hover:bg-gray-100 text-sm font-extrabold text-gray-700 transition-colors min-w-0"
+      aria-label="Tune public feed"
+      title="Tune"
+    >
+      <span className="truncate">{FLAGS.publicChannels ? publicChannelLabel : "Tune"}</span>
+      <span className="text-gray-400" aria-hidden>▾</span>
+    </button>
   </div>
 ) : null}
 
@@ -1107,7 +1126,7 @@ export function SideFeed() {
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <div className="text-sm font-extrabold text-gray-900">Browse Public</div>
-              <div className="text-xs text-gray-500 font-semibold">Sign in to post, reply, like, or save.</div>
+              <div className="text-xs text-gray-500 font-semibold">You can read everything. Sign in to interact.</div>
             </div>
             <Link href="/login" className="shrink-0 px-4 py-2 rounded-full bg-gray-900 text-white text-xs font-extrabold">
               Sign in
@@ -1164,23 +1183,32 @@ export function SideFeed() {
           </div>
         ) : null}
 
-        {refreshing && !restricted && !loadErr ? (
-          <div className="mb-2 flex items-center gap-2 text-[11px] text-gray-400" data-testid="feed-refreshing">
-            <span className="inline-block h-2 w-2 rounded-full bg-gray-300 animate-pulse" aria-hidden="true" />
+        <div className="mb-2 min-h-[16px]" aria-live="polite">
+          {refreshing && !restricted && !loadErr ? (
+            <div className="flex items-center gap-2 text-[11px] text-gray-400" data-testid="feed-refreshing">
+              <span className="inline-block h-2 w-2 rounded-full bg-gray-300 animate-pulse" aria-hidden="true" />
             <span>Refreshing…</span>
-          </div>
-        ) : null}
+            </div>
+          ) : null}
+        </div>
         {/* sd_717e_topic_tags: Side-bound tag filter UI */}
         {activeTag ? (
-          <div className={cn("mb-3 px-3 py-2 rounded-2xl border flex items-center justify-between", theme.lightBg, theme.border, theme.text)}>
-            <div className="text-xs font-extrabold truncate">Filtered: <span className="font-black">#{activeTagLabel}</span></div>
+          <div className="mb-2">
             <button
               type="button"
               onClick={clearTagFilter}
-              className="ml-3 px-3 py-1.5 rounded-full bg-white/70 hover:bg-white border border-gray-200 text-xs font-extrabold text-gray-900"
-              aria-label="Clear tag filter"
+              className={cn(
+                "inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-[11px] font-extrabold",
+                theme.lightBg,
+                theme.border,
+                theme.text,
+                "hover:opacity-90"
+              )}
+              aria-label={`Clear #${activeTagLabel} filter`}
+              title="Clear filter"
             >
-              Clear
+              <span className="truncate max-w-[14rem]">#{activeTagLabel}</span>
+              <span className="text-gray-400" aria-hidden>×</span>
             </button>
           </div>
         ) : null}

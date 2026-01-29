@@ -325,7 +325,7 @@ export function DesktopTopBar() {
             <SearchIcon size={18} className="text-gray-500" aria-hidden />
           </Link>
 
-          {isNow ? (
+          {false ? (
             canPickSet ? (
               <>
                 <button

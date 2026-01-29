@@ -47,7 +47,7 @@ export function AppTopBar(_props: { onOpenNotificationsDrawer?: () => void } = {
 
   const isSiddes = pathname.startsWith("/siddes-");
   const isNow = pathname === "/siddes-feed" || pathname.startsWith("/siddes-feed/");
-  const showSetScope = isNow; // MVP: Set scope only on Now
+  const showSetScope = false; // sd_790: Feed scope lives in SideFeed (SetFilterBar / Public Tune)
 
   const pageTitle = useMemo(() => {
     if (!isSiddes) return "";

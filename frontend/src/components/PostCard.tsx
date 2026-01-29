@@ -1295,7 +1295,7 @@ export function PostCard({
           }}
           className={cn(
             "text-gray-400 hover:text-gray-600 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-900/20",
-            isRow ? (hideCounts ? "opacity-100 lg:opacity-0 lg:group-hover:opacity-100" : "opacity-100") : "-mr-2"
+            isRow ? (hideCounts ? "opacity-100" : "opacity-100") : "-mr-2"
           )}
           aria-label="Post options"
         >
@@ -1482,7 +1482,7 @@ export function PostCard({
           <div
             className={cn(
               "mt-3 pt-2 border-t border-gray-100 flex items-center gap-2",
-              hideCounts ? "opacity-100 lg:opacity-0 lg:group-hover:opacity-100" : "opacity-100"
+              hideCounts ? "opacity-100" : "opacity-100"
             )}
           >
             <button
