@@ -1,38 +1,41 @@
 import { NextResponse } from "next/server";
 import { proxyJson } from "../_proxy";
+import { applyProxyCookies } from "../_cookie";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-function applySetCookies(resp: NextResponse, setCookies: string[]) {
-  for (const sc of setCookies || []) {
-    if (!sc) continue;
-    resp.headers.append("set-cookie", sc);
-  }
+function loggedOut200() {
+  // Safe “not logged in” response (p0_gate expects 200)
+  return NextResponse.json(
+    { ok: true, authenticated: false },
+    { status: 200, headers: { "cache-control": "no-store" } }
+  );
 }
 
 export async function GET(req: Request) {
   const out = await proxyJson(req, "/api/auth/me", "GET");
-  if (out instanceof NextResponse) return out;
 
-  const { res, data, setCookies } = out;
-
-  // sd_814_auth_me_softfail_404: dev gate resilience.
-  // If the backend auth router is temporarily missing/disabled in a dev env and returns 404,
-  // treat it as unauthenticated instead of propagating 404 (p0_gate expects 200).
-  if (res.status === 404) {
-    const resp = NextResponse.json({ ok: true, authenticated: false }, {
-      status: 200,
-      headers: { "cache-control": "no-store" },
-    });
-    applySetCookies(resp, setCookies || []);
-    return resp;
+  // Some proxy failures return a NextResponse directly
+  if (out instanceof NextResponse) {
+    const st = (out as any)?.status;
+    if (st === 401 || st === 403 || st === 404) return loggedOut200();
+    return out;
   }
+
+  const { res, data, setCookies } = out as any;
+
+  // Treat “not logged in / not found” as a calm 200
+  if (res?.status === 401 || res?.status === 403 || res?.status === 404) {
+    return loggedOut200();
+  }
+
   const resp = NextResponse.json(data, {
     status: res.status,
     headers: { "cache-control": "no-store" },
   });
 
-  applySetCookies(resp, setCookies || []);
+  // If backend ever returns cookies, keep behavior consistent with other auth routes.
+  applyProxyCookies(resp, data, setCookies || []);
   return resp;
 }

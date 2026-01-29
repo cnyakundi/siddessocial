@@ -39,7 +39,7 @@ function labelForType(t: NotifType) {
   if (t === "reply") return "Replied";
   if (t === "like") return "Liked";
   if (t === "echo") return "Echoed";
-  return "Mentioned";
+  return "Mentioned you";
 }
 
 function IconForType({ t }: { t: NotifType }) {
@@ -101,7 +101,7 @@ function Section({
                   <div className="text-[11px] text-gray-400">{new Date(n.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>
                 </div>
                 <div className="text-xs text-gray-600 mt-1">
-                  <span className="font-bold">{labelForType(n.type)}</span> your post
+                  <span className="font-bold">{labelForType(n.type)}</span>{n.type === "mention" ? "" : " your post"}
                   {n.postTitle ? <span className="text-gray-500"> — “{n.postTitle}”</span> : null}
                 </div>
                 {n.glimpse ? <div className="text-[11px] text-gray-500 mt-1 line-clamp-2">{n.glimpse}</div> : null}
@@ -136,7 +136,7 @@ export function NotificationsView({ embedded = false }: { embedded?: boolean }) 
     try {
       setNotificationsUnread(side, itemsRaw.filter((n) => !n?.read).length);
     } catch {}
-  }, [itemsRaw]);
+  }, [itemsRaw, side]);
   const unreadCount = useMemo(() => itemsRaw.filter((n) => !n?.read).length, [itemsRaw]);
   const canMarkAllRead = !loading && !restricted && !error && unreadCount > 0;
 

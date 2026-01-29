@@ -14,7 +14,7 @@ function cn(...parts: Array<string | undefined | false | null>) {
  * ComposeSuggestionBar (sd_820)
  * - Minimal suggestion UI (no auto actions).
  * - MUST be wired to computeComposeSuggestions (compose_intent_check).
- * - No internal 'Why:' / confidence leakage.
+ * - No internal '' / confidence leakage.
  */
 export function ComposeSuggestionBar({
   text,
