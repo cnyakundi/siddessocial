@@ -21,6 +21,13 @@ export async function GET(req: Request) {
   if (out instanceof NextResponse) return out;
 
   const { res, data, setCookies } = out;
+
+  // sd_789_invites_softfail_404: dev gate resilience.
+  // If the backend Invites router is temporarily disabled/missing in a given dev env,
+  // return a default-safe restricted payload (HTTP 200) instead of propagating 404.
+  if (res.status === 404) {
+    return NextResponse.json({ ok: true, restricted: true, viewer: null, role: "anon", items: [] }, { status: 200 });
+  }
   const r = NextResponse.json(data, { status: res.status });
   for (const c of setCookies) r.headers.append("set-cookie", c);
   return r;

@@ -1,5 +1,7 @@
 "use client";
 
+// sd_785_tab_route_memory
+
 
 
 // sd_763_standardize_alerts_label
@@ -26,7 +28,7 @@ function initialsFromName(nameOrHandle: string) {
   return ((parts[0][0] || 'U') + (parts[parts.length - 1][0] || 'U')).toUpperCase();
 }
 
-function MeTabLink({ active, side }: { active: boolean; side: SideId }) {
+function MeTabLink({ href = "/siddes-profile", active, side }: { href?: string; active: boolean; side: SideId }) {
   const [img, setImg] = useState<string | null>(null);
   const [initials, setInitials] = useState<string>("U");
 
@@ -70,7 +72,7 @@ function MeTabLink({ active, side }: { active: boolean; side: SideId }) {
   return (
     <div className="relative w-full h-full flex flex-col items-center justify-center">
       <Link
-        href="/siddes-profile"
+        href={href}
         aria-label="Me"
         className={cn(
           "w-full h-full flex flex-col items-center justify-center gap-1 rounded-2xl select-none active:scale-95 transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900/20",
@@ -216,6 +218,63 @@ export function BottomNav({ onToggleNotificationsDrawer, notificationsDrawerOpen
   // Note: uses useEffect so localStorage reads never run during SSR
   const [createHref, setCreateHref] = useState<string>(`/siddes-compose?side=${encodeURIComponent(side)}`);
 
+  // sd_785_tab_route_memory: FB-like tab stacks — return to the last route inside each tab.
+  // Stored per-session in sessionStorage.
+  const [tabHrefs, setTabHrefs] = useState<{ feed: string; alerts: string; inbox: string; me: string }>({
+    feed: "/siddes-feed",
+    alerts: "/siddes-notifications",
+    inbox: "/siddes-inbox",
+    me: "/siddes-profile",
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const fullPath = window.location.pathname + window.location.search;
+
+    const classify = (path: string) => {
+      if (path.startsWith("/siddes-inbox")) return "inbox";
+      if (path.startsWith("/siddes-profile")) return "me";
+      if (path.startsWith("/siddes-notifications")) return "alerts";
+      if (path.startsWith("/siddes-feed") || path.startsWith("/siddes-post")) return "feed";
+      return null;
+    };
+
+    const load = () => {
+      try {
+        const raw = window.sessionStorage.getItem("sd.tabroute.map.v1");
+        if (!raw) return {};
+        const j = JSON.parse(raw);
+        return j && typeof j === "object" ? j : {};
+      } catch {
+        return {};
+      }
+    };
+
+    const save = (j: any) => {
+      try {
+        window.sessionStorage.setItem("sd.tabroute.map.v1", JSON.stringify(j));
+      } catch {
+        // ignore
+      }
+    };
+
+    const j: any = load();
+    const tab = classify(fullPath);
+    if (tab) {
+      j[tab] = fullPath;
+      j._ts = Date.now();
+      save(j);
+    }
+
+    setTabHrefs({
+      feed: typeof j.feed === "string" && j.feed.startsWith("/siddes-") ? j.feed : "/siddes-feed",
+      alerts: typeof j.alerts === "string" && j.alerts.startsWith("/siddes-") ? j.alerts : "/siddes-notifications",
+      inbox: typeof j.inbox === "string" && j.inbox.startsWith("/siddes-") ? j.inbox : "/siddes-inbox",
+      me: typeof j.me === "string" && j.me.startsWith("/siddes-") ? j.me : "/siddes-profile",
+    });
+  }, [pathname]);
+
+
   useEffect(() => {
     const base = `/siddes-compose?side=${encodeURIComponent(side)}`;
     let href = base;
@@ -242,7 +301,7 @@ export function BottomNav({ onToggleNotificationsDrawer, notificationsDrawerOpen
     setCreateHref(href);
   }, [side, pathname]);
 
-  const isHome = pathname === "/siddes-feed";
+  const isHome = pathname === "/siddes-feed" || pathname.startsWith("/siddes-post");
   const isCompose = pathname.startsWith("/siddes-compose");
   const isNotifs = Boolean(notificationsDrawerOpen) || pathname.startsWith("/siddes-notifications");
   const isInbox = pathname.startsWith("/siddes-inbox");
@@ -256,7 +315,7 @@ export function BottomNav({ onToggleNotificationsDrawer, notificationsDrawerOpen
     >
       <div className="max-w-[430px] mx-auto px-4">
         <div className="h-[88px] grid grid-cols-5 items-start pt-2">
-          <TabLink href="/siddes-feed" label="Feed" Icon={Home} active={isHome} />
+          <TabLink href={tabHrefs.feed} label="Feed" Icon={Home} active={isHome} />
 
           {/* PWA/mobile: surface Alerts as first-class (swap out Sets tab) */}
           {onToggleNotificationsDrawer ? (
@@ -268,7 +327,7 @@ export function BottomNav({ onToggleNotificationsDrawer, notificationsDrawerOpen
               onClick={() => onToggleNotificationsDrawer()}
             />
           ) : (
-            <TabLink href="/siddes-notifications" label="Alerts" Icon={Bell} active={isNotifs} badge={unread} />
+            <TabLink href={tabHrefs.alerts} label="Alerts" Icon={Bell} active={isNotifs} badge={unread} />
           )}
 
           {/* MAGIC PLUS */}
@@ -299,9 +358,9 @@ export function BottomNav({ onToggleNotificationsDrawer, notificationsDrawerOpen
             </span>
           </Link>
 
-          <TabLink href="/siddes-inbox" label="Inbox" Icon={MessageCircle} active={isInbox} />
+          <TabLink href={tabHrefs.inbox} label="Inbox" Icon={MessageCircle} active={isInbox} />
 
-          <MeTabLink active={isMe} side={side} />
+          <MeTabLink active={isMe} side={side} href={tabHrefs.me} />
         </div>
       </div>
     </nav>

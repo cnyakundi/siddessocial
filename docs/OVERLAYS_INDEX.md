@@ -5,6 +5,7 @@ Rule: Apply overlays with `scripts/apply_overlay.sh`. The script appends a row a
 
 | Applied (UTC) | Overlay Zip | Summary |
 |---|---|---|
+| 2026-01-28 08:29:18 | sd_785_tab_route_memory_apply_helper.sh | FB-like tab stacks: remember last route per tab (Feed includes /siddes-post) for BottomNav + DesktopSideDock. |
 | 2026-01-28 08:22:33 | sd_784_connections_followers_mutuals_v3_apply_helper.sh | Finish sd_784: add “Connections” button on profile (links to /siddes-profile/connections) + docs update. |
 | 2026-01-28 07:33:28 | sd_783_tab_scroll_memory_apply_helper.sh | Tab/page scroll memory (FB-like): persist/restore scroll across navigation for primary surfaces. |
 | 2026-01-28 07:10:42 | sd_782_fix_post_detail_freeze_side_lock_apply_helper.sh | Fix Post Detail freeze: stabilize SideProvider sideLock setters (prevents infinite render loop). |

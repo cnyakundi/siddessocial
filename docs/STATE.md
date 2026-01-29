@@ -6,7 +6,7 @@
 - Commit:
 - Zip/Overlay ID:
 - Environment: local | prod
-- Last overlay applied: sd_785_inbox_dm_delivery_handle_fallback_apply_helper.sh
+- Last overlay applied: sd_789_invites_softfail_404_for_dev_gate_apply_helper.sh
 ## Current milestone
 - **sd_784:** Connections: Followers/Following/Mutuals (incoming SideMembership via /api/followers + UI at /siddes-profile/connections)
 - **sd_781:** Feed UX: show row engagement actions without hover traps + show reply/like counts on the timeline; default Public engagement counts to shown.

@@ -3,7 +3,18 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {Globe, Users, Star, Briefcase, Home, Bell, User as UserIcon, Plus, Lock as LockIcon, MessageCircle} from "lucide-react";
+import {
+  Globe,
+  Users,
+  Star,
+  Briefcase,
+  Home,
+  Bell,
+  User as UserIcon,
+  Plus,
+  Lock as LockIcon,
+  MessageCircle,
+} from "lucide-react";
 import { useSide } from "@/src/components/SideProvider";
 import { SIDES, SIDE_ORDER, SIDE_THEMES, type SideId } from "@/src/lib/sides";
 
@@ -79,6 +90,8 @@ function RailLink({ href, label, Icon, active }: { href: string; label: string; 
  * - Hero: Side switcher (Mode)
  * - Nav: Now / Alerts / Inbox / Me
  * - Bottom: Create
+ *
+ * sd_787_fix_gates: reset to a clean, parse-safe rail (removes any broken JSX insertions).
  */
 export function DesktopSideDock() {
   const pathname = usePathname() || "/";

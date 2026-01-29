@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { resolveStubViewer } from "@/src/lib/server/stubViewer";
-import { proxyJson } from "../../auth/_proxy";
-
+import { proxyJson } from "../auth/_proxy";
 
 function withDevViewer(req: Request): Request {
   if (process.env.NODE_ENV === "production") return req;
@@ -12,30 +11,24 @@ function withDevViewer(req: Request): Request {
   return new Request(req.url, { method: req.method, headers: h });
 }
 
-// GET /api/invites/:id -> Django GET /api/invites/:id
-export async function GET(req: Request, ctx: { params: { id: string } }) {
-  const id = ctx?.params?.id;
+// GET /api/broadcasts -> Django GET /api/broadcasts
+export async function GET(req: Request) {
+  const url = new URL(req.url);
+  const qs = url.search || "";
   const req2 = withDevViewer(req);
-  const out = await proxyJson(req2, `/api/invites/${id}`, "GET");
+  const out = await proxyJson(req2, "/api/broadcasts" + qs, "GET");
   if (out instanceof NextResponse) return out;
 
   const { res, data, setCookies } = out;
-
-  // sd_789_invites_softfail_404: dev gate resilience.
-  // If backend /api/invites/:id is missing, return default-safe restricted payload (HTTP 200).
-  if (res.status === 404) {
-    return NextResponse.json({ ok: true, restricted: true, viewer: null, role: "anon", item: null }, { status: 200 });
-  }
   const r = NextResponse.json(data, { status: res.status });
   for (const c of setCookies) r.headers.append("set-cookie", c);
   return r;
 }
 
-// PATCH /api/invites/:id -> Django PATCH /api/invites/:id
-export async function PATCH(req: Request, ctx: { params: { id: string } }) {
-  const id = ctx?.params?.id;
+// POST /api/broadcasts -> Django POST /api/broadcasts
+export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
-  const out = await proxyJson(req, `/api/invites/${id}`, "PATCH", body);
+  const out = await proxyJson(req, "/api/broadcasts", "POST", body);
   if (out instanceof NextResponse) return out;
 
   const { res, data, setCookies } = out;
