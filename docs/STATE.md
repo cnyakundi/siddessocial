@@ -6,7 +6,7 @@
 - Commit:
 - Zip/Overlay ID:
 - Environment: local | prod
-- Last overlay applied: sd_814_auth_me_softfail_404_apply_helper.sh
+- Last overlay applied: sd_816_compose_intent_scaffold_apply_helper.sh
 ## Current milestone
 - **sd_902:** Fix typing-indicator hook scope (move useEffects into thread page) + fix Inbox urls.py SyntaxError (views_typing import).
 - **sd_784:** Connections: Followers/Following/Mutuals (incoming SideMembership via /api/followers + UI at /siddes-profile/connections)
@@ -190,6 +190,7 @@ These are the overlays applied/created during the current session (evidence: ter
 - Set members are normalized to @handles, deduped, and capped server-side.
 
 ## PWA (mobile app feel)
+- **sd_914_pwa_fast_scroll_smoothness_v1:** Fast-scroll smoothness: global fast-scroll detector + defer image decode to idle during flings + prefetchImages returns queued count (avoid locking prefetch when nothing queued). Disable with NEXT_PUBLIC_SD_FAST_SCROLL_MODE=0.
 - **sd_913_pwa_pull_to_refresh_everywhere_v1:** Pull-to-refresh on Inbox threads + Alerts (NotificationsView) + Sets list. Ref-safe hook (no stale callbacks). Disable with NEXT_PUBLIC_SD_PULL_TO_REFRESH=0.
 - **sd_912_pwa_new_posts_pill_v1:** “New posts” pill — when background revalidate finds new items while you’re mid-scroll, show a pill instead of inserting/jumping. Disable with NEXT_PUBLIC_SD_NEW_POSTS_PILL=0.
 - **sd_910_pwa_feed_silent_revalidate_v1:** Background feed revalidate (wake + interval) that warms caches silently; only updates UI when near top. Disable with NEXT_PUBLIC_SD_FEED_REVALIDATE=0.

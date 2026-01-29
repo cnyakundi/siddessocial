@@ -442,9 +442,9 @@ function MediaGrid({ items, ownerId }: { items: MediaItem[]; ownerId: string }) 
     }
     if (!urls.length) return;
 
-    prefetchOnceRef.current = true;
     try {
-      prefetchImages(urls, { decode: true });
+      const queued = prefetchImages(urls, { decode: true });
+      if (queued > 0) prefetchOnceRef.current = true;
     } catch {}
   }, [prefetchKey]);
 

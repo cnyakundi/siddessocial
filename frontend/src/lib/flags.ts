@@ -21,4 +21,7 @@ export const FLAGS = {
   // PWA: pull-to-refresh (default ON). Set NEXT_PUBLIC_SD_PULL_TO_REFRESH=0 to disable.
   pullToRefresh: process.env.NEXT_PUBLIC_SD_PULL_TO_REFRESH !== "0",
 
+  // Perf: fast-scroll mode (default ON). Set NEXT_PUBLIC_SD_FAST_SCROLL_MODE=0 to disable.
+  fastScrollMode: process.env.NEXT_PUBLIC_SD_FAST_SCROLL_MODE !== "0",
+
 } as const;

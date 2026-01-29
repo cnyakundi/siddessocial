@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useTabScrollMemory } from "@/src/hooks/useTabScrollMemory";
 import { useManualScrollRestoration } from "@/src/hooks/useManualScrollRestoration";
 import { useAppRoutePrefetch } from "@/src/hooks/useAppRoutePrefetch";
+import { useScrollPerformanceMode } from "@/src/hooks/useScrollPerformanceMode";
 
 import { AppTopBar } from "@/src/components/AppTopBar";
 import { BottomNav } from "@/src/components/BottomNav";
@@ -29,6 +30,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   // sd_907_pwa_route_prefetch: warm tab routes on idle so BottomNav feels instant.
   useAppRoutePrefetch(pathname);
+
+  // sd_914_fast_scroll_mode: reduce jank by deferring heavy work during fast scroll.
+  useScrollPerformanceMode(pathname);
 
   // sd_770: close drawer on navigation (prevents lingering overlay)
   useEffect(() => {

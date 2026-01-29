@@ -15,6 +15,25 @@ let active = 0;
 const MAX_ACTIVE = 2;
 const queue: Task[] = [];
 
+function isFastScroll(): boolean {
+  try {
+    return Boolean((globalThis as any).__SD_FAST_SCROLL__);
+  } catch {
+    return false;
+  }
+}
+
+function scheduleIdle(fn: () => void) {
+  try {
+    const ric = (window as any).requestIdleCallback as ((cb: () => void, opts?: any) => number) | undefined;
+    if (typeof ric === "function") {
+      ric(fn, { timeout: 1200 });
+      return;
+    }
+  } catch {}
+  try { window.setTimeout(fn, 180); } catch {}
+}
+
 function canPrefetch(): boolean {
   try {
     if (!FLAGS || (FLAGS as any).mediaPrefetch === false) return false;
@@ -84,17 +103,32 @@ async function run(t: Task): Promise<void> {
     try {
       const img = new Image();
       try { (img as any).decoding = "async"; } catch {}
+      try { (img as any).fetchPriority = "low"; } catch {}
 
       const timer = window.setTimeout(() => finish(), 8000);
 
-      img.onload = async () => {
+      img.onload = () => {
+        const done = () => {
+          try { window.clearTimeout(timer); } catch {}
+          finish();
+        };
+
+        // Decode can be expensive. If user is flinging fast, defer decode to idle time.
         try {
           if (t.decode && typeof (img as any).decode === "function") {
-            await (img as any).decode().catch(() => {});
+            if (isFastScroll()) {
+              scheduleIdle(() => {
+                try { (img as any).decode?.().catch(() => {}); } catch {}
+              });
+              done();
+              return;
+            }
+            (img as any).decode().catch(() => {}).finally(done);
+            return;
           }
         } catch {}
-        try { window.clearTimeout(timer); } catch {}
-        finish();
+
+        done();
       };
 
       img.onerror = () => {
@@ -109,12 +143,13 @@ async function run(t: Task): Promise<void> {
   });
 }
 
-export function prefetchImages(urls: string[], opts: PrefetchOpts = {}) {
-  if (!canPrefetch()) return;
+export function prefetchImages(urls: string[], opts: PrefetchOpts = {}): number {
+  if (!canPrefetch()) return 0;
 
   const decode = opts.decode !== false;
   const arr = Array.isArray(urls) ? urls : [];
   const clean: string[] = [];
+  let queued = 0;
 
   for (const raw of arr) {
     const u = normalize(raw);
@@ -123,5 +158,10 @@ export function prefetchImages(urls: string[], opts: PrefetchOpts = {}) {
     if (clean.length >= 4) break; // hard cap per call
   }
 
-  for (const u of clean) pushTask({ url: u, decode });
+  for (const u of clean) {
+    pushTask({ url: u, decode });
+    queued++;
+  }
+
+  return queued;
 }

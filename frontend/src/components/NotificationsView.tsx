@@ -22,13 +22,6 @@ type NotificationItem = {
   read?: boolean;
 };
 
-// sd_804: display-level item can represent a bundle (multiple underlying notification ids)
-type DisplayItem = NotificationItem & {
-  ids?: string[];
-  actors?: string[];
-  bundleCount?: number;
-};
-
 type NotifsResp = {
   ok: boolean;
   restricted?: boolean;
@@ -73,85 +66,6 @@ function dedupe(items: NotificationItem[]): NotificationItem[] {
   return Array.from(m.values()).sort((a, b) => b.ts - a.ts);
 }
 
-
-function uniqActors(list: string[]): string[] {
-  const out: string[] = [];
-  for (const a of list || []) {
-    const v = String(a || "").trim();
-    if (!v) continue;
-    if (!out.includes(v)) out.push(v);
-    if (out.length >= 12) break; // keep it small
-  }
-  return out;
-}
-
-function actorSummary(actors: string[]): string {
-  const a = uniqActors(actors);
-  if (a.length <= 1) return a[0] || "Someone";
-  if (a.length === 2) return `${a[0]} and ${a[1]}`;
-  if (a.length === 3) return `${a[0]}, ${a[1]} and 1 other`;
-  return `${a[0]}, ${a[1]} and ${a.length - 2} others`;
-}
-
-// sd_804: roll up noisy rows into one “Facebook-style” bundle per (type + postId)
-function bundleByPost(items: NotificationItem[]): DisplayItem[] {
-  const sorted = (items || []).slice().sort((a, b) => (b.ts || 0) - (a.ts || 0));
-  const groups = new Map<string, DisplayItem>();
-  const out: DisplayItem[] = [];
-
-  for (const it of sorted) {
-    const pid = it && it.postId ? String(it.postId) : "";
-    if (!pid) {
-      out.push({ ...(it as any), ids: [String(it.id)], actors: [String(it.actor || "")], bundleCount: 1 });
-      continue;
-    }
-
-    const key = `${String(it.type)}|${pid}`;
-    const g = groups.get(key);
-    if (!g) {
-      const first: DisplayItem = { ...(it as any), ids: [String(it.id)], actors: [String(it.actor || "")], bundleCount: 1 };
-      // group read = true only if all underlying are read
-      first.read = !!(it as any).read;
-      groups.set(key, first);
-      out.push(first);
-    } else {
-      const ids = (g.ids || []).slice();
-      ids.push(String(it.id));
-      g.ids = ids;
-
-      const acts = (g.actors || []).slice();
-      acts.push(String(it.actor || ""));
-      g.actors = acts;
-
-      g.bundleCount = (g.bundleCount || 1) + 1;
-
-      // If ANY is unread => group is unread
-      g.read = Boolean(g.read) && Boolean((it as any)?.read);
-  }
-
-  // Finalize actor display + stabilize read flags
-  for (const g of out) {
-    const ids = (g.ids || []).map((x) => String(x || "").trim()).filter(Boolean);
-    g.ids = ids;
-
-    const acts = uniqActors((g.actors || []).map((x) => String(x || "").trim()));
-    g.actors = acts;
-
-    if ((g.bundleCount || 1) > 1) {
-      g.actor = actorSummary(acts);
-    }
-
-    // read=true only if all are read (if any missing, assume unread)
-    if ((g.bundleCount || 1) > 1) {
-      // We can’t perfectly know if a row lacks a read field; treat falsy as unread.
-      // The group’s read field may have been computed during rollup; keep it.
-      g.read = !!g.read;
-    }
-  }
-
-  return out;
-}
-
 function Section({
   title,
   items,
@@ -159,9 +73,9 @@ function Section({
   onOpen,
 }: {
   title: string;
-  items: DisplayItem[];
+  items: NotificationItem[];
   theme: any;
-  onOpen: (n: DisplayItem) => void;
+  onOpen: (n: NotificationItem) => void;
 }) {
   if (!items.length) return null;
   return (
@@ -258,17 +172,14 @@ const markRead = async (ids: string[]) => {
   }
 };
 
-const openNotification = (n: DisplayItem) => {
+const openNotification = (n: NotificationItem) => {
   const nid = String(n?.id || "").trim();
-const ids = Array.isArray((n as any)?.ids) && (n as any).ids.length ? (n as any).ids : (nid ? [nid] : []);
-const idSet = new Set(ids.map((x: any) => String(x || "").trim()).filter(Boolean));
+  if (nid && !n?.read) {
+    setItemsRaw((prev) => prev.map((x) => (x.id === nid ? { ...x, read: true } : x)));
+    void markRead([nid]);
+  }
 
-if (idSet.size && !n?.read) {
-  setItemsRaw((prev) => prev.map((x) => (idSet.has(String(x.id)) ? { ...x, read: true } : x)));
-  void markRead(Array.from(idSet));
-}
-
-const postId = n.postId || null;
+  const postId = n.postId || null;
   if (!postId) return toast("No post attached yet.");
   try { saveReturnScroll(String(postId)); } catch {}
   router.push(`/siddes-post/${encodeURIComponent(postId)}`);
@@ -334,7 +245,7 @@ const postId = n.postId || null;
     return all.filter((n) => n.type === "reply");
   }, [filter, itemsRaw]);
 
-  const items = useMemo(() => bundleByPost(dedupe(filtered)), [filtered]);
+  const items = useMemo(() => dedupe(filtered), [filtered]);
   const todayItems = useMemo(() => items.filter((n) => isToday(n.ts)), [items]);
   const earlierItems = useMemo(() => items.filter((n) => !isToday(n.ts)), [items]);
 

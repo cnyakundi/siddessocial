@@ -27,6 +27,16 @@ a, button {
   -webkit-tap-highlight-color: transparent;
 }
 
+
+/* sd_914_fast_scroll_mode: when user is flinging fast, reduce expensive paint work */
+.sd-fast-scroll [class*="backdrop-blur"] {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.sd-fast-scroll [class*="transition"] {
+  transition-duration: 0ms !important;
+}
+
 /* Keep iOS momentum scrolling where applicable. */
 @supports (-webkit-overflow-scrolling: touch) {
   .sd-scroll-touch {

@@ -3,7 +3,8 @@ import { proxyJson } from "../auth/_proxy";
 
 // sd_181b: DB-backed notifications proxy (cookie-forwarding)
 export async function GET(req: Request) {
-  const out = await proxyJson(req, "/api/notifications", "GET");
+  const qs = new URL(req.url).search || "";
+  const out = await proxyJson(req, "/api/notifications" + qs, "GET");
   if (out instanceof NextResponse) {
     try { out.headers.set("cache-control", "no-store"); } catch {}
     return out;
