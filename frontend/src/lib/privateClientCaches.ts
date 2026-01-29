@@ -2,6 +2,7 @@
 
 import { clearInboxCache } from "@/src/lib/inboxCache";
 import { clearFeedInstantCache } from "@/src/lib/feedInstantCache";
+import { clearFeedWarmCache } from "@/src/lib/feedWarmCache";
 import { clearQueue } from "@/src/lib/offlineQueue";
 import { clearSessionIdentity } from "@/src/lib/sessionIdentity";
 
@@ -70,6 +71,10 @@ export function clearPrivateDataCaches() {
     clearFeedInstantCache();
   } catch {}
 
+
+  try {
+    clearFeedWarmCache();
+  } catch {}
   try {
     clearInboxCache();
   } catch {}

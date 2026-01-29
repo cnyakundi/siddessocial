@@ -24,6 +24,7 @@ import type { FeedItem } from "@/src/lib/feedProvider";
 import { getFeedProvider } from "@/src/lib/feedProvider";
 import { EVT_SESSION_IDENTITY_CHANGED, getSessionIdentity, touchSessionConfirmed, updateSessionFromMe } from "@/src/lib/sessionIdentity";
 import { getCachedFeedPage, makeFeedCacheKey, setCachedFeedPage } from "@/src/lib/feedInstantCache";
+import { getWarmFeedPage, makePublicFeedWarmKey, setWarmFeedPage } from "@/src/lib/feedWarmCache";
 import { FLAGS } from "@/src/lib/flags";
 import type { PublicCalmUiState } from "@/src/lib/publicCalmUi";
 import { EVT_PUBLIC_CALM_UI_CHANGED, loadPublicCalmUi, savePublicCalmUi } from "@/src/lib/publicCalmUi";
@@ -405,6 +406,45 @@ export function SideFeed() {
         }
       }
 
+      // sd_903_warm_feed_cache: durable warm-start cache (IndexedDB).
+      // - Public feed: safe to cache (works even when logged-out).
+      // - Private feeds: only show warm cache if session was confirmed recently (reduces stale-access risk).
+      let restrictedNow = false;
+      let networkCommitted = false;
+
+      const confirmedAt = typeof (ident as any)?.confirmedAt === "number" ? (ident as any).confirmedAt : null;
+      const confirmedFresh = !!confirmedAt && Date.now() - confirmedAt < 600_000; // 10 minutes
+
+      const warmKey =
+        side === "public"
+          ? makePublicFeedWarmKey({ topic, tag: activeTag, cursor: null, limit: PAGE_LIMIT })
+          : cacheKey;
+
+      const canUseWarm = side === "public" ? true : (canUseCache && confirmedFresh);
+
+      if (canUseWarm && warmKey) {
+        getWarmFeedPage(warmKey)
+          .then((warm) => {
+            if (!mounted) return;
+            if (restrictedNow) return;
+            // If network already committed a fresh view, don't overwrite.
+            if (networkCommitted) return;
+            // If instant cache was used, don't override.
+            if (usedCache) return;
+            if (!warm) return;
+
+            usedCache = true;
+            setLoadErr(null);
+            setRawPosts(warm.items || []);
+            setNextCursor(warm.nextCursor ?? null);
+            setHasMore(Boolean(warm.hasMore));
+            setLoadingInitial(false);
+            setRefreshing(true);
+          })
+          .catch(() => {});
+      }
+
+
       if (!usedCache) {
         setRawPosts([]);
         setLoadingInitial(true);
@@ -420,6 +460,13 @@ export function SideFeed() {
         setLoadingInitial(false);
         setRefreshing(false);
 
+        networkCommitted = true;
+
+        // sd_903_warm_feed_cache: store durable warm cache for Public.
+        try {
+          if (side === "public" && warmKey) void setWarmFeedPage(warmKey, page);
+        } catch {}
+
         // Successful authenticated fetch -> mark session as recently confirmed.
         touchSessionConfirmed();
 
@@ -428,6 +475,11 @@ export function SideFeed() {
           const identNow = getSessionIdentity();
           if (identNow.viewerId === viewerAtStart && identNow.epoch === epochAtStart && identNow.authed) {
             setCachedFeedPage(cacheKey, page);
+
+            // sd_903_warm_feed_cache: store durable warm cache for Private feeds (only when confirmedFresh).
+            try {
+              if (side !== "public" && confirmedFresh && warmKey) void setWarmFeedPage(warmKey, page);
+            } catch {}
           }
         }
       } catch (e: any) {
@@ -436,6 +488,8 @@ export function SideFeed() {
         setRefreshing(false);
 
         if (isRestrictedError(e)) {
+          restrictedNow = true;
+
           // Fail closed: do not show cached content if the session is restricted.
           setRestricted(true);
           setLoadErr(null);

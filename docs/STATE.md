@@ -6,7 +6,7 @@
 - Commit:
 - Zip/Overlay ID:
 - Environment: local | prod
-- Last overlay applied: sd_796_fix_typing_blocks_and_restore_views_typing_apply_helper.sh
+- Last overlay applied: sd_797_fix_inbox_typing_integration_apply_helper.sh
 ## Current milestone
 - **sd_902:** Fix typing-indicator hook scope (move useEffects into thread page) + fix Inbox urls.py SyntaxError (views_typing import).
 - **sd_784:** Connections: Followers/Following/Mutuals (incoming SideMembership via /api/followers + UI at /siddes-profile/connections)
@@ -190,6 +190,7 @@ These are the overlays applied/created during the current session (evidence: ter
 - Set members are normalized to @handles, deduped, and capped server-side.
 
 ## PWA (mobile app feel)
+- **sd_903_pwa_warm_feed_cache_v1:** Warm-start feed cache (IndexedDB) — Public always, Private only when session confirmed recently; cleared on logout/invalidation.
 - **sd_900_perf_pwa_speed_pack_v1:** PWA speed pack — SW caches ONLY public+immutable /m images, lazy-loads global chrome, enables feed row content-visibility.
 - **sd_741_push_backend_db:** Push subscriptions stored in backend DB + endpoints + UI wiring
 - **sd_742_push_auto_dispatch_on_notifications:** push is automatically dispatched when notifications are created (reply/like/mention/echo)
