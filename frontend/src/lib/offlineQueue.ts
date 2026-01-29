@@ -31,7 +31,7 @@ export type QueuedDm = {
   text: string;
 };
 
-export type QueueItem = QueuedPost | QueuedReply;
+export type QueueItem = QueuedPost | QueuedReply | QueuedDm;
 
 const STORAGE_KEY = "sd.offlineQueue.v0";
 const USE_API = true; // sd_245: never pretend-send; always attempt real /api writes
@@ -217,7 +217,7 @@ async function sendQueuedDm(item: QueuedDm): Promise<boolean> {
 
 export async function flushQueue(): Promise<{ sent: number; sentPosts: number; sentReplies: number; sentDms: number; remaining: number }> {
   const items = loadQueue();
-  if (!items.length) return { sent: 0, sentPosts: 0, sentReplies: 0, remaining: 0 };
+  if (!items.length) return { sent: 0, sentPosts: 0, sentReplies: 0, sentDms: 0, remaining: 0 };
 
   let sentPosts = 0;
   let sentReplies = 0;
