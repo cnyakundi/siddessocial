@@ -33,6 +33,9 @@ export type FeedPost = {
   id: string;
   author: string;
   handle: string;
+  // Optional: author avatar URL (per-side identity)
+  authorAvatarUrl?: string | null;
+
   time: string;
   content: string;
   kind: PostKind;

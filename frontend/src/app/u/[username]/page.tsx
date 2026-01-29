@@ -52,6 +52,21 @@ export default function UserProfilePage() {
 
   const [activeIdentitySide, setActiveIdentitySide] = useState<SideId>("public");
 
+  // sd_801_profile_side_from_url: allow deep-linking into a specific Side identity
+  // (e.g. clicking an avatar in the Feed should open the matching identity view).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const u = new URL(window.location.href);
+      const raw = String(u.searchParams.get("side") || "").trim().toLowerCase();
+      if (!raw) return;
+      if (raw === "public" || raw === "friends" || raw === "close" || raw === "work") {
+        setActiveIdentitySide(raw as SideId);
+      }
+    } catch {}
+  }, []);
+
+
   const [sideSheet, setSideSheet] = useState(false);
   const [busy, setBusy] = useState(false);
 

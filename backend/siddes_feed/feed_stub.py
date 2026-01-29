@@ -469,7 +469,40 @@ def _hydrate_from_record(
         "echoCount": int(echo_count),
         "echoed": bool(echoed),
     }
-    # sd_717e_topic_tags: include derived tags for UI chips (safe, side-bound)
+    # sd_801_author_avatar: prefer Prism facet display + avatar for this Side (dynamic identity)
+    try:
+        from siddes_prism.models import PrismFacet  # type: ignore
+
+        side_key = str(getattr(rec, "side", "") or "public").strip().lower() or "public"
+        u = _user_from_token(author_id)
+        if u is not None:
+            f = PrismFacet.objects.filter(user=u, side=side_key).first()
+            if f is not None:
+                dn = str(getattr(f, "display_name", "") or "").strip()
+                if dn:
+                    out["author"] = dn
+
+                avatar_url = None
+                try:
+                    k = str(getattr(f, "avatar_media_key", "") or "").strip()
+                    if k:
+                        from siddes_media.token_urls import build_media_url  # type: ignore
+                        avatar_url = build_media_url(k, is_public=(side_key == "public"))
+                    else:
+                        avatar_url = str(getattr(f, "avatar_image_url", "") or "").strip() or None
+                except Exception:
+                    k = str(getattr(f, "avatar_media_key", "") or "").strip()
+                    if k:
+                        avatar_url = "/m/" + k.lstrip("/")
+                    else:
+                        avatar_url = str(getattr(f, "avatar_image_url", "") or "").strip() or None
+
+                if avatar_url:
+                    out["authorAvatarUrl"] = avatar_url
+    except Exception:
+        pass
+
+# sd_717e_topic_tags: include derived tags for UI chips (safe, side-bound)
     tags = _extract_topic_tags(str(getattr(rec, "text", "") or ""))
     if tags:
         out["tags"] = tags

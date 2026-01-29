@@ -137,7 +137,7 @@ export function NotificationsView({ embedded = false }: { embedded?: boolean }) 
 
   const [filter, setFilter] = useState<"all" | "mentions" | "replies">("all");
 
-  // sd_824_reset_filter_on_side
+  // sd_825_reset_filter_on_side
   useEffect(() => { setFilter("all"); }, [side]);
 
   const [loading, setLoading] = useState(true);
@@ -281,7 +281,7 @@ const openNotification = (n: NotificationItem) => {
         <div className="flex items-center justify-between">
           <div className="text-sm font-bold text-gray-900">{embedded ? meta.label : "Alerts"}</div>
           {/* sd_768_clean_alerts_page_hide_push_debug */}
-          {/* sd_824_markallread_gate */}\n          {canMarkAllRead ? (\n<button
+          <button
             type="button"
             onClick={markAllRead}
             disabled={!canMarkAllRead}
@@ -291,11 +291,13 @@ const openNotification = (n: NotificationItem) => {
             )}
           >
             Mark all read{unreadCount ? " (" + unreadCount + ")" : ""}
-          </button>\n          ) : null}
+          </button>
         </div>
 
         
-        <div className="flex gap-2 mt-3 overflow-x-auto no-scrollbar">
+        {/* sd_825_chips_gate */}
+        {itemsRaw.length ? (
+          <div className="flex gap-2 mt-3 overflow-x-auto no-scrollbar">
           <button
             type="button"
             onClick={() => setFilter("all")}
@@ -338,7 +340,8 @@ const openNotification = (n: NotificationItem) => {
               Replies
             </button>
           ) : null}
-        </div>
+          </div>
+        ) : null}
 
       </div>
 

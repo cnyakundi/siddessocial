@@ -1112,7 +1112,7 @@ export function PostCard({
       return;
     }
     saveReturnScroll(post.id);
-    router.push(`/u/${encodeURIComponent(u)}`);
+    router.push(`/u/${encodeURIComponent(u)}?side=${encodeURIComponent(side)}`);
   };
   const openReply = () => {
     saveReturnScroll(post.id);
@@ -1221,7 +1221,7 @@ export function PostCard({
             aria-label={"Open profile " + String(post.handle || post.author || "user")}
             title="View profile"
           >
-            <Avatar name={post.author} handle={post.handle} avatarUrl={avatarUrl} />
+            <Avatar name={post.author} handle={post.handle} avatarUrl={avatarUrl || post.authorAvatarUrl || null} />
           </button>
           <div className="min-w-0">
             <button
