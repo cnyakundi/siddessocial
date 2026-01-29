@@ -70,6 +70,8 @@ export default function UserProfilePage() {
   const [sideSheet, setSideSheet] = useState(false);
   const [busy, setBusy] = useState(false);
 
+  const [followBusy, setFollowBusy] = useState(false);
+
   const [msgBusy, setMsgBusy] = useState(false);
 
   const [actionsOpen, setActionsOpen] = useState(false);
@@ -139,6 +141,10 @@ export default function UserProfilePage() {
 
   const isOwner = !!(data as any)?.isOwner;
 
+  const viewerFollowsPublic = !!(data as any)?.viewerFollowsPublic;
+  const publicFollowers = typeof (data as any)?.publicFollowers === "number" ? (data as any).publicFollowers : null;
+  const publicFollowing = typeof (data as any)?.publicFollowing === "number" ? (data as any).publicFollowing : null;
+
   const viewerSidedAs = (data?.viewerSidedAs || null) as SideId | null;
 
   const postsPayload = data?.posts || null;
@@ -147,6 +153,40 @@ export default function UserProfilePage() {
   const postsCount = typeof postsPayload?.count === "number" ? postsPayload.count : posts.length;
 
   const avatarUrl = String((facet as any)?.avatarImage || "").trim() || null;
+
+  const doToggleFollow = async () => {
+    if (!user?.handle) return;
+    if (followBusy) return;
+    const want = !viewerFollowsPublic;
+    setFollowBusy(true);
+    try {
+      const res = await fetch("/api/follow", {
+        method: "POST",
+        cache: "no-store",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ username: user.handle, follow: want }),
+      });
+      const j = (await res.json().catch(() => null)) as any;
+      if (!res.ok || !j || j.ok !== true) {
+        const msg = res.status === 401 ? "Log in to follow." : res.status === 429 ? "Slow down." : "Could not update follow.";
+        toast.error(msg);
+        return;
+      }
+      setData((prev) => {
+        if (!prev || !prev.ok) return prev;
+        return {
+          ...(prev as any),
+          viewerFollowsPublic: !!j.following,
+          publicFollowers: typeof j.publicFollowers === "number" ? j.publicFollowers : (prev as any).publicFollowers,
+          publicFollowing: typeof j.publicFollowing === "number" ? j.publicFollowing : (prev as any).publicFollowing,
+        } as any;
+      });
+    } catch {
+      toast.error("Could not update follow.");
+    } finally {
+      setFollowBusy(false);
+    }
+  };
 
   const doPickSide = async (side: SideId | "public", opts?: { silent?: boolean }) => {
     if (!user?.handle) return;
@@ -573,7 +613,7 @@ const tid = String(j?.thread?.id || "").trim();
                 facet={facet}
                 siders={data?.siders ?? null}
                 postsCount={postsCount}
-                isOwner={isOwner}
+isOwner={isOwner}
                 viewerSidedAs={viewerSidedAs}
                 onMessage={!isOwner ? doMessage : null}
                 messageDisabled={msgBusy}
@@ -598,6 +638,21 @@ const tid = String(j?.thread?.id || "").trim();
                         aria-label="More actions"
                       >
                         <MoreHorizontal size={18} />
+
+              {/* sd_792_public_follow_stats_row */}
+              {viewSide === "public" ? (
+                <div className="mt-4 flex gap-8 justify-center pb-4 border-b border-gray-100">
+                  <div className="flex flex-col items-center">
+                    <span className="text-lg font-black text-gray-900 leading-none tabular-nums">{publicFollowers ?? "—"}</span>
+                    <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-1">Followers</span>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="text-lg font-black text-gray-900 leading-none tabular-nums">{publicFollowing ?? "—"}</span>
+                    <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-1">Following</span>
+                  </div>
+                </div>
+              ) : null}
+
                       </button>
                     </div>
                   ) : (
@@ -605,6 +660,25 @@ const tid = String(j?.thread?.id || "").trim();
                       <div className="flex-1">
                         <SideActionButtons viewerSidedAs={viewerSidedAs} onOpenSheet={() => setSideSheet(true)} />
                       </div>
+
+                      {/* sd_790_follow_button */}
+                      {viewSide === "public" ? (
+                        <button
+                          type="button"
+                          onClick={() => void doToggleFollow()}
+                          disabled={followBusy}
+                          className={
+                            (viewerFollowsPublic
+                              ? "px-4 h-11 rounded-2xl font-extrabold text-sm transition-all flex items-center justify-center bg-gray-900 text-white border border-gray-900 hover:opacity-90"
+                              : "px-4 h-11 rounded-2xl font-extrabold text-sm transition-all flex items-center justify-center bg-white text-gray-900 border border-gray-200 hover:bg-gray-50") +
+                            (followBusy ? " opacity-60 cursor-not-allowed" : "")
+                          }
+                          aria-label={viewerFollowsPublic ? "Following" : "Follow"}
+                        >
+                          {viewerFollowsPublic ? "Following" : "Follow"}
+                        </button>
+                      ) : null}
+
                       <button
                         type="button"
                         onClick={() => setActionsOpen(true)}

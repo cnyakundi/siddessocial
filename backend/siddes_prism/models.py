@@ -115,4 +115,31 @@ class SideAccessRequest(models.Model):
             models.Index(fields=["owner", "status", "-updated_at"], name="side_access_owner_st_upd"),
             models.Index(fields=["requester", "status", "-updated_at"], name="side_access_req_st_upd"),
         ]
+class UserFollow(models.Model):
+    """Public follow edge: follower follows target.
 
+    One-way subscription for *Public* content only.
+    Does NOT grant access to Friends/Close/Work.
+    """
+
+    follower = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="follow_outgoing",
+    )
+    target = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="follow_incoming",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["follower", "target"], name="userfollow_follower_target"),
+            models.CheckConstraint(check=~models.Q(follower=models.F("target")), name="userfollow_no_self"),
+        ]
+        indexes = [
+            models.Index(fields=["target", "created_at"], name="userfollow_target_created"),
+            models.Index(fields=["follower", "created_at"], name="userfollow_follower_created"),
+        ]

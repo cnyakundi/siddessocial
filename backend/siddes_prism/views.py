@@ -16,7 +16,7 @@ from rest_framework.views import APIView
 from siddes_backend.csrf import dev_csrf_exempt
 from siddes_safety.policy import is_blocked_pair
 
-from .models import PrismFacet, PrismSideId, SideMembership, SideAccessRequest
+from .models import PrismFacet, PrismSideId, SideMembership, SideAccessRequest, UserFollow
 
 VIEW_SIDES = ("public", "friends", "close", "work")
 MEMBER_SIDES = ("friends", "close", "work")
@@ -457,8 +457,12 @@ class ProfileView(APIView):
                     "viewSide": view_side,
                     "requestedSide": requested,
                     "allowedSides": allowed_sides,
+            "isOwner": is_owner,
                     "isOwner": is_owner,
                 "viewerAuthed": viewer_authed,
+            "viewerFollowsPublic": viewer_follows_public,
+            "publicFollowers": public_followers,
+            "publicFollowing": public_following,
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )
@@ -516,6 +520,27 @@ class ProfileView(APIView):
         if viewer and viewer.id != target.id:
             rel_out = SideMembership.objects.filter(owner=viewer, member=target).first()
             viewer_sided_as = rel_out.side if rel_out else None
+
+        # sd_790_public_follow: Public follow graph (Public identity only; does NOT grant private access)
+        viewer_follows_public = False
+        public_followers: Optional[int] = None
+        public_following: Optional[int] = None
+
+        try:
+            public_followers = int(UserFollow.objects.filter(target=target).count())
+        except Exception:
+            public_followers = None
+
+        try:
+            public_following = int(UserFollow.objects.filter(follower=target).count())
+        except Exception:
+            public_following = None
+
+        if viewer and viewer.id != target.id:
+            try:
+                viewer_follows_public = bool(UserFollow.objects.filter(follower=viewer, target=target).exists())
+            except Exception:
+                viewer_follows_public = False
 
         # Siders count: how many owners have placed target into a side
         siders_count: Optional[int] = None
@@ -778,6 +803,71 @@ class ProfileView(APIView):
         if cache_status != "bypass":
             resp["X-Siddes-Cache-Ttl"] = str(cache_ttl)
         return resp
+
+@method_decorator(dev_csrf_exempt, name="dispatch")
+class FollowActionView(APIView):
+    """Viewer action: Follow/unfollow someone for Public updates. POST /api/follow
+
+    Body:
+      {"username": "@alice", "follow": true|false}
+    """
+
+    def post(self, request):
+        viewer = _user_from_request(request)
+        if not viewer:
+            return Response({"ok": False, "error": "restricted"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        body: Dict[str, Any] = request.data if isinstance(request.data, dict) else {}
+        uname = _normalize_username(body.get("username") or body.get("handle") or "")
+        if not uname:
+            return Response({"ok": False, "error": "missing_username"}, status=status.HTTP_400_BAD_REQUEST)
+
+        want = body.get("follow")
+        follow = bool(want) if isinstance(want, (bool, int)) else _truthy(str(want))
+
+        User = get_user_model()
+        target = User.objects.filter(username__iexact=str(uname)).first()
+        if not target:
+            return Response({"ok": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if getattr(target, "id", None) == getattr(viewer, "id", None):
+            return Response({"ok": False, "error": "cannot_follow_self"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Blocks: allow unfollow, prevent follow when blocked.
+        if follow:
+            try:
+                viewer_tok = viewer_id_for_user(viewer)
+                target_tok = "@" + str(getattr(target, "username", "") or "").lower()
+                if target_tok and is_blocked_pair(viewer_tok, target_tok):
+                    return Response({"ok": False, "error": "restricted"}, status=status.HTTP_403_FORBIDDEN)
+            except Exception:
+                pass
+
+            try:
+                UserFollow.objects.get_or_create(follower=viewer, target=target)
+            except Exception:
+                pass
+        else:
+            try:
+                UserFollow.objects.filter(follower=viewer, target=target).delete()
+            except Exception:
+                pass
+
+        try:
+            followers_cnt = int(UserFollow.objects.filter(target=target).count())
+        except Exception:
+            followers_cnt = None
+
+        try:
+            following_cnt = int(UserFollow.objects.filter(follower=target).count())
+        except Exception:
+            following_cnt = None
+
+        return Response(
+            {"ok": True, "following": bool(follow), "publicFollowers": followers_cnt, "publicFollowing": following_cnt},
+            status=status.HTTP_200_OK,
+        )
+
 
 @method_decorator(dev_csrf_exempt, name="dispatch")
 class SideActionView(APIView):

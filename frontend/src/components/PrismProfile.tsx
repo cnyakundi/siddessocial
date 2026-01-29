@@ -67,6 +67,9 @@ export type ProfileViewPayload = {
   allowedSides?: SideId[];
   viewerAuthed?: boolean;
   isOwner?: boolean;
+  viewerFollowsPublic?: boolean;
+  publicFollowers?: number | null;
+  publicFollowing?: number | null;
 facet?: PrismFacet;
   siders?: number | string | null;
   viewerSidedAs?: SideId | null;
