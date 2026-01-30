@@ -245,7 +245,7 @@ export function CirclePickerSheet({
       <div className="fixed inset-0 z-[125] flex items-end justify-center md:items-center">
                 <button
           type="button"
-          aria-label="Close group picker"
+          aria-label="Close circle picker"
           className="absolute inset-0 bg-black/40 backdrop-blur-sm"
           onPointerDown={(e) => {
             // sd_713_backdrop_clickthrough: consume pointerdown to prevent ghost taps (close on click/touch)
@@ -277,7 +277,7 @@ export function CirclePickerSheet({
               <h3 id="circle-picker-title" className="text-lg font-bold text-gray-900">
                 {title}
               </h3>
-              <div className="text-[11px] text-gray-500 mt-1">Pick a group. Create groups inline.</div>
+              <div className="text-[11px] text-gray-500 mt-1">Pick a circle. Create circles inline.</div>
             </div>
             <button
               type="button"
@@ -307,7 +307,7 @@ export function CirclePickerSheet({
               </div>
               <div>
                 <div className="font-black text-gray-900">New Circle</div>
-                <div className="text-[11px] text-gray-500 mt-0.5">Name + optional people</div>
+                <div className="text-[11px] text-gray-500 mt-0.5">Add people, then name</div>
               </div>
             </div>
             <div className="text-xs font-bold text-gray-500">{canWrite ? "Create" : "Read-only"}</div>
