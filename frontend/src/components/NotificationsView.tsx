@@ -133,7 +133,11 @@ export function NotificationsView({ embedded = false }: { embedded?: boolean }) 
   const theme = SIDE_THEMES[side];
 
   const Wrapper = ({ children }: { children: React.ReactNode }) =>
-    embedded ? <>{children}</> : <div className="px-4 py-6">{children}</div>;
+    embedded ? (
+      <div className="w-full max-w-[760px] mx-auto">{children}</div>
+    ) : (
+      <div className="w-full max-w-[760px] mx-auto px-4 py-6">{children}</div>
+    );
 
   const [filter, setFilter] = useState<"all" | "mentions" | "replies">("all");
 
