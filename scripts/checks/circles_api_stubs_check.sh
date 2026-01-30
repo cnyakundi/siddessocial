@@ -4,11 +4,11 @@ set -euo pipefail
 echo "== Check: Circles API stubs =="
 
 REQ=(
-  "frontend/src/lib/server/setsStore.ts"
+  "frontend/src/lib/server/circlesStore.ts"
   "frontend/src/app/api/circles/route.ts"
   "frontend/src/app/api/circles/[id]/route.ts"
   "frontend/src/app/api/circles/[id]/events/route.ts"
-  "docs/SETS_API_STUBS.md"
+  "docs/CIRCLES_API_STUBS.md"
 )
 
 missing=0
@@ -34,5 +34,5 @@ else
 fi
 
 # Basic TS parse check (cheap sanity):
-node -e "require('fs').readFileSync('frontend/src/lib/server/setsStore.ts','utf8');" >/dev/null
+node -e "require('fs').readFileSync('frontend/src/lib/server/circlesStore.ts','utf8');" >/dev/null
 echo "✅ sets api stubs selfcheck passed"

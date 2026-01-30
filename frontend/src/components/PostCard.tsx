@@ -3,6 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import React, { useMemo, useState, useRef } from "react";
+import { createPortal } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Image as ImageIcon,
@@ -84,7 +85,13 @@ function MediaViewerModal({
   onClose: () => void;
   onIndexChange: React.Dispatch<React.SetStateAction<number>>;
 }) {
-  useLockBodyScroll(open);
+  // iOS/PWA: portal so `position: fixed` isn't broken by transformed ancestors (virtualized feed rows).
+  const [mounted, setMounted] = useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useLockBodyScroll(open && mounted);
 
   const count = Array.isArray(items) ? items.length : 0;
   const safeIndex = Math.max(0, Math.min(count - 1, Math.floor(index || 0)));
@@ -109,14 +116,13 @@ function MediaViewerModal({
     if (count < 2) return;
     onIndexChange((prev) => (prev - 1 + count) % count);
   }, [count, onIndexChange]);
+
   const goNext = React.useCallback(() => {
     if (count < 2) return;
     onIndexChange((prev) => (prev + 1) % count);
   }, [count, onIndexChange]);
 
-
-
-  // sd_781_media_viewer_history_preload: preload adjacent images for instant Next/Prev.
+  // Preload adjacent images for instant Next/Prev.
   React.useEffect(() => {
     if (!open || count < 2) return;
     const preload = (m?: MediaItem) => {
@@ -130,7 +136,7 @@ function MediaViewerModal({
     preload(items[(safeIndex - 1 + count) % count]);
   }, [open, safeIndex, count, items]);
 
-  // sd_781_media_viewer_history_preload: keep URL index in sync (deep-linkable media).
+  // Keep URL index in sync (deep-linkable media).
   React.useEffect(() => {
     if (!open) return;
     if (typeof window === "undefined") return;
@@ -144,29 +150,30 @@ function MediaViewerModal({
     } catch {}
   }, [open, safeIndex, ownerId]);
 
-  const touchRef = React.useRef<{ x: number; y: number } | null>(null);
+  // Tap-backdrop-to-close on touch (and keep swipe left/right).
+  const touchRef = React.useRef<{ x: number; y: number; backdrop: boolean } | null>(null);
 
   React.useEffect(() => {
     if (!open || count === 0) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         e.preventDefault();
         onClose();
-      } else if (e.key === 'ArrowLeft') {
+      } else if (e.key === "ArrowLeft") {
         e.preventDefault();
         goPrev();
-      } else if (e.key === 'ArrowRight') {
+      } else if (e.key === "ArrowRight") {
         e.preventDefault();
         goNext();
       }
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, [open, count, onClose, goPrev, goNext]);
 
-  if (!open || count === 0) return null;
+  if (!open || !mounted || count === 0) return null;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[220] bg-black"
       role="dialog"
@@ -176,31 +183,47 @@ function MediaViewerModal({
         e.stopPropagation();
         if (e.target === e.currentTarget) onClose();
       }}
-      onClick={(e) => e.stopPropagation()}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (e.target === e.currentTarget) onClose();
+      }}
       onTouchStart={(e) => {
         e.stopPropagation();
         const t = e.touches?.[0];
         if (!t) return;
-        touchRef.current = { x: t.clientX, y: t.clientY };
+        touchRef.current = { x: t.clientX, y: t.clientY, backdrop: e.target === e.currentTarget };
       }}
       onTouchEnd={(e) => {
         e.stopPropagation();
         const start = touchRef.current;
         touchRef.current = null;
         if (!start) return;
+
         const t = e.changedTouches?.[0];
         if (!t) return;
+
         const dx = t.clientX - start.x;
         const dy = t.clientY - start.y;
+
         if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) {
           dx > 0 ? goPrev() : goNext();
+          return;
+        }
+
+        // Tap on the outer (dark) space closes.
+        if (start.backdrop && Math.abs(dx) < 12 && Math.abs(dy) < 12) {
+          onClose();
         }
       }}
     >
-      {/* Close */}
+      {/* Close (safe-area aware) */}
       <button
         type="button"
-        className="absolute top-4 left-4 z-[230] w-11 h-11 rounded-full bg-white/5 hover:bg-white/10 text-white inline-flex items-center justify-center transition-colors"
+        className="absolute z-[230] w-11 h-11 rounded-full bg-white/10 hover:bg-white/15 text-white inline-flex items-center justify-center transition-colors backdrop-blur"
+        style={{
+          top: "calc(env(safe-area-inset-top) + 12px)",
+          left: "calc(env(safe-area-inset-left) + 12px)",
+        }}
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -214,7 +237,10 @@ function MediaViewerModal({
 
       {/* Counter */}
       {count > 1 ? (
-        <div className="absolute top-5 left-1/2 -translate-x-1/2 text-white/70 text-sm font-semibold">
+        <div
+          className="absolute left-1/2 -translate-x-1/2 text-white/70 text-sm font-semibold"
+          style={{ top: "calc(env(safe-area-inset-top) + 18px)" }}
+        >
           {safeIndex + 1} / {count}
         </div>
       ) : null}
@@ -258,7 +284,7 @@ function MediaViewerModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="max-w-[min(960px,calc(100vw-32px))] max-h-[calc(100dvh-120px)]">
-          {active.kind === 'video' ? (
+          {active.kind === "video" ? (
             <div className="relative">
               <video
                 ref={videoRef}
@@ -278,7 +304,7 @@ function MediaViewerModal({
                   setMuted((v) => !v);
                 }}
                 aria-label="Toggle mute"
-                title={muted ? 'Unmute' : 'Mute'}
+                title={muted ? "Unmute" : "Mute"}
               >
                 {muted ? <VolumeX size={20} /> : <Volume2 size={20} />}
               </button>
@@ -293,9 +319,11 @@ function MediaViewerModal({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
+
 
 function MediaGrid({ items, ownerId }: { items: MediaItem[]; ownerId: string }) {
   const [open, setOpen] = useState(false);
@@ -785,6 +813,7 @@ export function PostCard({
   onMore?: (post: FeedPost) => void;
   calmHideCounts?: boolean;
   variant?: "card" | "row";
+  showAccentBorder?: boolean;
   avatarUrl?: string | null;
 }) {
   const router = useRouter();
@@ -830,7 +859,7 @@ export function PostCard({
     [post.id, router, side]
   );
 
-  const isDetail = typeof pathname === "string" && pathname.startsWith("/siddes-post/");
+  const isDetail = pathname.startsWith("/siddes-post/") || pathname.startsWith("/p/");
 
   // sd_568: prefetch post routes on intent (instant tap feel)
   const prefetchPost = () => {
@@ -845,6 +874,7 @@ export function PostCard({
 
   const hideCounts = Boolean(calmHideCounts);
 
+  const showAccentBorder = !isRow && !isDetail;
   const allChips: Chip[] = useMemo(() => buildChips(chipsFromPost(post), { side }), [post, side]);
 
   // Context stamp uses Set OR Topic (mutually exclusive), always visible.
@@ -1242,8 +1272,9 @@ export function PostCard({
         isRow
           ? "group py-4 border-b border-gray-100 hover:bg-gray-50/40 transition-colors"
           : cn(
-              "bg-white p-5 sm:p-6 rounded-3xl shadow-sm border border-gray-100 border-l-4 transition-shadow hover:shadow-md",
-              theme.accentBorder
+              "bg-white p-5 sm:p-6 rounded-3xl shadow-sm border border-gray-100 transition-shadow hover:shadow-md",
+              showAccentBorder ? "border-l-4" : "",
+              showAccentBorder ? theme.accentBorder : ""
             )
       )}
       data-post-id={post.id}
@@ -1627,12 +1658,7 @@ export function PostCard({
                 <span className="inline-flex items-center gap-1">
                   <MessageCircle size={22} strokeWidth={2} />
                   {!hideCounts && replyCount ? (
-                    <span className="inline-flex items-baseline gap-1">
-                      <span className="text-[11px] font-extrabold tabular-nums text-gray-500">{replyCount} {replyCount === 1 ? "Reply" : "Replies"}</span>
-                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                        {replyCount === 1 ? "reply" : "replies"}
-                      </span>
-                    </span>
+                    <span className="text-[11px] font-extrabold tabular-nums text-gray-500">{replyCount} {replyCount === 1 ? "Reply" : "Replies"}</span>
                   ) : null}
                 </span>
               </button>
@@ -1660,12 +1686,7 @@ export function PostCard({
                     <Heart size={22} strokeWidth={2} fill={liked ? "currentColor" : "none"} />
                   )}
                   {!hideCounts && likeCount ? (
-                    <span className="inline-flex items-baseline gap-1">
-                      <span className="text-[11px] font-extrabold tabular-nums text-gray-500">{likeCount} {side === "work" ? (likeCount === 1 ? "Ack" : "Acks") : (likeCount === 1 ? "Like" : "Likes")}</span>
-                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                        {side === "work" ? "acks" : likeCount === 1 ? "like" : "likes"}
-                      </span>
-                    </span>
+                    <span className="text-[11px] font-extrabold tabular-nums text-gray-500">{likeCount} {side === "work" ? (likeCount === 1 ? "Ack" : "Acks") : (likeCount === 1 ? "Like" : "Likes")}</span>
                   ) : null}
                 </span>
               </button>

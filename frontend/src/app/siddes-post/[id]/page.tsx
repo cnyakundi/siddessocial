@@ -804,6 +804,7 @@ useEffect(() => {
         <PostCard
           post={found.post}
           side={found.side}
+          showAccentBorder={false}
           calmHideCounts={found.side === "public" && FLAGS.publicCalmUi && !(publicCalm?.showCounts)}
         />
 

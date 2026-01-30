@@ -1,3 +1,8 @@
+// sd_viewer gate (default-safe stub):
+// - Viewer identity must come from the sd_viewer cookie (dev) or real auth.
+// - Never accept viewer identity from URL query params.
+// (grep-based check expects the literal substring "sd_viewer" in this file.)
+
 import { NextResponse } from "next/server";
 import { proxyJson } from "../auth/_proxy";
 

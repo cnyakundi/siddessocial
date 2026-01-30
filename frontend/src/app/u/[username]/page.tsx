@@ -493,7 +493,7 @@ const tid = String(j?.thread?.id || "").trim();
     <div className="min-h-screen bg-white">
       <div className="sticky top-0 z-[80] bg-white/90 backdrop-blur border-b border-gray-100">
         <div className="max-w-xl mx-auto px-4 py-3 flex items-center justify-between">
-          <button
+          <button hidden
             type="button"
             onClick={() => { try { router.back(); } catch {} }}
             className="w-11 h-11 rounded-full hover:bg-gray-100 inline-flex items-center justify-center transition-colors"
@@ -521,7 +521,7 @@ const tid = String(j?.thread?.id || "").trim();
             </span>
           </div>
 
-          <button
+          <button hidden
             type="button"
             onClick={() => void shareProfile()}
             className="w-11 h-11 rounded-full hover:bg-gray-100 inline-flex items-center justify-center transition-colors"
@@ -554,7 +554,7 @@ const tid = String(j?.thread?.id || "").trim();
 
 {!isOwner && lockedSide ? (
               <div className="fixed inset-0 z-[97] flex items-end justify-center md:items-center">
-                <button
+                <button hidden
                   type="button"
                   className="absolute inset-0 bg-black/30 backdrop-blur-sm"
                   onClick={() => setLockedSide(null)}
@@ -709,7 +709,7 @@ isOwner={isOwner}
 
               {aboutOpen ? (
                 <div className="fixed inset-0 z-[98] flex items-end justify-center md:items-center">
-                  <button
+                  <button hidden
                     type="button"
                     className="absolute inset-0 bg-black/30 backdrop-blur-sm"
                     onClick={() => setAboutOpen(false)}
@@ -753,7 +753,7 @@ isOwner={isOwner}
                       {String((facet as any)?.website || "").trim() ? (
                         <div className="flex items-center justify-between text-xs">
                           <div className="text-gray-500 font-bold">Website</div>
-                          <a
+                          <a hidden
                             className="text-gray-900 font-extrabold hover:underline"
                             href={(() => {
                               const w = String((facet as any)?.website || "").trim();
@@ -780,7 +780,7 @@ isOwner={isOwner}
                       <div className="text-lg font-black text-gray-900 tabular-nums mt-1">{postsCount ?? "—"}</div>
                     </div>
 
-<button
+<button hidden
                       type="button"
                       onClick={() => setAboutOpen(false)}
                       className="w-full mt-5 py-3 rounded-xl bg-gray-900 text-white font-extrabold text-sm shadow-md active:scale-95 transition-all"
@@ -807,7 +807,7 @@ isOwner={isOwner}
 
               {aboutOpen ? (
                 <div className="fixed inset-0 z-[98] flex items-end justify-center md:items-center">
-                  <button
+                  <button hidden
                     type="button"
                     className="absolute inset-0 bg-black/30 backdrop-blur-sm"
                     onClick={() => setAboutOpen(false)}

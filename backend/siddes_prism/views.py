@@ -869,6 +869,252 @@ class FollowActionView(APIView):
         )
 
 
+
+@method_decorator(dev_csrf_exempt, name="dispatch")
+class PublicFollowersView(APIView):
+    """Public follow roster: who follows @username (Public identity only).
+
+    GET /api/public-followers/<username>?limit=&cursor=
+    Cursor is an opaque integer id (descending). Safe for public browsing.
+    """
+
+    def get(self, request, username: str):
+        User = get_user_model()
+        uname = _normalize_username(username).lower()
+        if not uname:
+            return Response({"ok": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
+
+        target = User.objects.filter(username__iexact=uname).first()
+        if not target:
+            return Response({"ok": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
+
+        viewer = _user_from_request(request)
+        if viewer and getattr(viewer, "id", None) != getattr(target, "id", None):
+            try:
+                viewer_tok = viewer_id_for_user(viewer)
+                target_tok = "@" + str(getattr(target, "username", "") or "").lower()
+                if target_tok and is_blocked_pair(viewer_tok, target_tok):
+                    return Response({"ok": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
+            except Exception:
+                pass
+
+        lim_raw = str(getattr(request, "query_params", {}).get("limit") or "").strip()
+        try:
+            lim = int(lim_raw) if lim_raw else 40
+        except Exception:
+            lim = 40
+        if lim < 1:
+            lim = 1
+        if lim > 80:
+            lim = 80
+
+        cur_raw = str(getattr(request, "query_params", {}).get("cursor") or "").strip() or None
+        cur_id = None
+        if cur_raw:
+            try:
+                cur_id = int(cur_raw)
+            except Exception:
+                cur_id = None
+
+        qs = UserFollow.objects.filter(target=target).select_related("follower").order_by("-id")
+        if cur_id is not None and cur_id > 0:
+            qs = qs.filter(id__lt=cur_id)
+
+        recs = list(qs[: lim + 1])
+        has_more = len(recs) > lim
+        if has_more:
+            recs = recs[:lim]
+
+        next_cursor = str(getattr(recs[-1], "id")) if (has_more and recs) else None
+
+        users = []
+        for r in recs:
+            u = getattr(r, "follower", None)
+            if u is not None:
+                users.append(u)
+
+        uids = []
+        for u in users:
+            try:
+                uids.append(int(getattr(u, "id", 0) or 0))
+            except Exception:
+                pass
+
+        facet_by_uid = {}
+        if uids:
+            try:
+                for f in PrismFacet.objects.filter(user_id__in=uids, side="public"):
+                    try:
+                        facet_by_uid[int(getattr(f, "user_id", 0) or 0)] = f
+                    except Exception:
+                        continue
+            except Exception:
+                facet_by_uid = {}
+
+        items = []
+        for u in users:
+            try:
+                uid = int(getattr(u, "id", 0) or 0)
+            except Exception:
+                continue
+            uname2 = str(getattr(u, "username", "") or "").strip()
+            handle = ("@" + uname2) if uname2 else ""
+
+            f = facet_by_uid.get(uid)
+            display = ""
+            avatar = None
+            if f is not None:
+                display = str(getattr(f, "display_name", "") or "").strip()
+                try:
+                    avatar = _avatar_url_for_facet(f)
+                except Exception:
+                    avatar = None
+            if not display:
+                display = _pretty_name(uname2)
+
+            items.append(
+                {
+                    "id": uid,
+                    "handle": handle,
+                    "displayName": display,
+                    "avatarImage": avatar,
+                }
+            )
+
+        total = None
+        try:
+            total = int(UserFollow.objects.filter(target=target).count())
+        except Exception:
+            total = None
+
+        resp = Response({"ok": True, "items": items, "nextCursor": next_cursor, "total": total}, status=status.HTTP_200_OK)
+        resp["Cache-Control"] = "private, no-store"
+        resp["Vary"] = "Cookie, Authorization"
+        return resp
+
+
+@method_decorator(dev_csrf_exempt, name="dispatch")
+class PublicFollowingView(APIView):
+    """Public follow roster: who @username follows (Public identity only).
+
+    GET /api/public-following/<username>?limit=&cursor=
+    Cursor is an opaque integer id (descending). Safe for public browsing.
+    """
+
+    def get(self, request, username: str):
+        User = get_user_model()
+        uname = _normalize_username(username).lower()
+        if not uname:
+            return Response({"ok": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
+
+        target = User.objects.filter(username__iexact=uname).first()
+        if not target:
+            return Response({"ok": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
+
+        viewer = _user_from_request(request)
+        if viewer and getattr(viewer, "id", None) != getattr(target, "id", None):
+            try:
+                viewer_tok = viewer_id_for_user(viewer)
+                target_tok = "@" + str(getattr(target, "username", "") or "").lower()
+                if target_tok and is_blocked_pair(viewer_tok, target_tok):
+                    return Response({"ok": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
+            except Exception:
+                pass
+
+        lim_raw = str(getattr(request, "query_params", {}).get("limit") or "").strip()
+        try:
+            lim = int(lim_raw) if lim_raw else 40
+        except Exception:
+            lim = 40
+        if lim < 1:
+            lim = 1
+        if lim > 80:
+            lim = 80
+
+        cur_raw = str(getattr(request, "query_params", {}).get("cursor") or "").strip() or None
+        cur_id = None
+        if cur_raw:
+            try:
+                cur_id = int(cur_raw)
+            except Exception:
+                cur_id = None
+
+        qs = UserFollow.objects.filter(follower=target).select_related("target").order_by("-id")
+        if cur_id is not None and cur_id > 0:
+            qs = qs.filter(id__lt=cur_id)
+
+        recs = list(qs[: lim + 1])
+        has_more = len(recs) > lim
+        if has_more:
+            recs = recs[:lim]
+
+        next_cursor = str(getattr(recs[-1], "id")) if (has_more and recs) else None
+
+        users = []
+        for r in recs:
+            u = getattr(r, "target", None)
+            if u is not None:
+                users.append(u)
+
+        uids = []
+        for u in users:
+            try:
+                uids.append(int(getattr(u, "id", 0) or 0))
+            except Exception:
+                pass
+
+        facet_by_uid = {}
+        if uids:
+            try:
+                for f in PrismFacet.objects.filter(user_id__in=uids, side="public"):
+                    try:
+                        facet_by_uid[int(getattr(f, "user_id", 0) or 0)] = f
+                    except Exception:
+                        continue
+            except Exception:
+                facet_by_uid = {}
+
+        items = []
+        for u in users:
+            try:
+                uid = int(getattr(u, "id", 0) or 0)
+            except Exception:
+                continue
+            uname2 = str(getattr(u, "username", "") or "").strip()
+            handle = ("@" + uname2) if uname2 else ""
+
+            f = facet_by_uid.get(uid)
+            display = ""
+            avatar = None
+            if f is not None:
+                display = str(getattr(f, "display_name", "") or "").strip()
+                try:
+                    avatar = _avatar_url_for_facet(f)
+                except Exception:
+                    avatar = None
+            if not display:
+                display = _pretty_name(uname2)
+
+            items.append(
+                {
+                    "id": uid,
+                    "handle": handle,
+                    "displayName": display,
+                    "avatarImage": avatar,
+                }
+            )
+
+        total = None
+        try:
+            total = int(UserFollow.objects.filter(follower=target).count())
+        except Exception:
+            total = None
+
+        resp = Response({"ok": True, "items": items, "nextCursor": next_cursor, "total": total}, status=status.HTTP_200_OK)
+        resp["Cache-Control"] = "private, no-store"
+        resp["Vary"] = "Cookie, Authorization"
+        return resp
+
 @method_decorator(dev_csrf_exempt, name="dispatch")
 class SideActionView(APIView):
     """Viewer action: Side/Unside someone. POST /api/side

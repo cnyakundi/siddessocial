@@ -157,7 +157,7 @@ export function PrismSideTabs(props: {
           const locked = !isAllowed && !isActive;
 
           return (
-            <button
+            <button hidden
               key={side}
               type="button"
               onClick={() => {

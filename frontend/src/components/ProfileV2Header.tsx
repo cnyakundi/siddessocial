@@ -226,7 +226,7 @@ export function ProfileV2Header(props: {
         {showAccessStat ? (
           <Stat label="Private Set" value={typeof shownSiders === "string" ? shownSiders : "Close Vault"} subtle />
         ) : (
-          <Stat label="Sided" value={typeof shownSiders === "undefined" ? "—" : shownSiders} />
+          <Stat label="Connected" value={typeof shownSiders === "undefined" ? "—" : shownSiders} />
         )}
         {Array.isArray(sharedSets) && sharedSets.length ? <Stat label="Shared" value={sharedSets.length} subtle /> : null}
       </div>

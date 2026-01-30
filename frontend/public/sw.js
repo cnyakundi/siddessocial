@@ -8,7 +8,7 @@
  * Result: instant app shell + offline fallback, without any cross-user/Side cache contamination.
  */
 
-const VERSION = "8bd1ff89e5d7";
+const VERSION = "a4f7706bc0d7";
 const CORE_CACHE = `siddes-core-${VERSION}`;
 const STATIC_CACHE = `siddes-static-${VERSION}`;
 
@@ -286,7 +286,13 @@ ${data.glimpse}`.trim()
 });
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = event.notification?.data?.url || "/";
+  const raw = event.notification?.data?.url || "/";
+  let url = raw;
+  try {
+    url = new URL(raw, self.location.origin).href;
+  } catch {
+    url = self.location.origin + "/";
+  }
 
   event.waitUntil(
     (async () => {
