@@ -22,6 +22,8 @@ import type { PrismFacet } from "@/src/components/PrismProfile";
 // sd_790_public_profile_header_polish
 // Goal: make /u/<username> feel premium + calm (Threads-level cleanliness), without breaking existing props.
 
+// sd_913_public_follow_counts: public followers/following stats in header
+
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
 }
@@ -92,6 +94,10 @@ export function ProfileV2Header(props: {
   siders?: number | string | null; // number or "Close Vault"
   postsCount?: number;
 
+  // Public-only stats (shown when displaySide === public)
+  publicFollowers?: number | null;
+  publicFollowing?: number | null;
+
   sharedSets?: string[];
 
   // Action cluster (Side button, copy link, "more" etc)
@@ -112,6 +118,8 @@ export function ProfileV2Header(props: {
     viewerSidedAs,
     siders,
     postsCount,
+    publicFollowers,
+    publicFollowing,
     sharedSets,
     actions,
     messageHref,
@@ -137,6 +145,8 @@ export function ProfileV2Header(props: {
 
   const showAccessStat = viewSide === "close" || typeof siders === "string";
   const shownPosts = typeof postsCount === "number" ? postsCount : undefined;
+  const shownFollowers = typeof publicFollowers === "number" ? publicFollowers : undefined;
+  const shownFollowing = typeof publicFollowing === "number" ? publicFollowing : undefined;
   const shownSiders = typeof siders === "number" ? siders : typeof siders === "string" ? siders : undefined;
 
   const showRelationship = !isOwner && (viewSide !== "public" || !!viewerSidedAs);
@@ -219,40 +229,40 @@ export function ProfileV2Header(props: {
     </div>
   ) : null;
 
-  const stats =
-    typeof shownPosts !== "undefined" || typeof shownSiders !== "undefined" || (sharedSets && sharedSets.length) ? (
+  
+    const stats = (() => {
+    const isPublic = displaySide === "public";
+    const sharedCount = Array.isArray(sharedSets) ? sharedSets.length : 0;
+    const hasPublicCounts = isPublic && (typeof shownFollowers !== "undefined" || typeof shownFollowing !== "undefined");
+    const hasCore =
+      typeof shownPosts !== "undefined" ||
+      typeof shownSiders !== "undefined" ||
+      sharedCount > 0 ||
+      hasPublicCounts;
+
+    if (!hasCore) return null;
+
+    return (
       <div className="mt-6 flex gap-8 pb-6 border-b border-gray-100">
         <Stat label="Posts" value={typeof shownPosts === "undefined" ? "—" : shownPosts} />
-        {showAccessStat ? (
+        {isPublic ? (
+          <>
+            <Stat label="Followers" value={typeof shownFollowers === "undefined" ? "—" : shownFollowers} subtle />
+            <Stat label="Following" value={typeof shownFollowing === "undefined" ? "—" : shownFollowing} subtle />
+          </>
+        ) : showAccessStat ? (
           <Stat label="Private Set" value={typeof shownSiders === "string" ? shownSiders : "Close Vault"} subtle />
         ) : (
           <Stat label="Connected" value={typeof shownSiders === "undefined" ? "—" : shownSiders} />
         )}
-        {Array.isArray(sharedSets) && sharedSets.length ? <Stat label="Shared" value={sharedSets.length} subtle /> : null}
+        {!isPublic && sharedCount > 0 ? <Stat label="Shared Circles" value={sharedCount} subtle /> : null}
       </div>
-    ) : null;
-
-  const pulseBlock =
-    pulse && (String(pulse.label || "").trim() || String(pulse.text || "").trim()) ? (
-      <div className="mt-6">
-        <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-2">
-          {displaySide === "public" ? "Recent Town Hall" : "Recent Pulse"}
-        </div>
-        <div className={cn("p-4 rounded-2xl bg-gray-50 border border-gray-200")}>
-          <div className="text-[10px] font-extrabold text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-            <Mic size={10} /> {String(pulse.label || "").trim() || (displaySide === "public" ? "Town Hall" : "Pulse")}
-          </div>
-          <div className="text-sm font-extrabold text-gray-900">
-            {String(pulse.text || "").trim() ? `“${String(pulse.text || "").trim()}”` : ""}
-          </div>
-        </div>
-      </div>
-    ) : null;
-
+    );
+  })();
   const sharedSetsBlock =
     Array.isArray(sharedSets) && sharedSets.length ? (
       <div className="mt-6">
-        <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-2">Shared Sets</div>
+        <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-2">Shared Circles</div>
         <div className="flex flex-wrap gap-2">
           {sharedSets.slice(0, 8).map((s) => (
             <span key={s} className="px-3 py-1 rounded-full text-[11px] font-extrabold bg-gray-50 text-gray-700 border border-gray-200 truncate max-w-[220px]">
@@ -287,7 +297,10 @@ export function ProfileV2Header(props: {
     </div>
   );
 
-  if (variant === "clean") {
+    // sd_914_pulseblock_define: keep compile green; pulse UI can be reintroduced later.
+  const pulseBlock = null;
+
+if (variant === "clean") {
     return (
       <div className="w-full">
         <div className="rounded-3xl border border-gray-200 bg-white shadow-sm p-5 sm:p-6">
@@ -326,7 +339,6 @@ export function ProfileV2Header(props: {
           {actions ? <div className="mt-5">{actions}</div> : null}
 
           {pulseBlock}
-          {sharedSetsBlock}
         </div>
       </div>
     );

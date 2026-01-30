@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
-import { MoreHorizontal, ArrowLeft, Share2, ChevronRight, X } from "lucide-react";
+import { MoreHorizontal, ArrowLeft, Share2, ChevronRight, ChevronDown, X, List, Grid, Play, Lock } from "lucide-react";
 
 import { SIDES, type SideId } from "@/src/lib/sides";
 import {
@@ -24,6 +24,14 @@ import { useReturnScrollRestore } from "@/src/hooks/returnScroll";
 import { ProfileActionsSheet } from "@/src/components/ProfileActionsSheet";
 import { toast } from "@/src/lib/toast";
 
+
+function Checkmark() {
+  return (
+    <div className="w-6 h-6 rounded-full bg-black text-white flex items-center justify-center">
+      <span className="text-[12px] font-black">✓</span>
+    </div>
+  );
+}
 
 export default function UserProfilePage() {
   const params = useParams() as { username?: string };
@@ -80,6 +88,12 @@ export default function UserProfilePage() {
   const [accessReqSentFor, setAccessReqSentFor] = useState<SideId | null>(null);
 
   const [aboutOpen, setAboutOpen] = useState(false);
+
+  // sd_912_profile_tabs: Posts vs Media
+  const [contentTab, setContentTab] = useState<"posts" | "media">("posts");
+
+  // sd_912_room_pill_sheet: switch identity side via a compact pill
+  const [roomSheetOpen, setRoomSheetOpen] = useState(false);
 
 
   useEffect(() => {
@@ -493,7 +507,7 @@ const tid = String(j?.thread?.id || "").trim();
     <div className="min-h-screen bg-white">
       <div className="sticky top-0 z-[80] bg-white/90 backdrop-blur border-b border-gray-100">
         <div className="max-w-xl mx-auto px-4 py-3 flex items-center justify-between">
-          <button hidden
+          <button
             type="button"
             onClick={() => { try { router.back(); } catch {} }}
             className="w-11 h-11 rounded-full hover:bg-gray-100 inline-flex items-center justify-center transition-colors"
@@ -502,10 +516,15 @@ const tid = String(j?.thread?.id || "").trim();
             <ArrowLeft size={20} className="text-gray-700" />
           </button>
 
-          <div className="flex items-center gap-1.5 bg-gray-100/60 px-3 py-1 rounded-full border border-gray-200">
+                    <button
+            type="button"
+            onClick={() => setRoomSheetOpen(true)}
+            className="flex items-center gap-2 bg-gray-100/70 hover:bg-gray-100 px-3 py-1.5 rounded-full border border-gray-200 transition-colors"
+            aria-label="Switch profile room"
+          >
             <div
               className={
-                "w-1.5 h-1.5 rounded-full " +
+                "w-2 h-2 rounded-full " +
                 (displaySide === "public"
                   ? "bg-blue-600"
                   : displaySide === "friends"
@@ -516,12 +535,14 @@ const tid = String(j?.thread?.id || "").trim();
               }
               aria-hidden="true"
             />
-            <span className="text-[10px] font-black uppercase tracking-widest text-gray-600">
-              {(SIDES[displaySide]?.label || displaySide)} Mode
+            <span className="text-[11px] font-black uppercase tracking-widest text-gray-700">
+              {SIDES[displaySide]?.label || displaySide}
             </span>
-          </div>
+            <ChevronDown size={14} className="text-gray-400" />
+            {/* sd_912_room_pill */}
+          </button>
 
-          <button hidden
+          <button
             type="button"
             onClick={() => void shareProfile()}
             className="w-11 h-11 rounded-full hover:bg-gray-100 inline-flex items-center justify-center transition-colors"
@@ -530,6 +551,77 @@ const tid = String(j?.thread?.id || "").trim();
             <Share2 size={18} className="text-gray-700" />
           </button>
         </div>
+
+      {roomSheetOpen ? (
+        <div className="fixed inset-0 z-[95] flex items-end justify-center md:items-center">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+            onClick={() => setRoomSheetOpen(false)}
+            aria-label="Close"
+          />
+          <div className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-4">
+            <div className="flex items-center justify-between mb-3 px-1">
+              <div className="text-xs font-black text-gray-500 uppercase tracking-widest">View Room</div>
+              <button
+                type="button"
+                onClick={() => setRoomSheetOpen(false)}
+                className="p-2 rounded-full hover:bg-gray-100"
+                aria-label="Close"
+              >
+                <X size={18} className="text-gray-500" />
+              </button>
+            </div>
+
+            <div className="space-y-1">
+              {(["public","friends","close","work"] as SideId[]).map((s) => {
+                const allowed = s === "public" ? true : (Array.isArray(allowedSides) ? allowedSides.includes(s) : false);
+                const active = String(displaySide) === String(s);
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => {
+                      setRoomSheetOpen(false);
+                      if (allowed) setActiveIdentitySide(s);
+                      else setLockedSide(s);
+                    }}
+                    className={
+                      "w-full flex items-center justify-between px-3 py-3 rounded-2xl border transition-colors " +
+                      (active ? "bg-gray-50 border-gray-200" : "bg-white border-gray-100 hover:bg-gray-50")
+                    }
+                    aria-label={allowed ? `Switch to ${SIDES[s]?.label || s}` : `Locked: ${SIDES[s]?.label || s}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={
+                        "w-10 h-10 rounded-full flex items-center justify-center border " +
+                        (allowed ? "bg-black text-white border-black" : "bg-gray-100 text-gray-400 border-gray-200")
+                      }>
+                        {allowed ? (
+                          <span className="text-[10px] font-black">{(SIDES[s]?.label || s).slice(0,1)}</span>
+                        ) : (
+                          <Lock size={16} />
+                        )}
+                      </div>
+                      <div className="text-left">
+                        <div className={"text-sm font-black capitalize " + (allowed ? "text-gray-900" : "text-gray-400")}>
+                          {SIDES[s]?.label || s}
+                        </div>
+                        {!allowed ? <div className="text-[11px] font-semibold text-gray-400">Locked</div> : null}
+                      </div>
+                    </div>
+
+                    {active ? <Checkmark /> : null}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* sd_912_room_sheet_overlay */}
+          </div>
+        </div>
+      ) : null}
+
       </div>
       <div className="max-w-xl mx-auto px-4 py-6">
         {loading ? (
@@ -545,13 +637,7 @@ const tid = String(j?.thread?.id || "").trim();
           </div>
         ) : (
           <>
-            <PrismSideTabs
-              active={displaySide}
-              allowedSides={allowedSides}
-              onPick={(side) => setActiveIdentitySide(side)}
-              onLockedPick={(side) => setLockedSide(side)}
-            />
-
+            {/* sd_912_remove_prism_side_tabs */}
 {!isOwner && lockedSide ? (
               <div className="fixed inset-0 z-[97] flex items-end justify-center md:items-center">
                 <button hidden
@@ -696,7 +782,7 @@ isOwner={isOwner}
               />
 
 
-              {/* sd_814_about_sheet */}
+              {/* sd_814_about_sheet (hidden by sd_912) */}
               <button
                 type="button"
                 onClick={() => setAboutOpen(true)}
@@ -911,8 +997,40 @@ isOwner={isOwner}
               ) : null}
 
 
-              {/* Posts */}
+              
+              {/* sd_912_profile_content_tabs */}
+              <div className="mt-6 sticky top-[52px] z-[70] bg-white/90 backdrop-blur border-b border-gray-100 rounded-2xl overflow-hidden">
+                <div className="flex">
+                  <button
+                    type="button"
+                    onClick={() => setContentTab("posts")}
+                    className={
+                      "flex-1 py-3 flex items-center justify-center gap-2 text-[12px] font-black transition-colors " +
+                      (contentTab === "posts" ? "text-gray-900 bg-gray-50" : "text-gray-400 hover:text-gray-600")
+                    }
+                    aria-label="Posts"
+                  >
+                    <List size={16} /> Posts
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setContentTab("media")}
+                    className={
+                      "flex-1 py-3 flex items-center justify-center gap-2 text-[12px] font-black transition-colors " +
+                      (contentTab === "media" ? "text-gray-900 bg-gray-50" : "text-gray-400 hover:text-gray-600")
+                    }
+                    aria-label="Media"
+                  >
+                    <Grid size={16} /> Media
+                  </button>
+                </div>
+              </div>
+
+{/* Posts */}
               <div className="mt-4">
+
+                  {contentTab === "posts" ? (
+                    <div className="bg-white">
                 <div className="bg-white">
                   {posts.length ? (
                     <>
@@ -941,7 +1059,61 @@ isOwner={isOwner}
                     </div>
                   )}
                 </div>
-              </div>
+              
+                    </div>
+                  ) : (
+                    <div className="mt-4">
+                      <div className="grid grid-cols-3 gap-1 rounded-2xl overflow-hidden border border-gray-100 bg-gray-50">
+                        {(() => {
+                          const items: Array<{ postId: string; media: any }> = [];
+                          for (const p of posts as any[]) {
+                            const mm = Array.isArray((p as any)?.media) ? (p as any).media : [];
+                            for (const m of mm) {
+                              const url = String((m as any)?.url || "").trim();
+                              if (!url) continue;
+                              items.push({ postId: String((p as any)?.id || ""), media: m });
+                            }
+                          }
+                          return items;
+                        })().slice(0, 120).map((it, idx) => (
+                          <button
+                            key={it.postId + ":" + idx}
+                            type="button"
+                            onClick={() => {
+                              try { router.push(`/siddes-post/${encodeURIComponent(String(it.postId))}?from=profile`); } catch {}
+                            }}
+                            className="relative aspect-square bg-gray-100"
+                            aria-label="Open post"
+                          >
+                            {String((it.media as any)?.kind || "") === "video" ? (
+                              <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
+                                <Play size={18} className="text-gray-700" />
+                              </div>
+                            ) : (
+                              <img src={String((it.media as any)?.url)} alt="" className="absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* sd_912_media_grid */}
+                      {(() => {
+                        let count = 0;
+                        for (const p of posts as any[]) {
+                          const mm = Array.isArray((p as any)?.media) ? (p as any).media : [];
+                          count += mm.length;
+                        }
+                        return count;
+                      })() === 0 ? (
+                        <div className="py-14 text-center px-6 rounded-3xl border border-gray-200 bg-white mt-4">
+                          <div className="text-sm font-extrabold text-gray-900">No media visible</div>
+                          <div className="text-xs text-gray-500 mt-1">Nothing with photos or videos in this Room.</div>
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
+
+                </div>
 
             </div>
 
