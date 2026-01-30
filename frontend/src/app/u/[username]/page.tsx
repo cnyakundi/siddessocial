@@ -245,7 +245,7 @@ export default function UserProfilePage() {
         const nextKey = (nextSide || "public") as any;
         if (String(beforeKey) !== String(nextKey)) {
           const nextLabel = nextSide ? (SIDES[nextSide]?.label || nextSide) : "Public";
-          toast.undo(`You show them: ${nextLabel}`, () => {
+          toast.undo(`Sharing as: ${nextLabel}`, () => {
             void doPickSide((before || "public") as any, { silent: true });
             toast.success("Undone");
           });
@@ -656,21 +656,7 @@ isOwner={isOwner}
                       >
                         <MoreHorizontal size={18} />
 
-              {/* sd_792_public_follow_stats_row */}
-              {viewSide === "public" ? (
-                <div className="mt-4 flex gap-8 justify-center pb-4 border-b border-gray-100">
-                  <div className="flex flex-col items-center">
-                    <span className="text-lg font-black text-gray-900 leading-none tabular-nums">{publicFollowers ?? "—"}</span>
-                    <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-1">Followers</span>
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <span className="text-lg font-black text-gray-900 leading-none tabular-nums">{publicFollowing ?? "—"}</span>
-                    <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-1">Following</span>
-                  </div>
-                </div>
-              ) : null}
-
-                      </button>
+              </button>
                     </div>
                   ) : (
                     <div className="flex gap-3">
@@ -709,28 +695,6 @@ isOwner={isOwner}
                 }
               />
 
-
-              {/* sd_816_pinned_identity_card */}
-              <div className="mt-3 rounded-3xl border border-gray-200 bg-white p-4">
-                <div className="flex items-center justify-between">
-                  <div className="text-[10px] font-extrabold uppercase tracking-wider text-gray-500">Pinned</div>
-                  <div className="text-[10px] font-bold text-gray-400">{SIDES[displaySide]?.label || displaySide}</div>
-                </div>
-
-                <div className="mt-2 text-sm font-semibold text-gray-900">
-                  {String((facet as any)?.headline || "").trim()
-                    ? String((facet as any)?.headline || "").trim()
-                    : (SIDES[displaySide]?.privacyHint
-                        ? `Audience: ${SIDES[displaySide]?.privacyHint}`
-                        : "This identity is for this Side.")}
-                </div>
-
-                {String((facet as any)?.bio || "").trim() ? (
-                  <div className="mt-1 text-xs text-gray-600">
-                    {String((facet as any)?.bio || "").trim()}
-                  </div>
-                ) : null}
-              </div>
 
               {/* sd_814_about_sheet */}
               <button
@@ -811,36 +775,12 @@ isOwner={isOwner}
                       </div>
                     </div>
 
-                    <div className="mt-4 grid grid-cols-2 gap-3">
-                      <div className="p-3 rounded-2xl bg-gray-50 border border-gray-200">
-                        <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">Posts</div>
-                        <div className="text-lg font-black text-gray-900 tabular-nums mt-1">{postsCount ?? "—"}</div>
-                      </div>
-                      <div className="p-3 rounded-2xl bg-gray-50 border border-gray-200">
-                        <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">
-                          {viewSide === "close" || typeof (data as any)?.siders === "string" ? "Private Set" : "Siders"}
-                        </div>
-                        <div className="text-lg font-black text-gray-900 tabular-nums mt-1">
-                          {typeof (data as any)?.siders === "string" ? String((data as any)?.siders) : ((data as any)?.siders ?? "—")}
-                        </div>
-                      </div>
+                                        <div className="mt-4 p-3 rounded-2xl bg-gray-50 border border-gray-200">
+                      <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">Posts</div>
+                      <div className="text-lg font-black text-gray-900 tabular-nums mt-1">{postsCount ?? "—"}</div>
                     </div>
 
-                    {!isOwner ? (
-                      <div className="mt-4 p-4 rounded-2xl bg-gray-50 border border-gray-200 text-xs text-gray-700">
-                        <div>
-                          They show you: <span className="font-black text-gray-900">{SIDES[viewSide]?.label || viewSide}</span>
-                        </div>
-                        <div className="mt-1">
-                          You show them:{" "}
-                          <span className="font-black text-gray-900">
-                            {viewerSidedAs ? (SIDES[viewerSidedAs]?.label || viewerSidedAs) : "Public"}
-                          </span>
-                        </div>
-                      </div>
-                    ) : null}
-
-                    <button
+<button
                       type="button"
                       onClick={() => setAboutOpen(false)}
                       className="w-full mt-5 py-3 rounded-xl bg-gray-900 text-white font-extrabold text-sm shadow-md active:scale-95 transition-all"
@@ -940,27 +880,13 @@ isOwner={isOwner}
                       </div>
                       <div className="p-3 rounded-2xl bg-gray-50 border border-gray-200">
                         <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">
-                          {viewSide === "close" || typeof (data as any)?.siders === "string" ? "Private Set" : "Siders"}
+                          {viewSide === "close" || typeof (data as any)?.siders === "string" ? "Private Set" : "Connections"}
                         </div>
                         <div className="text-lg font-black text-gray-900 tabular-nums mt-1">
                           {typeof (data as any)?.siders === "string" ? String((data as any)?.siders) : ((data as any)?.siders ?? "—")}
                         </div>
                       </div>
                     </div>
-
-                    {!isOwner ? (
-                      <div className="mt-4 p-4 rounded-2xl bg-gray-50 border border-gray-200 text-xs text-gray-700">
-                        <div>
-                          They show you: <span className="font-black text-gray-900">{SIDES[viewSide]?.label || viewSide}</span>
-                        </div>
-                        <div className="mt-1">
-                          You show them:{" "}
-                          <span className="font-black text-gray-900">
-                            {viewerSidedAs ? (SIDES[viewerSidedAs]?.label || viewerSidedAs) : "Public"}
-                          </span>
-                        </div>
-                      </div>
-                    ) : null}
 
                     {String((facet as any)?.pulse?.text || "").trim() ? (
                       <div className="mt-4 p-4 rounded-2xl bg-white border border-gray-200">
