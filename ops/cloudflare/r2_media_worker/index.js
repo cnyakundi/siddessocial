@@ -91,26 +91,69 @@ async function verifyToken(secret, key, token) {
   return { ok: true, mode };
 }
 
+// sd_792_worker_hardening: security + method gating + safe content types
+function applySecurityHeaders(headers) {
+  try {
+    headers.set("x-content-type-options", "nosniff");
+    headers.set("referrer-policy", "no-referrer");
+    headers.set("cross-origin-resource-policy", "same-origin");
+    headers.set("x-robots-tag", "noindex, nofollow");
+  } catch {}
+  return headers;
+}
+
+function clampContentType(headers) {
+  try {
+    const raw = String(headers.get("content-type") || "");
+    const base = raw.split(";")[0].trim().toLowerCase();
+    const isSvg = base === "image/svg+xml" || base.endsWith("+xml") && base.includes("svg");
+    const safe = (base.startsWith("image/") || base.startsWith("video/")) && !isSvg;
+    if (!safe) {
+      headers.set("content-type", "application/octet-stream");
+      if (!headers.has("content-disposition")) headers.set("content-disposition", "attachment");
+    }
+  } catch {}
+}
+
+function err(body, status, cacheControl, extra) {
+  const headers = new Headers(extra || {});
+  applySecurityHeaders(headers);
+  headers.set("content-type", "text/plain; charset=utf-8");
+  headers.set("cache-control", cacheControl || "private, no-store");
+  return new Response(body, { status, headers });
+}
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (!url.pathname.startsWith("/m/")) return new Response("not_found", { status: 404 });
+    if (!url.pathname.startsWith("/m/")) return err("not_found", 404, "public, max-age=60");
+
+    const m = String(request.method || "GET").toUpperCase();
+    if (m !== "GET" && m !== "HEAD") {
+      return err("method_not_allowed", 405, "private, no-store", { allow: "GET, HEAD" });
+    }
 
     const secret = env.MEDIA_TOKEN_SECRET;
-    if (!secret) return new Response("worker_not_configured", { status: 503 });
+    if (!secret) return err("worker_not_configured", 503, "private, no-store");
 
     const key = decodeURIComponent(url.pathname.slice(3)).replace(/^\/+/, "");
-    if (!key) return new Response("bad_request", { status: 400 });
+    if (!key) return err("bad_request", 400, "private, no-store");
+    // Restrict key namespace (defense-in-depth)
+    if (!key.startsWith("u/")) return err("not_found", 404, "private, no-store");
+    // Reject path tricks / weird bytes
+    if (key.includes("..") || !/^[A-Za-z0-9_./~\-]+$/.test(key)) return err("bad_request", 400, "private, no-store");
 
     const token = url.searchParams.get("t") || "";
-    if (!token) return new Response("restricted", { status: 401 });
+    if (!token) return err("restricted", 401, "private, no-store");
 
     const v = await verifyToken(secret, key, token);
-    if (!v.ok) return new Response(v.expired ? "expired" : "forbidden", { status: 401 });
+    if (!v.ok) return err(v.expired ? "expired" : "forbidden", 401, "private, no-store");
 
     const range = parseRange(request.headers.get("range"));
     const obj = await env.MEDIA_BUCKET.get(key, range ? { range } : undefined);
-    if (!obj || !obj.body) return new Response("not_found", { status: 404 });
+    if (!obj || !obj.body) {
+      const cc = v.mode === "pub" ? "public, max-age=60" : "private, no-store";
+      return err("not_found", 404, cc);
+    }
 
     const headers = new Headers();
     try {
@@ -119,8 +162,10 @@ export default {
 
     headers.set("etag", obj.httpEtag);
     headers.set("accept-ranges", "bytes");
-
-    // Cache rules:
+    headers.set("vary", "range");
+    applySecurityHeaders(headers);
+    clampContentType(headers);
+// Cache rules:
     // - pub: safe to cache hard (token is stable, URL is stable)
     // - priv: never cache
     if (v.mode === "pub") {
