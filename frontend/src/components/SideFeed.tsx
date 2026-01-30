@@ -1070,6 +1070,20 @@ export function SideFeed() {
 
   return (
     <div className="w-full min-h-full bg-white">
+      {process.env.NODE_ENV !== "production" ? (
+        <div className="px-3 pt-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black text-white text-[10px] font-extrabold tracking-widest">
+            <span>DEV</span>
+            <span className="opacity-70">•</span>
+            <span>FEED_V2</span>
+            <span className="opacity-70">•</span>
+            <span>feedv2_20260130_191838</span>
+          </div>
+        </div>
+      ) : null}
+
+      // sd_910_feed_v2_dev_badge
+
             {/* Sets-as-filter (Step 2): CircleFilterBar for private sides */}
 {side !== "public" ? (
   <div className="px-3 pt-3">
