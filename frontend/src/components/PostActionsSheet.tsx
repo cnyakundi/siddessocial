@@ -68,14 +68,16 @@ export function PostActionsSheet({
 
   if (!open || !post || !mounted) return null;
 
-  const relUrl = `/siddes-post/${post.id}`;
-  const absUrl =
-    typeof window !== "undefined" ? `${window.location.origin}${relUrl}` : relUrl;
-
   const isPublic = side === "public";
 
+  // sd_906_shareable_public: only some Public posts are externally shareable (/p/[id]).
+  // Public posts scoped to a Group (post.setId) must be treated as INTERNAL (/siddes-post/[id]).
+  const shareablePublic = isPublic && (!post.setId || String(post.setId).startsWith("b_"));
 
-  const doOpen = () => {
+  const relUrl = shareablePublic ? `/p/${post.id}` : `/siddes-post/${post.id}`;
+  const absUrl =
+    typeof window !== "undefined" ? `${window.location.origin}${relUrl}` : relUrl;
+const doOpen = () => {
     onOpen();
     onClose();
   };
@@ -104,9 +106,11 @@ export function PostActionsSheet({
   const doCopyLink = async () => {
     const ok = await copyText(absUrl);
     const msg = ok
-      ? isPublic
+      ? shareablePublic
         ? "Link copied."
-        : "Internal link copied (requires access)."
+        : isPublic
+          ? "Internal link copied (Set requires access)."
+          : "Internal link copied (requires access)."
       : "Could not copy link.";
     toast[ok ? "success" : "error"](msg);
     onClose();
@@ -125,7 +129,7 @@ export function PostActionsSheet({
   };
 
   const doShare = async () => {
-    if (!isPublic) {
+    if (!shareablePublic) {
       await doCopyLink();
       return;
     }
@@ -345,8 +349,8 @@ const doBlock = async () => {
               <Link2 size={18} />
             </div>
             <div>
-              <div className="font-bold text-gray-900">{isPublic ? "Copy link" : "Copy link"}</div>
-              <div className="text-xs text-gray-500">{isPublic ? "Share anywhere" : "Only people with access can open"}</div>
+              <div className="font-bold text-gray-900">{shareablePublic ? "Copy link" : "Copy internal link"}</div>
+              <div className="text-xs text-gray-500">{shareablePublic ? "Share anywhere" : (isPublic ? "Set requires access" : "Only people with access can open")}</div>
             </div>
           </button>
 
@@ -363,7 +367,7 @@ const doBlock = async () => {
               <div className="text-xs text-gray-500">Copy the post body</div>
             </div>
           </button>
-          {isPublic ? (
+          {shareablePublic ? (
 
 
           <button

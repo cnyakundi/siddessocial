@@ -90,6 +90,7 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 
 ## NEXT overlay
 
+- **sd_906_feed_v2_postactions_shareable_public:** Feed V2: PostActionsSheet share/copy uses `/p/[id]` only for shareable Public posts; Public Group posts copy internal link.
 - **sd_926:** Post detail replies: remove manual Refresh, add truthful loading, make Reply a pill + hide Reply on nested replies; remove “safely” wording.
 - **sd_924_post_detail_no_nested_reply_action:** Post detail: hide Reply action on nested replies (backend max-depth truth; prevents parent_too_deep UI lie).
 
