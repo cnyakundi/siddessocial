@@ -192,7 +192,7 @@ ABOUT_BLOCK = r'''
                       </div>
                       <div className="p-3 rounded-2xl bg-gray-50 border border-gray-200">
                         <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">
-                          {viewSide === "close" || typeof (data as any)?.siders === "string" ? "Private Set" : "Siders"}
+                          {viewSide === "close" || typeof (data as any)?.siders === "string" ? "Private Circle" : "Siders"}
                         </div>
                         <div className="text-lg font-black text-gray-900 tabular-nums mt-1">
                           {typeof (data as any)?.siders === "string" ? String((data as any)?.siders) : ((data as any)?.siders ?? "—")}
@@ -277,10 +277,10 @@ h, n = re.subn(meta_pat, meta_rep, h, flags=re.DOTALL, count=1)
 if n == 0:
     print("⚠️  WARN: did not find the meta row block in ProfileV2Header (maybe already changed).")
 
-# Remove Shared Sets and Pulse sections from the clean header (they live in About sheet now).
-# Shared Sets
+# Remove Shared Circles and Pulse sections from the clean header (they live in About sheet now).
+# Shared Circles
 h = re.sub(
-    r'\n\s*\{\s*/\*\s*Shared Sets\s*\*/\s*\}\s*\n\s*\{sharedSets\s*&&\s*sharedSets\.length\s*>\s*0\s*\?\s*\(.*?\)\s*:\s*null\}\s*',
+    r'\n\s*\{\s*/\*\s*Shared Circles\s*\*/\s*\}\s*\n\s*\{sharedSets\s*&&\s*sharedSets\.length\s*>\s*0\s*\?\s*\(.*?\)\s*:\s*null\}\s*',
     "\n",
     h,
     flags=re.DOTALL,

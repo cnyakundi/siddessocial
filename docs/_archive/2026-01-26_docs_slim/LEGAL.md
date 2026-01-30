@@ -10,7 +10,7 @@ This workstream ships **minimum public-facing legal pages** required for a real-
 ## IMPORTANT
 These documents are **templates**. Before a public/global launch, you must:
 
-1) Set your **operator name** and a real **support contact** (email + in-app path).
+1) Circle your **operator name** and a real **support contact** (email + in-app path).
 2) Confirm your **jurisdiction** and dispute language.
 3) Confirm your **data retention** policy and whether you run analytics.
 4) Confirm your **child safety** policy and minimum age.

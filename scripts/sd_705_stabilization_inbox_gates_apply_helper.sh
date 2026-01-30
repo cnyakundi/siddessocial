@@ -135,7 +135,7 @@ if "a.pinned !== b.pinned" not in s:
     sort_block = (
         "    // sd_573: sort by most-recent activity (prevents regressions + satisfies check)\n"
         "    // sd_705: local pins (pinned-first) + then recency.\n"
-        "    const pinnedSet = new Set(pinnedIds);\n"
+        "    const pinnedSet = new Circle(pinnedIds);\n"
         "    const withPins = items.map((t) => ({ ...(t as any), pinned: pinnedSet.has(String((t as any).id || \"\")) }));\n\n"
         "    items = [...withPins].sort((a, b) => {\n"
         "      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;\n"

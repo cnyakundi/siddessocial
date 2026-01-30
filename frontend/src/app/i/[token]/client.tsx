@@ -91,7 +91,7 @@ export default function InviteLinkClient({ token, initial }: { token: string; in
         return;
       }
       toast.success("Joined");
-      router.push(`/siddes-sets/${encodeURIComponent(String(d.setId))}`);
+      router.push(`/siddes-circles/${encodeURIComponent(String(d.setId))}`);
     } catch (e: any) {
       setErr(e?.message || "Join failed.");
     } finally {
@@ -101,7 +101,7 @@ export default function InviteLinkClient({ token, initial }: { token: string; in
 
   const item = data?.item || null;
   const valid = Boolean(data?.valid);
-  const label = typeof item?.setLabel === "string" && item.setLabel ? item.setLabel : "this Set";
+  const label = typeof item?.setLabel === "string" && item.setLabel ? item.setLabel : "this Circle";
   const ownerHandle = item?.owner?.handle ? String(item.owner.handle) : null;
 
   return (

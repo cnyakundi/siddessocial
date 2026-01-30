@@ -2,7 +2,7 @@
 
 Why this exists:
 - When Django is running but migrations haven't been applied yet, we still want
-  the `/api/sets/*` endpoints to behave in a default-safe way without throwing
+  the `/api/circles/*` endpoints to behave in a default-safe way without throwing
   500s.
 
 This store matches the Next.js stub contract (items/item/events shapes).

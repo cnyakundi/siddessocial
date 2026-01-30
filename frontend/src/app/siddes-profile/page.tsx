@@ -3,7 +3,7 @@
 import Link from "next/link";
 import React, { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Briefcase, ChevronRight, Globe, Star, Users } from "lucide-react";
+import { Briefcase, ChevronRight, Globe, Heart, Users } from "lucide-react";
 
 import { useSide } from "@/src/components/SideProvider";
 import { fetchMe, type MeResponse } from "@/src/lib/authMe";
@@ -18,7 +18,7 @@ function cn(...parts: Array<string | undefined | false | null>) {
 const SIDE_ICON: Record<SideId, React.ComponentType<{ className?: string }>> = {
   public: Globe,
   friends: Users,
-  close: Star,
+  close: Heart,
   work: Briefcase,
 };
 

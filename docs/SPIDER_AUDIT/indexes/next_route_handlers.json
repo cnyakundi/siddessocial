@@ -576,16 +576,16 @@
     ]
   },
   {
-    "route": "/api/sets",
-    "file": "frontend/src/app/api/sets/route.ts",
+    "route": "/api/circles",
+    "file": "frontend/src/app/api/circles/route.ts",
     "methods": [
       "GET",
       "POST"
     ]
   },
   {
-    "route": "/api/sets/[id]",
-    "file": "frontend/src/app/api/sets/[id]/route.ts",
+    "route": "/api/circles/[id]",
+    "file": "frontend/src/app/api/circles/[id]/route.ts",
     "methods": [
       "DELETE",
       "GET",
@@ -593,8 +593,8 @@
     ]
   },
   {
-    "route": "/api/sets/[id]/events",
-    "file": "frontend/src/app/api/sets/[id]/events/route.ts",
+    "route": "/api/circles/[id]/events",
+    "file": "frontend/src/app/api/circles/[id]/events/route.ts",
     "methods": [
       "GET"
     ]

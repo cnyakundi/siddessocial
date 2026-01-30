@@ -1,6 +1,6 @@
 "use client";
 
-import type { SuggestedSet } from "@/src/lib/setSuggestions";
+import type { SuggestedCircle } from "@/src/lib/circleSuggestions";
 import type { SideId } from "@/src/lib/sides";
 
 export const MAX_MEMBERS_PER_SUGGESTION = 24;
@@ -71,7 +71,7 @@ function stableId(prefix: string, key: string): string {
   return `${prefix}_${hex}`;
 }
 
-function coerceSide(side: SideId | undefined, color: SuggestedSet["color"]): SideId {
+function coerceSide(side: SideId | undefined, color: SuggestedCircle["color"]): SideId {
   if (side) return side;
   if (color === "slate") return "work";
   if (color === "rose") return "close";
@@ -195,9 +195,9 @@ function bestClusterToken(
 
 /**
  * Local-first suggestion engine (on-device).
- * Returns review-first Suggested Sets that can be accepted into real Sets.
+ * Returns review-first Suggested Circles that can be accepted into real Sets.
  */
-export function suggestSetsFromMatches(matches: ContactMatch[]): SuggestedSet[] {
+export function suggestSetsFromMatches(matches: ContactMatch[]): SuggestedCircle[] {
   const m = Array.isArray(matches) ? matches : [];
   const cleaned = m
     .map((x) => ({
@@ -215,7 +215,7 @@ export function suggestSetsFromMatches(matches: ContactMatch[]): SuggestedSet[] 
   const uniq = Array.from(uniqueByHandle.values());
   if (uniq.length < 2) return [];
 
-  const out: SuggestedSet[] = [];
+  const out: SuggestedCircle[] = [];
   const used = new Set<string>();
 
   // 1) Work clusters: group by work-ish email domain
@@ -370,7 +370,7 @@ export function suggestSetsFromMatches(matches: ContactMatch[]): SuggestedSet[] 
       if (members.length >= Math.max(8, Math.floor(remainingPeople.length * 0.7))) continue;
 
       const token = bestClusterToken(idxs, remainingPeople as any, globalFreq);
-      const label = token ? `${titleCase(token)} Crew` : `Friends Group ${k + 1}`;
+      const label = token ? `${titleCase(token)} Crew` : `Friends Circle ${k + 1}`;
 
       const id = stableId("local_cluster", `${token || "friends"}:${members.slice().sort().join(",")}`);
 

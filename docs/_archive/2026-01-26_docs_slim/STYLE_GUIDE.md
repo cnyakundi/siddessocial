@@ -3,7 +3,7 @@
 
 ## Naming
 - Sides: public/friends/close/work
-- Sets: viewer-private labels (Friends)
+- Circles: viewer-private labels (Friends)
 - Signals = Likes + Echoes + Replies
 - Echo = repost action
 
@@ -19,7 +19,7 @@
 
 ## Naming (UI)
 - Do not use: Side / Siders / Circles
-- Use: Side / Sided / Unside / Sets / Topics
+- Use: Side / Sided / Unside / Circles / Topics
 
 ---
 

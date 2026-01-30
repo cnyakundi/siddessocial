@@ -1,7 +1,7 @@
 "use client";
 
 import type { SideId } from "@/src/lib/sides";
-import type { SetDef } from "@/src/lib/sets";
+import type { CircleDef } from "@/src/lib/circles";
 
 export type SuggestionKind = "side" | "set" | "urgent";
 
@@ -70,12 +70,12 @@ function scoreUrgent(text: string): { confidence: number; reason: string } | nul
   return { confidence, reason: "Urgency cues" };
 }
 
-function scoreSet(text: string, sets: SetDef[]): { setId: string; label: string; confidence: number; reason: string } | null {
+function scoreSet(text: string, sets: CircleDef[]): { setId: string; label: string; confidence: number; reason: string } | null {
   const t = norm(text);
   if (!t) return null;
 
   // Try keyword match against set labels (token match, >=3 chars).
-  let best: { s: SetDef; score: number } | null = null;
+  let best: { s: CircleDef; score: number } | null = null;
   for (const s of sets || []) {
     const label = norm(String((s as any)?.label || ""));
     if (!label) continue;
@@ -96,11 +96,11 @@ function scoreSet(text: string, sets: SetDef[]): { setId: string; label: string;
 export function computeComposeSuggestions(args: {
   text: string;
   currentSide: SideId;
-  sets: SetDef[];
-  selectedSetId?: string | null;
+  sets: CircleDef[];
+  selectedCircleId?: string | null;
   urgent?: boolean;
 }): ComposeSuggestion[] {
-  const { text, currentSide, sets, selectedSetId, urgent } = args;
+  const { text, currentSide, sets, selectedCircleId, urgent } = args;
   const t = String(text || "").trim();
   if (!t) return [];
 
@@ -120,7 +120,7 @@ export function computeComposeSuggestions(args: {
   const effSide: SideId = (sideScore?.side ?? currentSide) as SideId;
   if (effSide !== "public") {
     const setScore = scoreSet(t, sets || []);
-    if (setScore && setScore.confidence >= 0.70 && setScore.setId !== selectedSetId) {
+    if (setScore && setScore.confidence >= 0.70 && setScore.setId !== selectedCircleId) {
       out.push({
         kind: "set",
         setId: setScore.setId,

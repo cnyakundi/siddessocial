@@ -30,7 +30,7 @@ Each issue includes:
 **Required behavior for launch:**
 - Composer can attach images (upload) and post them
 - Feed + Post detail render the attachments
-- Private-side media can be viewed by allowed viewers (Side + Set membership), but cannot leak publicly
+- Private-side media can be viewed by allowed viewers (Side + Circle membership), but cannot leak publicly
 - `/m/*` serves media safely
 
 **Fix available:** `sd_384_r6_media_pipeline_go_live_apply_helper.sh`  

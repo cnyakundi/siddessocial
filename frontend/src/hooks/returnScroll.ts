@@ -38,7 +38,7 @@ export function saveReturnScroll(anchorPostId?: string) {
     // Only capture list pages where restoring makes sense.
     const ok =
       path.startsWith("/siddes-feed") ||
-      path.startsWith("/siddes-sets") ||
+      path.startsWith("/siddes-circles") ||
       path.startsWith("/siddes-inbox") ||
       path.startsWith("/siddes-search") ||
       path.startsWith("/u/") ||

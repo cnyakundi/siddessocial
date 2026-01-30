@@ -41,7 +41,7 @@ These areas are already wired through Next → Django and are DB-backed:
 - **Replies** (list + create)
 - **Engagement** (like, echo, quote)
 - **Feed** (cursor paging)
-- **Sets** (create/update/delete, membership, events)
+- **Circles** (create/update/delete, membership, events)
 - **Invites** (create/accept/reject/revoke)
 - **Inbox** (threads/messages)
 - **Broadcasts**
@@ -68,7 +68,7 @@ Severity meanings:
 - **Status:** Missing config
 - **Symptom:** Any Next `/api/*` proxy returns `backend_not_configured`
 - **Evidence:** `frontend/src/app/api/auth/_proxy.ts` → production returns `null` unless `SD_INTERNAL_API_BASE` (or `NEXT_PUBLIC_API_BASE`) is set.
-- **Fix:** Set on Vercel Production env:
+- **Fix:** Circle on Vercel Production env:
   - `SD_INTERNAL_API_BASE=https://api.<yourdomain>.com`
 - **Acceptance:** `GET https://app.<yourdomain>.com/api/auth/me` returns `{ok:true,...}` (not backend_not_configured).
 
@@ -107,7 +107,7 @@ Severity meanings:
 - **Symptom:** Import/Sync contacts appears like a feature but yields nothing.
 - **Evidence:** `backend/siddes_contacts/views.py` → `if not settings.DEBUG: return {items: []}`
 - **Current mitigation (already applied in cleanup pack):**
-  - Feed empty state: in production, it routes users to `/siddes-sets?create=1` instead of import.
+  - Feed empty state: in production, it routes users to `/siddes-circles?create=1` instead of import.
   - Evidence: `frontend/src/components/SideFeed.tsx` production branch.
 - **Remaining decision:**
   - Either keep contacts import **dev-only** until you ship real phone contact hashing flow.
@@ -134,7 +134,7 @@ Severity meanings:
 - **Symptom:** Env vars like `SD_INBOX_STORE` are referenced historically but behavior now defaults DB.
 - **Fix:** Update docs to reflect current selection rules.
 
-#### GL-009 — Test coverage is thin outside Posts/Sets
+#### GL-009 — Test coverage is thin outside Posts/Circles
 - **Status:** Quality debt
 - **Fix:** Minimal smoke tests for: auth/session, inbox, invites, broadcasts, safety.
 

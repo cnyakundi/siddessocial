@@ -86,7 +86,7 @@ export function InviteActionSheet({
       <button type="button" className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={close} aria-label="Close" />
       <div ref={panelRef} role="dialog" aria-modal="true" tabIndex={-1} aria-labelledby="invite-actions-title" className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-full duration-200">
         <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-          <div id="invite-actions-title" className="font-black text-gray-900">Invite more to this Set</div>
+          <div id="invite-actions-title" className="font-black text-gray-900">Invite more to this Circle</div>
           <button type="button" ref={closeBtnRef} onClick={close} className="p-2 rounded-full hover:bg-gray-100" aria-label="Close">
             <X size={18} className="text-gray-500" />
           </button>
@@ -117,7 +117,7 @@ export function InviteActionSheet({
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               className="w-full min-h-[84px] px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm font-semibold outline-none focus:ring-2 ring-gray-900/10"
-              placeholder="Come join this Set"
+              placeholder="Come join this Circle"
             />
           </div>
 

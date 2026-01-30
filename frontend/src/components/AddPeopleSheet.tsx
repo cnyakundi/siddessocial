@@ -2,11 +2,11 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Mic, Plus, X } from "lucide-react";
-import type { SetDef } from "@/src/lib/sets";
-import { getSetsProvider } from "@/src/lib/setsProvider";
+import type { CircleDef } from "@/src/lib/circles";
+import { getCirclesProvider } from "@/src/lib/circlesProvider";
 import { toast } from "@/src/lib/toast";
 import { normalizeHandle } from "@/src/lib/mentions";
-import { emitSetsChanged } from "@/src/lib/setsSignals";
+import { emitCirclesChanged } from "@/src/lib/circlesSignals";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { useDialogA11y } from "@/src/hooks/useDialogA11y";
 
@@ -38,7 +38,7 @@ export function AddPeopleSheet(props: {
   canWrite: boolean;
 
   existingMembers: string[];
-  onUpdated?: (next: SetDef | null) => void;
+  onUpdated?: (next: CircleDef | null) => void;
 
   onUseInviteLink?: (() => void) | null;
 }) {
@@ -88,13 +88,13 @@ export function AddPeopleSheet(props: {
     setErr(null);
     setSaving(true);
     try {
-      const provider = getSetsProvider();
+      const provider = getCirclesProvider();
       const nextMembers = Array.from(new Set([...existing, ...toAdd]));
       const updated = await provider.update(setId, { members: nextMembers });
-      if (!updated) throw new Error("Set not found.");
+      if (!updated) throw new Error("Circle not found.");
       toast("People added", { variant: "success" });
       try {
-        emitSetsChanged();
+        emitCirclesChanged();
       } catch {}
       onUpdated?.(updated);
       onClose();

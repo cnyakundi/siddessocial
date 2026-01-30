@@ -2,14 +2,14 @@
 
 This fixes the *real* issue from the screenshot:
 
-- On mobile, the in-feed composer looked like a full editor, but it **can't** provide Siddes-standard audience control (Set/Topic selection) + an obvious Post CTA.
+- On mobile, the in-feed composer looked like a full editor, but it **can't** provide Siddes-standard audience control (Circle/Topic selection) + an obvious Post CTA.
 - It also led to confusion: keyboard pops up on the feed, but posting feels unclear.
 
 ## The Siddes standard
 **Mobile feed composer = launcher.**  
 Tapping it opens `/siddes-compose` where:
-- Audience is explicit (Side + Set/Topic)
-- You can switch Set/Topic (e.g., **Gym Squad** inside Friends)
+- Audience is explicit (Side + Circle/Topic)
+- You can switch Circle/Topic (e.g., **Gym Squad** inside Friends)
 - There's a clear **Post** button
 - Close/back behavior is reliable
 
@@ -31,5 +31,5 @@ File: `frontend/src/components/SideFeed.tsx`
 
 ## Acceptance checks (mobile)
 - Tap the composer row → opens compose page (no keyboard on feed)
-- In compose, pick a Set (Gym Squad) and Post
+- In compose, pick a Circle (Gym Squad) and Post
 - After posting, you return to feed and see the new post

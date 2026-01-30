@@ -113,12 +113,12 @@ d=json.load(open(p))
 assert d.get('restricted') is True, d
 print('✅ restricted list for unknown viewer')
 PY
-# 2) Create a Set as VIEWER (no members)
+# 2) Create a Circle as VIEWER (no members)
 ts="$(now_ms)"
 set_payload="$(printf '{"side":"friends","label":"Rituals Smoke %s","members":[]}' "$ts")"
 
-echo "-> POST /api/sets (create private set)"
-res="$(call_json POST "${BASE}/api/sets" "${VIEWER}" "${set_payload}")"
+echo "-> POST /api/circles (create private set)"
+res="$(call_json POST "${BASE}/api/circles" "${VIEWER}" "${set_payload}")"
 expect_http_one_of "$res" "200" "201"
 
 set_id="$(python3 -c 'import json,sys

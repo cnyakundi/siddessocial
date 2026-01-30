@@ -47,7 +47,7 @@ export default function LaunchpadPage() {
             Inbox
           </Link>
           <Link
-            href="/siddes-sets"
+            href="/siddes-circles"
             className="inline-flex items-center justify-center rounded-full border border-gray-200 bg-white px-5 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-50"
           >
             Sets

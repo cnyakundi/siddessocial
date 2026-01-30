@@ -67,8 +67,8 @@ Returned in `listThreads()`.
 ```json
 {
   "id": "t_work_1",
-  "title": "Work Group",
-  "participant": { "displayName": "Work Group", "initials": "WG", "avatarSeed": "seed_..." },
+  "title": "Work Circle",
+  "participant": { "displayName": "Work Circle", "initials": "WG", "avatarSeed": "seed_..." },
   "lockedSide": "work",
   "last": "Updated the roadmap slides…",
   "time": "10m",
@@ -244,7 +244,7 @@ Unread semantics:
 
 ---
 
-## 4) Set locked side (move thread)
+## 4) Circle locked side (move thread)
 
 ### Request
 `POST /api/inbox/thread/:id`

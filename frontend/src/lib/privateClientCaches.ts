@@ -28,7 +28,7 @@ const AUTH_SHELL_PREFIXES = [
 const PROTECTED_PREFIXES = [
   "/siddes-feed",
   "/siddes-post",
-  "/siddes-sets",
+  "/siddes-circles",
   "/siddes-inbox",
   "/siddes-invites",
   "/siddes-compose",

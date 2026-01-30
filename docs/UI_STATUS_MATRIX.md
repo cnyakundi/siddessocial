@@ -25,10 +25,10 @@ Legend:
 - ✅ Side feed route — `frontend/src/app/siddes-feed/page.tsx`
 - ✅ Feed engine (cursor paging, virtualization, module injection) — `frontend/src/components/SideFeed.tsx`
 - ✅ Feed provider uses same-origin Next proxy — `frontend/src/lib/feedProviders/backendStub.ts`
-- ✅ Set filter is **server-truth** end-to-end — Next `/api/feed` forwards `set=`, backend filters by `set_id`
+- ✅ Circle filter is **server-truth** end-to-end — Next `/api/feed` forwards `set=`, backend filters by `set_id`
   - `frontend/src/app/api/feed/route.ts`
   - `backend/siddes_feed/views.py`, `backend/siddes_feed/feed_stub.py`
-- ✅ Set Picker safety copy + members preview — `frontend/src/components/SetPickerSheet.tsx`
+- ✅ Circle Picker safety copy + members preview — `frontend/src/components/CirclePickerSheet.tsx`
 - 🟡 Public Topics/Channels UI copy (“Topic”) — exists; rename/polish later
 
 ## C) Compose
@@ -68,11 +68,11 @@ Legend:
 - ✅ External profile view by viewer’s relationship — `frontend/src/app/u/[username]/page.tsx`
 - 🟡 “Who sees this version of you?” UI needs deterministic rule text (v0 ok, later tighten)
 
-## H) Sets
+## H) Circles
 
-- ✅ Sets index — `frontend/src/app/siddes-sets/page.tsx`
-- ✅ Set detail hub (tabs) — `frontend/src/app/siddes-sets/[id]/page.tsx`
-- ✅ Set detail locks Side switching — via `SideProvider.sideLock`
+- ✅ Circles index — `frontend/src/app/siddes-circles/page.tsx`
+- ✅ Circle detail hub (tabs) — `frontend/src/app/siddes-circles/[id]/page.tsx`
+- ✅ Circle detail locks Side switching — via `SideProvider.sideLock`
 - 🟡 Membership/invites management: some flows still partial depending on backend state
 
 ## I) Invites
@@ -83,7 +83,7 @@ Legend:
 
 ## J) Universal Search
 
-- ✅ Universal Search page (People + Sets + Takes) — `frontend/src/app/search/client.tsx`
+- ✅ Universal Search page (People + Circles + Takes) — `frontend/src/app/search/client.tsx`
 - ✅ Next proxy routes for search exist — `frontend/src/app/api/search/*`
 - 🟡 Ranking/presentation polish later (v0 is usable)
 

@@ -206,7 +206,7 @@ export default function TelemetryClient() {
             </div>
 
             <div className="mt-3 text-xs text-gray-500">
-              Tip: accept/skip/edit Suggested Sets a few times, then hit Refresh. This page never shows handles.
+              Tip: accept/skip/edit Suggested Circles a few times, then hit Refresh. This page never shows handles.
             </div>
           </div>
         </div>

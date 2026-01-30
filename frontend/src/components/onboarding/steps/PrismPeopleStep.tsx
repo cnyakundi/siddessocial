@@ -9,8 +9,8 @@ import { SIDE_THEMES, SIDES } from "@/src/lib/sides";
 import { PrimaryButton, Toast } from "@/src/components/onboarding/ui";
 
 import { suggestSetsFromMatches, type ContactMatch } from "@/src/lib/localIntelligence/onDeviceContextEngine";
-import type { SuggestedSet } from "@/src/lib/setSuggestions";
-import { saveSuggestedSetsCache } from "@/src/lib/localIntelligence/localSuggestedSetsCache";
+import type { SuggestedCircle } from "@/src/lib/circleSuggestions";
+import { saveSuggestedCirclesCache } from "@/src/lib/localIntelligence/localSuggestedCirclesCache";
 
 type ContactHint = { kind?: string; domain?: string; workish?: boolean };
 type ContactsSuggestionItem = { id: string; name: string; handle: string; matched?: boolean; hint?: ContactHint };
@@ -60,7 +60,7 @@ function sidePriority(side: SideId): number {
   return 9;
 }
 
-function isHighConfidence(s: SuggestedSet): boolean {
+function isHighConfidence(s: SuggestedCircle): boolean {
   const id = String((s as any)?.id || "");
   return id.startsWith("local_work_") || id.startsWith("local_family_");
 }
@@ -89,7 +89,7 @@ export default function PrismPeopleStep({
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [fillFriends, setFillFriends] = useState(false);
-  const [createSets, setCreateSets] = useState(false);
+  const [createCircles, setCreateSets] = useState(false);
 
   const [sensitiveConfirmOpen, setSensitiveConfirmOpen] = useState(false); // sd_532_sensitive_confirm
   const [sensitiveCounts, setSensitiveCounts] = useState<{ close: number; work: number; total: number }>({ close: 0, work: 0, total: 0 }); // sd_532_sensitive_confirm
@@ -157,7 +157,7 @@ export default function PrismPeopleStep({
   useEffect(() => {
     if (!viewerKey || viewerKey === "anon") return;
     if (!suggestedSets.length) return;
-    saveSuggestedSetsCache(viewerKey, suggestedSets);
+    saveSuggestedCirclesCache(viewerKey, suggestedSets);
   }, [viewerKey, suggestedSets]);
 
   useEffect(() => {
@@ -194,7 +194,7 @@ export default function PrismPeopleStep({
     }
   }
 
-  function toggleGroup(id: string) {
+  function toggleCircle(id: string) {
     const sid = String(id || "").trim();
     if (!sid) return;
     setSelectedIds((prev) => {
@@ -205,20 +205,20 @@ export default function PrismPeopleStep({
     });
   }
 
-  const selectedGroups = useMemo(() => {
+  const selectedCircles = useMemo(() => {
     const set = new Set(selectedIds.map((x) => String(x || "").trim()).filter(Boolean));
     return suggestedSets.filter((s) => set.has(String((s as any)?.id || "")));
   }, [suggestedSets, selectedIds]);
 
   const counts = useMemo(() => {
     const total = matches.length;
-    const selected = selectedGroups.length;
+    const selected = selectedCircles.length;
     const people = new Set<string>();
-    for (const g of selectedGroups) {
+    for (const g of selectedCircles) {
       for (const h of (g as any)?.members || []) people.add(String(h || "").trim());
     }
     return { total, selected, people: people.size };
-  }, [matches.length, selectedGroups]);
+  }, [matches.length, selectedCircles]);
 
   async function applyAndContinue(forceConfirmed: boolean = false) {
     setErr(null);
@@ -228,7 +228,7 @@ export default function PrismPeopleStep({
       // 1) Build membership assignments (close > work > friends)
       const assignments = new Map<string, SideId>();
 
-      for (const g of selectedGroups) {
+      for (const g of selectedCircles) {
         const side = (g as any)?.side as SideId | undefined;
         const members = Array.isArray((g as any)?.members) ? ((g as any)?.members as string[]) : [];
         if (!side || side === "public") continue;
@@ -300,15 +300,15 @@ export default function PrismPeopleStep({
       }
 
       // 3) Optional: create sets from selected groups
-      if (createSets) {
-        for (const g of selectedGroups) {
+      if (createCircles) {
+        for (const g of selectedCircles) {
           const side = (g as any)?.side as SideId | undefined;
           const label = String((g as any)?.label || "").trim() || "Untitled";
           const color = (g as any)?.color || undefined;
           const members = Array.isArray((g as any)?.members) ? (g as any).members : [];
           if (!side || side === "public") continue;
           try {
-            const r = await fetch("/api/sets", {
+            const r = await fetch("/api/circles", {
               method: "POST",
               headers: { "content-type": "application/json" },
               body: JSON.stringify({ side, label, color, members }),
@@ -330,7 +330,7 @@ export default function PrismPeopleStep({
   }
 
 
-  const canApply = !busy && !syncing && (selectedGroups.length > 0 || fillFriends);
+  const canApply = !busy && !syncing && (selectedCircles.length > 0 || fillFriends);
 
   return (
     <div className="flex flex-col min-h-full px-10 pt-28 text-center pb-12">
@@ -467,7 +467,7 @@ export default function PrismPeopleStep({
                   <button
                     key={id}
                     type="button"
-                    onClick={() => toggleGroup(id)}
+                    onClick={() => toggleCircle(id)}
                     className={cn(
                       "w-full rounded-3xl border p-4 text-left transition-all",
                       checked ? cn(theme.border, theme.lightBg, "shadow-sm") : "border-gray-100 hover:border-gray-200"
@@ -512,7 +512,7 @@ export default function PrismPeopleStep({
             </label>
 
             <label className="flex items-center gap-3 text-xs font-bold text-gray-700">
-              <input type="checkbox" checked={createSets} onChange={(e) => setCreateSets(e.target.checked)} className="h-4 w-4 rounded border-gray-300" />
+              <input type="checkbox" checked={createCircles} onChange={(e) => setCreateSets(e.target.checked)} className="h-4 w-4 rounded border-gray-300" />
               Also create Sets from selected groups
             </label>
 

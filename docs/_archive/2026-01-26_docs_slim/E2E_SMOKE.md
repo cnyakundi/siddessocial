@@ -30,7 +30,7 @@ npm run e2e
 
 - Auth: signup → onboarding complete → logout → login
 - Compose: post text → appears in feed
-- Sets: create a set → visible in sets list
+- Circles: create a set → visible in sets list
 - Media (optional): verifies `kind=video` is accepted when R2 is configured
 
 ## Notes

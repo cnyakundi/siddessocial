@@ -65,7 +65,7 @@ To verify **persistence** (survives restart), enable the DB-backed store.
 bash scripts/dev/django_migrate.sh
 ```
 
-2) Set store mode (recommended: auto)
+2) Circle store mode (recommended: auto)
 Edit `ops/docker/.env` and set:
 ```bash
 SD_POST_STORE=auto

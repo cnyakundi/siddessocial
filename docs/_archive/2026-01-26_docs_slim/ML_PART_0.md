@@ -1,11 +1,11 @@
-# ML Part 0 — Clerkless Context Engine (Contacts → Sides → Sets)
+# ML Part 0 — Clerkless Context Engine (Contacts → Sides → Circles)
 **Updated:** 2026-01-19
 
 Siddes lives or dies on one thing: **Context Safety without clerical work.**
 
 If people must manually classify every contact like a spreadsheet, Siddes becomes “Google+ Circles with homework.”
 
-This document defines the **Clerkless Context Engine (CCE)**: a privacy-safe, low-cost AI/ML system that *suggests* where people belong (Friends / Close / Work) and how they cluster into Sets — while keeping the user in control.
+This document defines the **Clerkless Context Engine (CCE)**: a privacy-safe, low-cost AI/ML system that *suggests* where people belong (Friends / Close / Work) and how they cluster into Circles — while keeping the user in control.
 
 ---
 
@@ -13,7 +13,7 @@ This document defines the **Clerkless Context Engine (CCE)**: a privacy-safe, lo
 
 1) **Suggest-only by default**
 - The engine may recommend, highlight, prefill.
-- It must **never silently move someone** into a Side/Set.
+- It must **never silently move someone** into a Side/Circle.
 - Any “Auto-accept” is an explicit user setting with undo.
 
 2) **No raw address books stored**
@@ -39,7 +39,7 @@ Social products die when they fail one of these:
 - **Culture:** creators don’t get value → they leave.
 
 CCE is a survival engine because it:
-- **Fixes cold start**: quickly forms a usable Friends graph and starter Sets.
+- **Fixes cold start**: quickly forms a usable Friends graph and starter Circles.
 - **Kills friction**: users accept 3–10 suggestions instead of doing 300 clicks.
 - **Builds trust**: explicit control + reversible actions + privacy-safe matching.
 - **Builds a moat**: “context safety at scale” is harder to copy than a single feature.
@@ -74,7 +74,7 @@ CCE is a survival engine because it:
 ### Core jobs
 1) **Candidate discovery** (who might matter)
 2) **Side suggestion** (Friends vs Close vs Work)
-3) **Set clustering** (sub-groups inside a Side)
+3) **Circle clustering** (sub-groups inside a Side)
 4) **Reasoning + explanation** (why we think so)
 5) **Feedback loop** (learn from accept/reject)
 
@@ -109,14 +109,14 @@ Goal: ship real value with zero infra.
 - If email domain matches user’s verified work domain (optional) → suggest Work.
 - High interaction intensity + “late night + weekend” patterns → suggest Close.
 
-**Set suggestion rules (examples):**
+**Circle suggestion rules (examples):**
 - Cluster by “frequently co-mentioned together”
 - Cluster by “often co-present in the same threads”
 
 Output: suggestions with confidence + human-readable reasons.
 
 ### Phase 1: Embeddings + clustering (still cheap)
-Goal: better Set quality without training big models.
+Goal: better Circle quality without training big models.
 
 - Create embeddings from *non-sensitive* text (handles, bios, user-provided labels)
 - Cluster embeddings (HDBSCAN/k-means)
@@ -171,16 +171,16 @@ This keeps AI explainable and auditable.
   - Offer 2–3 bundles: “Likely Work (5)”, “Likely Friends (3)”
   - Accept / review / skip.
 
-2) **Sets creation flow** (already exists)
-- After sync, show Suggested Sets (accept/rename/skip)
+2) **Circles creation flow** (already exists)
+- After sync, show Suggested Circles (accept/rename/skip)
 - Never auto-create without a tap.
 
 3) **Butler Tray: Context tab**
 - “You have 3 people who look like Work. Review?”
-- “This Set looks too big. Split suggestion?”
+- “This Circle looks too big. Split suggestion?”
 
 4) **Compose**
-- Use existing “Compose Intelligence” bar to suggest Side/Set.
+- Use existing “Compose Intelligence” bar to suggest Side/Circle.
 
 ---
 
@@ -227,7 +227,7 @@ We will add these as we implement CCE:
 
 ## Definition of Done for CCE Phase 0
 1) User can accept a suggested Side placement for matched contacts.
-2) User can accept suggested Sets from matched contacts.
+2) User can accept suggested Circles from matched contacts.
 3) Every suggestion has a visible reason.
 4) Everything is undoable.
 5) No raw contact book is stored.

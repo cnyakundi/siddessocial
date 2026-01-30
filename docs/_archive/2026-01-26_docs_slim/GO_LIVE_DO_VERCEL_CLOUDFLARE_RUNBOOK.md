@@ -35,7 +35,7 @@ This repo is designed for **Browser -> Vercel (Next) -> Next /api proxies -> Dig
 
 1. Create an R2 bucket (example): `siddes-media`
 2. Create an API token / access key scoped to that bucket
-3. Set R2 CORS (required for uploads):
+3. Circle R2 CORS (required for uploads):
    - Methods: `PUT, GET, HEAD`
    - Origins: your Vercel domain(s)
    - Headers: `content-type`
@@ -117,7 +117,7 @@ If you use `api.yourdomain.com`, set:
 1) Sign up + verify email (or login)
 2) Create a text post (all Sides)
 3) Like / reply / echo a post
-4) Create a Set + post to it
+4) Create a Circle + post to it
 5) If you applied `sd_384` (media): upload an image, confirm it renders in feed + detail
 
 ---

@@ -14,7 +14,7 @@ Non-negotiables:
 - ✅ sd_363: (Optional) content-visibility + smaller DOM cap (cheap scroll win)
 - ✅ sd_364: Redis hot-feed cache (viewer+side+topic+cursor+limit)
 - ✅ sd_365: True list virtualization (mounted cards ~O(30))
-- ✅ sd_366: Normalize Set membership (SetMember table + indexes)
+- ✅ sd_366: Normalize Circle membership (SetMember table + indexes)
 - ⬜ sd_367: Cloudflare R2 media pipeline (Worker same-origin: /m/<key>)
 - ⬜ sd_368: SSR/streaming first feed paint (App Router)
 
@@ -62,7 +62,7 @@ Recommended serving strategy:
 - UI paints instantly (skeleton) and loads content progressively.
 - PostCard payload includes everything needed to render the card.
 
-## sd_366: Set membership normalization
+## sd_366: Circle membership normalization
 
 - Added `SiddesSetMember` table (indexed) for join-friendly membership checks.
 - Kept `SiddesSet.members` JSON for response parity; writes keep both in sync.

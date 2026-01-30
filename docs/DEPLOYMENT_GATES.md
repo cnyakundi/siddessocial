@@ -48,12 +48,12 @@ each gate has a **Definition of Done** and **Evidence commands** you can run.
 
 ## P0.2 Authorization & privacy enforcement (Siddes core)
 
-**Goal:** server enforces Side + Set rules. Client never decides privacy.
+**Goal:** server enforces Side + Circle rules. Client never decides privacy.
 
 **Definition of Done**
 - Every core endpoint checks viewer identity and enforces:
   - Side visibility rules (Public vs Friends/Close/Work)
-  - Set membership rules
+  - Circle membership rules
   - Invite acceptance binding (side+set), expiry/uses
   - Siders/Siding lists: **viewer sees mutuals only** by default
 - Deny‑by‑default: unknown viewer gets no private data

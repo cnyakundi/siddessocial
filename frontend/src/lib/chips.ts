@@ -3,8 +3,8 @@ import type { LucideIcon } from "lucide-react";
 import type { FeedPost } from "@/src/lib/feedTypes";
 import type { SideId } from "@/src/lib/sides";
 import { SIDE_THEMES } from "@/src/lib/sides";
-import type { SetColor } from "@/src/lib/setThemes";
-import { getSetTheme } from "@/src/lib/setThemes";
+import type { CircleColor } from "@/src/lib/circleThemes";
+import { getCircleTheme } from "@/src/lib/circleThemes";
 import { FLAGS } from "@/src/lib/flags";
 import type { PublicChannelId } from "@/src/lib/publicChannels";
 import { labelForPublicChannel } from "@/src/lib/publicChannels";
@@ -20,7 +20,7 @@ export type Chip = {
 
 export type ChipBuildContext = {
   // viewer-private set membership label
-  set?: { id: string; label: string; color: SetColor };
+  set?: { id: string; label: string; color: CircleColor };
 
   // lightweight context signals
   mentionedYou?: boolean;
@@ -53,7 +53,7 @@ export function chipsFromPost(post: FeedPost): ChipBuildContext {
   };
 }
 
-const CHANNEL_TO_COLOR: Record<PublicChannelId, SetColor> = {
+const CHANNEL_TO_COLOR: Record<PublicChannelId, CircleColor> = {
   general: "slate",
   tech: "blue",
   politics: "purple",
@@ -69,7 +69,7 @@ export function buildChips(ctx: ChipBuildContext, opts?: { side?: SideId }): Chi
 
 
   if (FLAGS.publicChannels && ctx.publicChannel) {
-    const t = getSetTheme(CHANNEL_TO_COLOR[ctx.publicChannel] ?? "slate");
+    const t = getCircleTheme(CHANNEL_TO_COLOR[ctx.publicChannel] ?? "slate");
     out.push({
       id: "topic",
       label: labelForPublicChannel(ctx.publicChannel),
@@ -79,7 +79,7 @@ export function buildChips(ctx: ChipBuildContext, opts?: { side?: SideId }): Chi
   }
 
   if (ctx.set) {
-    const t = getSetTheme(ctx.set.color);
+    const t = getCircleTheme(ctx.set.color);
     out.push({
       id: "set",
       label: ctx.set.label,

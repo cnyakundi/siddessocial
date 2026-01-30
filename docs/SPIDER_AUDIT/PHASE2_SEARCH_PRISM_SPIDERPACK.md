@@ -10,14 +10,14 @@ This pack maps Siddes' **discovery surfaces** (Search) and **identity surfaces**
 
 ## 1) User-facing surfaces (frontend)
 
-### 1.1 Search results page (currently: Sets-only search)
+### 1.1 Search results page (currently: Circles-only search)
 - Route: `/search`
-- Purpose: client-side search across **Sets** (label + member handles) for all Sides.
+- Purpose: client-side search across **Circles** (label + member handles) for all Sides.
 - Files:
   - `frontend/src/app/search/page.tsx` (Suspense wrapper)
   - `frontend/src/app/search/client.tsx` (search UI + fetch)
 
-**Data source (today):** `/api/sets?side=<side>` (4 calls, one per Side), then filter on the client.
+**Data source (today):** `/api/circles?side=<side>` (4 calls, one per Side), then filter on the client.
 
 ### 1.2 Search entry points
 - AppTopBar search button opens the search overlay.
@@ -64,7 +64,7 @@ This pack maps Siddes' **discovery surfaces** (Search) and **identity surfaces**
   - File: `frontend/src/app/api/side/route.ts`
 
 ### 2.3 Search proxies (backend search endpoints)
-> These proxies exist even though `/search` UI currently searches Sets via `/api/sets`.
+> These proxies exist even though `/search` UI currently searches Circles via `/api/circles`.
 
 - `GET /api/search/users?q=&limit=` → backend `GET /api/search/users?q=&limit=`
   - File: `frontend/src/app/api/search/users/route.ts`
@@ -294,10 +294,10 @@ Backend file: `backend/siddes_search/views.py`
 3) Enter key navigates to:
    - `/search?q=<query>&tab=posts`
 4) `/search` client fetches sets for each side:
-   - `/api/sets?side=friends|close|work|public`
+   - `/api/circles?side=friends|close|work|public`
 5) Results render grouped by Side theme tokens
 6) Each result offers an "Open" link:
-   - `/siddes-sets?side=<sid>`
+   - `/siddes-circles?side=<sid>`
 
 ### 6.2 Prism owner flow
 1) User visits `/siddes-profile`

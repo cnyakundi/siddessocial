@@ -2,7 +2,7 @@
 
 This is a **developer + designer handoff** for the current repo snapshot you shared, focused on **UI launch readiness** + how to implement the UI so it stays consistent with Siddes’ core promise:
 
-> **Context-first social. Side = global mode. Sets = subgroup filter inside a Side.**
+> **Context-first social. Side = global mode. Circles = subgroup filter inside a Side.**
 
 ---
 
@@ -21,15 +21,15 @@ The repo already contains a **clean MVP shell** that matches the “simple, calm
 ### Launch UI source of truth (already in repo)
 - `docs/UI_LAUNCH_MVP.md` (Updated 2026-01-14)
 
-### Sets-as-filter (already implemented)
+### Circles-as-filter (already implemented)
 - Feed header filter control:
-  - `frontend/src/components/SetFilterBar.tsx`
-  - `frontend/src/components/SetPickerSheet.tsx`
+  - `frontend/src/components/CircleFilterBar.tsx`
+  - `frontend/src/components/CirclePickerSheet.tsx`
   - Used in `frontend/src/components/SideFeed.tsx`
 - Composer set picker:
   - `frontend/src/app/siddes-compose/page.tsx`
 - Deep-link to create:
-  - `/siddes-sets?create=1` (works)
+  - `/siddes-circles?create=1` (works)
 
 ### Unified Inbox (already implemented)
 - `/siddes-inbox` tabs Messages + Alerts:
@@ -58,10 +58,10 @@ Canonical tokens live in:
 Do **not** build classes like `ring-${color}` dynamically. Use static strings (the repo already does this well).
 
 ### 1.2 The hierarchy users must feel
-**Side (audience mode) → Set (subgroup filter) → Content**
+**Side (audience mode) → Circle (subgroup filter) → Content**
 
 - Side is **always** visible.
-- Set is **always** optional and only exists inside a Side.
+- Circle is **always** optional and only exists inside a Side.
 - Anything that changes audience must be explicit and reversible.
 
 ### 1.3 Naming (don’t accidentally become a clone)
@@ -73,7 +73,7 @@ Hard rules:
   - **Sided (state)** = you are connected
   - **Siders** = people who sided you (only visible to owner by default)
   - **Siding** = people you side (owner-only by default)
-- Prefer “Set” for subgroup. Avoid “Circle Health” naming.
+- Prefer “Circle” for subgroup. Avoid “Circle Health” naming.
 
 ---
 
@@ -234,7 +234,7 @@ Your designer should mock these as **small, reusable feed cards**, not whole new
 
 ### C) Remixed feed modules (pick 2 per Side)
 - **Public:** Today in Public (trends)
-- **Friends:** Set Prompt (Book Club question)
+- **Friends:** Circle Prompt (Book Club question)
 - **Close:** On This Day memory
 - **Work:** Morning Triage + Decision Log (optional)
 
@@ -253,7 +253,7 @@ Your designer should mock these as **small, reusable feed cards**, not whole new
 
 Providers (frontend):
 - Feed: `frontend/src/lib/feedProvider.ts`
-- Sets: `frontend/src/lib/setsProvider.ts`
+- Circles: `frontend/src/lib/setsProvider.ts`
 - Inbox: `frontend/src/lib/inboxProvider.ts`
 - Invites: `frontend/src/lib/inviteProvider.ts`
 
@@ -261,7 +261,7 @@ DRF API root (backend):
 - `backend/siddes_backend/api.py` routes:
   - `/api/feed`
   - `/api/post/*`
-  - `/api/sets/*`
+  - `/api/circles/*`
   - `/api/invites/*`
   - `/api/inbox/*`
 
@@ -282,7 +282,7 @@ Dev identity rule:
 
 3) **Feed Modules framework (flagged)**
    - Implement 3 modules max to start:
-     - Side health, Set prompt, Memory
+     - Side health, Circle prompt, Memory
 
 4) **Work extras (flagged)**
    - Work composer + Task cards + simple Board toggle
@@ -299,6 +299,6 @@ Dev identity rule:
 - `/siddes-inbox` → `frontend/src/app/siddes-inbox/page.tsx`
 - `/siddes-inbox/[id]` → thread
 - `/siddes-profile` → profile
-- `/siddes-sets` (+ `/siddes-sets/[id]`) → sets management
+- `/siddes-circles` (+ `/siddes-circles/[id]`) → sets management
 - `/siddes-invites` (+ `/invite/[id]`) → invites
 - `/siddes-settings` → local settings stub

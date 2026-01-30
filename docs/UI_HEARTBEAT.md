@@ -22,7 +22,7 @@ If you hand this repo to a collaborator or move it to a new environment, read th
 
 Do **not** use:
 - Siders / Siding
-- Sets (internal model only)
+- Circles (internal model only)
 - Stories / Rings
 
 Use:

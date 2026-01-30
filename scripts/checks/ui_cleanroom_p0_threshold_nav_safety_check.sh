@@ -85,13 +85,13 @@ fi
 
 echo ""
 
-# --- Navigation: Sets is primary on mobile; Public active is side-based ---
-require_grep "href=\"/siddes-sets\"" "$BOTTOM_NAV" "BottomNav includes Sets"
-require_grep "Icon={Layers}" "$BOTTOM_NAV" "BottomNav Sets uses Layers icon (no Users collision)"
+# --- Navigation: Circles is primary on mobile; Public active is side-based ---
+require_grep "href=\"/siddes-circles\"" "$BOTTOM_NAV" "BottomNav includes Circles"
+require_grep "Icon={Layers}" "$BOTTOM_NAV" "BottomNav Circles uses Layers icon (no Users collision)"
 require_grep "publicActive = side === \"public\"" "$BOTTOM_NAV" "BottomNav Public active state is side-based"
 
 # Desktop sets icon collision check
-require_grep "{ href: \"/siddes-sets\", label: \"Sets\", icon: Layers }" "$DESKTOP_RAIL" "DesktopSideRail Sets uses Layers icon"
+require_grep "{ href: \"/siddes-circles\", label: \"Circles\", icon: Layers }" "$DESKTOP_RAIL" "DesktopSideRail Circles uses Layers icon"
 
 # First-run picker must not appear on onboarding/auth/about routes
 require_grep "pathname.startsWith(\"/onboarding\")" "$FTR_PICKER" "FirstRunSidePicker hidden during onboarding"

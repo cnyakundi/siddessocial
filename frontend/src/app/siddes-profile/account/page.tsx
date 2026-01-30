@@ -224,11 +224,11 @@ export default function SiddesAccountPage() {
           </Link>
 
           <Link
-            href="/siddes-sets"
+            href="/siddes-circles"
             className="rounded-2xl border border-gray-200 bg-white hover:bg-gray-50 p-4"
           >
             <div className="text-sm font-extrabold text-gray-900">Sets</div>
-            <div className="text-xs text-gray-500 mt-1">Groups inside each Side</div>
+            <div className="text-xs text-gray-500 mt-1">Circles inside each Side</div>
           </Link>
 
           {!onboarded ? (

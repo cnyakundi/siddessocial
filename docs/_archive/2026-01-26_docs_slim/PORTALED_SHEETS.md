@@ -19,7 +19,7 @@ Portal overlays to `document.body` using `createPortal`, and make backdrops clos
 - `frontend/src/components/EditPostSheet.tsx`
 - `frontend/src/components/QuoteEchoComposer.tsx`
 - `frontend/src/components/ProfileActionsSheet.tsx`
-- `frontend/src/components/SetPickerSheet.tsx`
+- `frontend/src/components/CirclePickerSheet.tsx`
 
 ## Acceptance checks (iPhone PWA)
 For each sheet: open it, then tap outside anywhere → it closes instantly, every time.

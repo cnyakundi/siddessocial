@@ -49,7 +49,7 @@ Security:
 #         return Response(out, status=status.HTTP_400_BAD_REQUEST)
 #
 # class SetRenameView(APIView):
-#     def post(self, request, set_id: str):
+#     def post(self, request, circle_id: str):
 #         label = (request.data.get("label") or "").strip()
 #         out = rename_set(store, owner_id=get_owner_id(request), set_id=set_id, label=label)
 #         if out.get("ok"):
@@ -59,7 +59,7 @@ Security:
 #         return Response(out, status=status.HTTP_400_BAD_REQUEST)
 #
 # class SetMembersView(APIView):
-#     def post(self, request, set_id: str, action: str):
+#     def post(self, request, circle_id: str, action: str):
 #         members = request.data.get("members") or []
 #         fn = add_members if action == "add" else remove_members
 #         out = fn(store, owner_id=get_owner_id(request), set_id=set_id, members=members)
@@ -68,6 +68,6 @@ Security:
 #         return Response(out, status=status.HTTP_404_NOT_FOUND)
 #
 # class SetEventsView(APIView):
-#     def get(self, request, set_id: str):
+#     def get(self, request, circle_id: str):
 #         out = list_events(store, owner_id=get_owner_id(request), set_id=set_id)
 #         return Response(out, status=status.HTTP_200_OK)

@@ -186,12 +186,12 @@ _links_store = DbInviteLinksStore()
 
 
 @method_decorator(dev_csrf_exempt, name="dispatch")
-class SetInviteLinksView(APIView):
-    """GET/POST /api/sets/<id>/invite-links (owner-only)."""
+class CircleInviteLinksView(APIView):
+    """GET/POST /api/circles/<id>/invite-links (owner-only)."""
 
     throttle_scope = "invites_links"
 
-    def get(self, request, set_id: str):
+    def get(self, request, circle_id: str):
         has_viewer, viewer, role = _viewer_ctx(request)
         if not has_viewer:
             return Response(_restricted_payload(has_viewer, viewer, role, extra={"items": []}), status=status.HTTP_200_OK)
@@ -201,7 +201,7 @@ class SetInviteLinksView(APIView):
         items = _links_store.list_for_set(owner_id=viewer, set_id=set_id)
         return Response({"ok": True, "restricted": False, "viewer": viewer, "role": role, "items": items}, status=status.HTTP_200_OK)
 
-    def post(self, request, set_id: str):
+    def post(self, request, circle_id: str):
         has_viewer, viewer, role = _viewer_ctx(request)
         if not has_viewer:
             return Response({"ok": False, "restricted": True, "error": "restricted"}, status=status.HTTP_401_UNAUTHORIZED)
@@ -220,12 +220,12 @@ class SetInviteLinksView(APIView):
 
 
 @method_decorator(dev_csrf_exempt, name="dispatch")
-class SetInviteLinkRevokeView(APIView):
-    """POST /api/sets/<id>/invite-links/<token>/revoke (owner-only)."""
+class CircleInviteLinkRevokeView(APIView):
+    """POST /api/circles/<id>/invite-links/<token>/revoke (owner-only)."""
 
     throttle_scope = "invites_links_revoke"
 
-    def post(self, request, set_id: str, token: str):
+    def post(self, request, circle_id: str, token: str):
         has_viewer, viewer, role = _viewer_ctx(request)
         if not has_viewer:
             return Response({"ok": False, "restricted": True, "error": "restricted"}, status=status.HTTP_401_UNAUTHORIZED)

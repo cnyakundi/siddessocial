@@ -24,7 +24,7 @@ Why this plan works well:
 ## 1) Cloudflare DNS + SSL (one-time)
 1) Add your domain in Cloudflare and switch nameservers at your registrar.
 2) Cloudflare → **SSL/TLS**
-   - Set mode to **Full (strict)** (recommended)
+   - Circle mode to **Full (strict)** (recommended)
 3) Cloudflare → **DNS**
    Create records (you’ll finalize targets after you set up Vercel/DO):
 
@@ -49,7 +49,7 @@ Start with **DNS only** for the API too (grey cloud). After the app is stable, y
 ## 2) Cloudflare R2 bucket (media storage)
 1) Cloudflare dashboard → R2 → Create bucket (example name: `siddes-media`)
 2) Create an **R2 API token** / access keys (S3-compatible credentials)
-3) Set **CORS** on the bucket so browsers can upload:
+3) Circle **CORS** on the bucket so browsers can upload:
 
 Allow origins:
 - `https://app.yourdomain.com`
@@ -123,7 +123,7 @@ After the app is deployed:
 3) Build: `npm run build` (default is fine for Next)
 
 ### 4B) Add environment variables
-Set:
+Circle:
 - `SD_INTERNAL_API_BASE=https://api.yourdomain.com`
 
 (If you have a `vercel.env.example`, copy from it.)
@@ -156,7 +156,7 @@ Steps:
 1) `cd ops/cloudflare/r2_media_worker`
 2) `cp wrangler.toml.example wrangler.toml`
 3) Edit placeholders in `wrangler.toml`
-4) Set secret:
+4) Circle secret:
    - `npx wrangler secret put MEDIA_TOKEN_SECRET`
 5) Deploy:
    - `npx wrangler deploy`

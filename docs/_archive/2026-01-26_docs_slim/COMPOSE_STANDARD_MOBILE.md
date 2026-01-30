@@ -1,7 +1,7 @@
 # Compose Standard (Mobile) — Launcher Rule (sd_741)
 
 Your screenshot shows the exact problem:
-- In **Friends**, tapping the in-feed composer opens the keyboard, but Siddes needs audience + Set selection clarity (e.g., **Gym Squad**).
+- In **Friends**, tapping the in-feed composer opens the keyboard, but Siddes needs audience + Circle selection clarity (e.g., **Gym Squad**).
 - On mobile, the feed is not where you should be editing a full post.
 
 ## Rule

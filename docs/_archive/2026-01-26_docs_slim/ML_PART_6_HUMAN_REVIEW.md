@@ -22,4 +22,4 @@ UI affordances (implemented):
 Telemetry (privacy-safe):
 - suggestion_shown / accepted / skipped / edited / undo
 Counts only. No handles. No contact identifiers.
-\n\n## Backend support\n- Undo uses DELETE /api/sets/<id> (owner-only).\n
+\n\n## Backend support\n- Undo uses DELETE /api/circles/<id> (owner-only).\n

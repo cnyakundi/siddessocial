@@ -35,7 +35,7 @@ Scope: **structural + data-contract mapping** (no fix suggestions).
 - **External tissue:** `lucide-react` icons; `toast` (`frontend/src/lib/toast`)
 
 Key interactions:
-- `provider.dock({ side, setId: activeSet })` on Side/Set change
+- `provider.dock({ side, setId: activeSet })` on Side/Circle change
 - Opens:
   - `RitualCreateSheet` (Start)
   - `RitualSheet` (View/Reply)
@@ -308,7 +308,7 @@ or text answer:
 
 ### 6.2 Launch-safe scoping
 - Non-public rituals are **set-scoped** (v1) — enforced in `RitualsView.post` and `RitualsView.get`.
-- “Set.side is the truth”: backend may override requested `side` based on stored Set side (uses `DbSetsStore().get`).
+- “Circle.side is the truth”: backend may override requested `side` based on stored Circle side (uses `DbSetsStore().get`).
 
 ### 6.3 Existence leak avoidance
 - List: unknown viewer returns `{ restricted:true, items:[] }`.

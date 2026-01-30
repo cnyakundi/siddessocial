@@ -3,7 +3,7 @@
 Sets are curated sets inside a Side.
 
 This app becomes the persistent backing store for Sets and the DRF endpoints
-under `/api/sets/*`.
+under `/api/circles/*`.
 
 Contract note:
 - We intentionally mirror the Next.js stub response shapes so the frontend can

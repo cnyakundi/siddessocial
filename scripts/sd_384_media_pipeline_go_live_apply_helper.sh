@@ -837,12 +837,12 @@ const canPost = text.trim().length > 0 && !posting && !overLimit && !mediaBusy &
 
 # Ensure reset() clears media
 s{
-const\s+reset\s*=\s*\(\)\s*=>\s*\{\n\s*setText\(\"\"\);\n\s*setUrgent\(false\);\n\s*setSelectedSetId\(null\);\n\s*setError\(null\);\n\s*clearDraft\(side\);\n\s*\};
+const\s+reset\s*=\s*\(\)\s*=>\s*\{\n\s*setText\(\"\"\);\n\s*setUrgent\(false\);\n\s*setSelectedCircleId\(null\);\n\s*setError\(null\);\n\s*clearDraft\(side\);\n\s*\};
 }{
 const reset = () => {
       setText("");
       setUrgent(false);
-      setSelectedSetId(null);
+      setSelectedCircleId(null);
       setError(null);
       clearMedia();
       clearDraft(side);

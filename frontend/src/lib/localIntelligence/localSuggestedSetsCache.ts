@@ -1,10 +1,10 @@
 "use client";
 
-import type { SuggestedSet } from "@/src/lib/setSuggestions";
+import type { SuggestedCircle } from "@/src/lib/circleSuggestions";
 
 type CachePayload = {
   ts: number;
-  suggestions: SuggestedSet[];
+  suggestions: SuggestedCircle[];
 };
 
 const KEY_PREFIX = "siddes.suggested_sets.cache.v1";
@@ -27,8 +27,8 @@ function safeParse(raw: string | null): CachePayload | null {
   }
 }
 
-function dedupeById(items: SuggestedSet[]): SuggestedSet[] {
-  const out: SuggestedSet[] = [];
+function dedupeById(items: SuggestedCircle[]): SuggestedCircle[] {
+  const out: SuggestedCircle[] = [];
   const seen = new Set<string>();
   for (const it of items) {
     const id = String((it as any)?.id || "").trim();
@@ -47,7 +47,7 @@ function dedupeById(items: SuggestedSet[]): SuggestedSet[] {
   return out;
 }
 
-export function saveSuggestedSetsCache(viewerKey: string, suggestions: SuggestedSet[]) {
+export function saveSuggestedCirclesCache(viewerKey: string, suggestions: SuggestedCircle[]) {
   if (typeof window === "undefined") return;
   try {
     const payload: CachePayload = {
@@ -60,7 +60,7 @@ export function saveSuggestedSetsCache(viewerKey: string, suggestions: Suggested
   }
 }
 
-export function loadSuggestedSetsCache(viewerKey: string, maxAgeDays = 30): SuggestedSet[] {
+export function loadSuggestedCirclesCache(viewerKey: string, maxAgeDays = 30): SuggestedCircle[] {
   if (typeof window === "undefined") return [];
   try {
     const payload = safeParse(window.localStorage.getItem(key(viewerKey)));
@@ -73,7 +73,7 @@ export function loadSuggestedSetsCache(viewerKey: string, maxAgeDays = 30): Sugg
   }
 }
 
-export function clearSuggestedSetsCache(viewerKey: string) {
+export function clearSuggestedCirclesCache(viewerKey: string) {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.removeItem(key(viewerKey));

@@ -7,7 +7,7 @@
 - AppShell: layout + safe chrome exclusions
 
 [Content]
-- FilterBar: Set pills / context chips
+- FilterBar: Circle pills / context chips
 - FeedEngine: posts-only chronological feed rendering + caching safety
 - PostCard: feed card + actions sheets / overflow
 - PostDetail: /siddes-post/[id]
@@ -42,7 +42,7 @@
 - sd_764_authstub_hide_advanced_auth_ui: Hide OAuth + password reset + magic link UI until real production host (override NEXT_PUBLIC_AUTH_ADVANCED=1).
 - sd_759: AppTopBar bell opens NotificationsDrawer on mobile (quick alerts)
 - sd_756_fix_actions_sheet_backdrop_ghosttap: PostActionsSheet backdrop touchstart now calls preventDefault to stop iOS ghost taps/clickthrough.
-- sd_757_fix_setpicker_member_avatars_no_external_calls: SetPickerSheet member preview no longer hits Dicebear; uses deterministic initials badges.
+- sd_757_fix_setpicker_member_avatars_no_external_calls: CirclePickerSheet member preview no longer hits Dicebear; uses deterministic initials badges.
 - sd_763_compose_mvp: Compose stripped to MVP defaults (identity + audience + text + media; removed drafts UI / suggestions / quick tools / @mentions).
 
 

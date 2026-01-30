@@ -2,7 +2,7 @@
 
 > **Fix Pack ID (suggested):** `sd_430_ui_cleanroom_p0_threshold_nav_safety_v0.10.0`
 >
-> **Summary:** Unify the “Threshold” (Public entry confirm everywhere), remove Chameleon color leaks, reduce mis‑taps (44×44 targets), and make **Sets** a first‑class nav surface on mobile.
+> **Summary:** Unify the “Threshold” (Public entry confirm everywhere), remove Chameleon color leaks, reduce mis‑taps (44×44 targets), and make **Circles** a first‑class nav surface on mobile.
 
 ---
 
@@ -14,7 +14,7 @@ It does **not** attempt to redesign Siddes. It removes the highest-risk UX incon
 - accidental entry into **Public** (mis‑post risk)
 - accidental likes/taps (mis‑tap risk)
 - diluted brand meaning (Chameleon color leakage)
-- nav confusion (“Sets is primary on desktop but hidden on mobile”)
+- nav confusion (“Circles is primary on desktop but hidden on mobile”)
 
 ---
 
@@ -55,11 +55,11 @@ It does **not** attempt to redesign Siddes. It removes the highest-risk UX incon
    - Avatar palette removes Side colors (no blue/emerald/rose/slate/sky).
 
 4) **Navigation parity**
-   - Make **Sets** a primary destination on mobile BottomNav.
+   - Make **Circles** a primary destination on mobile BottomNav.
    - Fix BottomNav “Public active” state so it never highlights Public unless Public is truly active.
 
 5) **Icon collision removal**
-   - Stop using the **Users** icon for both Friends Side and Sets.
+   - Stop using the **Users** icon for both Friends Side and Circles.
 
 6) **Copy tweaks for safety clarity**
    - Make Public confirm copy sharper and less ambiguous.
@@ -161,11 +161,11 @@ Add to the Side context:
 
 ### 3.4 Navigation parity + icon collision
 
-#### BottomNav: make Sets primary
+#### BottomNav: make Circles primary
 **File:** `frontend/src/components/BottomNav.tsx`
-- Replace “Me” with “Sets”:
+- Replace “Me” with “Circles”:
   - Icon: `Grid3X3` (or `Layers`) — **not** `Users`.
-  - Link: `/siddes-sets`.
+  - Link: `/siddes-circles`.
 - Profile remains accessible from the TopBar account menu (`DesktopUserMenu` already links it).
 
 #### BottomNav: Public active semantics
@@ -173,9 +173,9 @@ Add to the Side context:
 - Fix:
   - `publicActive = side === "public" && (isFeed || isBroadcasts)`
 
-#### DesktopSideRail: Sets icon
+#### DesktopSideRail: Circles icon
 **File:** `frontend/src/components/DesktopSideRail.tsx`
-- In `PRIMARY_NAV`, change Sets icon from `Users` to `Grid3X3` (or `Layers`).
+- In `PRIMARY_NAV`, change Circles icon from `Users` to `Grid3X3` (or `Layers`).
 
 ---
 
@@ -278,8 +278,8 @@ cd frontend && npm run build
 - Avatars no longer use Side-reserved colors (no blue/emerald/rose/slate families).
 
 6) **Navigation parity**
-- Sets is reachable in one tap from BottomNav (mobile).
-- Desktop Sets icon no longer collides with Friends icon.
+- Circles is reachable in one tap from BottomNav (mobile).
+- Desktop Circles icon no longer collides with Friends icon.
 
 ---
 
@@ -298,8 +298,8 @@ cd frontend && npm run build
 - ✅ Like uses `ACTION_BASE` and meets 44×44 target.
 
 ### Navigation
-- ✅ Sets is a primary nav destination on both desktop and mobile.
-- ✅ Sets icon is distinct from Friends Side icon.
+- ✅ Circles is a primary nav destination on both desktop and mobile.
+- ✅ Circles icon is distinct from Friends Side icon.
 
 ---
 

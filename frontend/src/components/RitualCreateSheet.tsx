@@ -162,7 +162,7 @@ export function RitualCreateSheet({
           disabled={disabled}
           onClick={async () => {
             if (!setId) {
-              toast.error("Pick a Set first to start a ritual.");
+              toast.error("Pick a Circle first to start a ritual.");
               return;
             }
             const p = prompt.trim();

@@ -28,7 +28,7 @@ for arg in "$@"; do
     -h|--help)
       echo "Usage: bash scripts/dev/inbox_db_seed.sh [--switch] [--no-reset]"
       echo ""
-      echo "--switch     Set SD_INBOX_STORE=db in ops/docker/.env and restart backend"
+      echo "--switch     Circle SD_INBOX_STORE=db in ops/docker/.env and restart backend"
       echo "--no-reset   Do not wipe existing inbox rows before seeding"
       exit 0
       ;;

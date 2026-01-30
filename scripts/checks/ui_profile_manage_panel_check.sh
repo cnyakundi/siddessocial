@@ -30,7 +30,7 @@ PV="frontend/src/components/ProfileView.tsx"
 grep -q 'data-testid="profile-manage-panel"' "$PV" || { echo "❌ ProfileView missing manage panel (data-testid=profile-manage-panel)"; exit 1; }
 echo "✅ ProfileView contains manage panel"
 
-for href in "/siddes-sets" "/siddes-invites" "/siddes-settings"; do
+for href in "/siddes-circles" "/siddes-invites" "/siddes-settings"; do
   grep -q "href=\"$href\"" "$PV" || { echo "❌ Manage panel missing link to $href"; exit 1; }
   echo "✅ Manage panel links to $href"
 done

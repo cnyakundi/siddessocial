@@ -9,7 +9,7 @@ Globe,
   Users,
   Lock,
   
-  Star,Briefcase,
+  Heart,Briefcase,
   Shield,
   MapPin,
   Link as LinkIcon,
@@ -30,6 +30,48 @@ import { signUpload, uploadToSignedUrl, commitUpload } from "@/src/lib/mediaClie
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
 }
+
+// sd_932: restore PrismProfile local helpers (initials, website normalization, privacy label, cover gradients)
+
+function initialsFrom(name: string): string {
+  const s = String(name || "").trim();
+  if (!s) return "U";
+  const words = s.split(/\s+/).filter(Boolean);
+  const a = (words[0]?.[0] || "").toUpperCase();
+  const b =
+    words.length > 1
+      ? (words[words.length - 1]?.[0] || "").toUpperCase()
+      : (words[0]?.[1] || "").toUpperCase();
+  const out = (a + b).trim();
+  return out || a || "U";
+}
+
+function safeWebsiteHref(website: string) {
+  const w = (website || "").trim();
+  if (!w) return "#";
+  if (w.startsWith("http://") || w.startsWith("https://")) return w;
+  return "https://" + w;
+}
+
+function privacyTruth(side: SideId): string {
+  try {
+    const meta = (SIDES as any)?.[side];
+    if (meta && meta.privacyHint) return String(meta.privacyHint);
+    if (meta && meta.isPrivate) return "Restricted";
+    return "Visible";
+  } catch {
+    return "Visible";
+  }
+}
+
+// Tailwind-safe static cover gradients (PrismProfile fallback)
+const COVER: Record<SideId, string> = {
+  public: "bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600",
+  friends: "bg-gradient-to-br from-emerald-500 via-teal-500 to-emerald-600",
+  close: "bg-gradient-to-br from-rose-500 via-pink-500 to-rose-600",
+  work: "bg-gradient-to-br from-slate-700 via-slate-800 to-black",
+};
+
 function errorMessage(err: unknown): string {
   if (err instanceof Error) return err.message;
   if (typeof err === "string") return err;
@@ -87,7 +129,7 @@ facet?: PrismFacet;
 const SIDE_ICON: Record<SideId, React.ComponentType<React.SVGProps<SVGSVGElement> & { size?: string | number }>> = {
   public: Globe,
   friends: Users,
-  close: Star,
+  close: Heart,
   work: Briefcase,
 };
 
@@ -100,10 +142,13 @@ export function PrismSideTabs(props: {
 }) {
   const { active, allowedSides, onPick, onLockedPick } = props;
   const items: SideId[] = SIDE_ORDER;
+
   return (
     <div className="mt-4">
       <div className="text-xs text-gray-500 font-semibold mb-2">Side = who this is for.</div>
-      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+
+      {/* Prism Switch (segmented control) */}
+      <div className="flex p-1.5 bg-gray-100/80 backdrop-blur rounded-[24px] border border-white shadow-sm">
         {items.map((side) => {
           const t = SIDE_THEMES[side];
           const Icon = SIDE_ICON[side];
@@ -123,21 +168,23 @@ export function PrismSideTabs(props: {
                 onPick(side);
               }}
               className={cn(
-                "relative px-4 py-2 rounded-full font-extrabold text-sm whitespace-nowrap border transition-all flex items-center gap-2",
-                isActive ? cn(t.lightBg, "border-gray-200") : "bg-white border-gray-200 hover:bg-gray-50",
+                "flex-1 flex flex-col items-center py-2.5 rounded-[18px] transition-all duration-300",
+                isActive ? "bg-white shadow-[0_4px_12px_rgba(0,0,0,0.06)] text-gray-900 scale-[1.02]" : "text-gray-400 hover:text-gray-700",
                 locked ? "opacity-70" : ""
               )}
               aria-disabled={locked}
+              aria-label={SIDES[side].label}
+              title={SIDES[side].privacyHint}
             >
               <span className="relative">
-                <Icon size={16} className={isActive ? t.text : "text-gray-600"} />
+                <Icon size={18} className={cn(isActive ? t.text : "")} />
                 {locked ? (
                   <span className="absolute -top-2 -right-2 bg-white rounded-full p-0.5 shadow-sm border border-gray-200">
                     <Lock size={12} className="text-gray-500" />
                   </span>
                 ) : null}
               </span>
-              <span className={isActive ? "text-gray-900" : "text-gray-700"}>{SIDES[side].label}</span>
+              <span className="text-[9px] font-black mt-1 uppercase tracking-tighter italic">{SIDES[side].label}</span>
             </button>
           );
         })}
@@ -145,29 +192,7 @@ export function PrismSideTabs(props: {
     </div>
   );
 }
-const COVER: Record<SideId, string> = {
-  public: "bg-gradient-to-r from-blue-600 to-blue-400",
-  friends: "bg-gradient-to-r from-emerald-600 to-emerald-400",
-  close: "bg-gradient-to-r from-rose-600 to-rose-400",
-  work: "bg-gradient-to-r from-slate-700 to-slate-500",
-};
-function initialsFrom(nameOrHandle: string) {
-  const s = (nameOrHandle || "").replace(/^@/, "").trim();
-  if (!s) return "U";
-  const parts = s.split(/\s+/).filter(Boolean);
-  if (parts.length === 1) return (parts[0][0] || "U").toUpperCase();
-  return ((parts[0][0] || "U") + (parts[parts.length - 1][0] || "U")).toUpperCase();
-}
-function safeWebsiteHref(website: string) {
-  const w = (website || "").trim();
-  if (!w) return "#";
-  if (w.startsWith("http://") || w.startsWith("https://")) return w;
-  return "https://" + w;
-}
-function privacyTruth(viewSide: SideId) {
-  if (viewSide === "public") return "Public identity";
-  return `Visible to ${SIDES[viewSide].label} Side`;
-}
+
 export function SideWithSheet(props: {
   open: boolean;
   onClose: () => void;

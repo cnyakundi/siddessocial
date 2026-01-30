@@ -11,20 +11,20 @@ This doc tells you exactly what to set before going live.
 ## Choose a provider
 
 ### Option A: SMTP (simplest)
-Set:
+Circle:
 - `SD_EMAIL_PROVIDER=smtp`
 - `SD_EMAIL_FROM=no-reply@yourdomain.com`
 - `SD_SMTP_HOST` (from your SMTP provider)
 - `SD_SMTP_USER` / `SD_SMTP_PASSWORD`
 
 ### Option B: SendGrid (API)
-Set:
+Circle:
 - `SD_EMAIL_PROVIDER=sendgrid`
 - `SD_EMAIL_FROM=no-reply@yourdomain.com`
 - `SD_SENDGRID_API_KEY=<your key>`
 
 ## Required: public app base
-Set one of these (recommended):
+Circle one of these (recommended):
 - `SIDDES_PUBLIC_APP_BASE=https://yourdomain.com`
 
 If missing, emails will still include a token users can paste, but links won't be clickable.

@@ -38,7 +38,7 @@ const SIDE_ITEMS: Array<{ id: SideId; icon: IconType }> = [
 // sd_469a: Desktop nav declutter — unify alerts into Inbox (keep UI simple)
 const PRIMARY_NAV: Array<{ href: string; label: string; icon: IconType }> = [
   { href: "/siddes-feed", label: "Home", icon: Home },
-  { href: "/siddes-sets", label: "Circles", icon: CirclesMark },
+  { href: "/siddes-circles", label: "Circles", icon: CirclesMark },
   { href: "/siddes-inbox", label: "Inbox", icon: Mail },
 ];
 

@@ -10,10 +10,10 @@ import { FLAGS } from "@/src/lib/flags";
 import type { PublicChannelId } from "@/src/lib/publicChannels";
 import { PUBLIC_CHANNELS, labelForPublicChannel } from "@/src/lib/publicChannels";
 import { ComposeSuggestionBar } from "@/src/components/ComposeSuggestionBar";
-import type { SetDef, SetId } from "@/src/lib/sets";
-import { DEFAULT_SETS } from "@/src/lib/sets";
-import { getSetsProvider } from "@/src/lib/setsProvider";
-import { SetPickerSheet } from "@/src/components/SetPickerSheet";
+import type { CircleDef, CircleId } from "@/src/lib/circles";
+import { DEFAULT_CIRCLES } from "@/src/lib/circles";
+import { getCirclesProvider } from "@/src/lib/circlesProvider";
+import { CirclePickerSheet } from "@/src/components/CirclePickerSheet";
 import { toast } from "@/src/lib/toast";
 
 function cn(...parts: Array<string | undefined | false | null>) {
@@ -110,7 +110,7 @@ function TopicPickerSheet({
 
 type ComposeDraft = {
   text: string;
-  setId: SetId | null;
+  setId: CircleId | null;
   urgent: boolean;
   publicChannel: PublicChannelId;
   updatedAt: number;
@@ -321,7 +321,7 @@ export default function SiddesComposePage() {
         setText(d.text);
         setPosting(false);
         // Restore meta best-effort.
-        setSelectedSetId(d.setId ?? null);
+        setSelectedCircleId(d.setId ?? null);
         setUrgent(Boolean(d.urgent));
         setPublicChannel((d.publicChannel as any) || "general");
       }
@@ -365,7 +365,7 @@ export default function SiddesComposePage() {
     try {
       saveDraft(side, {
         text: t,
-        setId: selectedSetId,
+        setId: selectedCircleId,
         urgent: Boolean(urgent),
         publicChannel,
         updatedAt: Date.now(),
@@ -397,9 +397,9 @@ export default function SiddesComposePage() {
   const [publicConfirmDontAsk, setPublicConfirmDontAsk] = useState(false);
   const [pendingPublicText, setPendingPublicText] = useState<string | null>(null);
 
-  const setsProvider = useMemo(() => getSetsProvider(), []);
-  const [sets, setSets] = useState<SetDef[]>(() => DEFAULT_SETS);
-  const [selectedSetId, setSelectedSetId] = useState<SetId | null>(null);
+  const setsProvider = useMemo(() => getCirclesProvider(), []);
+  const [sets, setSets] = useState<CircleDef[]>(() => DEFAULT_CIRCLES);
+  const [selectedCircleId, setSelectedCircleId] = useState<CircleId | null>(null);
   const [urgent, setUrgent] = useState(false);
   const [publicChannel, setPublicChannel] = useState<PublicChannelId>("general");
 
@@ -410,10 +410,10 @@ export default function SiddesComposePage() {
   useEffect(() => {
     let mounted = true;
 
-    setSelectedSetId(null);
+    setSelectedCircleId(null);
     setUrgent(false);
     // Prevent "wrong side" sets flashing during side switches.
-    setSets(side === "friends" ? DEFAULT_SETS : []);
+    setSets(side === "friends" ? DEFAULT_CIRCLES : []);
     setsProvider
       .list({ side })
       .then((items) => {
@@ -431,7 +431,7 @@ export default function SiddesComposePage() {
 
   const isOnline = typeof navigator !== "undefined" ? navigator.onLine : true;
 
-  const selectedSet = useMemo(() => sets.find((s) => s.id === selectedSetId) ?? null, [sets, selectedSetId]);
+  const selectedSet = useMemo(() => sets.find((s) => s.id === selectedCircleId) ?? null, [sets, selectedCircleId]);
 
   const audienceLabel =
     side === "public"
@@ -478,7 +478,7 @@ export default function SiddesComposePage() {
     setError(null);
 
     const meta = {
-      setId: selectedSetId,
+      setId: selectedCircleId,
       urgent,
       publicChannel: side === "public" && FLAGS.publicChannels ? publicChannel : null,
     };
@@ -486,7 +486,7 @@ export default function SiddesComposePage() {
     const reset = () => {
       setText("");
       setUrgent(false);
-      setSelectedSetId(null);
+      setSelectedCircleId(null);
       setError(null);
       clearDraft(side);
     };
@@ -511,7 +511,7 @@ export default function SiddesComposePage() {
         body: JSON.stringify({
           side,
           text: t,
-          setId: selectedSetId,
+          setId: selectedCircleId,
           urgent,
           publicChannel: side === "public" && FLAGS.publicChannels ? publicChannel : null,
           client_key: clientKey,
@@ -771,21 +771,21 @@ export default function SiddesComposePage() {
                     text={text}
                     currentSide={side}
                     sets={sets}
-                    selectedSetId={selectedSetId}
+                    selectedCircleId={selectedCircleId}
                     urgent={urgent}
                     onApplySide={(s) => setSide(s)}
-                    onToggleSet={(id) => setSelectedSetId((cur) => (cur === id ? null : (id as any)))}
+                    onToggleSet={(id) => setSelectedCircleId((cur) => (cur === id ? null : (id as any)))}
                     onToggleUrgent={() => setUrgent((u) => !u)}
                   />
                 </div>
 
                 {/* Selected context chips (clear fast) */}
-                {selectedSetId && selectedSet ? (
+                {selectedCircleId && selectedSet ? (
                   <div className="flex gap-2 flex-wrap mt-2">
                     <button
                       type="button"
                       className="px-3 py-1 rounded-full text-xs font-extrabold bg-orange-50 text-orange-700 border border-orange-100 hover:opacity-90"
-                      onClick={() => setSelectedSetId(null)}
+                      onClick={() => setSelectedCircleId(null)}
                       title="Click to clear set"
                     >
                       Set: {selectedSet.label} ✕
@@ -856,7 +856,7 @@ export default function SiddesComposePage() {
           // Restore in-place: switch side safely, then fill.
           if (restoreSide !== side) setSide(restoreSide);
           setText(d.text || "");
-          setSelectedSetId(d.setId ?? null);
+          setSelectedCircleId(d.setId ?? null);
           setUrgent(Boolean(d.urgent));
           setPublicChannel((d.publicChannel as any) || "general");
           setError(null);
@@ -864,13 +864,13 @@ export default function SiddesComposePage() {
       />
 
       {/* Audience sheets */}
-      <SetPickerSheet
+      <CirclePickerSheet
         open={setPickerOpen}
         onClose={() => setSetPickerOpen(false)}
         sets={sets}
-        activeSet={selectedSetId}
-        onPick={(next) => setSelectedSetId(next)}
-        onNewSet={() => router.push("/siddes-sets?create=1")}
+        activeSet={selectedCircleId}
+        onPick={(next) => setSelectedCircleId(next)}
+        onNewSet={() => router.push("/siddes-circles?create=1")}
         title="Choose Audience"
         allLabel={`All ${SIDES[side].label}`}
       />

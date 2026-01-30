@@ -221,14 +221,14 @@
       "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/siddes-profile/page.tsx"
     },
     {
-      "route": "/siddes-sets/[id]",
-      "file": "siddes-sets/[id]/page.tsx",
-      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/siddes-sets/[id]/page.tsx"
+      "route": "/siddes-circles/[id]",
+      "file": "siddes-circles/[id]/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/siddes-circles/[id]/page.tsx"
     },
     {
-      "route": "/siddes-sets",
-      "file": "siddes-sets/page.tsx",
-      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/siddes-sets/page.tsx"
+      "route": "/siddes-circles",
+      "file": "siddes-circles/page.tsx",
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/siddes-circles/page.tsx"
     },
     {
       "route": "/siddes-settings/appeals",
@@ -306,12 +306,12 @@
       "file": "siddes-post/[id]/error.tsx"
     },
     {
-      "route": "/siddes-sets/[id]",
-      "file": "siddes-sets/[id]/error.tsx"
+      "route": "/siddes-circles/[id]",
+      "file": "siddes-circles/[id]/error.tsx"
     },
     {
-      "route": "/siddes-sets",
-      "file": "siddes-sets/error.tsx"
+      "route": "/siddes-circles",
+      "file": "siddes-circles/error.tsx"
     }
   ],
   "layouts": [
@@ -732,19 +732,19 @@
       "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/search/users/route.ts"
     },
     {
-      "route": "/api/sets/[id]/events",
+      "route": "/api/circles/[id]/events",
       "file": "api/sets/[id]/events/route.ts",
-      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/sets/[id]/events/route.ts"
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/circles/[id]/events/route.ts"
     },
     {
-      "route": "/api/sets/[id]",
+      "route": "/api/circles/[id]",
       "file": "api/sets/[id]/route.ts",
-      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/sets/[id]/route.ts"
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/circles/[id]/route.ts"
     },
     {
-      "route": "/api/sets",
+      "route": "/api/circles",
       "file": "api/sets/route.ts",
-      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/sets/route.ts"
+      "path": "/mnt/data/sidesroot/sidesroot/frontend/src/app/api/circles/route.ts"
     },
     {
       "route": "/api/side",

@@ -57,16 +57,16 @@ Privacy note is enforced by convention here:
 
 `sdTelemetry()` is called only from these UI surfaces:
 
-1) Suggested Sets review sheet
-- File: `frontend/src/components/SuggestedSetsSheet.tsx`
+1) Suggested Circles review sheet
+- File: `frontend/src/components/SuggestedCirclesSheet.tsx`
 - Emits:
   - `suggestion_shown` (count = number of suggestions shown) when sheet opens
   - `suggestion_accepted` (count = 1 or N) on accept
   - `suggestion_skipped` (count = 1 or N) on skip
   - `suggestion_edited` (count = 1) when removing a member or renaming
 
-2) Suggested Sets tray (feed/onboarding helper)
-- File: `frontend/src/components/SuggestedSetsTray.tsx`
+2) Suggested Circles tray (feed/onboarding helper)
+- File: `frontend/src/components/SuggestedCirclesTray.tsx`
 - Emits:
   - `suggestion_accepted` (count = 1 or N)
   - `suggestion_skipped` (count = 1 or N)
@@ -282,8 +282,8 @@ Frontend
 - `frontend/src/app/api/telemetry/route.ts`
 - `frontend/src/app/developer/telemetry/page.tsx`
 - `frontend/src/app/developer/telemetry/telemetryClient.tsx`
-- `frontend/src/components/SuggestedSetsSheet.tsx`
-- `frontend/src/components/SuggestedSetsTray.tsx`
+- `frontend/src/components/SuggestedCirclesSheet.tsx`
+- `frontend/src/components/SuggestedCirclesTray.tsx`
 - `frontend/src/app/onboarding/page.tsx`
 
 Backend

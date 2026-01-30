@@ -35,7 +35,7 @@ SD_INBOX_STORE=memory
 
 ## Environment toggles
 
-Set these in `ops/docker/.env` (Docker dev backend reads this file).
+Circle these in `ops/docker/.env` (Docker dev backend reads this file).
 
 ### `SD_INBOX_STORE`
 Values:
@@ -86,7 +86,7 @@ bash scripts/dev/django_migrate.sh
 docker compose -f ops/docker/docker-compose.dev.yml run --rm backend python manage.py seed_inbox_demo --reset
 ```
 
-3) Set store + restart backend:
+3) Circle store + restart backend:
 ```bash
 # ops/docker/.env
 SD_INBOX_STORE=db

@@ -15,6 +15,7 @@ import { getInboxProvider } from "@/src/lib/inboxProvider";
 import { loadPinnedSet, togglePinned } from "@/src/lib/inboxPins";
 import { ensureThreadLockedSide, loadThread, loadThreadMeta } from "@/src/lib/threadStore";
 import { InboxBanner } from "@/src/components/InboxBanner";
+import { NotificationsView } from "@/src/components/NotificationsView";
 import { isRestrictedError, restrictedMessage } from "@/src/lib/restricted";
 import { InboxStubDebugPanel } from "@/src/components/InboxStubDebugPanel";
 import { useInboxStubViewer } from "@/src/lib/useInboxStubViewer";
@@ -221,6 +222,19 @@ function SiddesInboxPageInner() {
   const tabParam = params.get("tab");
   const tab: "messages" | "alerts" = tabParam === "alerts" ? "alerts" : "messages";
 
+  const setTab = (next: "messages" | "alerts") => {
+    try {
+      const sp = new URLSearchParams(params.toString());
+      if (next === "alerts") sp.set("tab", "alerts");
+      else sp.delete("tab");
+      const qs = sp.toString();
+      router.replace(qs ? `/siddes-inbox?${qs}` : "/siddes-inbox");
+    } catch {
+      router.replace(next === "alerts" ? "/siddes-inbox?tab=alerts" : "/siddes-inbox");
+    }
+  };
+
+
   const debug = params.get("debug") === "1";
   // sd_464d1: restore scroll when returning from thread detail
   useReturnScrollRestore();
@@ -254,6 +268,11 @@ function SiddesInboxPageInner() {
 
   
   useEffect(() => {
+    if (tab === "alerts") {
+      setLoading(false);
+      return;
+    }
+
     let alive = true;
     const ac = new AbortController();
     setLoading(true);
@@ -307,7 +326,7 @@ function SiddesInboxPageInner() {
       try { ac.abort(); } catch {}
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [provider, side, viewer, refreshTick]);
+  }, [provider, side, viewer, refreshTick, tab]);
 
   const unreadMap = useMemo(() => {
     const ids = threads.map((t) => String((t as any)?.id || ""));
@@ -367,6 +386,7 @@ const filtered = useMemo(() => {
 
   // Keyboard nav: j/k to move selection, Enter to open.
   useEffect(() => {
+    if (tab === "alerts") return;
     function onKeyDown(e: KeyboardEvent) {
       const key = e.key;
 
@@ -407,7 +427,7 @@ const filtered = useMemo(() => {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [activeIndex, filtered, router]);
+  }, [activeIndex, filtered, router, tab]);
 
   const loadMore = async () => {
     if (restricted) return;
@@ -498,6 +518,38 @@ const filtered = useMemo(() => {
       ) : null}
 
       {debug ? <InboxStubDebugPanel viewer={viewerInput} onViewer={setViewerInput} /> : null}
+
+      <div className="mb-3" data-testid="inbox-tabs">
+        <div className="inline-flex rounded-full border border-gray-200 bg-white p-1 shadow-sm">
+          <button
+            type="button"
+            data-testid="inbox-tab-messages"
+            onClick={() => setTab("messages")}
+            className={cn(
+              "px-4 py-2 rounded-full text-xs font-bold",
+              tab === "messages" ? "bg-gray-900 text-white" : "text-gray-600 hover:bg-gray-50"
+            )}
+          >
+            Messages
+          </button>
+          <button
+            type="button"
+            data-testid="inbox-tab-alerts"
+            onClick={() => setTab("alerts")}
+            className={cn(
+              "px-4 py-2 rounded-full text-xs font-bold",
+              tab === "alerts" ? "bg-gray-900 text-white" : "text-gray-600 hover:bg-gray-50"
+            )}
+          >
+            Alerts
+          </button>
+        </div>
+      </div>
+
+      {tab === "alerts" ? (
+        <NotificationsView embedded />
+      ) : (
+        <>
       <div className="mb-4 px-1">
         <p className="text-xs font-medium text-gray-400 flex items-center gap-1.5">
           <Lock size={12} className="text-gray-400" />
@@ -709,6 +761,8 @@ const filtered = useMemo(() => {
           </button>
         </div>
       ) : null}
+        </>
+      )}
     </div>
   );
 }

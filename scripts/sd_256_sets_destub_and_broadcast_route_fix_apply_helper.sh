@@ -5,9 +5,9 @@ set -euo pipefail
 #
 # Batch-safe fixes:
 # 1) Fix /api/broadcasts route compile bug (proxyPost missing csrf/origin/referer/reqId defs).
-# 2) Remove sd_viewer cookie gating + cookie-instruction banners from Sets pages (list + detail).
+# 2) Remove sd_viewer cookie gating + cookie-instruction banners from Circles pages (list + detail).
 # 3) Remove always-on "Dev stub requires sd_viewer=me" copy from InviteActionSheet.
-# 4) Remove unused/duplicated inviteSuggestions block in Set detail page (extra requests + lint risk).
+# 4) Remove unused/duplicated inviteSuggestions block in Circle detail page (extra requests + lint risk).
 #
 # Run from repo root (must contain ./frontend and ./backend).
 
@@ -22,8 +22,8 @@ need() { [[ -f "$1" ]] || { echo "[sd_256] ERROR: Missing file: $1"; exit 1; }; 
 
 FILES=(
   "frontend/src/app/api/broadcasts/route.ts"
-  "frontend/src/app/siddes-sets/page.tsx"
-  "frontend/src/app/siddes-sets/[id]/page.tsx"
+  "frontend/src/app/siddes-circles/page.tsx"
+  "frontend/src/app/siddes-circles/[id]/page.tsx"
   "frontend/src/components/Invites/InviteActionSheet.tsx"
 )
 
@@ -99,8 +99,8 @@ if "async function proxyPost" in s:
 else:
     print(f"[sd_256] WARN: {BR} missing proxyPost (unexpected)")
 
-# 2) Sets list page: remove sd_viewer gating
-SETS_LIST = "frontend/src/app/siddes-sets/page.tsx"
+# 2) Circles list page: remove sd_viewer gating
+SETS_LIST = "frontend/src/app/siddes-circles/page.tsx"
 
 sub_all(SETS_LIST,
         r'^\s*import\s+\{\s*getStubViewerCookie\s*,\s*isStubMe\s*\}\s+from\s+"@/src/lib/stubViewerClient";\s*\n',
@@ -109,10 +109,10 @@ sub_all(SETS_LIST,
         label="drop stubViewerClient import")
 
 sub_all(SETS_LIST,
-        r'^\s*import\s+\{\s*SetsJoinedPill\s*\}\s+from\s+"@/src/components/SetsJoinedBanner";\s*\n',
+        r'^\s*import\s+\{\s*CirclesJoinedPill\s*\}\s+from\s+"@/src/components/CirclesJoinedBanner";\s*\n',
         "",
         flags=re.M,
-        label="drop SetsJoinedPill import")
+        label="drop CirclesJoinedPill import")
 
 sub_all(SETS_LIST,
         r'^\s*const\s+providerName\s*=\s*setsProvider\.name;\s*\n',
@@ -123,7 +123,7 @@ sub_all(SETS_LIST,
 # Replace viewer/canWrite/readOnly block with session-truth canWrite
 sub_once(SETS_LIST,
          r'\n\s*const\s*\[viewer\s*,\s*setViewer\]\s*=\s*useState<[^>]*>\([^;]*\);\s*\n\s*useEffect\([\s\S]*?\);\s*\n\s*\n\s*const\s+canWrite\s*=\s*[^;]*;\s*\n\s*const\s+readOnly\s*=\s*[^;]*;\s*\n',
-         "\n\n  // sd_256: Sets UI is session-auth only (no viewer cookie gating).\n  const canWrite = true;\n\n",
+         "\n\n  // sd_256: Circles UI is session-auth only (no viewer cookie gating).\n  const canWrite = true;\n\n",
          flags=re.S,
          label="remove viewer gating block")
 
@@ -154,14 +154,14 @@ sub_all(SETS_LIST,
         flags=re.S,
         label="remove create sd_viewer check")
 
-# 3) Sets detail page: remove sd_viewer gating + remove unused inviteSuggestions block
-SET_DETAIL = "frontend/src/app/siddes-sets/[id]/page.tsx"
+# 3) Circles detail page: remove sd_viewer gating + remove unused inviteSuggestions block
+SET_DETAIL = "frontend/src/app/siddes-circles/[id]/page.tsx"
 
 sub_all(SET_DETAIL,
-        r'^\s*import\s+\{\s*SetsJoinedBanner\s*,\s*SetsJoinedPill\s*\}\s+from\s+"@/src/components/SetsJoinedBanner";\s*\n',
+        r'^\s*import\s+\{\s*CirclesJoinedBanner\s*,\s*CirclesJoinedPill\s*\}\s+from\s+"@/src/components/CirclesJoinedBanner";\s*\n',
         "",
         flags=re.M,
-        label="drop SetsJoinedBanner import")
+        label="drop CirclesJoinedBanner import")
 
 sub_all(SET_DETAIL,
         r'^\s*import\s+\{\s*getStubViewerCookie\s*,\s*isStubMe\s*\}\s+from\s+"@/src/lib/stubViewerClient";\s*\n',
@@ -178,7 +178,7 @@ sub_all(SET_DETAIL,
 # Replace viewer/canWrite/readOnly block
 sub_once(SET_DETAIL,
          r'\n\s*const\s*\[viewer\s*,\s*setViewer\]\s*=\s*useState<[^>]*>\(\(\)\s*=>\s*getStubViewerCookie\(\)\s*\|\|\s*null\);\s*\n\s*useEffect\([\s\S]*?\);\s*\n\s*\n\s*const\s+canWrite\s*=\s*[^;]*;\s*\n\s*const\s+readOnly\s*=\s*[^;]*;\s*\n',
-         "\n\n  // sd_256: Sets UI is session-auth only (no viewer cookie gating).\n  const canWrite = true;\n\n",
+         "\n\n  // sd_256: Circles UI is session-auth only (no viewer cookie gating).\n  const canWrite = true;\n\n",
          flags=re.S,
          label="remove viewer gating block")
 
@@ -203,14 +203,14 @@ sub_all(SET_DETAIL,
         label="remove readOnly fragment")
 
 sub_all(SET_DETAIL,
-        r'\{readOnly\s*\?\s*<SetsJoinedPill\s*/>\s*:\s*null\}',
+        r'\{readOnly\s*\?\s*<CirclesJoinedPill\s*/>\s*:\s*null\}',
         "",
         flags=re.S,
         label="remove readOnly pill")
 
 # Remove sd_viewer-specific save() guard (server enforces)
 sub_all(SET_DETAIL,
-        r'\n\s*if\s*\(!canWrite\)\s*\{\s*\n\s*setErr\("Read-only: switch sd_viewer=me to edit this Set\."\);\s*\n\s*return;\s*\n\s*\}\s*\n',
+        r'\n\s*if\s*\(!canWrite\)\s*\{\s*\n\s*setErr\("Read-only: switch sd_viewer=me to edit this Circle\."\);\s*\n\s*return;\s*\n\s*\}\s*\n',
         "\n",
         flags=re.S,
         label="remove save sd_viewer check")
@@ -230,7 +230,7 @@ sub_all(INV_SHEET,
         flags=re.S,
         label="replace dev-stub note")
 
-# Minimal post-check: cookie-instruction strings should be gone from Sets pages
+# Minimal post-check: cookie-instruction strings should be gone from Circles pages
 for p in [SETS_LIST, SET_DETAIL]:
     s = read(p)
     if 'document.cookie = "sd_viewer=me' in s or "sd_viewer is missing" in s:
@@ -245,8 +245,8 @@ echo "Stop/Go gate:"
 echo "  npm -C frontend run lint"
 echo ""
 echo "Quick verification:"
-echo "  grep -R -n 'document.cookie = \"sd_viewer=me' frontend/src/app/siddes-sets || true"
-echo "  grep -R -n 'sd_viewer is missing' frontend/src/app/siddes-sets || true"
+echo "  grep -R -n 'document.cookie = \"sd_viewer=me' frontend/src/app/siddes-circles || true"
+echo "  grep -R -n 'sd_viewer is missing' frontend/src/app/siddes-circles || true"
 echo "  node -c frontend/src/app/api/broadcasts/route.ts 2>/dev/null || true"
 echo ""
 echo "Rollback:"

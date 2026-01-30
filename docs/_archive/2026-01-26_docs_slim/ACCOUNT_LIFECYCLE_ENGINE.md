@@ -25,7 +25,7 @@ It is written to match the current Siddes architecture: **browser → Next proxy
 - DEV has a stub viewer (`x-sd-viewer` / `sd_viewer`), but **auth endpoints ignore it** and it is **disabled** when `DEBUG=False`.
 
 ### 1.2 Critical proxy rule: Next sets the session cookie
-The Next proxy **does not rely on backend `Set-Cookie` for `sessionid`**. Instead, it:
+The Next proxy **does not rely on backend `Circle-Cookie` for `sessionid`**. Instead, it:
 - forwards *non-session cookies* (e.g., `csrftoken`)
 - strips backend `sessionid`
 - re-sets `sessionid` on the app domain using **`data.session`** from backend JSON (`applyProxyCookies()`)
@@ -131,7 +131,7 @@ Any endpoint that creates an authenticated session MUST return:
 - UI: `/signup`
 - Next: `POST /api/auth/signup`
 - Django: `POST /api/auth/signup`
-  - creates `User` + `SiddesProfile` + default Sets
+  - creates `User` + `SiddesProfile` + default Circles
   - logs in and returns `session`
   - sends verification email best-effort
 

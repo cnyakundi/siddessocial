@@ -13,7 +13,7 @@
 - User
 - UserIdentity (HMAC token)
 - Relationship (friends/close/work)
-- Set + SetMember (Friends)
+- Circle + SetMember (Friends)
 - Post (side_id + optional set_id)
 - Interaction (like/echo/reply)
 - SignalsCounter (cached)

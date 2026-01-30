@@ -47,7 +47,7 @@ Siddes is *context-first*: the UI must constantly answer:
 4. Me → `/siddes-profile`
 
 **Not in global nav (by design):**
-- Sets (`/siddes-sets`) — reachable from Me → Manage
+- Circles (`/siddes-circles`) — reachable from Me → Manage
 - Invites (`/siddes-invites`) — reachable from Me → Manage
 - Notifications (`/siddes-notifications`) — **alias only** (see Unified Inbox)
 
@@ -75,7 +75,7 @@ Inbox is the single “attention hub” with two tabs:
 **Component:** `frontend/src/components/ProfileView.tsx`
 
 Shown only on self profile (`user.id === "me"`) as a calm card:
-- Sets → `/siddes-sets`
+- Circles → `/siddes-circles`
 - Invites → `/siddes-invites`
 - Settings → `/siddes-settings`
 
@@ -110,43 +110,43 @@ Toggles stored in `localStorage` for MVP:
 
 ---
 
-## Sets-as-filter
+## Circles-as-filter
 
 ### Launch UX
 
-**Rule:** A *Set* is a **secondary filter inside the current Side**, not a primary navigation destination.
+**Rule:** A *Circle* is a **secondary filter inside the current Side**, not a primary navigation destination.
 
 ### Feed behavior
-- In Friends (and any Side that supports Sets), the feed header shows a single Set control:
+- In Friends (and any Side that supports Circles), the feed header shows a single Circle control:
   - Default: **All**
-  - Tap to open a **Set picker sheet**
-  - Selecting a Set filters the feed within the current Side
-- **Create Set** is a secondary action (no dashboard clutter).
+  - Tap to open a **Circle picker sheet**
+  - Selecting a Circle filters the feed within the current Side
+- **Create Circle** is a secondary action (no dashboard clutter).
 
 ### Compose behavior
-- Composer shows a **manual Set picker** (when the current Side supports Sets).
-- AI suggestions may *recommend* Sets, but never auto-switch the Set.
-- Deep-link: `/siddes-sets?create=1` can be used from Compose to create a Set without leaving the flow.
+- Composer shows a **manual Circle picker** (when the current Side supports Circles).
+- AI suggestions may *recommend* Circles, but never auto-switch the Circle.
+- Deep-link: `/siddes-circles?create=1` can be used from Compose to create a Circle without leaving the flow.
 
 ### Psychological rationale
-- Users naturally think **Audience (Side) → Subgroup (Set)**.
-- Keeping Sets as a filter prevents “management UI” vibes and reduces cognitive load.
+- Users naturally think **Audience (Side) → Subgroup (Circle)**.
+- Keeping Circles as a filter prevents “management UI” vibes and reduces cognitive load.
 - Manual control + reversible suggestions preserve psychological safety.
 
 
-## Sets-as-filter (Step 2)
-**Goal:** Sets feel like a *secondary filter* inside a Side—never a dashboard destination.
+## Circles-as-filter (Step 2)
+**Goal:** Circles feel like a *secondary filter* inside a Side—never a dashboard destination.
 
 ### Feed
-- Friends feed shows a calm **Set** row (All / specific Set) instead of a permanent chips toolbar.
-- Tapping the row opens a **Set picker sheet**.
-- New Set stays available (dashed button) and uses the existing import/create flow.
+- Friends feed shows a calm **Circle** row (All / specific Circle) instead of a permanent chips toolbar.
+- Tapping the row opens a **Circle picker sheet**.
+- New Circle stays available (dashed button) and uses the existing import/create flow.
 
 ### Compose
-- Friends compose shows the same **Set** row so manual selection never depends on AI suggestions.
-- "New" deep-links to `/siddes-sets?create=1` to keep the composer uncluttered.
+- Friends compose shows the same **Circle** row so manual selection never depends on AI suggestions.
+- "New" deep-links to `/siddes-circles?create=1` to keep the composer uncluttered.
 
-**Psych rationale:** Users decide audience first (Side), then subgroup (Set). This hierarchy reduces context-collapse errors and decision fatigue.
+**Psych rationale:** Users decide audience first (Side), then subgroup (Circle). This hierarchy reduces context-collapse errors and decision fatigue.
 
 
 ## Remixed Feed Modules (flagged)
@@ -169,6 +169,6 @@ This enables **UI-only feed modules** ("stealables") injected into `SideFeed` wi
 
 **Current modules (v0)**
 - Public: Today in Public
-- Friends: Side Health + Set Prompt
+- Friends: Side Health + Circle Prompt
 - Close: On this day (memory)
 - Work: Morning triage

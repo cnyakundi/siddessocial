@@ -4,9 +4,9 @@ Rituals are **structured micro-moments** that live **above the feed**.
 They are *not posts*.
 
 Examples:
-- Mood check (Friends Set)
-- Reading list (Close Set)
-- Blocker check (Work Set)
+- Mood check (Friends Circle)
+- Reading list (Close Circle)
+- Blocker check (Work Circle)
 - Public Daily Town Hall (Public)
 
 ## Privacy model (who sees what)
@@ -18,9 +18,9 @@ Examples:
 - Public Rituals require an authenticated viewer (unknown viewer returns `restricted:true`).
 
 ### Friends / Close / Work
-- **V1 is Set-scoped only.**
-- A viewer can read/write only if they are the Set owner or a Set member (DB-enforced).
-- The Set's stored `side` is the truth (client cannot spoof the side).
+- **V1 is Circle-scoped only.**
+- A viewer can read/write only if they are the Circle owner or a Circle member (DB-enforced).
+- The Circle's stored `side` is the truth (client cannot spoof the side).
 
 ### Broadcasts / Topics (`set_id=b_*`)
 - Treated as Public channels. In v1, Ritual kind is limited to **question**.

@@ -16,9 +16,9 @@ fi
 
 {
   echo ""
-  echo "## sd_140b — Sets membership propagation"
+  echo "## sd_140b — Circles membership propagation"
   echo ""
-  echo "- Auto-refresh Sets list/detail after invite accept (setsSignals)."
+  echo "- Auto-refresh Circles list/detail after invite accept (setsSignals)."
   echo ""
 } >> "${STATE}"
 

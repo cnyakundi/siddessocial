@@ -6,7 +6,7 @@ import React from "react";
 import {
   Globe,
   Users,
-  Star,
+  Heart,
   Briefcase,
   ShieldCheck,
   MapPin,
@@ -45,7 +45,7 @@ function safeWebsiteHref(website: string) {
 const SIDE_ICON: Record<SideId, React.ComponentType<any>> = {
   public: Globe,
   friends: Users,
-  close: Star,
+  close: Heart,
   work: Briefcase,
 };
 
@@ -125,122 +125,93 @@ export function ProfileV2Header(props: {
   if (variant === "clean") {
     return (
       <div className="w-full">
-        <div className="flex flex-col items-center text-center pt-8 pb-6">
-          <div
-            className={cn(
-              "w-28 h-28 rounded-full bg-gray-100 overflow-hidden shadow-sm flex items-center justify-center font-black text-2xl select-none ring-2",
-              theme.ring
-            )}
-            aria-hidden="true"
-            title={name}
-          >
-            {avatarImage ? <img src={avatarImage} alt="" className="w-full h-full object-cover" /> : initialsFrom(name)}
-          </div>
+        <div className="pt-3">
+          <div className="flex items-center gap-5">
+            {/* Avatar + Side badge */}
+            <div className="relative">
+              <div className={cn("absolute inset-0 rounded-[32px] blur-md opacity-20", theme.lightBg)} aria-hidden="true" />
+              <div className="relative">
+                <div className="w-24 h-24 rounded-[32px] overflow-hidden border-4 border-white shadow-sm bg-gray-100 flex items-center justify-center select-none">
+                  {avatarImage ? (
+                    <img src={avatarImage} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className={cn("text-2xl font-black", theme.text)}>{initialsFrom(name)}</span>
+                  )}
+                </div>
 
-          <h1 className="mt-5 text-2xl font-black text-gray-900 tracking-tight">{name}</h1>
-          <div className="text-sm text-gray-500 font-semibold mt-1">{handle}</div>
-
-          <div
-            className={cn(
-              "mt-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-extrabold uppercase tracking-wider",
-              theme.lightBg,
-              theme.border,
-              theme.text
-            )}
-          >
-            <Icon size={12} />
-            {SIDES[displaySide].label} identity
-          </div>
-
-          {headline ? <div className="mt-3 text-sm font-semibold text-gray-700">{headline}</div> : null}
-
-          <p className={cn("mt-4 text-[15px] leading-relaxed max-w-md", bio ? "text-gray-700" : "text-gray-400")}>
-            {bio || "No bio yet."}
-          </p>
-
-          {/* Declutter: keep privacy visible, hide location/website behind Details */}
-          <div className="mt-4 inline-flex items-center gap-1 px-3 py-1 rounded-full border text-xs font-semibold bg-gray-50 border-gray-100 text-gray-600">
-            {SIDES[displaySide]?.isPrivate ? <Lock size={12} /> : <ShieldCheck size={12} />}{" "}
-            {SIDES[displaySide]?.privacyHint || "Visible"}
-          </div>
-
-          {(location || website) ? (
-            <details className="mt-3 text-xs text-gray-600">
-              <summary className="cursor-pointer select-none font-extrabold text-gray-500 hover:text-gray-700">
-                Details
-              </summary>
-              <div className="mt-2 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-gray-500 font-medium">
-                {location ? (
-                  <div className="flex items-center gap-1">
-                    <MapPin size={14} /> {location}
-                  </div>
-                ) : null}
-                {website ? (
-                  <a
-                    href={safeWebsiteHref(website)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className={cn("flex items-center gap-1 font-extrabold hover:underline", theme.text)}
-                  >
-                    <LinkIcon size={14} /> {website}
-                  </a>
-                ) : null}
+                <div className={cn("absolute -bottom-1 -right-1 w-9 h-9 rounded-2xl border-4 border-white flex items-center justify-center shadow-md", theme.lightBg, theme.text)}>
+                  <Icon size={16} strokeWidth={3} />
+                </div>
               </div>
-            </details>
-          ) : null}
+            </div>
 
-          {/* Directional clarity */}
-          {!isOwner ? (
-            <div className="mt-4 flex flex-wrap gap-2 justify-center">
-              <div
-                className={cn(
-                  "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-extrabold",
-                  theme.lightBg,
-                  theme.border,
-                  theme.text
-                )}
+            {/* Identity */}
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-black tracking-tight text-gray-900 truncate">{name}</h1>
+              <div className="text-sm text-gray-500 font-bold truncate">{handle}</div>
+
+              {/* Primary actions + Message */}
+              {(actions || onMessage || messageHref) ? (
+                <div className="mt-3 flex gap-2">
+                  <div className="flex-1 min-w-0">{actions}</div>
+
+                  {onMessage ? (
+                    <button
+                      type="button"
+                      onClick={onMessage}
+                      disabled={!!messageDisabled}
+                      className={cn(
+                        "w-11 h-11 rounded-2xl border border-gray-200 bg-white text-gray-600 flex items-center justify-center active:scale-[0.98] transition",
+                        messageDisabled ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-50"
+                      )}
+                      aria-label="Message"
+                      title="Message"
+                    >
+                      <MessageSquare size={18} strokeWidth={2.5} />
+                    </button>
+                  ) : messageHref ? (
+                    <a
+                      href={messageHref}
+                      className="w-11 h-11 rounded-2xl border border-gray-200 bg-white text-gray-600 flex items-center justify-center active:scale-[0.98] transition hover:bg-gray-50"
+                      aria-label="Message"
+                      title="Message"
+                    >
+                      <MessageSquare size={18} strokeWidth={2.5} />
+                    </a>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+          </div>
+
+          {/* Headline + Bio */}
+          {headline ? <div className="mt-5 text-sm font-semibold text-gray-700">{headline}</div> : null}
+          <p className={cn("mt-3 text-[15px] leading-relaxed", bio ? "text-gray-700" : "text-gray-400")}>{bio || "No bio yet."}</p>
+
+          {/* Meta row */}
+          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-gray-500 font-semibold">
+            {location ? (
+              <div className="flex items-center gap-1">
+                <MapPin size={14} /> {location}
+              </div>
+            ) : null}
+
+            {/* Website is Public-only (keeps private Sides clean + safe) */}
+            {displaySide === "public" && website ? (
+              <a
+                href={safeWebsiteHref(website)}
+                target="_blank"
+                rel="noreferrer"
+                className={cn("flex items-center gap-1 font-extrabold hover:underline", theme.text)}
               >
-                <ShieldCheck className="w-3.5 h-3.5" />
-                They show you {theyShow}
-              </div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-extrabold bg-gray-50 border-gray-200 text-gray-700">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                You show them {youShow}
-              </div>
-            </div>
-          ) : null}
+                <LinkIcon size={14} /> {website}
+              </a>
+            ) : null}
 
-          {actions ? (
-            <div className="mt-6 w-full max-w-sm">
-              <div className="flex gap-3">
-                <div className="flex-1">{actions}</div>
-                {onMessage ? (
-                  <button
-                    type="button"
-                    onClick={onMessage}
-                    disabled={!!messageDisabled}
-                    className={cn(
-                      "w-12 h-11 rounded-2xl bg-gray-100 text-gray-900 inline-flex items-center justify-center font-extrabold transition-colors",
-                      messageDisabled ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-200"
-                    )}
-                    aria-label="Message"
-                    title="Message"
-                  >
-                    <MessageSquare size={18} />
-                  </button>
-                ) : messageHref ? (
-                  <a
-                    href={messageHref}
-                    className="w-12 h-11 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-900 inline-flex items-center justify-center font-extrabold transition-colors"
-                    aria-label="Message"
-                    title="Message"
-                  >
-                    <MessageSquare size={18} />
-                  </a>
-                ) : null}
-              </div>
+            <div className="flex items-center gap-1 text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
+              {SIDES[displaySide]?.isPrivate ? <Lock size={10} /> : <ShieldCheck size={10} />} {SIDES[displaySide]?.privacyHint || "Visible"}
             </div>
-          ) : null}
+          </div>
         </div>
       </div>
     );

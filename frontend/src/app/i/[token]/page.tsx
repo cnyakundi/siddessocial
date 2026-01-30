@@ -39,7 +39,7 @@ export async function generateMetadata({ params }: { params: { token: string } }
   const token = String(params?.token || "").trim();
   const got = await fetchInvite(token);
   const item = got?.item || null;
-  const label = typeof item?.setLabel === "string" && item.setLabel ? item.setLabel : "a Set";
+  const label = typeof item?.setLabel === "string" && item.setLabel ? item.setLabel : "a Circle";
   const ownerHandle = item?.owner?.handle ? String(item.owner.handle) : "";
 
   const title = ownerHandle ? `${ownerHandle} invited you to ${label}` : `Invite to ${label}`;
@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: { params: { token: string } }
 
   return {
     title,
-    description: desc || "Join this Set on Siddes.",
+    description: desc || "Join this Circle on Siddes.",
   };
 }
 

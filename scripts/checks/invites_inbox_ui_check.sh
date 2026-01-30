@@ -7,7 +7,7 @@ REQ=(
   "frontend/src/app/siddes-invites/page.tsx"
   "frontend/src/components/TopNav.tsx"
   "frontend/src/components/Invites/InviteActionSheet.tsx"
-  "frontend/src/app/siddes-sets/[id]/page.tsx"
+  "frontend/src/app/siddes-circles/[id]/page.tsx"
   "docs/STATE.md"
 )
 
@@ -31,6 +31,6 @@ grep -q "getInviteProvider" frontend/src/app/siddes-invites/page.tsx && echo "�
 grep -q "invites\\.act" frontend/src/app/siddes-invites/page.tsx && echo "✅ Invites page supports actions" || (echo "❌ Invites page missing invites.act" && exit 1)
 
 grep -Fq "prefillTo?: string" frontend/src/components/Invites/InviteActionSheet.tsx && echo "✅ InviteActionSheet supports prefillTo" || (echo "❌ InviteActionSheet missing prefillTo prop" && exit 1)
-grep -q "prefillTo={prefillTo" "frontend/src/app/siddes-sets/[id]/page.tsx" && echo "✅ Set detail passes prefillTo" || (echo "❌ Set detail missing prefillTo wiring" && exit 1)
+grep -q "prefillTo={prefillTo" "frontend/src/app/siddes-circles/[id]/page.tsx" && echo "✅ Circle detail passes prefillTo" || (echo "❌ Circle detail missing prefillTo wiring" && exit 1)
 
 grep -q "sd_138c" docs/STATE.md && echo "✅ STATE doc mentions sd_138c" || (echo "❌ docs/STATE.md missing sd_138c" && exit 1)

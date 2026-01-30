@@ -29,7 +29,7 @@ Why:
 
 ## 2) Cloudflare: SSL/TLS settings
 Cloudflare → SSL/TLS:
-- Set **SSL mode** to **Full (strict)** (recommended)
+- Circle **SSL mode** to **Full (strict)** (recommended)
 - Leave HSTS off until everything is stable (you can add later)
 
 ---
@@ -109,7 +109,7 @@ Steps:
 1) Deploy worker from `ops/cloudflare/r2_media_worker`
 2) Add Worker route: `https://app.yourdomain.com/m/*`
 3) Turn proxy ON for `app` record in Cloudflare
-4) Set `SIDDES_MEDIA_TOKEN_SECRET` on DigitalOcean backend to the same value
+4) Circle `SIDDES_MEDIA_TOKEN_SECRET` on DigitalOcean backend to the same value
 
 ---
 

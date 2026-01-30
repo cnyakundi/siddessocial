@@ -5,8 +5,8 @@ and the trust guardrails that prevent platform death by friction or mis-post fea
 
 ## What is Done
 - Contact match is privacy-safe (tokenized/HMAC) and returns safe derived hints (domain/workish).
-- On-device Suggested Sets generated from real matches (local-first).
-- Review-first Suggested Sets UI:
+- On-device Suggested Circles generated from real matches (local-first).
+- Review-first Suggested Circles UI:
   - rename, member remove chips, min-2 guard
   - side pills, with Public disabled for contact-derived sets
   - batch accept (Accept valid (N))

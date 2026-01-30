@@ -67,4 +67,4 @@ Flow:
 2) Request reset
 3) Copy token from backend logs
 4) Open `http://localhost:3000/reset-password?token=...`
-5) Set new password and confirm you can login
+5) Circle new password and confirm you can login

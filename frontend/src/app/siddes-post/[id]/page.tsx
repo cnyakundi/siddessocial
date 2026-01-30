@@ -17,7 +17,7 @@ import { getStubViewerCookie, isStubMe } from "@/src/lib/stubViewerClient";
 import { fetchMe } from "@/src/lib/authMe";
 import { getSessionIdentity, touchSessionConfirmed, updateSessionFromMe } from "@/src/lib/sessionIdentity";
 import { getCachedPost, makePostCacheKey, setCachedPost } from "@/src/lib/postInstantCache";
-import { getSetsProvider } from "@/src/lib/setsProvider";
+import { getCirclesProvider } from "@/src/lib/circlesProvider";
 import {
   enqueueReply,
   countQueuedRepliesForPost,
@@ -356,7 +356,7 @@ function PostDetailInner() {
       if (!p) return;
       if (
         p.startsWith("/siddes-feed") ||
-        p.startsWith("/siddes-sets") ||
+        p.startsWith("/siddes-circles") ||
         p.startsWith("/siddes-inbox") ||
         p.startsWith("/siddes-notifications") ||
         p.startsWith("/siddes-search") ||
@@ -388,7 +388,7 @@ function PostDetailInner() {
     const r = String(savedReturn || "");
     if (r.startsWith("/siddes-inbox")) return r.includes("tab=alerts") ? "Alerts" : "Inbox";
     if (r.startsWith("/siddes-notifications")) return "Alerts";
-    if (r.startsWith("/siddes-sets")) return "Sets";
+    if (r.startsWith("/siddes-circles")) return "Sets";
     if (r.startsWith("/siddes-search") || r.startsWith("/search")) return "Search";
     if (r.startsWith("/u/")) return "Profile";
     if (r.startsWith("/siddes-profile")) return "Me";
@@ -649,7 +649,7 @@ useEffect(() => {
       try { (ctrl as any)?.abort?.(); } catch {}
     };
   }, [id]);
-// Enrich post with Set metadata for private sides so ContextStamp shows the real Set name/color.
+// Enrich post with Set metadata for private sides so ContextStamp shows the real Circle name/color.
   useEffect(() => {
     let mounted = true;
     if (!found) return;
@@ -665,7 +665,7 @@ useEffect(() => {
     const hasColor = typeof (found.post as any)?.setColor === "string" && String((found.post as any).setColor || "").trim().length > 0;
     if (hasLabel && hasColor) return;
 
-    const setsProvider = getSetsProvider();
+    const setsProvider = getCirclesProvider();
     setsProvider
       .get(setId)
       .then((s) => {

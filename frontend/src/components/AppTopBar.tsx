@@ -8,14 +8,14 @@ import { usePathname, useRouter } from "next/navigation";
 import { Bell, ChevronDown, RefreshCw, Search as SearchIcon, Lock as LockIcon } from "lucide-react";
 
 import { SideSwitcherSheet } from "@/src/components/SideSwitcherSheet";
-import { SetPickerSheet } from "@/src/components/SetPickerSheet";
+import { CirclePickerSheet } from "@/src/components/CirclePickerSheet";
 
 import { useSide } from "@/src/components/SideProvider";
 import { useSideActivity } from "@/src/hooks/useSideActivity";
 import { useNotificationsActivity } from "@/src/hooks/useNotificationsActivity";
 import { SIDES, SIDE_THEMES } from "@/src/lib/sides";
-import type { SetDef, SetId } from "@/src/lib/sets";
-import { getSetsProvider } from "@/src/lib/setsProvider";
+import type { CircleDef, CircleId } from "@/src/lib/circles";
+import { getCirclesProvider } from "@/src/lib/circlesProvider";
 import {
   emitAudienceChanged,
   getStoredLastSetForSide,
@@ -47,12 +47,12 @@ export function AppTopBar(_props: { onOpenNotificationsDrawer?: () => void } = {
 
   const isSiddes = pathname.startsWith("/siddes-");
   const isNow = pathname === "/siddes-feed" || pathname.startsWith("/siddes-feed/");
-  const showSetScope = false; // sd_790: Feed scope lives in SideFeed (SetFilterBar / Public Tune)
+  const showSetScope = false; // sd_790: Feed scope lives in SideFeed (CircleFilterBar / Public Tune)
 
   const pageTitle = useMemo(() => {
     if (!isSiddes) return "";
     if (isNow) return "";
-    if (pathname.startsWith("/siddes-sets")) return "Circles";
+    if (pathname.startsWith("/siddes-circles")) return "Circles";
     if (pathname.startsWith("/siddes-inbox")) return "Inbox";
     if (pathname.startsWith("/siddes-profile/prism")) return "Identity";
     if (pathname.startsWith("/siddes-profile/account")) return "Account";
@@ -68,8 +68,8 @@ if (pathname.startsWith("/siddes-profile")) return "Me";
 
   // Set scope (private sides only)
   const [setSheetOpen, setSetSheetOpen] = useState(false);
-  const [sets, setSets] = useState<SetDef[]>([]);
-  const [activeSet, setActiveSet] = useState<SetId | null>(null);
+  const [sets, setSets] = useState<CircleDef[]>([]);
+  const [activeSet, setActiveSet] = useState<CircleId | null>(null);
 
   // Load sets for current side (best-effort)
   useEffect(() => {
@@ -85,7 +85,7 @@ if (pathname.startsWith("/siddes-profile")) return "Me";
     const last = getStoredLastSetForSide(side);
     setActiveSet(last || null);
 
-    getSetsProvider()
+    getCirclesProvider()
       .list({ side })
       .then((list) => {
         if (cancelled) return;
@@ -275,7 +275,7 @@ if (pathname.startsWith("/siddes-profile")) return "Me";
 
       {/* Set picker (private sides only) */}
       {canPickSet ? (
-        <SetPickerSheet
+        <CirclePickerSheet
           open={setSheetOpen}
           currentSide={side}
           onClose={() => setSetSheetOpen(false)}
@@ -286,7 +286,7 @@ if (pathname.startsWith("/siddes-profile")) return "Me";
             setStoredLastSetForSide(side, next);
             emitAudienceChanged({ side, setId: next, topic: null, source: "AppTopBar" });
           }}
-          title="Group"
+          title="Circle"
           allLabel={SIDES[side].label}
         />
       ) : null}

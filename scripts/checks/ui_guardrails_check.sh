@@ -40,9 +40,9 @@ for f in "${NAV_FILES[@]}"; do
   fi
 done
 
-# 4) Side/Set language: avoid Mode/Scope in visible labels.
+# 4) Side/Circle language: avoid Mode/Scope in visible labels.
 if grep -RIn --include='*.tsx' -E '>Mode<|>Scope<' frontend/src/components/DesktopTopBar.tsx >/dev/null 2>&1; then
-  fail "DesktopTopBar still shows Mode/Scope. Use Side/Set."
+  fail "DesktopTopBar still shows Mode/Scope. Use Side/Circle."
 fi
 
 echo "✅ UI guardrails: OK"

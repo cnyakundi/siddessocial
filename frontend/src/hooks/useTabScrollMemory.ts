@@ -17,7 +17,7 @@ function isTrackable(path: string) {
   return (
     path.startsWith("/siddes-feed") ||
     path.startsWith("/siddes-inbox") ||
-    path.startsWith("/siddes-sets") ||
+    path.startsWith("/siddes-circles") ||
     path.startsWith("/siddes-search") ||
     path.startsWith("/siddes-notifications") ||
     path.startsWith("/u/")

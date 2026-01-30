@@ -126,7 +126,7 @@ if [[ "${INCLUDE_LOGS:-0}" == "1" ]]; then
   hr
 else
   say "== Docker logs skipped =="
-  say "Set INCLUDE_LOGS=1 to include docker compose logs (tail)."
+  say "Circle INCLUDE_LOGS=1 to include docker compose logs (tail)."
   hr
 fi
 

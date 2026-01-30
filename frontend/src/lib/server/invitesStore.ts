@@ -9,7 +9,7 @@
 
 import type { SideId } from "@/src/lib/sides";
 import type { SetInvite } from "@/src/lib/inviteProvider";
-import { getSet, updateSet } from "@/src/lib/server/setsStore";
+import { getSet, updateSet } from "@/src/lib/server/circlesStore";
 
 export type InviteDirection = "incoming" | "outgoing" | "all";
 

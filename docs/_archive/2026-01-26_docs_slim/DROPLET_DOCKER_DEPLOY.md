@@ -28,7 +28,7 @@ Fill:
 - `SIDDES_R2_ACCESS_KEY_ID`
 - `SIDDES_R2_SECRET_ACCESS_KEY`
 - `SIDDES_MEDIA_TOKEN_SECRET` (must match Worker `MEDIA_TOKEN_SECRET`)
-- Set `POSTGRES_PASSWORD` and update `DATABASE_URL` to match.
+- Circle `POSTGRES_PASSWORD` and update `DATABASE_URL` to match.
 
 ## 3) Start containers
 ```bash

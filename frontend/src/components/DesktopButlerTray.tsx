@@ -58,12 +58,12 @@ function ContextCard() {
     }
     if (side === "work") {
       return [
-        { icon: Users, title: "Sets (Teams)", desc: "Keep work streams separated by Set.", href: "/siddes-sets" },
+        { icon: Users, title: "Sets (Teams)", desc: "Keep work streams separated by Set.", href: "/siddes-circles" },
         { icon: Mail, title: "Inbox", desc: "Work messages stay in Work Side.", href: "/siddes-inbox" },
       ];
     }
     return [
-      { icon: Users, title: "Sets", desc: "Audience control inside your Side.", href: "/siddes-sets" },
+      { icon: Users, title: "Sets", desc: "Audience control inside your Side.", href: "/siddes-circles" },
       {
         icon: Shield,
         title: "Context Safety",

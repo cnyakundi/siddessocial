@@ -18,7 +18,7 @@ If you are a beginner, start here:
 
 ### Frontend (Next.js)
 - Core routes include `error.tsx` boundaries to show calm failure + retry:
-  - Feed, Post detail, Sets, Invites, Inbox
+  - Feed, Post detail, Circles, Invites, Inbox
 - The `/api` proxy generates/forwards `x-request-id` and often injects `requestId` into JSON responses.
 
 ---

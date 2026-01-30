@@ -240,7 +240,7 @@ else if (label === "settings_locality_link") {
     ensureContains(anchor, "expected blocked link anchor not found");
 
     const insert =
-`        <Link href="/siddes-settings/locality" className="block">\n          <div className="mt-2 flex items-center justify-between gap-4 p-4 rounded-2xl border border-gray-200 bg-white hover:bg-gray-50">\n            <div>\n              <div className="text-sm font-bold text-gray-900">Region & Age</div>\n              <div className="text-xs text-gray-500 mt-1">Set your region defaults and confirm age gate.</div>\n            </div>\n            <div className="text-xs font-extrabold text-gray-700">Open</div>\n          </div>\n        </Link>\n`;
+`        <Link href="/siddes-settings/locality" className="block">\n          <div className="mt-2 flex items-center justify-between gap-4 p-4 rounded-2xl border border-gray-200 bg-white hover:bg-gray-50">\n            <div>\n              <div className="text-sm font-bold text-gray-900">Region & Age</div>\n              <div className="text-xs text-gray-500 mt-1">Circle your region defaults and confirm age gate.</div>\n            </div>\n            <div className="text-xs font-extrabold text-gray-700">Open</div>\n          </div>\n        </Link>\n`;
 
     txt = txt.replace(anchor, insert + anchor);
   }

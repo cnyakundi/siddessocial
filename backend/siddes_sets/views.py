@@ -1,10 +1,10 @@
 """Sets API views (Django REST Framework).
 
 Endpoints mirror the Next.js API stubs:
-- GET/POST   /api/sets
-- GET/PATCH  /api/sets/<id>
-- GET        /api/sets/<id>/events
-- POST       /api/sets/<id>/leave
+- GET/POST   /api/circles
+- GET/PATCH  /api/circles/<id>
+- GET        /api/circles/<id>/events
+- POST       /api/circles/<id>/leave
 
 Viewer gating:
 - Viewer identity comes from DRF auth.
@@ -157,7 +157,7 @@ def _restricted_payload(has_viewer: bool, viewer: str, role: str, *, extra: Opti
 
 @method_decorator(dev_csrf_exempt, name="dispatch")
 class SetsView(APIView):
-    """GET/POST /api/sets"""
+    """GET/POST /api/circles"""
 
     def get(self, request):
         has_viewer, viewer, role = _viewer_ctx(request)
@@ -202,9 +202,9 @@ class SetsView(APIView):
 
 @method_decorator(dev_csrf_exempt, name="dispatch")
 class SetDetailView(APIView):
-    """GET/PATCH/DELETE /api/sets/<id>"""
+    """GET/PATCH/DELETE /api/circles/<id>"""
 
-    def get(self, request, set_id: str):
+    def get(self, request, circle_id: str):
         has_viewer, viewer, role = _viewer_ctx(request)
 
         if not has_viewer:
@@ -266,14 +266,14 @@ class SetDetailView(APIView):
 
 @method_decorator(dev_csrf_exempt, name="dispatch")
 class SetLeaveView(APIView):
-    """POST /api/sets/<id>/leave
+    """POST /api/circles/<id>/leave
 
     Allows a non-owner member to leave a Set (server-truth).
     - Default-safe: does not leak Set existence (404 if not readable).
     - Owner cannot leave (must delete).
     """
 
-    def post(self, request, set_id: str):
+    def post(self, request, circle_id: str):
         has_viewer, viewer, role = _viewer_ctx(request)
 
         if not has_viewer:
@@ -302,9 +302,9 @@ class SetLeaveView(APIView):
 
 @method_decorator(dev_csrf_exempt, name="dispatch")
 class SetEventsView(APIView):
-    """GET /api/sets/<id>/events"""
+    """GET /api/circles/<id>/events"""
 
-    def get(self, request, set_id: str):
+    def get(self, request, circle_id: str):
         has_viewer, viewer, role = _viewer_ctx(request)
 
         if not has_viewer:

@@ -311,7 +311,7 @@ export function AuthBootstrap() {
     const protectedPrefixes = [
       "/siddes-feed",
       "/siddes-post",
-      "/siddes-sets",
+      "/siddes-circles",
       "/siddes-inbox",
       "/siddes-invites",
       "/siddes-compose",
@@ -450,7 +450,7 @@ export function resolveInternalBase(): string | null {
 }
 
 function getSetCookies(res: Response): string[] {
-  // Node/Next runtime exposes getSetCookie() which preserves multiple Set-Cookie headers.
+  // Node/Next runtime exposes getSetCookie() which preserves multiple Circle-Cookie headers.
   const h: any = (res as any).headers;
   if (h && typeof h.getSetCookie === "function") {
     try {

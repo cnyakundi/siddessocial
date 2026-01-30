@@ -196,7 +196,7 @@
         },
         {
           "pattern": "sets/<str:set_id>/events",
-          "view": "SetEventsView.as_view("
+          "view": "CircleEventsView.as_view("
         }
       ]
     },

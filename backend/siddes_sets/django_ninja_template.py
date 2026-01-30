@@ -3,12 +3,12 @@
 This file is a TEMPLATE. It is not auto-registered.
 
 Proposed endpoints (v0):
-- GET  /api/sets?side=friends
-- POST /api/sets
-- POST /api/sets/{set_id}/rename
-- POST /api/sets/{set_id}/members/add
-- POST /api/sets/{set_id}/members/remove
-- GET  /api/sets/{set_id}/events
+- GET  /api/circles?side=friends
+- POST /api/circles
+- POST /api/circles/{set_id}/rename
+- POST /api/circles/{set_id}/members/add
+- POST /api/circles/{set_id}/members/remove
+- GET  /api/circles/{set_id}/events
 
 How to use:
 1) Copy into your Django project where Ninja routers live.

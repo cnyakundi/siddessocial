@@ -502,7 +502,24 @@ const tid = String(j?.thread?.id || "").trim();
             <ArrowLeft size={20} className="text-gray-700" />
           </button>
 
-          <div className="text-sm font-black text-gray-900 truncate max-w-[60%]">{handle}</div>
+          <div className="flex items-center gap-1.5 bg-gray-100/60 px-3 py-1 rounded-full border border-gray-200">
+            <div
+              className={
+                "w-1.5 h-1.5 rounded-full " +
+                (displaySide === "public"
+                  ? "bg-blue-600"
+                  : displaySide === "friends"
+                    ? "bg-emerald-600"
+                    : displaySide === "close"
+                      ? "bg-rose-600"
+                      : "bg-slate-700")
+              }
+              aria-hidden="true"
+            />
+            <span className="text-[10px] font-black uppercase tracking-widest text-gray-600">
+              {(SIDES[displaySide]?.label || displaySide)} Mode
+            </span>
+          </div>
 
           <button
             type="button"

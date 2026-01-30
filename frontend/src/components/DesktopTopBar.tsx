@@ -7,8 +7,8 @@ import { ChevronDown, Check, Search as SearchIcon } from "lucide-react";
 
 import { useSide } from "@/src/components/SideProvider";
 import { SIDES, SIDE_ORDER, SIDE_THEMES, type SideId } from "@/src/lib/sides";
-import type { SetDef, SetId } from "@/src/lib/sets";
-import { getSetsProvider } from "@/src/lib/setsProvider";
+import type { CircleDef, CircleId } from "@/src/lib/circles";
+import { getCirclesProvider } from "@/src/lib/circlesProvider";
 import {
   emitAudienceChanged,
   getStoredLastSetForSide,
@@ -21,7 +21,7 @@ function cn(...parts: Array<string | undefined | false | null>) {
 }
 
 function titleFor(pathname: string): string {
-  if (pathname.startsWith("/siddes-sets")) return "Circles";
+  if (pathname.startsWith("/siddes-circles")) return "Circles";
     if (pathname.startsWith("/siddes-notifications")) return "Alerts";
   if (pathname.startsWith("/siddes-inbox")) return "Inbox";
   if (pathname.startsWith("/siddes-profile/prism")) return "Identity";
@@ -95,9 +95,9 @@ function SetPopover({
 }: {
   open: boolean;
   onClose: () => void;
-  sets: SetDef[];
-  currentSet: SetId | null;
-  onPick: (next: SetId | null) => void;
+  sets: CircleDef[];
+  currentSet: CircleId | null;
+  onPick: (next: CircleId | null) => void;
 }) {
   if (!open) return null;
 
@@ -146,7 +146,7 @@ function SetPopover({
         <div className="h-px bg-gray-100 my-1 mx-2" />
 
         <Link
-          href="/siddes-sets"
+          href="/siddes-circles"
           onClick={() => onClose()}
           className="block w-full text-left px-4 py-2.5 text-sm font-semibold text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-colors"
         >
@@ -176,8 +176,8 @@ export function DesktopTopBar() {
   const [sideOpen, setSideOpen] = useState(false);
   const [setOpen, setSetOpen] = useState(false);
 
-  const [sets, setSets] = useState<SetDef[]>([]);
-  const [activeSet, setActiveSet] = useState<SetId | null>(null);
+  const [sets, setSets] = useState<CircleDef[]>([]);
+  const [activeSet, setActiveSet] = useState<CircleId | null>(null);
 
   // Cmd/Ctrl+K opens Search
   useEffect(() => {
@@ -218,7 +218,7 @@ export function DesktopTopBar() {
     const last = getStoredLastSetForSide(side);
     setActiveSet(last || null);
 
-    getSetsProvider()
+    getCirclesProvider()
       .list({ side })
       .then((list) => {
         if (cancelled) return;

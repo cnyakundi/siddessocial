@@ -251,8 +251,8 @@ error_files = [
   ROOT/"frontend/src/app/siddes-inbox/[id]/error.tsx",
   ROOT/"frontend/src/app/siddes-invites/error.tsx",
   ROOT/"frontend/src/app/siddes-feed/error.tsx",
-  ROOT/"frontend/src/app/siddes-sets/error.tsx",
-  ROOT/"frontend/src/app/siddes-sets/[id]/error.tsx",
+  ROOT/"frontend/src/app/siddes-circles/error.tsx",
+  ROOT/"frontend/src/app/siddes-circles/[id]/error.tsx",
   ROOT/"frontend/src/app/invite/[id]/error.tsx",
   ROOT/"frontend/src/app/siddes-post/[id]/error.tsx",
 ]
@@ -434,8 +434,8 @@ if p0.exists():
     patch_text_file(p0, {
         'DESKTOP_RAIL="frontend/src/components/DesktopSideRail.tsx"':'DESKTOP_DOCK="frontend/src/components/DesktopSideDock.tsx"',
         'require_file "$DESKTOP_RAIL"':'require_file "$DESKTOP_DOCK"',
-        'require_grep "{ href: \\"/siddes-sets\\", label: \\"Sets\\", icon: Layers }" "$DESKTOP_RAIL" "DesktopSideRail Sets uses Layers icon"':
-        'require_grep "href: \\"/siddes-sets\\"" "$DESKTOP_DOCK" "DesktopSideDock contains Sets nav"\nrequire_grep "icon: Layers" "$DESKTOP_DOCK" "DesktopSideDock Sets uses Layers icon"',
+        'require_grep "{ href: \\"/siddes-circles\\", label: \\"Circles\\", icon: Layers }" "$DESKTOP_RAIL" "DesktopSideRail Circles uses Layers icon"':
+        'require_grep "href: \\"/siddes-circles\\"" "$DESKTOP_DOCK" "DesktopSideDock contains Circles nav"\nrequire_grep "icon: Layers" "$DESKTOP_DOCK" "DesktopSideDock Circles uses Layers icon"',
     })
 
 p1 = ROOT/"scripts/checks/ui_cleanroom_p1_side_activity_engine_check.sh"

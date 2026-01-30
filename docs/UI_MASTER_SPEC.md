@@ -14,9 +14,9 @@ It is intentionally opinionated: **context-first, calm, privacy-first.**
 1) **Side (global context mode)**  
    Public (Blue), Friends (Emerald), Close (Rose), Work (Slate)
 
-2) **Set (subgroup inside a Side)**  
+2) **Circle (subgroup inside a Side)**  
    Example: Gym Crew, Family, Startup Core  
-   **Sets never exist outside a Side.** They are filters and audiences inside the chosen Side.
+   **Circles never exist outside a Side.** They are filters and audiences inside the chosen Side.
 
 3) **Topics (Public-only categories)**  
    Example: Politics, Tech, Sports  
@@ -44,7 +44,7 @@ Avoid making Siddes feel like a clone:
 - **Unside**: remove connection (requires confirmation)
 - **Siders**: people who sided you (owner-only by default)
 - **Siding**: people you side (owner-only by default)
-- **Set**: subgroup inside a Side
+- **Circle**: subgroup inside a Side
 - **Topics**: Public categories (internally: public topics)
 
 ---
@@ -88,11 +88,11 @@ Canonical theme tokens:
 This is the “all pages we agreed on” list.
 
 ### 4.1 Side Feed (core)
-**Purpose:** browse content in one Side, optionally filtered by Set or Topic.
+**Purpose:** browse content in one Side, optionally filtered by Circle or Topic.
 
 Must include:
 - Side indicator always visible
-- Set filter row inside Friends/Close/Work
+- Circle filter row inside Friends/Close/Work
 - Topics filter (Public only)
 - Calm, uncluttered post card
 - Context stamp on each card (tiny)
@@ -101,8 +101,8 @@ Repo mapping:
 - Page: `frontend/src/app/siddes-feed/page.tsx`
 - Feed: `frontend/src/components/SideFeed.tsx`
 - Post card: `frontend/src/components/PostCard.tsx`
-- Set filter: `frontend/src/components/SetFilterBar.tsx`
-- Set picker: `frontend/src/components/SetPickerSheet.tsx`
+- Circle filter: `frontend/src/components/CircleFilterBar.tsx`
+- Circle picker: `frontend/src/components/CirclePickerSheet.tsx`
 - Public topics (internal “topics”): `frontend/src/lib/publicChannels.ts`
 
 ### 4.2 Compose (posting)
@@ -110,7 +110,7 @@ Repo mapping:
 
 Rules:
 - Composer always shows **current Side** with a colored dot + label.
-- If posting to a Set, Set selection is explicit.
+- If posting to a Circle, Circle selection is explicit.
 - Public posts can optionally include Topic selection.
 
 Repo mapping:
@@ -154,20 +154,20 @@ Repo mapping:
 - Page: `frontend/src/app/siddes-profile/page.tsx`
 - View: `frontend/src/components/ProfileView.tsx` (needs Side/Sided naming pass)
 
-### 4.6 Sets (subgroups)
-**Purpose:** create/manage Sets; filter feed by Set; invite into Set.
+### 4.6 Circles (subgroups)
+**Purpose:** create/manage Circles; filter feed by Circle; invite into Circle.
 
 Rules:
-- Sets are always contained within their parent Side.
+- Circles are always contained within their parent Side.
 - Feed set picker should only show sets in that Side.
-- Create Set is a guided flow (fast).
+- Create Circle is a guided flow (fast).
 
 Repo mapping:
-- Page: `frontend/src/app/siddes-sets/page.tsx`
-- Guided create: `frontend/src/components/CreateSetSheet.tsx`
+- Page: `frontend/src/app/siddes-circles/page.tsx`
+- Guided create: `frontend/src/components/CreateCircleSheet.tsx`
 
 ### 4.7 Invites
-**Purpose:** invite into a Side or Set via link; acceptance flow.
+**Purpose:** invite into a Side or Circle via link; acceptance flow.
 
 Rules:
 - Invite is context-scoped.
@@ -203,7 +203,7 @@ Implementation (flagged):
 
 Module catalog (v0):
 - Public: Today in Public (topics/trends)
-- Friends: Side Health + Set Prompt
+- Friends: Side Health + Circle Prompt
 - Close: On this day (memory)
 - Work: Morning triage
 

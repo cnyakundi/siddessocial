@@ -277,7 +277,7 @@ Frontend (Next proxy routes):
 - No accidental dev-only identity in prod
 
 ## Evidence commands
-- On HTTPS deployment: inspect Set-Cookie headers → `Secure; HttpOnly; SameSite=Lax`
+- On HTTPS deployment: inspect Circle-Cookie headers → `Secure; HttpOnly; SameSite=Lax`
 
 ---
 
@@ -314,7 +314,7 @@ Frontend:
 - Admin actions are logged
 
 ## Evidence commands
-- Set user to SUSPENDED → posting returns restricted
+- Circle user to SUSPENDED → posting returns restricted
 - Audit log shows actor + timestamp
 
 ---

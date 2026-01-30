@@ -2,13 +2,13 @@ import { test, expect } from "@playwright/test";
 import { seedClientPrefs, assertBackendReady, signupAndOnboard, dismissFtueIfPresent, csrfPost } from "./utils";
 
 test.describe("Feed scope sync", () => {
-  test("selecting a Set triggers /api/feed?set=... (TopBar -> Feed)", async ({ page }) => {
+  test("selecting a Circle triggers /api/feed?set=... (TopBar -> Feed)", async ({ page }) => {
     await seedClientPrefs(page);
     await assertBackendReady(page);
     await signupAndOnboard(page, "feedscope");
 
     const label = `E2E Scope Set ${Date.now()}`;
-    const res = await csrfPost(page, "/api/sets", {
+    const res = await csrfPost(page, "/api/circles", {
       data: { side: "friends", label, members: [], color: "emerald" },
       timeout: 15_000,
     });

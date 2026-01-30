@@ -54,7 +54,7 @@ export function AuthBootstrap() {
     const protectedPrefixes = [
       "/siddes-feed",
       "/siddes-post",
-      "/siddes-sets",
+      "/siddes-circles",
       "/siddes-inbox",
       "/siddes-invites",
       "/siddes-compose",

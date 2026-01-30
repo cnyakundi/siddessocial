@@ -1,6 +1,6 @@
 # ML Part 2 — On-Device Local Clustering v2 (Token Similarity)
 
-Goal: reduce onboarding "clerical work" by generating **Suggested Sets** locally (browser/on-device)
+Goal: reduce onboarding "clerical work" by generating **Suggested Circles** locally (browser/on-device)
 from *safe match results* — without sending private context to the server.
 
 This version extends the existing high-precision anchors (Work domain + surname) with a cheap
@@ -13,10 +13,10 @@ From `POST /api/contacts/match` we use the safe subset:
 - `hint.domain` + `hint.workish`
 
 ## Output
-A list of `SuggestedSet` objects:
+A list of `SuggestedCircle` objects:
 - `label`, `members[]`, `side`, `color`, `reason`, `id`
 
-Server only receives the final accepted Set via `POST /api/sets`.
+Server only receives the final accepted Circle via `POST /api/circles`.
 
 ## Pipeline
 1) Work clusters (high precision)

@@ -7,7 +7,7 @@ This is the consolidated “one doc” view of Siddes: philosophy, architecture,
 Siddes solves **context collapse** by making social context explicit and enforced:
 
 - **Sides** are persistent contexts (Public/Friends/Close/Work).
-- **Sets** are sub-groups inside a Side.
+- **Circles** are sub-groups inside a Side.
 - The server is the source of truth for privacy and authorization.
 
 ### Core laws (do not break)
@@ -26,7 +26,7 @@ Siddes solves **context collapse** by making social context explicit and enforce
 ### Backend
 - Django + DRF
 - Session-auth is truth (`request.user`)
-- Side/Set authz enforced server-side
+- Side/Circle authz enforced server-side
 
 **Reference:** `ARCHITECTURE.md`, `PRIVACY_SECURITY.md`, `SESSIONS.md`
 
@@ -57,7 +57,7 @@ Docs:
 - `FEED_BACKEND.md`
 - `PERFORMANCE_SUPERSONIC.md`
 
-### Sets
+### Circles
 - CRUD, membership gating, events
 
 Docs:
@@ -115,7 +115,7 @@ The definitive launch checklist is:
 A deployment is “real” only when:
 - `DJANGO_DEBUG=0` and secrets/hosts are safe
 - no dev-only routes are reachable
-- Side/Set authz is enforced server-side
+- Side/Circle authz is enforced server-side
 - DB migrations + backups are part of deploy
 
 ## 7) Where to look next

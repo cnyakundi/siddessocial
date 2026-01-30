@@ -2,7 +2,7 @@
 
 import React, { useMemo } from "react";
 import type { SideId } from "@/src/lib/sides";
-import type { SetDef } from "@/src/lib/sets";
+import type { CircleDef } from "@/src/lib/circles";
 import { computeComposeSuggestions } from "@/src/lib/composeIntent";
 import { SIDES, SIDE_THEMES } from "@/src/lib/sides";
 
@@ -20,7 +20,7 @@ export function ComposeSuggestionBar({
   text,
   currentSide,
   sets,
-  selectedSetId,
+  selectedCircleId,
   urgent,
   onApplySide,
   onToggleSet,
@@ -28,16 +28,16 @@ export function ComposeSuggestionBar({
 }: {
   text: string;
   currentSide: SideId;
-  sets: SetDef[];
-  selectedSetId: string | null;
+  sets: CircleDef[];
+  selectedCircleId: string | null;
   urgent: boolean;
   onApplySide: (side: SideId) => void;
   onToggleSet: (setId: string) => void;
   onToggleUrgent: () => void;
 }) {
   const suggestions = useMemo(() => {
-    return computeComposeSuggestions({ text, currentSide, sets, selectedSetId, urgent });
-  }, [text, currentSide, sets, selectedSetId, urgent]);
+    return computeComposeSuggestions({ text, currentSide, sets, selectedCircleId, urgent });
+  }, [text, currentSide, sets, selectedCircleId, urgent]);
 
   if (!suggestions.length) return null;
 
@@ -68,7 +68,7 @@ export function ComposeSuggestionBar({
           }
 
           if (s.kind === "set") {
-            const active = selectedSetId === s.setId;
+            const active = selectedCircleId === s.setId;
             return (
               <button
                 key={`set:${s.setId}`}

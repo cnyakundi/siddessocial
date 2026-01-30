@@ -5,8 +5,8 @@ import Link from "next/link";
 import { Users } from "lucide-react";
 import { useSide } from "@/src/components/SideProvider";
 import { SIDE_THEMES } from "@/src/lib/sides";
-import { getSetsProvider } from "@/src/lib/setsProvider";
-import type { SetDef } from "@/src/lib/sets";
+import { getCirclesProvider } from "@/src/lib/circlesProvider";
+import type { CircleDef } from "@/src/lib/circles";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -30,8 +30,8 @@ export function DesktopRightRail() {
   const { side } = useSide();
   const theme = SIDE_THEMES[side];
 
-  const setsProvider = useMemo(() => getSetsProvider(), []);
-  const [sets, setSets] = useState<SetDef[]>([]);
+  const setsProvider = useMemo(() => getCirclesProvider(), []);
+  const [sets, setSets] = useState<CircleDef[]>([]);
   const [setsErr, setSetsErr] = useState<string | null>(null);
 
   useEffect(() => {
@@ -63,7 +63,7 @@ export function DesktopRightRail() {
           <div className="flex items-center justify-between mb-3">
             <div className="text-xs font-extrabold text-gray-400 uppercase tracking-widest">Sets</div>
             <Link
-              href="/siddes-sets"
+              href="/siddes-circles"
               className="text-xs font-bold text-gray-500 hover:text-gray-900 hover:underline"
               aria-label="Manage sets"
               title="Manage sets"
@@ -79,7 +79,7 @@ export function DesktopRightRail() {
               {sets.map((s) => (
                 <Link
                   key={s.id}
-                  href={`/siddes-sets/${encodeURIComponent(String(s.id))}`}
+                  href={`/siddes-circles/${encodeURIComponent(String(s.id))}`}
                   className="flex items-center gap-3 p-2 -mx-2 rounded-xl hover:bg-gray-50 transition-colors"
                 >
                   <div className={cn("w-9 h-9 rounded-full flex items-center justify-center", theme.lightBg)}>
@@ -95,7 +95,7 @@ export function DesktopRightRail() {
           ) : (
             <div className="text-xs text-gray-500">
               No sets yet.{" "}
-              <Link href="/siddes-sets" className="font-bold hover:underline">
+              <Link href="/siddes-circles" className="font-bold hover:underline">
                 Create one
               </Link>
               .

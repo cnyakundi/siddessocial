@@ -51,7 +51,7 @@ Keep these safe:
 ## Step 2 — Backend deploy (DigitalOcean)
 
 ### A) Required env vars (minimum)
-Set these in DigitalOcean for the Django service:
+Circle these in DigitalOcean for the Django service:
 
 - `DJANGO_DEBUG=0`
 - `DJANGO_SECRET_KEY=<generated>`
@@ -101,7 +101,7 @@ Your backend should run migrations and serve gunicorn. If you used the `sd_385` 
 ## Step 3 — Frontend deploy (Vercel)
 
 ### Required env vars
-Set these in Vercel:
+Circle these in Vercel:
 
 - `SD_INTERNAL_API_BASE=https://api.yourdomain.com`
 
@@ -139,7 +139,7 @@ npx wrangler deploy
 ```
 
 ### C) Backend env to match Worker
-Set on DigitalOcean:
+Circle on DigitalOcean:
 - `SIDDES_MEDIA_TOKEN_SECRET=<same secret as Worker>`
 - Optional: `SIDDES_MEDIA_PRIVATE_TTL=600`
 

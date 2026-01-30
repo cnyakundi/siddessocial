@@ -25,7 +25,7 @@ Ops:
 - `ops/cloudflare/r2_media_worker/*` example Worker to serve `/m/*` from R2 (with Range support).
 
 ## Required env vars (backend)
-Set these for presigning (S3-compatible R2 API):
+Circle these for presigning (S3-compatible R2 API):
 - `SIDDES_R2_ACCOUNT_ID` (or `SIDDES_R2_ENDPOINT`)
 - `SIDDES_R2_BUCKET`
 - `SIDDES_R2_ACCESS_KEY_ID`
@@ -53,4 +53,4 @@ See `ops/cloudflare/r2_media_worker/README.md`.
 
 ## Security notes
 - This phase treats private media as **owner-only** (safe default).
-- Later: when media is attached to Posts, authorization should be derived from Post visibility (Side + Set membership).
+- Later: when media is attached to Posts, authorization should be derived from Post visibility (Side + Circle membership).

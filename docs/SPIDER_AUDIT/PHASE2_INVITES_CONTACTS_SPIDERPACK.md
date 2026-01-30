@@ -1,6 +1,6 @@
 # Phase 2.14 — Invites + Contacts Spider Pack (Siddes)
 
-This pack maps the **Invite** subsystem (Set invites) and the **Contacts** subsystem (contact matching + suggestions) end‑to‑end:
+This pack maps the **Invite** subsystem (Circle invites) and the **Contacts** subsystem (contact matching + suggestions) end‑to‑end:
 
 **UI surfaces → client providers → Next API proxy routes → Django/DRF endpoints → DB models/stores**.
 
@@ -19,24 +19,24 @@ No logic critique or fixes here — only **structural DNA**: files, contracts, a
   - **Path:** `frontend/src/app/invite/[id]/page.tsx`
   - **Purpose:** Load a single invite and allow accept/reject/revoke.
 
-- **Create invite from Set detail**
-  - **Path:** `frontend/src/app/siddes-sets/[id]/page.tsx`
-  - **Purpose:** Open `InviteActionSheet` to send Set invites.
+- **Create invite from Circle detail**
+  - **Path:** `frontend/src/app/siddes-circles/[id]/page.tsx`
+  - **Purpose:** Open `InviteActionSheet` to send Circle invites.
 
 ### 1.2 Contacts (used by multiple flows)
 - **Onboarding: contact match**
   - **Path:** `frontend/src/app/onboarding/page.tsx`
-  - **Purpose:** User pastes identifiers → `/api/contacts/match` returns matches; local on-device clustering suggests Sets.
+  - **Purpose:** User pastes identifiers → `/api/contacts/match` returns matches; local on-device clustering suggests Circles.
 
-- **Import Set flow: contacts suggestions**
-  - **Path:** `frontend/src/components/ImportSetSheet.tsx`
+- **Import Circle flow: contacts suggestions**
+  - **Path:** `frontend/src/components/ImportCircleSheet.tsx`
   - **Purpose:** `/api/contacts/suggestions` provides a DB-backed list of people (dev-mode) for set creation + suggestions.
 
 - **Inbox thread: mention candidates**
   - **Path:** `frontend/src/app/siddes-inbox/[id]/page.tsx`
   - **Purpose:** `/api/contacts/suggestions` provides candidates for @mention UI.
 
-- **Set invite suggestions**
+- **Circle invite suggestions**
   - **Path:** `frontend/src/lib/inviteSuggestions.ts`
   - **Purpose:** Uses `/api/contacts/suggestions` to generate “who to invite” handle pool.
 
@@ -46,7 +46,7 @@ No logic critique or fixes here — only **structural DNA**: files, contracts, a
 
 ### 2.1 UI Components
 - **InviteActionSheet**
-  - **Purpose:** Modal sheet to send a Set invite.
+  - **Purpose:** Modal sheet to send a Circle invite.
   - **State dependencies:** `useState`, `useEffect`, `useMemo` (provider), local validation.
   - **Path:** `frontend/src/components/Invites/InviteActionSheet.tsx`
 
@@ -62,7 +62,7 @@ No logic critique or fixes here — only **structural DNA**: files, contracts, a
 
 - **Invite provider implementation (backend_stub)**
   - **Purpose:** Calls same-origin Next API routes (`/api/invites*`) and coerces JSON into `SetInvite`.
-  - **Side effect:** On `accept`, emits `emitSetsChanged()` so Sets UI can refetch.
+  - **Side effect:** On `accept`, emits `emitCirclesChanged()` so Circles UI can refetch.
   - **Path:** `frontend/src/lib/inviteProviders/backendStub.ts`
 
 ### 2.3 Contacts helpers used by Invites
@@ -119,7 +119,7 @@ These are the same-origin **proxy endpoints** the UI calls.
 
 - **Store**
   - **Path:** `backend/siddes_invites/store_db.py`
-  - **Notes:** On accept, the store updates Set membership and emits a Set history event.
+  - **Notes:** On accept, the store updates Circle membership and emits a Circle history event.
 
 - **Model**
   - **Path:** `backend/siddes_invites/models.py` (`SiddesInvite`)
@@ -249,7 +249,7 @@ export type SetInvite = {
 ```
 
 ### 5.7 Contacts — Suggestions
-**Call sites:** `ImportSetSheet`, inbox mentions, invite suggestions.
+**Call sites:** `ImportCircleSheet`, inbox mentions, invite suggestions.
 
 **Response JSON in DEBUG:**
 ```json
@@ -282,14 +282,14 @@ export type SetInvite = {
   - **Path:** `backend/siddes_contacts/views.py`
 
 ### 6.3 Invite accept side-effects (membership)
-On accept, backend updates Set membership and emits Set history:
+On accept, backend updates Circle membership and emits Circle history:
 - Add recipient handle to `SiddesSet.members`
 - Best-effort sync membership table (`SiddesSetMember.get_or_create`)
-- Emit event `SiddesSetEvent(kind=MEMBERS_UPDATED, data={from,to,via,inviteId})`
+- Emit event `SiddesCircleEvent(kind=MEMBERS_UPDATED, data={from,to,via,inviteId})`
   - **Path:** `backend/siddes_invites/store_db.py`
 
 ### 6.4 Frontend refetch signaling
-- After `accept`, client emits `emitSetsChanged()`
+- After `accept`, client emits `emitCirclesChanged()`
   - **Path:** `frontend/src/lib/inviteProviders/backendStub.ts`
 
 ---
@@ -324,11 +324,11 @@ On accept, backend updates Set membership and emits Set history:
 - **Contacts suggestions → Invite suggestions**
   - `frontend/src/lib/inviteSuggestions.ts` consumes `/api/contacts/suggestions`.
 
-- **Invite accept → Sets membership + Sets UI refresh**
+- **Invite accept → Circles membership + Circles UI refresh**
   - Backend: `backend/siddes_invites/store_db.py` mutates membership + events.
-  - Frontend: `emitSetsChanged()` from invite provider.
+  - Frontend: `emitCirclesChanged()` from invite provider.
 
-- **Contacts match → On-device clustering → Suggested Sets**
+- **Contacts match → On-device clustering → Suggested Circles**
   - Frontend onboarding: `frontend/src/app/onboarding/page.tsx` calls match → feeds `onDeviceContextEngine`.
 
 

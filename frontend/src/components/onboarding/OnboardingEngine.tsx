@@ -142,12 +142,12 @@ export function OnboardingEngine() {
     setStepId("create_set");
   }
 
-  async function createSet(info: { side: SideId; name: string }) {
+  async function createCircle(info: { side: SideId; name: string }) {
     setSetBusy(true);
     setSetMsg(null);
     try {
       const colorBySide: Record<SideId, string> = { public: "blue", friends: "emerald", close: "rose", work: "slate" };
-      const r = await fetch("/api/sets", {
+      const r = await fetch("/api/circles", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ side: info.side, label: info.name, color: colorBySide[info.side], members: [] }),
@@ -226,7 +226,7 @@ export function OnboardingEngine() {
         </StepWrapper>
 
         <StepWrapper active={stepId === "create_set"} onBack={() => setStepId("welcome")}> 
-          <CreateFirstSetStep onCreate={createSet} onSkip={completeOnboarding} busy={setBusy} msg={setMsg} />
+          <CreateFirstSetStep onCreate={createCircle} onSkip={completeOnboarding} busy={setBusy} msg={setMsg} />
         </StepWrapper>
 
         <StepWrapper active={stepId === "first_post"} onBack={() => setStepId("create_set")}> 

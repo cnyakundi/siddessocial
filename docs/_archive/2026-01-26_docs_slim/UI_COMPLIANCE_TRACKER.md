@@ -24,7 +24,7 @@ This tracker is the measurable definition of “100% aligned”.
 - [ ] Search states (loading skeleton, empty CTA, error+retry, restricted distinct)
 - [ ] Inbox list states (skeleton rows, error+retry, empty CTA)
 - [ ] Inbox thread “no lies” (no empty during initial load)
-- [ ] Sets list + set hub states match SideFeed
+- [ ] Circles list + set hub states match SideFeed
 - [ ] Profile self/other states (skeleton + retry; network error != not authed)
 - [ ] States E2E test exists and passes
 

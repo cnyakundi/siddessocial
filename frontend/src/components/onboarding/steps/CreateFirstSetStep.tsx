@@ -73,7 +73,7 @@ export default function CreateFirstSetStep({
 
         <input
           type="text"
-          placeholder="Set name (e.g. Gym Crew)"
+          placeholder="Circle name (e.g. Gym Crew)"
           value={setName}
           onChange={(e) => setSetName(e.target.value)}
           className="w-full p-5 bg-gray-50 border border-gray-100 rounded-2xl text-center font-bold outline-none focus:bg-white focus:border-gray-200 transition-all"

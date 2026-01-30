@@ -37,7 +37,7 @@ Repo root: `/mnt/data/sidesroot/sidesroot`
   _Path:_ `frontend/src/lib/sideStore.ts`
 - **useSide (SideProvider)** — Global Side Context hook; UI reads active Side from here.  
   _Path:_ `frontend/src/components/SideProvider.tsx`
-- **Set theme tokens (SET_THEMES)** — Set color tokens for Set chips/badges.  
+- **Circle theme tokens (CIRCLE_THEMES)** — Circle color tokens for Circle chips/badges.  
   _Path:_ `frontend/src/lib/setThemes.ts`
 
 **How switching works (structural):** Components either (a) call `useSide()` to get the active Side, then (b) look up Tailwind classes via `SIDE_THEMES[side]`, or they receive `side` via props from their parent (e.g., feed → post card).
@@ -69,9 +69,9 @@ All exported UI components under `frontend/src/components/**` with state depende
 - **ContentColumn** — UI component.  
   _State deps:_ —  
   _Path:_ `frontend/src/components/ContentColumn.tsx`
-- **CreateSetSheet** — Modal/sheet UI surface for user actions and focused workflows.  
+- **CreateCircleSheet** — Modal/sheet UI surface for user actions and focused workflows.  
   _State deps:_ useEffect, useMemo, useState  
-  _Path:_ `frontend/src/components/CreateSetSheet.tsx`
+  _Path:_ `frontend/src/components/CreateCircleSheet.tsx`
 - **DesktopButlerTray** — UI component.  
   _State deps:_ useEffect, useMemo, useSide, useState  
   _Path:_ `frontend/src/components/DesktopButlerTray.tsx`
@@ -99,9 +99,9 @@ All exported UI components under `frontend/src/components/**` with state depende
 - **FirstRunSidePicker** — UI component.  
   _State deps:_ useCallback, useEffect, useMemo, useSide, useState  
   _Path:_ `frontend/src/components/FirstRunSidePicker.tsx`
-- **ImportSetSheet** — Modal/sheet UI surface for user actions and focused workflows.  
+- **ImportCircleSheet** — Modal/sheet UI surface for user actions and focused workflows.  
   _State deps:_ useMemo, useSide, useState  
-  _Path:_ `frontend/src/components/ImportSetSheet.tsx`
+  _Path:_ `frontend/src/components/ImportCircleSheet.tsx`
 - **InboxBanner** — UI component.  
   _State deps:_ —  
   _Path:_ `frontend/src/components/InboxBanner.tsx`
@@ -165,18 +165,18 @@ All exported UI components under `frontend/src/components/**` with state depende
 - **RitualSheet** — Modal/sheet UI surface for user actions and focused workflows.  
   _State deps:_ useEffect, useMemo, useState  
   _Path:_ `frontend/src/components/RitualSheet.tsx`
-- **SetFilterBar** — Filter bar for selecting Sets / audience contexts.  
+- **CircleFilterBar** — Filter bar for selecting Circles / audience contexts.  
   _State deps:_ useMemo, useState  
-  _Path:_ `frontend/src/components/SetFilterBar.tsx`
-- **SetPickerSheet** — Modal/sheet UI surface for user actions and focused workflows.  
+  _Path:_ `frontend/src/components/CircleFilterBar.tsx`
+- **CirclePickerSheet** — Modal/sheet UI surface for user actions and focused workflows.  
   _State deps:_ useEffect  
-  _Path:_ `frontend/src/components/SetPickerSheet.tsx`
-- **SetsChipsRow** — UI component.  
+  _Path:_ `frontend/src/components/CirclePickerSheet.tsx`
+- **CirclesChipsRow** — UI component.  
   _State deps:_ —  
-  _Path:_ `frontend/src/components/SetsChipsRow.tsx`
-- **SetsJoinedBanner** — UI component.  
+  _Path:_ `frontend/src/components/CirclesChipsRow.tsx`
+- **CirclesJoinedBanner** — UI component.  
   _State deps:_ —  
-  _Path:_ `frontend/src/components/SetsJoinedBanner.tsx`
+  _Path:_ `frontend/src/components/CirclesJoinedBanner.tsx`
 - **SideBadge** — Compact Side identity badge using chameleon tokens.  
   _State deps:_ useRef, useSide  
   _Path:_ `frontend/src/components/SideBadge.tsx`
@@ -195,12 +195,12 @@ All exported UI components under `frontend/src/components/**` with state depende
 - **StubViewerCookie** — UI component.  
   _State deps:_ useEffect  
   _Path:_ `frontend/src/components/StubViewerCookie.tsx`
-- **SuggestedSetsSheet** — Modal/sheet UI surface for user actions and focused workflows.  
+- **SuggestedCirclesSheet** — Modal/sheet UI surface for user actions and focused workflows.  
   _State deps:_ useEffect, useMemo, useState  
-  _Path:_ `frontend/src/components/SuggestedSetsSheet.tsx`
-- **SuggestedSetsTray** — UI component.  
+  _Path:_ `frontend/src/components/SuggestedCirclesSheet.tsx`
+- **SuggestedCirclesTray** — UI component.  
   _State deps:_ useEffect, useMemo, useRef, useState  
-  _Path:_ `frontend/src/components/SuggestedSetsTray.tsx`
+  _Path:_ `frontend/src/components/SuggestedCirclesTray.tsx`
 - **ToastHost** — Toast notification renderer/host.  
   _State deps:_ useEffect, useMemo, useState  
   _Path:_ `frontend/src/components/ToastHost.tsx`
@@ -316,10 +316,10 @@ All Next.js App Router pages (`page.tsx`).
   _Path:_ `frontend/src/app/siddes-profile/account/password/page.tsx`
 - **/siddes-profile/account/sessions** — Route page entrypoint.  
   _Path:_ `frontend/src/app/siddes-profile/account/sessions/page.tsx`
-- **/siddes-sets** — Route page entrypoint.  
-  _Path:_ `frontend/src/app/siddes-sets/page.tsx`
-- **/siddes-sets/[id]** — Route page entrypoint.  
-  _Path:_ `frontend/src/app/siddes-sets/[id]/page.tsx`
+- **/siddes-circles** — Route page entrypoint.  
+  _Path:_ `frontend/src/app/siddes-circles/page.tsx`
+- **/siddes-circles/[id]** — Route page entrypoint.  
+  _Path:_ `frontend/src/app/siddes-circles/[id]/page.tsx`
 - **/siddes-settings** — Route page entrypoint.  
   _Path:_ `frontend/src/app/siddes-settings/page.tsx`
 - **/siddes-settings/appeals** — Route page entrypoint.  
@@ -355,10 +355,10 @@ All Next.js App Router pages (`page.tsx`).
   _Path:_ `frontend/src/app/siddes-invites/error.tsx`
 - **/siddes-post/[id] (error boundary)** — Route-level error UI.  
   _Path:_ `frontend/src/app/siddes-post/[id]/error.tsx`
-- **/siddes-sets (error boundary)** — Route-level error UI.  
-  _Path:_ `frontend/src/app/siddes-sets/error.tsx`
-- **/siddes-sets/[id] (error boundary)** — Route-level error UI.  
-  _Path:_ `frontend/src/app/siddes-sets/[id]/error.tsx`
+- **/siddes-circles (error boundary)** — Route-level error UI.  
+  _Path:_ `frontend/src/app/siddes-circles/error.tsx`
+- **/siddes-circles/[id] (error boundary)** — Route-level error UI.  
+  _Path:_ `frontend/src/app/siddes-circles/[id]/error.tsx`
 
 ### Next API Layer (Route Handlers)
 All Next route handlers (`route.ts`) including `/api/*` and other handler routes.
@@ -603,15 +603,15 @@ All Next route handlers (`route.ts`) including `/api/*` and other handler routes
 - **/api/search/users** — Next route handler.  
   _Methods:_ GET  
   _Path:_ `frontend/src/app/api/search/users/route.ts`
-- **/api/sets** — Next route handler.  
+- **/api/circles** — Next route handler.  
   _Methods:_ GET, POST  
-  _Path:_ `frontend/src/app/api/sets/route.ts`
-- **/api/sets/[id]** — Next route handler.  
+  _Path:_ `frontend/src/app/api/circles/route.ts`
+- **/api/circles/[id]** — Next route handler.  
   _Methods:_ DELETE, GET, PATCH  
-  _Path:_ `frontend/src/app/api/sets/[id]/route.ts`
-- **/api/sets/[id]/events** — Next route handler.  
+  _Path:_ `frontend/src/app/api/circles/[id]/route.ts`
+- **/api/circles/[id]/events** — Next route handler.  
   _Methods:_ GET  
-  _Path:_ `frontend/src/app/api/sets/[id]/events/route.ts`
+  _Path:_ `frontend/src/app/api/circles/[id]/events/route.ts`
 - **/api/side** — Next route handler.  
   _Methods:_ POST  
   _Path:_ `frontend/src/app/api/side/route.ts`
@@ -822,11 +822,11 @@ All URL patterns included under `/api/` (pattern + view class/function + urls fi
   _Path:_ `backend/siddes_broadcasts/urls.py`
 - **/api/broadcasts/<str:broadcast_id>/posts** — BroadcastPostsView.as_view(  
   _Path:_ `backend/siddes_broadcasts/urls.py`
-- **/api/sets** — SetsView.as_view(  
+- **/api/circles** — SetsView.as_view(  
   _Path:_ `backend/siddes_sets/urls.py`
-- **/api/sets/<str:set_id>** — SetDetailView.as_view(  
+- **/api/circles/<str:set_id>** — SetDetailView.as_view(  
   _Path:_ `backend/siddes_sets/urls.py`
-- **/api/sets/<str:set_id>/events** — SetEventsView.as_view(  
+- **/api/circles/<str:set_id>/events** — CircleEventsView.as_view(  
   _Path:_ `backend/siddes_sets/urls.py`
 - **/api/invites** — InvitesView.as_view(  
   _Path:_ `backend/siddes_invites/urls.py`
@@ -967,7 +967,7 @@ All URL patterns included under `/api/` (pattern + view class/function + urls fi
   - **siddes_safety.UserMute** — Django model. _Path:_ `backend/siddes_safety/models.py`
   - **siddes_safety.UserReport** — Django model. _Path:_ `backend/siddes_safety/models.py`
   - **siddes_sets.SiddesSet** — Django model. _Path:_ `backend/siddes_sets/models.py`
-  - **siddes_sets.SiddesSetEvent** — Django model. _Path:_ `backend/siddes_sets/models.py`
+  - **siddes_sets.SiddesCircleEvent** — Django model. _Path:_ `backend/siddes_sets/models.py`
   - **siddes_sets.SiddesSetMember** — Django model. _Path:_ `backend/siddes_sets/models.py`
   - **siddes_slate.SlateEntry** — Django model. _Path:_ `backend/siddes_slate/models.py`
   - **siddes_telemetry.TelemetryEvent** — Django model. _Path:_ `backend/siddes_telemetry/models.py`

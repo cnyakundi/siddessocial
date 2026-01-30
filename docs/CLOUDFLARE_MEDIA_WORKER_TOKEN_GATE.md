@@ -8,7 +8,7 @@
 ## Required configuration
 
 ### DigitalOcean (Django env vars)
-Set:
+Circle:
 - `SIDDES_MEDIA_TOKEN_SECRET=<long random secret>`  (must match Worker)
 - Optional: `SIDDES_MEDIA_PRIVATE_TTL=600` (seconds; default 600)
 

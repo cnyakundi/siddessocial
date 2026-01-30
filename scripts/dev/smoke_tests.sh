@@ -29,9 +29,9 @@ code="$(curl -s -o /dev/null -w "%{http_code}" "$FRONTEND/api/auth/me" || true)"
 ok "frontend /api/auth/me 200"
 
 # 3) sets list (dev viewer header)
-code="$(curl -s -H "x-sd-viewer: $VIEWER" -o /dev/null -w "%{http_code}" "$BACKEND/api/sets?side=friends" || true)"
-[ "$code" = "200" ] || die "backend /api/sets failed ($code)"
-ok "backend /api/sets 200"
+code="$(curl -s -H "x-sd-viewer: $VIEWER" -o /dev/null -w "%{http_code}" "$BACKEND/api/circles?side=friends" || true)"
+[ "$code" = "200" ] || die "backend /api/circles failed ($code)"
+ok "backend /api/circles 200"
 
 # 4) telemetry summary (optional)
 tcode="$(curl -s -H "x-sd-viewer: $VIEWER" -o /dev/null -w "%{http_code}" "$BACKEND/api/telemetry/summary?days=7" || true)"

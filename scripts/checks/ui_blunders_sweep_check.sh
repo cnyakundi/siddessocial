@@ -46,7 +46,7 @@ if [ ! -f "$BN" ]; then
 fi
 
 if ! grep -RIn 'Now' "$BN" >/dev/null 2>&1; then
-  fail "BottomNav does not contain the label Now (expected Now/Sets/Create/Inbox/Me)."
+  fail "BottomNav does not contain the label Now (expected Now/Circles/Create/Inbox/Me)."
 fi
 
 # Avoid false positives: only fail if actual UI text says Home

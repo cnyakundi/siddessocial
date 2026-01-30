@@ -26,7 +26,7 @@ These are the default rates (override via env vars):
 
 ## Environment overrides
 
-Set any of these to tune rates:
+Circle any of these to tune rates:
 
 - `SIDDES_THROTTLE_INBOX_THREADS` (example: `300/min`)
 - `SIDDES_THROTTLE_INBOX_THREAD`

@@ -267,7 +267,7 @@ Mounted under `/api/` via the backend API router:
 
 Notable server-side normalization:
 - `side` is clamped to allowed sides.
-- Set posts (`setId`) may **force** side to the Set’s side.
+- Circle posts (`setId`) may **force** side to the Circle’s side.
 - Broadcast posts use `setId` starting with `b_` and are forced into Public.
 
 **Common error codes:**
@@ -424,8 +424,8 @@ Visibility is enforced in views (fail-closed):
 - `backend/siddes_feed/feed_stub.py` → `_can_view_record()` + `_set_allows()`
 
 Key gates:
-- Non-public without Set: author-only
-- Set posts: require membership
+- Non-public without Circle: author-only
+- Circle posts: require membership
 - Broadcast posts (`b_*`): public-readable channel semantics
 - Block/mute enforcement hooks (when present)
 - Hidden moderation gate (`is_hidden`) allows only author/staff
@@ -476,6 +476,6 @@ Echo/quote-echo are allowed only for **Public originals**:
 
 ## 10) Suggested next Phase 2 blocks (choose one)
 - **Visibility policy** (central rules + enforcement)
-- **Sets pipeline** (membership + set-scoped posting + audience wiring)
+- **Circles pipeline** (membership + set-scoped posting + audience wiring)
 - **Inbox pipeline** (threads, unread, pagination)
 - **Safety pipeline** (blocks/mutes/reports/appeals)

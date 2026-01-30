@@ -80,16 +80,16 @@ run "Repo: ops/docker/.env.example exists (recommended)" bash -lc 'test -f ops/d
 run "Frontend: critical Next API routes exist" bash -lc '
   test -f frontend/src/app/api/invites/route.ts && \
   test -f frontend/src/app/api/invites/[id]/route.ts && \
-  test -f frontend/src/app/api/sets/[id]/route.ts && \
+  test -f frontend/src/app/api/circles/[id]/route.ts && \
   test -f frontend/src/app/api/inbox/thread/[id]/route.ts && \
   test -f frontend/src/app/api/inbox/threads/route.ts && \
   test -f frontend/src/app/api/notifications/route.ts && \
   test -f frontend/src/app/api/broadcasts/route.ts
 '
 
-run "Frontend: no sd_viewer cookie-instruction UI remains on Sets" bash -lc '
-  ! grep -R -n "sd_viewer is missing" frontend/src/app/siddes-sets >/dev/null 2>&1 && \
-  ! grep -R -n "document\\.cookie = \\\"sd_viewer=me" frontend/src/app/siddes-sets >/dev/null 2>&1
+run "Frontend: no sd_viewer cookie-instruction UI remains on Circles" bash -lc '
+  ! grep -R -n "sd_viewer is missing" frontend/src/app/siddes-circles >/dev/null 2>&1 && \
+  ! grep -R -n "document\\.cookie = \\\"sd_viewer=me" frontend/src/app/siddes-circles >/dev/null 2>&1
 '
 
 run "Frontend: auth proxy never forwards x-sd-viewer in production" bash -lc '
@@ -155,7 +155,7 @@ else
   endpoints=(
     "/api/auth/me"
     "/api/feed?side=public"
-    "/api/sets?side=public"
+    "/api/circles?side=public"
     "/api/invites?direction=incoming"
     "/api/inbox/threads?side=public"
     "/api/notifications"

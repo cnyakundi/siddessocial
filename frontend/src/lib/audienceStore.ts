@@ -1,5 +1,5 @@
 import type { SideId } from "./sides";
-import type { SetId } from "./sets";
+import type { CircleId } from "./circles";
 
 const KEY_SET_PREFIX = "sd.feed.lastSet.";
 const KEY_TOPIC = "sd.feed.lastPublicTopic";
@@ -9,17 +9,17 @@ function hasWindow(): boolean {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
 }
 
-export function getStoredLastSetForSide(side: SideId): SetId | null {
+export function getStoredLastSetForSide(side: SideId): CircleId | null {
   if (!hasWindow()) return null;
   try {
     const v = window.localStorage.getItem(KEY_SET_PREFIX + side);
-    return v && typeof v === "string" ? (v as SetId) : null;
+    return v && typeof v === "string" ? (v as CircleId) : null;
   } catch {
     return null;
   }
 }
 
-export function setStoredLastSetForSide(side: SideId, setId: SetId | null): void {
+export function setStoredLastSetForSide(side: SideId, setId: CircleId | null): void {
   if (!hasWindow()) return;
   if (side === "public") return;
   try {
@@ -32,7 +32,7 @@ export function setStoredLastSetForSide(side: SideId, setId: SetId | null): void
 }
 
 
-export function getStoredRecentSetIdsForSide(side: SideId, limit = 3): SetId[] {
+export function getStoredRecentCircleIdsForSide(side: SideId, limit = 3): CircleId[] {
   if (!hasWindow()) return [];
   if (side === "public") return [];
   try {
@@ -40,10 +40,10 @@ export function getStoredRecentSetIdsForSide(side: SideId, limit = 3): SetId[] {
     if (!raw) return [];
     const arr = JSON.parse(raw);
     if (!Array.isArray(arr)) return [];
-    const out: SetId[] = [];
+    const out: CircleId[] = [];
     for (const v of arr) {
       if (typeof v !== "string") continue;
-      out.push(v as SetId);
+      out.push(v as CircleId);
       if (out.length >= limit) break;
     }
     return out;
@@ -52,7 +52,7 @@ export function getStoredRecentSetIdsForSide(side: SideId, limit = 3): SetId[] {
   }
 }
 
-export function pushStoredRecentSetForSide(side: SideId, setId: SetId, max = 12): void {
+export function pushStoredRecentSetForSide(side: SideId, setId: CircleId, max = 12): void {
   if (!hasWindow()) return;
   if (side === "public") return;
   const id = String(setId || "").trim();
@@ -104,7 +104,7 @@ export const EVT_AUDIENCE_CHANGED = "sd:audience";
 
 export type AudienceChange = {
   side: SideId;
-  setId: SetId | null;
+  setId: CircleId | null;
   topic: string | null;
   ts: number;
   source?: string;
@@ -114,7 +114,7 @@ const audienceListeners = new Set<(e: AudienceChange) => void>();
 
 export function emitAudienceChanged(input: {
   side: SideId;
-  setId?: SetId | null;
+  setId?: CircleId | null;
   topic?: string | null;
   source?: string;
   ts?: number;

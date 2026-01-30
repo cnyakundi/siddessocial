@@ -8,7 +8,7 @@ Rule:
 - Public is for Topics / broadcasts / intentionally public discovery - not your address book.
 
 Where enforced (implemented):
-- Suggested Sets UI disables the Public pill for contacts-derived suggestions.
+- Suggested Circles UI disables the Public pill for contacts-derived suggestions.
 - On-device engine defaults to Friends/Close/Work for contact clusters.
 
 Why:

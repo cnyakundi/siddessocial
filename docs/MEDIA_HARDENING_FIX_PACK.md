@@ -105,7 +105,7 @@ This Fix Pack addresses those in Parts 1–5, with acceptance tests and an execu
 
 ### View rules
 - **Public media**: world-readable *via stable pub token*; safe to cache hard.
-- **Private post media**: viewer must be allowed to view the post (Side + Set membership + block checks). Token short-lived.
+- **Private post media**: viewer must be allowed to view the post (Side + Circle membership + block checks). Token short-lived.
 - **Private Prism avatar**: viewer must be allowed to see that facet (Side membership). Token short-lived.
 
 ### Token expectations

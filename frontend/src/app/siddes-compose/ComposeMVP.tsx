@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 import { useSide } from "@/src/components/SideProvider";
-import { SetPickerSheet } from "@/src/components/SetPickerSheet";
+import { CirclePickerSheet } from "@/src/components/CirclePickerSheet";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { usePrismAvatar } from "@/src/hooks/usePrismAvatar";
 
@@ -26,8 +26,8 @@ import { FLAGS } from "@/src/lib/flags";
 import { SIDES, SIDE_THEMES, isSideId, type SideId } from "@/src/lib/sides";
 import type { PublicChannelId } from "@/src/lib/publicChannels";
 import { PUBLIC_CHANNELS, labelForPublicChannel } from "@/src/lib/publicChannels";
-import type { SetDef, SetId } from "@/src/lib/sets";
-import { getSetsProvider } from "@/src/lib/setsProvider";
+import type { CircleDef, CircleId } from "@/src/lib/circles";
+import { getCirclesProvider } from "@/src/lib/circlesProvider";
 import { getStoredLastPublicTopic, getStoredLastSetForSide } from "@/src/lib/audienceStore";
 
 import { formatDurationMs, useComposeMedia } from "./useComposeMedia";
@@ -67,7 +67,7 @@ type ComposeError = {
 
 type ComposeDraft = {
   text: string;
-  setId: SetId | null;
+  setId: CircleId | null;
   publicChannel: PublicChannelId;
   updatedAt: number;
 };
@@ -217,9 +217,9 @@ export default function ComposeMVP() {
     return isSideId(raw) ? (raw as SideId) : null;
   }, [searchParams]);
 
-  const requestedSetId: SetId | null = useMemo(() => {
+  const requestedCircleId: CircleId | null = useMemo(() => {
     const raw = String(searchParams?.get("set") || "").trim();
-    return raw ? (raw as SetId) : null;
+    return raw ? (raw as CircleId) : null;
   }, [searchParams]);
 
   const requestedTopic: PublicChannelId | null = useMemo(() => {
@@ -235,10 +235,10 @@ export default function ComposeMVP() {
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState<ComposeError | null>(null);
 
-  const setsProvider = useMemo(() => getSetsProvider(), []);
-  const [sets, setSets] = useState<SetDef[]>([]);
+  const setsProvider = useMemo(() => getCirclesProvider(), []);
+  const [sets, setSets] = useState<CircleDef[]>([]);
   const [setsLoaded, setSetsLoaded] = useState(false);
-  const [selectedSetId, setSelectedSetId] = useState<SetId | null>(null);
+  const [selectedCircleId, setSelectedCircleId] = useState<CircleId | null>(null);
   const [publicChannel, setPublicChannel] = useState<PublicChannelId>("general");
 
   const [setPickerOpen, setSetPickerOpen] = useState(false);
@@ -284,7 +284,7 @@ export default function ComposeMVP() {
       const d = store[side];
       if (d && d.text && !text.trim()) {
         setText(d.text);
-        setSelectedSetId(d.setId ?? null);
+        setSelectedCircleId(d.setId ?? null);
         setPublicChannel((d.publicChannel as any) || "general");
       }
     } catch {
@@ -300,7 +300,7 @@ export default function ComposeMVP() {
     if (!t) return;
     saveDraft(side, {
       text: t,
-      setId: selectedSetId,
+      setId: selectedCircleId,
       publicChannel,
       updatedAt: Date.now(),
     });
@@ -333,7 +333,7 @@ export default function ComposeMVP() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [side, text, selectedSetId, publicChannel]);
+  }, [side, text, selectedCircleId, publicChannel]);
 
   // Reset audience on side change (after initial mount).
   const didMountRef = useRef(false);
@@ -342,7 +342,7 @@ export default function ComposeMVP() {
       didMountRef.current = true;
       return;
     }
-    setSelectedSetId(null);
+    setSelectedCircleId(null);
     setPublicChannel("general");
     setError(null);
   }, [side]);
@@ -388,23 +388,23 @@ export default function ComposeMVP() {
     }
 
     if (!setsLoaded) return;
-    if (selectedSetId) {
+    if (selectedCircleId) {
       autoAudienceAppliedSideRef.current = side;
       return;
     }
 
-    const desiredSet = String(requestedSetId || getStoredLastSetForSide(side) || "").trim();
+    const desiredSet = String(requestedCircleId || getStoredLastSetForSide(side) || "").trim();
     if (desiredSet) {
       const found = sets.find((s) => s.id === desiredSet && s.side === side);
-      if (found) setSelectedSetId(found.id);
+      if (found) setSelectedCircleId(found.id);
     }
 
     autoAudienceAppliedSideRef.current = side;
-  }, [side, setsLoaded, sets, selectedSetId, requestedSetId, requestedTopic]);
+  }, [side, setsLoaded, sets, selectedCircleId, requestedCircleId, requestedTopic]);
 
   const isOnline = typeof navigator !== "undefined" ? navigator.onLine : true;
 
-  const selectedSet = useMemo(() => sets.find((s) => s.id === selectedSetId) ?? null, [sets, selectedSetId]);
+  const selectedSet = useMemo(() => sets.find((s) => s.id === selectedCircleId) ?? null, [sets, selectedCircleId]);
 
   const audienceLabel =
     side === "public"
@@ -451,7 +451,7 @@ export default function ComposeMVP() {
 
     const reset = () => {
       setText("");
-      setSelectedSetId(null);
+      setSelectedCircleId(null);
       setError(null);
       clearDraft(side);
       clearMedia();
@@ -462,7 +462,7 @@ export default function ComposeMVP() {
     // Offline: queue and show undo.
     if (!onlineNow) {
       const queued = enqueuePost(side, t, {
-        setId: selectedSetId,
+        setId: selectedCircleId,
         urgent: false,
         publicChannel: side === "public" && FLAGS.publicChannels ? publicChannel : null,
       });
@@ -482,7 +482,7 @@ export default function ComposeMVP() {
         body: JSON.stringify({
           side,
           text: t,
-          setId: selectedSetId,
+          setId: selectedCircleId,
           urgent: false,
           publicChannel: side === "public" && FLAGS.publicChannels ? publicChannel : null,
           client_key: clientKey,
@@ -822,15 +822,15 @@ export default function ComposeMVP() {
       />
 
       {/* Audience sheets */}
-      <SetPickerSheet
+      <CirclePickerSheet
         open={setPickerOpen}
         currentSide={side}
         onClose={() => setSetPickerOpen(false)}
         sets={sets}
-        activeSet={selectedSetId}
-        onPick={(next) => setSelectedSetId(next)}
-        onNewSet={() => router.push("/siddes-sets?create=1")}
-        title="Group"
+        activeSet={selectedCircleId}
+        onPick={(next) => setSelectedCircleId(next)}
+        onNewSet={() => router.push("/siddes-circles?create=1")}
+        title="Circle"
         allLabel={`All ${SIDES[side].label}`}
       />
 

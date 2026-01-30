@@ -20,12 +20,12 @@ The backend enforces privacy rules before returning any private content.
 
 ### 0.3 Side semantics
 - `public`: readable (subject to moderation/safety filters).
-- `friends|close|work`: treated as **private**; in this codebase, private reads are primarily enforced via **Set membership**.
+- `friends|close|work`: treated as **private**; in this codebase, private reads are primarily enforced via **Circle membership**.
 
-### 0.4 Set-scoped privacy is the current production-grade fence
+### 0.4 Circle-scoped privacy is the current production-grade fence
 For non-public posts, the “launch-safe” rule is:
 - **Author can always view**
-- **Set membership required** when `set_id` exists
+- **Circle membership required** when `set_id` exists
 - **Non-public posts without a set** are **author-only** (fail closed)
 
 ### 0.5 Safety + moderation overlays
@@ -54,7 +54,7 @@ Siddes uses three main response modes for visibility:
 
 ### 1.1 Relationship-graph policy (not yet wired into feed)
 - **Purpose:** clean relationship-based policy (`friends/close/work` sets).
-- **Status:** present as a canonical policy module, but **feed/post views currently use Set-based gating**.
+- **Status:** present as a canonical policy module, but **feed/post views currently use Circle-based gating**.
 - **Files:**
   - `backend/siddes_visibility/policy.py`
   - `backend/siddes_visibility/demo.py`
@@ -66,10 +66,10 @@ Siddes uses three main response modes for visibility:
 - **Post detail/replies/actions:**
   - `backend/siddes_post/views.py` (helpers `_can_view_post_record`, `_set_meta`, staff override)
 
-### 1.3 Set membership + Side alignment (prevents cross-side leakage)
-- **Set model (owns `side`, `members`):** `backend/siddes_sets/models.py`
+### 1.3 Circle membership + Side alignment (prevents cross-side leakage)
+- **Circle model (owns `side`, `members`):** `backend/siddes_sets/models.py`
 - **Membership store / join checks:** `backend/siddes_sets/store_db.py`
-- **Set read rules (owner OR member):** `backend/siddes_sets/views.py`
+- **Circle read rules (owner OR member):** `backend/siddes_sets/views.py`
 
 ### 1.4 Safety policy (blocks + mutes)
 - **Functions:** `is_blocked_pair`, `is_muted`, token normalization.
@@ -156,11 +156,11 @@ Decision outline (server truth for feed):
 4) **Author always allowed**.
 5) **Public allowed**.
 6) **Non-public**:
-   - If `set_id` present: require Set membership (`_set_allows`).
+   - If `set_id` present: require Circle membership (`_set_allows`).
    - If `set_id` missing: deny (author-only).
 
 Also note:
-- Broadcast Set IDs (`set_id` starting with `b_`) are treated as public-readable channels in `_set_allows`.
+- Broadcast Circle IDs (`set_id` starting with `b_`) are treated as public-readable channels in `_set_allows`.
 
 ### 3.3 Post detail: GET /api/post/<id>
 **File:** `backend/siddes_post/views.py` (`PostDetailView.get`)
@@ -172,7 +172,7 @@ Also note:
 1) Require viewer + post_id (otherwise 404)
 2) `POST_STORE.get(post_id)` (if missing → 404)
 3) `_set_meta(viewer, rec.set_id)` must pass (otherwise 404)
-4) If Set has a `side`, it must match `rec.side` (otherwise 404)
+4) If Circle has a `side`, it must match `rec.side` (otherwise 404)
 5) `_can_view_post_record(...)` must pass (otherwise 404)
 6) Return `{ ok:true, post:<FeedPost>, side:<side> }`
 
@@ -182,7 +182,7 @@ Also note:
 Gates mirror PostDetail:
 - Viewer required
 - Post exists
-- Set is viewable
+- Circle is viewable
 - `_can_view_post_record` passes
 
 ### 3.5 Key helper: `_can_view_post_record` (post/detail fence)
@@ -208,9 +208,9 @@ Decision outline:
 
 ---
 
-## 4) Sets as a visibility boundary (membership + side alignment)
+## 4) Circles as a visibility boundary (membership + side alignment)
 
-### 4.1 Set model fields used for visibility
+### 4.1 Circle model fields used for visibility
 - `SiddesSet.side` (SideId) — prevents cross-side leakage
 - `SiddesSet.owner_id`
 - `SiddesSet.members` (JSON contract parity)
@@ -218,8 +218,8 @@ Decision outline:
 
 **File:** `backend/siddes_sets/models.py`
 
-### 4.2 Set membership enforcement used by posts
-Posts use Set membership in two slightly different helpers:
+### 4.2 Circle membership enforcement used by posts
+Posts use Circle membership in two slightly different helpers:
 
 - Feed: `_set_allows(viewer_id, set_id)`
   - File: `backend/siddes_feed/feed_stub.py`
@@ -227,11 +227,11 @@ Posts use Set membership in two slightly different helpers:
 
 - Post detail/actions: `_set_meta(viewer_id, set_id) -> (ok, set_side)`
   - File: `backend/siddes_post/views.py`
-  - Same membership semantics + returns the Set’s `side` for alignment checks.
+  - Same membership semantics + returns the Circle’s `side` for alignment checks.
 
-### 4.3 Set read endpoints avoid leaks
-- `GET /api/sets/<id>` returns **Mode A** restricted payload with `item:null` when not readable.
-- `GET /api/sets/<id>/events` returns restricted payload with `items:[]` when not readable.
+### 4.3 Circle read endpoints avoid leaks
+- `GET /api/circles/<id>` returns **Mode A** restricted payload with `item:null` when not readable.
+- `GET /api/circles/<id>/events` returns restricted payload with `items:[]` when not readable.
 
 **File:** `backend/siddes_sets/views.py`
 
@@ -354,10 +354,10 @@ Protected Siddes routes are redirected to `/login` when `/api/auth/me` reports u
   - Backend: `backend/siddes_post/views.py`
   - Mode B when not viewable (404 not_found)
 
-### 8.2 Sets (membership boundary)
-- `GET /api/sets` → Mode A when viewer missing
-- `GET /api/sets/<id>` → Mode A when not readable (item:null)
-- `GET /api/sets/<id>/events` → Mode A when not readable (items:[])
+### 8.2 Circles (membership boundary)
+- `GET /api/circles` → Mode A when viewer missing
+- `GET /api/circles/<id>` → Mode A when not readable (item:null)
+- `GET /api/circles/<id>/events` → Mode A when not readable (items:[])
 
 **Backend:** `backend/siddes_sets/views.py`
 
@@ -406,6 +406,6 @@ Feed cache key includes `viewer + role + side + topic + cursor + limit`.
 
 ## 10) Suggested next zoom targets (Phase 2.5+)
 If we continue in the same “Spider Pack” style, the natural next blocks are:
-1) **Sets deep dive** (membership, events, side moves, contracts) — `backend/siddes_sets/*` + `frontend` sets surfaces
+1) **Circles deep dive** (membership, events, side moves, contracts) — `backend/siddes_sets/*` + `frontend` sets surfaces
 2) **Inbox deep dive** (threads/messages, locked sides, blocks enforcement) — `backend/siddes_inbox/*` + `/siddes-inbox/*`
 3) **Safety deep dive** (blocks/mutes/reports/appeals/mod actions) — `backend/siddes_safety/*` + `/siddes-settings/*`

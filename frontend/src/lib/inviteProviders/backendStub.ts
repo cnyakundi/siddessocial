@@ -1,7 +1,7 @@
 "use client";
 
 import type { InviteAction, InviteDirection, InviteProvider, SetInvite } from "@/src/lib/inviteProvider";
-import { emitSetsChanged } from "@/src/lib/setsSignals";
+import { emitCirclesChanged } from "@/src/lib/circlesSignals";
 import type { SideId } from "@/src/lib/sides";
 
 type ListResp = {
@@ -138,7 +138,7 @@ export const backendStubProvider: InviteProvider = {
     if (data.restricted) throw new Error("invites:act restricted (not authenticated)");
     const item = coerceInvite((data as any).item);
     if (item && action === "accept" && item.status === "accepted") {
-      emitSetsChanged();
+      emitCirclesChanged();
     }
     return item;
   },

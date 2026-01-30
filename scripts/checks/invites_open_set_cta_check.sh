@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "== Check: Invites Open Set CTA (sd_141a) =="
+echo "== Check: Invites Open Circle CTA (sd_141a) =="
 
 need_file() {
   local f="$1"
@@ -25,10 +25,10 @@ need_pat() {
 need_file "frontend/src/app/siddes-invites/page.tsx"
 need_file "frontend/src/app/invite/[id]/page.tsx"
 
-need_pat "frontend/src/app/siddes-invites/page.tsx" "Open Set"
-need_pat "frontend/src/app/siddes-invites/page.tsx" "/siddes-sets/"
+need_pat "frontend/src/app/siddes-invites/page.tsx" "Open Circle"
+need_pat "frontend/src/app/siddes-invites/page.tsx" "/siddes-circles/"
 
-need_pat "frontend/src/app/invite/[id]/page.tsx" "Open Set"
-need_pat "frontend/src/app/invite/[id]/page.tsx" "/siddes-sets/"
+need_pat "frontend/src/app/invite/[id]/page.tsx" "Open Circle"
+need_pat "frontend/src/app/invite/[id]/page.tsx" "/siddes-circles/"
 
-echo "✅ Invites Open Set CTA check passed"
+echo "✅ Invites Open Circle CTA check passed"

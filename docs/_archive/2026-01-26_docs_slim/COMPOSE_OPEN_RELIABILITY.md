@@ -4,7 +4,7 @@ Problem:
 - On iOS PWA, tapping the in-feed composer can appear to do nothing.
 
 Goal:
-- In Siddes, the feed composer must always open the full compose page so you can pick a Set (e.g., Friends → Gym Squad) and see a clear Post action.
+- In Siddes, the feed composer must always open the full compose page so you can pick a Circle (e.g., Friends → Gym Squad) and see a clear Post action.
 
 Fix (sd_748):
 1) `SideFeed.tsx`
@@ -16,4 +16,4 @@ Fix (sd_748):
 
 Acceptance (iPhone PWA):
 - Tap the composer field OR + OR send → always opens `/siddes-compose?...`
-- Pick a Set (Gym Squad) → Post
+- Pick a Circle (Gym Squad) → Post

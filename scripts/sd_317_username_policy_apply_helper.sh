@@ -64,7 +64,7 @@ from __future__ import annotations
 
 import os
 import re
-from typing import Set, Tuple
+from typing import Circle, Tuple
 
 # Launch policy (safe-by-default): ASCII lowercase only.
 # This eliminates Unicode confusables + mixed-script impersonation at launch.
@@ -72,7 +72,7 @@ USERNAME_RE = re.compile(r"^[a-z0-9_]{3,24}$")
 
 # Words we never want users to claim.
 # Includes staff/system terms + common route names + high-risk impersonation handles.
-DEFAULT_RESERVED: Set[str] = {
+DEFAULT_RESERVED: Circle[str] = {
     "admin", "administrator", "root", "owner",
     "staff", "team", "moderator", "mod",
     "support", "help", "security", "safety", "trust",
@@ -89,16 +89,16 @@ DEFAULT_RESERVED: Set[str] = {
 # Prefixes blocked because they collide with internal ids / seeds or imply staff/bots.
 RESERVED_PREFIXES = ("me_", "seed_", "sys_", "svc_", "bot_", "admin_", "staff_", "mod_")
 
-def _env_reserved() -> Set[str]:
+def _env_reserved() -> Circle[str]:
     raw = os.environ.get("SIDDES_RESERVED_USERNAMES") or os.environ.get("SD_RESERVED_USERNAMES") or ""
-    out: Set[str] = set()
+    out: Circle[str] = set()
     for part in str(raw).split(","):
         p = part.strip().lower()
         if p:
             out.add(p)
     return out
 
-RESERVED: Set[str] = set(DEFAULT_RESERVED) | _env_reserved()
+RESERVED: Circle[str] = set(DEFAULT_RESERVED) | _env_reserved()
 
 def normalize_username(raw: str) -> str:
     s = str(raw or "").strip()

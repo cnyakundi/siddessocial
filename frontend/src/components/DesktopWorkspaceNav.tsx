@@ -8,8 +8,8 @@ import { CirclesMark } from "@/src/components/icons/CirclesMark";import { Home, 
 import { useSide } from "@/src/components/SideProvider";
 import { SIDES, SIDE_THEMES } from "@/src/lib/sides";
 import { SIDE_UX } from "@/src/lib/sideUx";
-import { getSetsProvider } from "@/src/lib/setsProvider";
-import type { SetDef } from "@/src/lib/sets";
+import { getCirclesProvider } from "@/src/lib/circlesProvider";
+import type { CircleDef } from "@/src/lib/circles";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -58,8 +58,8 @@ export function DesktopWorkspaceNav() {
   const theme = SIDE_THEMES[side];
   const ux = SIDE_UX[side];
 
-  const setsProvider = useMemo(() => getSetsProvider(), []);
-  const [sets, setSets] = useState<SetDef[]>([]);
+  const setsProvider = useMemo(() => getCirclesProvider(), []);
+  const [sets, setSets] = useState<CircleDef[]>([]);
 
   useEffect(() => {
     let alive = true;
@@ -95,16 +95,16 @@ export function DesktopWorkspaceNav() {
         <WorkspaceNavItem href="/siddes-inbox" label="Inbox" icon={Mail} active={pathname.startsWith("/siddes-inbox")} theme={theme} />
         <WorkspaceNavItem href="/me" label="Me" icon={User} active={pathname.startsWith("/me") || (pathname.startsWith("/siddes-profile") && !pathname.startsWith("/siddes-profile/prism"))} theme={theme} />
         <WorkspaceNavItem href="/siddes-profile/prism" label="Prism" icon={Sparkles} active={pathname.startsWith("/siddes-profile/prism")} theme={theme} />
-        <WorkspaceNavItem href="/siddes-sets" label="Circles" icon={CirclesMark} active={pathname.startsWith("/siddes-sets")} theme={theme} />
+        <WorkspaceNavItem href="/siddes-circles" label="Circles" icon={CirclesMark} active={pathname.startsWith("/siddes-circles")} theme={theme} />
 
-        <div className="mt-8 mb-4 px-4 text-[10px] font-black text-gray-300 uppercase tracking-widest">Groups</div>
+        <div className="mt-8 mb-4 px-4 text-[10px] font-black text-gray-300 uppercase tracking-widest">Circles</div>
 
         <div className="space-y-1">
           {sets.length ? (
             sets.map((s) => (
               <Link
                 key={String(s.id)}
-                href={`/siddes-sets/${encodeURIComponent(String(s.id))}`}
+                href={`/siddes-circles/${encodeURIComponent(String(s.id))}`}
                 className="w-full flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-gray-50 transition-colors"
               >
                 <div className={cn("w-8 h-8 rounded-full flex items-center justify-center", theme.lightBg)}>
@@ -120,11 +120,11 @@ export function DesktopWorkspaceNav() {
           )}
 
           <Link
-            href="/siddes-sets"
+            href="/siddes-circles"
             className="w-full flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors"
           >
             <Plus size={14} strokeWidth={2.5} />
-            Create Set
+            Create Circle
           </Link>
         </div>
       </nav>

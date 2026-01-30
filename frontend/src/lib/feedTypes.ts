@@ -1,5 +1,5 @@
 import type { SideId } from "@/src/lib/sides";
-import type { SetColor } from "@/src/lib/setThemes";
+import type { CircleColor } from "@/src/lib/circleThemes";
 import type { PublicChannelId } from "@/src/lib/publicChannels";
 import type { TrustLevel } from "@/src/lib/trustLevels";
 
@@ -48,7 +48,7 @@ export type FeedPost = {
   // v0 context metadata (for chips)
   setId?: string;
   setLabel?: string;
-  setColor?: SetColor;
+  setColor?: CircleColor;
   context?: "mention";
   hasDoc?: boolean;
   urgent?: boolean;

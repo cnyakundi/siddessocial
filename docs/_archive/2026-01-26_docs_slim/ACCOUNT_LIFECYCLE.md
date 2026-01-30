@@ -36,8 +36,8 @@ Result:
 `POST /api/auth/account/deactivate`
 
 Result:
-- Sets `user.is_active=false`
-- Sets `SiddesProfile.account_state=suspended`
+- Circles `user.is_active=false`
+- Circles `SiddesProfile.account_state=suspended`
 - Revokes all sessions and logs out
 
 

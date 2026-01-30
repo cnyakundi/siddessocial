@@ -6,7 +6,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { BookOpen, Flame, Globe, HelpCircle, Star, MessageCircle, Smile, Sparkles, Users, Briefcase } from "lucide-react";
 import type { SideId } from "@/src/lib/sides";
 import { SIDE_THEMES, SIDES } from "@/src/lib/sides";
-import type { SetId } from "@/src/lib/sets";
+import type { CircleId } from "@/src/lib/circles";
 import type { RitualItem, RitualKind } from "@/src/lib/ritualsTypes";
 import { getRitualsProvider } from "@/src/lib/ritualsProvider";
 import { toast } from "@/src/lib/toast";
@@ -224,7 +224,7 @@ function EmptyDock({
     return (
       <div className="p-4 rounded-2xl border border-dashed border-gray-300 bg-gray-50">
         <div className="text-sm font-bold text-gray-900">Pulse lives in Sets</div>
-        <div className="text-xs text-gray-500 mt-1">Choose a Set to see and start rituals.</div>
+        <div className="text-xs text-gray-500 mt-1">Choose a Circle to see and start rituals.</div>
         <button
           type="button"
           onClick={() => onOpenSetPicker?.()}
@@ -266,7 +266,7 @@ export function RitualDock({
   onOpenSetPicker,
 }: {
   side: SideId;
-  activeSet: SetId | null;
+  activeSet: CircleId | null;
   activeSetLabel: string;
   onOpenSetPicker?: () => void;
 }) {
@@ -354,7 +354,7 @@ export function RitualDock({
           onOpenSetPicker={onOpenSetPicker}
           onStart={(k) => {
             if (!activeSet) {
-              toast.error("Pick a Set first.");
+              toast.error("Pick a Circle first.");
               onOpenSetPicker?.();
               return;
             }

@@ -27,7 +27,7 @@ Optional (independent):
 - `NEXT_PUBLIC_SD_PUBLIC_TRUST_DIAL=1`
 
 ## What to test
-1. Set `NEXT_PUBLIC_SD_PUBLIC_SLATE=1` and restart Next.
+1. Circle `NEXT_PUBLIC_SD_PUBLIC_SLATE=1` and restart Next.
 2. Go to `/siddes-profile?u=elena` and switch the profile strip to **Public**.
 3. You should see:
    - **Start Here** pinned carousel

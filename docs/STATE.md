@@ -24,8 +24,8 @@
 
 
 ## Clerkless Context Engine (Jan 2026)
-- On-device Suggested Sets after contacts match (review-first; never auto-apply)
-- Guardrails: contact-derived Sets cannot be Public
+- On-device Suggested Circles after contacts match (review-first; never auto-apply)
+- Guardrails: contact-derived Circles cannot be Public
 - Privacy-safe telemetry (counts-only) for suggestion quality
 ## Inbox (endgame status)
 Inbox is now “migration-safe” and ready for broader feature work:
@@ -65,25 +65,25 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 - **sd_132:** Public Visual Calm (hide counts by default; reveal on hover/tap)
 - **sd_133:** Public Trust Gates (server-enforced capabilities)
 
-## Sets/Subsides ladder (server-side series)
-- **sd_134:** Sets backend scaffold (records + history + endpoint stubs)
-- **sd_135a:** Sets provider interface + hydration-safe loads (still local)
-- **sd_135b:** Sets API stubs (`/api/sets/*`) + in-memory server store
-- **sd_135c:** Sets `backend_stub` provider wired (frontend uses `/api/sets/*`)
-- **sd_136a:** Sets provider `get/update/events` + local history events
-- **sd_136b:** Sets management UI + history viewer
-- **sd_137a:** Sets Django DRF router + ORM store (server enforcement wiring)
-- **sd_137b:** Sets frontend `backend_stub` provider uses Django API base with fallback
-- **sd_138a:** Sets Invites scaffold (create + accept/reject + invite link UI)
-- **sd_138b:** Sets detail members parse regex hotfix (lint stability)
+## Circles/Subsides ladder (server-side series)
+- **sd_134:** Circles backend scaffold (records + history + endpoint stubs)
+- **sd_135a:** Circles provider interface + hydration-safe loads (still local)
+- **sd_135b:** Circles API stubs (`/api/circles/*`) + in-memory server store
+- **sd_135c:** Circles `backend_stub` provider wired (frontend uses `/api/circles/*`)
+- **sd_136a:** Circles provider `get/update/events` + local history events
+- **sd_136b:** Circles management UI + history viewer
+- **sd_137a:** Circles Django DRF router + ORM store (server enforcement wiring)
+- **sd_137b:** Circles frontend `backend_stub` provider uses Django API base with fallback
+- **sd_138a:** Circles Invites scaffold (create + accept/reject + invite link UI)
+- **sd_138b:** Circles detail members parse regex hotfix (lint stability)
 - **sd_138c:** Invites inbox UI (incoming/outgoing) + suggestions prefill
-- **sd_139a:** Sets membership read access (non-owner access after invite acceptance)
-- **sd_139b:** Sets UI read-only for non-owner viewers
-- **sd_140a:** Sets membership UX polish (Joined badges + clearer copy)
-- **sd_140b:** Sets membership propagation (invite acceptance emits sets-changed; Sets pages auto-refresh)
-- **sd_141a:** Invites → Open Set CTA + joined-member onboarding polish
-- **sd_141b:** Invites list resolves Set labels + Open Set primary action
-- **sd_141c:** Invites snapshot Set label at create-time (pending recipients see Set name pre-acceptance)
+- **sd_139a:** Circles membership read access (non-owner access after invite acceptance)
+- **sd_139b:** Circles UI read-only for non-owner viewers
+- **sd_140a:** Circles membership UX polish (Joined badges + clearer copy)
+- **sd_140b:** Circles membership propagation (invite acceptance emits sets-changed; Circles pages auto-refresh)
+- **sd_141a:** Invites → Open Circle CTA + joined-member onboarding polish
+- **sd_141b:** Invites list resolves Circle labels + Open Circle primary action
+- **sd_141c:** Invites snapshot Circle label at create-time (pending recipients see Circle name pre-acceptance)
 
 ## Feed ladder (DRF cutover series)
 - **sd_142:** Feed DRF endpoint + API-base-aware Next proxy (client calls same-origin /api/feed; Next proxies to Django via SD_INTERNAL_API_BASE / NEXT_PUBLIC_API_BASE)
@@ -97,14 +97,14 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 - **sd_782:** UI: Label reply/like counts in PostCard actions (feed + detail) to fix unlabeled numbers.
 - **sd_778:** UI: Post detail back is reliable (Link-based); feed engagement is visible without hover when counts are shown (Public Visual Calm defaults to Shown).
 - **sd_777_reply_counts_labels_and_reply_profile_links:** UI: label reply/like counts + make reply authors clickable in post detail.
-- **sd_772:** Groups mode (copy): Sets → Groups in UI; All → Side label; SideFeed clears stale stored setId
+- **sd_772:** Circles mode (copy): Circles → Circles in UI; All → Side label; SideFeed clears stale stored setId
 - Next: TBD
 - **sd_769_alerts_copy_cleanup:** Standardize Alerts naming (remove Notifs/Notifications drift + aria-labels).
 - **sd_768_clean_alerts_page_hide_push_debug:** UI: /siddes-notifications shows Alerts first; push settings/debug tools collapsed (optional).
 - **sd_774_fix_build_hooks_and_deps:** Frontend build: fix rules-of-hooks errors + clean hook deps (router/activeTag/load).
 - **sd_766_alerts_drawer_close_icon_chevron:** Alerts drawer: change dismiss icon from X → ChevronDown (reduce icon confusion).
-- **sd_765_desktop_rail_alerts_tab:** Desktop rail: swap Sets → Alerts (alerts are first-class on desktop)
-- **sd_764_fix_icon_tap_targets_44px:** UI: Make key icon-only controls easier to tap (AppTopBar icons → 44×44; Toast dismiss → 44×44; SuggestedSets member remove → bigger hit area without pill blowup).
+- **sd_765_desktop_rail_alerts_tab:** Desktop rail: swap Circles → Alerts (alerts are first-class on desktop)
+- **sd_764_fix_icon_tap_targets_44px:** UI: Make key icon-only controls easier to tap (AppTopBar icons → 44×44; Toast dismiss → 44×44; SuggestedCircles member remove → bigger hit area without pill blowup).
 - **sd_763_standardize_alerts_label:** UI: Standardize label to “Alerts” across nav + NotificationsDrawer title + a11y strings (removes Notifs/Notifications inconsistency).
 - **sd_762_compact_other_sheets_max_height:** UI: Reduce max height of common sheets (ChipOverflow/SetPicker/ProfileActions) to 70dvh so they feel less full-screen on mobile.
 - **sd_761_compact_post_actions_sheet:** UI: Make PostActionsSheet ("…") compact on mobile (max height 70dvh + smaller paddings) so it doesn't feel full-screen.
@@ -112,7 +112,7 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 - **sd_759_topbar_alerts_drawer_button:** Mobile AppTopBar bell opens Notifications Drawer (PWA quick alerts)
 - **sd_758_standardize_sheet_backdrops_touchstart:** UI: standardize all sheet backdrops to close on touchstart with preventDefault (consistent, anti-jank).
 - **sd_756_fix_actions_sheet_backdrop_ghosttap:** UI: prevent PostActionsSheet backdrop ghost taps/clickthrough on iOS PWA (touchstart now preventDefault).
-- **sd_757_fix_setpicker_member_avatars_no_external_calls:** UI: SetPickerSheet member preview avatars are now offline-safe initials badges (removed external Dicebear calls).
+- **sd_757_fix_setpicker_member_avatars_no_external_calls:** UI: CirclePickerSheet member preview avatars are now offline-safe initials badges (removed external Dicebear calls).
 - **sd_749_media_picker_local_media_fix:** Media picker reliability (iOS/Safari-safe file inputs + extension-based kind detection)
 - **sd_757_postcard_media_single_image_contain:** PostCard MediaGrid: single-image preview uses object-contain + aspect-aware height (reduced cropping / bad image UI).
 - **sd_758_media_ui_mobile_carousel_aspect:** MediaGrid (PostCard): mobile multi-media carousel uses aspect-ratio containers (no fixed `h-64`) for more stable previews.
@@ -123,10 +123,10 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 
 - **sd_763_fix_compose_ts2322_sd759_insertion:** Fix Compose TS2322 by repairing sd_759 insertion bug (restore sd_384 JSX comment brace + remove extra '}' on sd_759 comment line).
 
-- **sd_740_sets_v1_dead_simple:** Sets v1 UX simplification (Sets-as-audience: SetFilterBar on Feed; Set hub = Feed+People with More sheet; read-only banners; scannable set cards)
-- **sd_743_sets_v1_1_inline_create_fast_add:** Sets v1.1 (Inline create in picker + Add People sheet: type/paste + voice stub + invite-link fallback)
+- **sd_740_sets_v1_dead_simple:** Circles v1 UX simplification (Circles-as-audience: CircleFilterBar on Feed; Circle hub = Feed+People with More sheet; read-only banners; scannable set cards)
+- **sd_743_sets_v1_1_inline_create_fast_add:** Circles v1.1 (Inline create in picker + Add People sheet: type/paste + voice stub + invite-link fallback)
 
-- **sd_741_fix_sd740_sets_v1_syntax:** Hotfix: repair sd_740 JSX syntax in Sets page + SideFeed; add MIGRATION_PACK if missing
+- **sd_741_fix_sd740_sets_v1_syntax:** Hotfix: repair sd_740 JSX syntax in Circles page + SideFeed; add MIGRATION_PACK if missing
 
 - **sd_736_fix_postcard_nav_share_restore:** Restore PostCard navigation/share helpers after syntax corruption (openPost/openProfile/doShare)
 
@@ -134,9 +134,9 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 
 - **sd_733_fix_postcard_saveReturnScroll_call:** Fix PostCard saveReturnScroll() call signature (no more (path, y) args)
 
-- **sd_731_fix_sets_page_syntax:** Fix Sets detail page JSX syntax (nested conditional rendering)
+- **sd_731_fix_sets_page_syntax:** Fix Circles detail page JSX syntax (nested conditional rendering)
 
-- **sd_717_profile_v2_shell_header_tabs:** Profile V2 hero header + content tabs shell (Posts tab unchanged; Media/Sets placeholders)
+- **sd_717_profile_v2_shell_header_tabs:** Profile V2 hero header + content tabs shell (Posts tab unchanged; Media/Circles placeholders)
 
 - **sd_144c:** Posts+Replies DRF smoke test script (fast full-stack proof via Docker)
 
@@ -146,9 +146,9 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 
 - **sd_146c:** Posts DB persistence smoke (create+restart+verify post/replies survive)
 
-- **sd_148a:** Ban 'Rooms' terminology globally; use Sets wording
+- **sd_148a:** Ban 'Rooms' terminology globally; use Circles wording
 
-- **sd_148b:** Guided Set creator sheet (Name→Side→Theme→Members→Create)\n\n- **sd_148e:** Add minimal Django API tests (posts+sets) so manage.py test finds tests\n\n\n- **sd_148f:** Fix Django tests by forcing DEBUG=True (enable x-sd-viewer header in Docker tests)\n
+- **sd_148b:** Guided Circle creator sheet (Name→Side→Theme→Members→Create)\n\n- **sd_148e:** Add minimal Django API tests (posts+sets) so manage.py test finds tests\n\n\n- **sd_148f:** Fix Django tests by forcing DEBUG=True (enable x-sd-viewer header in Docker tests)\n
 ## Launch hardening
 - **sd_318:** Secure cookies in production (Next-set session cookies include Secure when NODE_ENV=production)
 - Launch Part 0 plan: `docs/LAUNCH_PART_0.md`
@@ -179,12 +179,12 @@ These are the overlays applied/created during the current session (evidence: ter
 - sd_377_on_device_token_clustering_v2 - on-device group suggestions (token clustering) + ML_PART_2 doc
 - sd_378_fix_proxy_import_paths - fixed proxyJson relative paths (introduced double-quote typo)
 - sd_379_fix_proxy_double_quote - fixed the broken proxyJson import lines
-- sd_381_remove_mock_suggestions_use_ondevice_engine - removed mock "Gym Squad" suggestions; use on-device engine in Import Set
+- sd_381_remove_mock_suggestions_use_ondevice_engine - removed mock "Gym Squad" suggestions; use on-device engine in Import Circle
 - sd_382_fix_desktop_siderail_search_icon - missing lucide Search import (typecheck)
 - sd_383_cce_v12_bulk_accept_undo_delete_sets_telemetry_knob - bulk accept + Undo + delete + telemetry knob (pending apply)
 - sd_384_docs_refresh_status_pack - added status refresh doc + ML part docs
 
-- **sd_566:** Fix SetPickerSheet backdrop handler corruption + add default-safe restricted branch to /api/inbox/threads when stub viewer is missing.
+- **sd_566:** Fix CirclePickerSheet backdrop handler corruption + add default-safe restricted branch to /api/inbox/threads when stub viewer is missing.
 
 ## Known gotchas
 
@@ -192,12 +192,12 @@ These are the overlays applied/created during the current session (evidence: ter
 - If your shell prompt shows you are inside `frontend/`, then `cd frontend` will fail; run `npm ...` directly.
 - When Django asks for a one-off default during migrations, it expects valid Python: use `'legacy'` not `legacy`.
 
-## Server safety (Sets)
-- Set members are normalized to @handles, deduped, and capped server-side.
+## Server safety (Circles)
+- Circle members are normalized to @handles, deduped, and capped server-side.
 
 ## PWA (mobile app feel)
 - **sd_914_pwa_fast_scroll_smoothness_v1:** Fast-scroll smoothness: global fast-scroll detector + defer image decode to idle during flings + prefetchImages returns queued count (avoid locking prefetch when nothing queued). Disable with NEXT_PUBLIC_SD_FAST_SCROLL_MODE=0.
-- **sd_913_pwa_pull_to_refresh_everywhere_v1:** Pull-to-refresh on Inbox threads + Alerts (NotificationsView) + Sets list. Ref-safe hook (no stale callbacks). Disable with NEXT_PUBLIC_SD_PULL_TO_REFRESH=0.
+- **sd_913_pwa_pull_to_refresh_everywhere_v1:** Pull-to-refresh on Inbox threads + Alerts (NotificationsView) + Circles list. Ref-safe hook (no stale callbacks). Disable with NEXT_PUBLIC_SD_PULL_TO_REFRESH=0.
 - **sd_912_pwa_new_posts_pill_v1:** “New posts” pill — when background revalidate finds new items while you’re mid-scroll, show a pill instead of inserting/jumping. Disable with NEXT_PUBLIC_SD_NEW_POSTS_PILL=0.
 - **sd_910_pwa_feed_silent_revalidate_v1:** Background feed revalidate (wake + interval) that warms caches silently; only updates UI when near top. Disable with NEXT_PUBLIC_SD_FEED_REVALIDATE=0.
 - **sd_909_pwa_scroll_restoration_hardening_v1:** Force `history.scrollRestoration=manual` + persist tab scroll on pagehide/visibilitychange for smoother Back/Forward + PWA resume.
@@ -224,7 +224,7 @@ These are the overlays applied/created during the current session (evidence: ter
 - AppShell: layout + safe chrome exclusions
 
 [Content]
-- FilterBar: Set pills / context chips
+- FilterBar: Circle pills / context chips
 - FeedEngine: feed rendering + caching safety
 - PostCard: actions sheets / overflow
 - PostDetail: /siddes-post/[id]
@@ -244,7 +244,7 @@ These are the overlays applied/created during the current session (evidence: ter
 
 - sd_748_inbox_dm_delivery: Inbox DM mirror delivery (two-party messaging)
 
-- **sd_771:** Fix SetPickerSheet `currentSide` wiring for remaining call sites (compose/etc.)
+- **sd_771:** Fix CirclePickerSheet `currentSide` wiring for remaining call sites (compose/etc.)
 
 - **sd_773:** Fix auth pages ESLint rules-of-hooks (forgot-password + magic-request) so `next build` succeeds.
 
@@ -252,7 +252,7 @@ These are the overlays applied/created during the current session (evidence: ter
 
 - **sd_776:** Public share post (/p/[id]) — add an escape header (Home/Search/Open in app) + make author profile clickable.
 - **sd_782_fix_post_detail_freeze_side_lock:** Fix Post Detail freeze: SideProvider sideLock setters are stable (useCallback) + no-op when unchanged (prevents infinite render loop).
-- **sd_783_tab_scroll_memory:** Tab/page scroll memory: remember scroll positions across navigation (FB-like), restoring on return to Feed/Inbox/Sets/Search/Notifications.
+- **sd_783_tab_scroll_memory:** Tab/page scroll memory: remember scroll positions across navigation (FB-like), restoring on return to Feed/Inbox/Circles/Search/Notifications.
 - **sd_785_tab_route_memory:** FB-like tab stacks: BottomNav + DesktopSideDock return you to the last route you visited within each tab (Feed includes /siddes-post).
 
 - sd_786 — Inbox DM mirror delivery guardrails (doc sync for checks)

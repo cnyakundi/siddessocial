@@ -28,7 +28,7 @@ if grep -q "Provider → endpoint map" "$FILE" \
   && grep -q "GET /api/inbox/threads" "$FILE" \
   && grep -q "GET /api/inbox/thread/:id" "$FILE" \
   && grep -q "Send message" "$FILE" \
-  && grep -q "Set locked side" "$FILE"; then
+  && grep -q "Circle locked side" "$FILE"; then
   echo "✅ Contract sections present"
 else
   echo "❌ Missing required contract sections"

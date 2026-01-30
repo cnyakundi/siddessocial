@@ -25,7 +25,7 @@ If these differ (or Django secret is missing), private media will fail.
    - `<YOUR_DOMAIN>` (example: `yourdomain.com`)
    - `<YOUR_ZONE_NAME>` (example: `yourdomain.com`)
 
-4) Set Worker secret:
+4) Circle Worker secret:
    - `npx wrangler secret put MEDIA_TOKEN_SECRET`
    - Paste the SAME value you will put in DigitalOcean `SIDDES_MEDIA_TOKEN_SECRET`
 

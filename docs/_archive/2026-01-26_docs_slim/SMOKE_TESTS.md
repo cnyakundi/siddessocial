@@ -16,7 +16,7 @@ scripts/dev/smoke_tests.sh
 ## What it checks
 - backend /healthz
 - frontend /api/auth/me (proxy)
-- backend /api/sets
+- backend /api/circles
 - backend /api/telemetry/summary (optional)
 - backend /api/contacts/match response shape
 

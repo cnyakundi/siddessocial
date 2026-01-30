@@ -94,9 +94,9 @@ Siddes uses **cookie-based Django session auth** as the production truth, with a
 - **DesktopUserMenu** — logout button calls `/api/auth/logout`.
   - **State deps:** `useEffect`
   - **Path:** `frontend/src/components/DesktopUserMenu.tsx`
-- **SuggestedSetsTray** — reads `/api/auth/me` to compute viewer key.
+- **SuggestedCirclesTray** — reads `/api/auth/me` to compute viewer key.
   - **State deps:** `useEffect`, `useState`, `useMemo`, `useRef`
-  - **Path:** `frontend/src/components/SuggestedSetsTray.tsx`
+  - **Path:** `frontend/src/components/SuggestedCirclesTray.tsx`
 - **StubViewerCookie (dev-only)** — optionally sets `sd_viewer` cookie.
   - **State deps:** `useEffect`
   - **Path:** `frontend/src/components/StubViewerCookie.tsx`

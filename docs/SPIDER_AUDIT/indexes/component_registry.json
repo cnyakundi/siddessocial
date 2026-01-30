@@ -138,7 +138,7 @@
     ],
     "imports": [
       "@/src/lib/composeIntent",
-      "@/src/lib/sets",
+      "@/src/lib/circles",
       "@/src/lib/sides",
       "react"
     ]
@@ -156,11 +156,11 @@
     ]
   },
   {
-    "path": "src/components/CreateSetSheet.tsx",
-    "rel": "components/CreateSetSheet.tsx",
-    "file": "CreateSetSheet.tsx",
+    "path": "src/components/CreateCircleSheet.tsx",
+    "rel": "components/CreateCircleSheet.tsx",
+    "file": "CreateCircleSheet.tsx",
     "exports": [
-      "CreateSetSheet"
+      "CreateCircleSheet"
     ],
     "hooks": [
       "useEffect",
@@ -168,7 +168,7 @@
       "useState"
     ],
     "imports": [
-      "@/src/lib/setThemes",
+      "@/src/lib/circleThemes",
       "@/src/lib/sides",
       "lucide-react",
       "react"
@@ -211,8 +211,8 @@
     ],
     "imports": [
       "@/src/components/SideProvider",
-      "@/src/lib/sets",
-      "@/src/lib/setsProvider",
+      "@/src/lib/circles",
+      "@/src/lib/circlesProvider",
       "@/src/lib/sides",
       "lucide-react",
       "next/link",
@@ -365,11 +365,11 @@
     ]
   },
   {
-    "path": "src/components/ImportSetSheet.tsx",
-    "rel": "components/ImportSetSheet.tsx",
-    "file": "ImportSetSheet.tsx",
+    "path": "src/components/ImportCircleSheet.tsx",
+    "rel": "components/ImportCircleSheet.tsx",
+    "file": "ImportCircleSheet.tsx",
     "exports": [
-      "ImportSetSheet"
+      "ImportCircleSheet"
     ],
     "hooks": [
       "useMemo",
@@ -378,7 +378,7 @@
     ],
     "imports": [
       "@/src/components/SideProvider",
-      "@/src/components/SuggestedSetsSheet",
+      "@/src/components/SuggestedCirclesSheet",
       "@/src/lib/localIntelligence/onDeviceContextEngine",
       "@/src/lib/sides",
       "lucide-react",
@@ -753,7 +753,7 @@
       "@/src/components/RitualSheet",
       "@/src/lib/ritualsProvider",
       "@/src/lib/ritualsTypes",
-      "@/src/lib/sets",
+      "@/src/lib/circles",
       "@/src/lib/sides",
       "@/src/lib/toast",
       "lucide-react",
@@ -782,62 +782,62 @@
     ]
   },
   {
-    "path": "src/components/SetFilterBar.tsx",
-    "rel": "components/SetFilterBar.tsx",
-    "file": "SetFilterBar.tsx",
+    "path": "src/components/CircleFilterBar.tsx",
+    "rel": "components/CircleFilterBar.tsx",
+    "file": "CircleFilterBar.tsx",
     "exports": [
-      "SetFilterBar"
+      "CircleFilterBar"
     ],
     "hooks": [
       "useMemo",
       "useState"
     ],
     "imports": [
-      "@/src/components/SetPickerSheet",
-      "@/src/lib/setThemes",
-      "@/src/lib/sets",
+      "@/src/components/CirclePickerSheet",
+      "@/src/lib/circleThemes",
+      "@/src/lib/circles",
       "lucide-react",
       "react"
     ]
   },
   {
-    "path": "src/components/SetPickerSheet.tsx",
-    "rel": "components/SetPickerSheet.tsx",
-    "file": "SetPickerSheet.tsx",
+    "path": "src/components/CirclePickerSheet.tsx",
+    "rel": "components/CirclePickerSheet.tsx",
+    "file": "CirclePickerSheet.tsx",
     "exports": [
-      "SetPickerSheet"
+      "CirclePickerSheet"
     ],
     "hooks": [
       "useEffect"
     ],
     "imports": [
-      "@/src/lib/setThemes",
-      "@/src/lib/sets",
+      "@/src/lib/circleThemes",
+      "@/src/lib/circles",
       "lucide-react",
       "react"
     ]
   },
   {
-    "path": "src/components/SetsChipsRow.tsx",
-    "rel": "components/SetsChipsRow.tsx",
-    "file": "SetsChipsRow.tsx",
+    "path": "src/components/CirclesChipsRow.tsx",
+    "rel": "components/CirclesChipsRow.tsx",
+    "file": "CirclesChipsRow.tsx",
     "exports": [
-      "SetsChipsRow"
+      "CirclesChipsRow"
     ],
     "hooks": [],
     "imports": [
-      "@/src/lib/sets",
+      "@/src/lib/circles",
       "lucide-react",
       "react"
     ]
   },
   {
-    "path": "src/components/SetsJoinedBanner.tsx",
-    "rel": "components/SetsJoinedBanner.tsx",
-    "file": "SetsJoinedBanner.tsx",
+    "path": "src/components/CirclesJoinedBanner.tsx",
+    "rel": "components/CirclesJoinedBanner.tsx",
+    "file": "CirclesJoinedBanner.tsx",
     "exports": [
-      "SetsJoinedBanner",
-      "SetsJoinedPill"
+      "CirclesJoinedBanner",
+      "CirclesJoinedPill"
     ],
     "hooks": [],
     "imports": [
@@ -902,11 +902,11 @@
       "useWindowVirtualizer"
     ],
     "imports": [
-      "@/src/components/ImportSetSheet",
+      "@/src/components/ImportCircleSheet",
       "@/src/components/PostCard",
       "@/src/components/PublicTuneSheet",
       "@/src/components/RitualDock",
-      "@/src/components/SetPickerSheet",
+      "@/src/components/CirclePickerSheet",
       "@/src/components/SideProvider",
       "@/src/components/feedModules/FeedModuleCard",
       "@/src/lib/audienceStore",
@@ -919,8 +919,8 @@
       "@/src/lib/publicSiding",
       "@/src/lib/publicTrustDial",
       "@/src/lib/restricted",
-      "@/src/lib/sets",
-      "@/src/lib/setsProvider",
+      "@/src/lib/circles",
+      "@/src/lib/circlesProvider",
       "@/src/lib/sides",
       "@/src/lib/toast",
       "@tanstack/react-virtual",
@@ -984,11 +984,11 @@
     ]
   },
   {
-    "path": "src/components/SuggestedSetsSheet.tsx",
-    "rel": "components/SuggestedSetsSheet.tsx",
-    "file": "SuggestedSetsSheet.tsx",
+    "path": "src/components/SuggestedCirclesSheet.tsx",
+    "rel": "components/SuggestedCirclesSheet.tsx",
+    "file": "SuggestedCirclesSheet.tsx",
     "exports": [
-      "SuggestedSetsSheet"
+      "SuggestedCirclesSheet"
     ],
     "hooks": [
       "useEffect",
@@ -996,8 +996,8 @@
       "useState"
     ],
     "imports": [
-      "@/src/lib/setSuggestions",
-      "@/src/lib/setThemes",
+      "@/src/lib/circleSuggestions",
+      "@/src/lib/circleThemes",
       "@/src/lib/sides",
       "@/src/lib/telemetry/sdTelemetry",
       "lucide-react",
@@ -1005,11 +1005,11 @@
     ]
   },
   {
-    "path": "src/components/SuggestedSetsTray.tsx",
-    "rel": "components/SuggestedSetsTray.tsx",
-    "file": "SuggestedSetsTray.tsx",
+    "path": "src/components/SuggestedCirclesTray.tsx",
+    "rel": "components/SuggestedCirclesTray.tsx",
+    "file": "SuggestedCirclesTray.tsx",
     "exports": [
-      "SuggestedSetsTray"
+      "SuggestedCirclesTray"
     ],
     "hooks": [
       "useEffect",
@@ -1018,10 +1018,10 @@
       "useState"
     ],
     "imports": [
-      "@/src/components/SuggestedSetsSheet",
-      "@/src/lib/localIntelligence/localSuggestedSetsCache",
+      "@/src/components/SuggestedCirclesSheet",
+      "@/src/lib/localIntelligence/localSuggestedCirclesCache",
       "@/src/lib/localIntelligence/localSuggestionLedger",
-      "@/src/lib/setSuggestions",
+      "@/src/lib/circleSuggestions",
       "@/src/lib/sides",
       "@/src/lib/telemetry/sdTelemetry",
       "lucide-react",

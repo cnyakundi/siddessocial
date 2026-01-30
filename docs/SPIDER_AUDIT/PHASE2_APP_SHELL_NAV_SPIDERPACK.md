@@ -100,7 +100,7 @@ Everything else renders full chrome (Top bar / Bottom nav / Desktop rails depend
 ### 3.3 Protected routes (guarded by AuthBootstrap prefix list)
 AuthBootstrap protects these **prefixes**:
 
-`/siddes-feed, /siddes-post, /siddes-sets, /siddes-inbox, /siddes-invites, /siddes-compose, /invite, /siddes-profile, /siddes-settings`
+`/siddes-feed, /siddes-post, /siddes-circles, /siddes-inbox, /siddes-invites, /siddes-compose, /invite, /siddes-profile, /siddes-settings`
 
 Pages currently covered by that prefix list:
 - `/invite/[id]` — Invite acceptance flow.  
@@ -131,10 +131,10 @@ Pages currently covered by that prefix list:
   **Path:** `frontend/src/app/siddes-profile/account/password/page.tsx`
 - `/siddes-profile/account/sessions` — Profile + account surfaces.  
   **Path:** `frontend/src/app/siddes-profile/account/sessions/page.tsx`
-- `/siddes-sets` — Sets hub / set detail surfaces.  
-  **Path:** `frontend/src/app/siddes-sets/page.tsx`
-- `/siddes-sets/[id]` — Sets hub / set detail surfaces.  
-  **Path:** `frontend/src/app/siddes-sets/[id]/page.tsx`
+- `/siddes-circles` — Circles hub / set detail surfaces.  
+  **Path:** `frontend/src/app/siddes-circles/page.tsx`
+- `/siddes-circles/[id]` — Circles hub / set detail surfaces.  
+  **Path:** `frontend/src/app/siddes-circles/[id]/page.tsx`
 - `/siddes-settings` — Settings surfaces.  
   **Path:** `frontend/src/app/siddes-settings/page.tsx`
 - `/siddes-settings/appeals` — Settings surfaces.  

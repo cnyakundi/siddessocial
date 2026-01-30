@@ -29,8 +29,8 @@ fi
 # Type should include setLabel
 grep -q "setLabel" frontend/src/lib/inviteProvider.ts && echo "✅ SetInvite has setLabel" || (echo "❌ SetInvite missing setLabel" && exit 1)
 
-# Stub store should snapshot Set label on create
-grep -q "snapshot Set label" frontend/src/lib/server/invitesStore.ts && echo "✅ invitesStore snapshots label" || (echo "❌ invitesStore missing snapshot comment/logic" && exit 1)
+# Stub store should snapshot Circle label on create
+grep -q "snapshot Circle label" frontend/src/lib/server/invitesStore.ts && echo "✅ invitesStore snapshots label" || (echo "❌ invitesStore missing snapshot comment/logic" && exit 1)
 grep -q "getSet" frontend/src/lib/server/invitesStore.ts && echo "✅ invitesStore reads set via getSet" || (echo "❌ invitesStore missing getSet" && exit 1)
 
 # UI should prefer invite.setLabel

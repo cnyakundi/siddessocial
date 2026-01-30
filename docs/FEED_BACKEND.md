@@ -53,7 +53,7 @@ python3 scripts/dev/feed_demo.py --selftest
 
 To use real DB-backed posts in the Feed:
 
-1) Set `SD_POST_STORE=auto` in `ops/docker/.env` (or copy from `.env.example`).
+1) Circle `SD_POST_STORE=auto` in `ops/docker/.env` (or copy from `.env.example`).
 2) Run:
 
 ```bash
@@ -61,7 +61,7 @@ bash scripts/dev/seed_demo_universe.sh
 ```
 
 This seeds:
-- Sets (Friends/Close/Work)
+- Circles (Friends/Close/Work)
 - Posts across Sides (mostly authored by `me` so visibility is stable)
 - A sample reply
 

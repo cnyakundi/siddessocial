@@ -27,9 +27,9 @@ This pack describes **how Siddes “knows” what Side you are in**, how that Si
 - `nextSide(current, dir)` → cycling helper
 - File: `frontend/src/lib/sides.ts`
 
-### 1.5 Set theme tokens (separate from Sides)
-- `SET_THEMES[color] = { bg, text, border }`
-- Note: stored SetColor "blue" is mapped to slate in UI (blue reserved for Public Side).
+### 1.5 Circle theme tokens (separate from Sides)
+- `CIRCLE_THEMES[color] = { bg, text, border }`
+- Note: stored CircleColor "blue" is mapped to slate in UI (blue reserved for Public Side).
 - File: `frontend/src/lib/setThemes.ts`
 
 ---
@@ -181,7 +181,7 @@ This pack describes **how Siddes “knows” what Side you are in**, how that Si
 - File: `frontend/src/app/siddes-compose/client.tsx`
 
 ### 7.3 Blue reserved for Public
-- Sets render blue as slate to avoid confusing Public-vs-private color semantics.
+- Circles render blue as slate to avoid confusing Public-vs-private color semantics.
 - File: `frontend/src/lib/setThemes.ts`
 
 ---
@@ -206,7 +206,7 @@ This pack describes **how Siddes “knows” what Side you are in**, how that Si
 - frontend/src/components/DesktopSideRail.tsx
 - frontend/src/components/DesktopTopBar.tsx
 - frontend/src/components/FirstRunSidePicker.tsx
-- frontend/src/components/ImportSetSheet.tsx
+- frontend/src/components/ImportCircleSheet.tsx
 - frontend/src/components/NotificationsView.tsx
 - frontend/src/components/SideBadge.tsx
 - frontend/src/components/SideChrome.tsx
@@ -224,19 +224,19 @@ This pack describes **how Siddes “knows” what Side you are in**, how that Si
 - frontend/src/app/siddes-inbox/page.tsx
 - frontend/src/app/siddes-post/[id]/page.tsx
 - frontend/src/app/siddes-profile/page.tsx
-- frontend/src/app/siddes-sets/[id]/page.tsx
-- frontend/src/app/siddes-sets/page.tsx
+- frontend/src/app/siddes-circles/[id]/page.tsx
+- frontend/src/app/siddes-circles/page.tsx
 - frontend/src/components/AppTopBar.tsx
 - frontend/src/components/BottomNav.tsx
 - frontend/src/components/ComposeSuggestionBar.tsx
-- frontend/src/components/CreateSetSheet.tsx
+- frontend/src/components/CreateCircleSheet.tsx
 - frontend/src/components/DesktopButlerTray.tsx
 - frontend/src/components/DesktopRightRail.tsx
 - frontend/src/components/DesktopSideRail.tsx
 - frontend/src/components/DesktopTopBar.tsx
 - frontend/src/components/EchoSheet.tsx
 - frontend/src/components/FirstRunSidePicker.tsx
-- frontend/src/components/ImportSetSheet.tsx
+- frontend/src/components/ImportCircleSheet.tsx
 - frontend/src/components/NotificationsView.tsx
 - frontend/src/components/PeekSheet.tsx
 - frontend/src/components/PostCard.tsx
@@ -250,7 +250,7 @@ This pack describes **how Siddes “knows” what Side you are in**, how that Si
 - frontend/src/components/SideBadge.tsx
 - frontend/src/components/SideFeed.tsx
 - frontend/src/components/SideSwitcherSheet.tsx
-- frontend/src/components/SuggestedSetsSheet.tsx
+- frontend/src/components/SuggestedCirclesSheet.tsx
 - frontend/src/components/feedModules/FeedModuleCard.tsx
 - frontend/src/lib/chips.ts
 - frontend/src/lib/sides.ts
@@ -264,11 +264,11 @@ This pack describes **how Siddes “knows” what Side you are in**, how that Si
 - frontend/src/app/siddes-inbox/[id]/page.tsx
 - frontend/src/app/siddes-inbox/page.tsx
 - frontend/src/app/siddes-post/[id]/page.tsx
-- frontend/src/app/siddes-sets/[id]/page.tsx
-- frontend/src/app/siddes-sets/page.tsx
+- frontend/src/app/siddes-circles/[id]/page.tsx
+- frontend/src/app/siddes-circles/page.tsx
 - frontend/src/components/AppTopBar.tsx
 - frontend/src/components/ComposeSuggestionBar.tsx
-- frontend/src/components/CreateSetSheet.tsx
+- frontend/src/components/CreateCircleSheet.tsx
 - frontend/src/components/DesktopButlerTray.tsx
 - frontend/src/components/DesktopSideRail.tsx
 - frontend/src/components/DesktopTopBar.tsx
@@ -285,7 +285,7 @@ This pack describes **how Siddes “knows” what Side you are in**, how that Si
 - frontend/src/components/SideBadge.tsx
 - frontend/src/components/SideFeed.tsx
 - frontend/src/components/SideSwitcherSheet.tsx
-- frontend/src/components/SuggestedSetsSheet.tsx
+- frontend/src/components/SuggestedCirclesSheet.tsx
 - frontend/src/components/feedModules/FeedModuleCard.tsx
 - frontend/src/lib/sideActivity.ts
 - frontend/src/lib/sides.ts
@@ -299,7 +299,7 @@ Even though the “Chameleon” visuals are frontend, the **SideId values are en
 ### 9.1 SideId definitions found in backend
 - Visibility policy literal: `backend/siddes_visibility/policy.py`
 - Post DB choices: `backend/siddes_post/models.py`
-- Sets SideId TextChoices: `backend/siddes_sets/models.py`
+- Circles SideId TextChoices: `backend/siddes_sets/models.py`
 - Inbox SideId TextChoices (+ locked_side, message.side): `backend/siddes_inbox/models.py`
 - Rituals choices: `backend/siddes_rituals/models.py`
 - Prism facets + side membership: `backend/siddes_prism/models.py`

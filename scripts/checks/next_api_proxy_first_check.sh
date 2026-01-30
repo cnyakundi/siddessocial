@@ -4,8 +4,8 @@ set -euo pipefail
 echo "== Check: Next API routes proxy-first to Django (sd_154) =="
 
 REQ=(
-  "frontend/src/app/api/sets/route.ts"
-  "frontend/src/app/api/sets/[id]/route.ts"
+  "frontend/src/app/api/circles/route.ts"
+  "frontend/src/app/api/circles/[id]/route.ts"
   "frontend/src/app/api/invites/route.ts"
   "frontend/src/app/api/invites/[id]/route.ts"
   "frontend/src/app/api/inbox/threads/route.ts"

@@ -5,8 +5,8 @@ import Link from "next/link";
 import { ChevronLeft, CloudOff, Cpu, UserPlus, Users } from "lucide-react";
 import { useSide } from "@/src/components/SideProvider";
 import { SIDE_THEMES } from "@/src/lib/sides";
-import { getSetsProvider } from "@/src/lib/setsProvider";
-import type { SetDef } from "@/src/lib/sets";
+import { getCirclesProvider } from "@/src/lib/circlesProvider";
+import type { CircleDef } from "@/src/lib/circles";
 import { loadQueue, queueChangedEventName } from "@/src/lib/offlineQueue";
 
 function cn(...parts: Array<string | undefined | false | null>) {
@@ -28,8 +28,8 @@ export function DesktopContextInspectorRail({ expanded, onExpandedChange }: Prop
   const { side } = useSide();
   const theme = SIDE_THEMES[side];
 
-  const setsProvider = useMemo(() => getSetsProvider(), []);
-  const [sets, setSets] = useState<SetDef[]>([]);
+  const setsProvider = useMemo(() => getCirclesProvider(), []);
+  const [sets, setSets] = useState<CircleDef[]>([]);
   const [setsErr, setSetsErr] = useState<string | null>(null);
 
   const [queued, setQueued] = useState(0);
@@ -189,12 +189,12 @@ export function DesktopContextInspectorRail({ expanded, onExpandedChange }: Prop
         {/* Sets module (side-aware) */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <div className="text-xs font-extrabold text-gray-400 uppercase tracking-widest">Groups</div>
+            <div className="text-xs font-extrabold text-gray-400 uppercase tracking-widest">Circles</div>
             <Link
-              href="/siddes-sets"
+              href="/siddes-circles"
               className="text-xs font-bold text-gray-500 hover:text-gray-900 hover:underline"
-              aria-label="Manage groups"
-              title="Manage groups"
+              aria-label="Manage circles"
+              title="Manage circles"
             >
               Manage
             </Link>
@@ -207,7 +207,7 @@ export function DesktopContextInspectorRail({ expanded, onExpandedChange }: Prop
               {sets.map((s) => (
                 <Link
                   key={s.id}
-                  href={`/siddes-sets/${encodeURIComponent(String(s.id))}`}
+                  href={`/siddes-circles/${encodeURIComponent(String(s.id))}`}
                   className="flex items-center gap-3 p-2 -mx-2 rounded-xl hover:bg-gray-50 transition-colors"
                 >
                   <div className={cn("w-9 h-9 rounded-full flex items-center justify-center", theme.lightBg)}>
@@ -223,7 +223,7 @@ export function DesktopContextInspectorRail({ expanded, onExpandedChange }: Prop
           ) : (
             <div className="text-xs text-gray-500">
               No groups yet.{" "}
-              <Link href="/siddes-sets" className="font-bold hover:underline">
+              <Link href="/siddes-circles" className="font-bold hover:underline">
                 Create one
               </Link>
               .

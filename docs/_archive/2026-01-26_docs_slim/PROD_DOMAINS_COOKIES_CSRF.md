@@ -17,7 +17,7 @@ Use subdomains on the same apex domain:
 - API (DigitalOcean): `https://api.example.com`
 
 ## DigitalOcean (Django) env vars
-Set on your Django service:
+Circle on your Django service:
 
 - `DJANGO_DEBUG=0`
 - `DJANGO_SECRET_KEY=<strong 32+ chars>`
@@ -31,7 +31,7 @@ Optional (only if you use a custom domain like *.example.com):
 - `SIDDES_COOKIE_DOMAIN=.example.com` (share cookies across subdomains)
 
 ## Vercel env vars
-Set on Vercel:
+Circle on Vercel:
 
 - `SD_INTERNAL_API_BASE=https://api.example.com`
 

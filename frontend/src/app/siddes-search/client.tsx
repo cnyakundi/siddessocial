@@ -100,7 +100,7 @@ export default function SearchClient() {
   const [q, setQ] = useState(initialQ);
   const [tab, setTab] = useState<TabId>(initialTab);
 
-  const [filterSetId, setFilterSetId] = useState<string>(initialSet);
+  const [filterCircleId, setFilterCircleId] = useState<string>(initialSet);
   const [filterSetLabel, setFilterSetLabel] = useState<string>("");
 
   const [filterTopic, setFilterTopic] = useState<string>(() => {
@@ -125,7 +125,7 @@ export default function SearchClient() {
 
   const backQS = useMemo(() => (sp ? sp.toString() : ""), [sp]);
 
-  function updateUrl(nextQ: string, nextTab: TabId, nextSetId?: string, nextTopic?: string) {
+  function updateUrl(nextQ: string, nextTab: TabId, nextCircleId?: string, nextTopic?: string) {
     const params = new URLSearchParams(sp ? Array.from(sp.entries()) : []);
     if (nextQ) params.set("q", nextQ);
     else params.delete("q");
@@ -133,7 +133,7 @@ export default function SearchClient() {
     if (nextTab && nextTab !== "all") params.set("tab", nextTab);
     else params.delete("tab");
 
-    const sid = String(nextSetId || "").trim();
+    const sid = String(nextCircleId || "").trim();
     if (sid) params.set("set", sid);
     else params.delete("set");
 
@@ -146,7 +146,7 @@ const qs = params.toString();
   }
 
   async function fetchAllSets(): Promise<{ items: SetItem[]; restricted: boolean }> {
-    const res = await fetch("/api/sets?side=" + encodeURIComponent(side), { cache: "no-store" });
+    const res = await fetch("/api/circles?side=" + encodeURIComponent(side), { cache: "no-store" });
     const data = (await res.json().catch(() => ({}))) as SetsResp;
     const isRestr = Boolean(data?.restricted);
     if (!res.ok) return { items: [], restricted: isRestr };
@@ -189,12 +189,12 @@ const qs = params.toString();
     return { items: mapped, restricted: isRestr };
   }
 
-  async function fetchPosts(useQ: string, useSetId?: string, useTopic?: string): Promise<{ items: PostItem[]; restricted: boolean }> {
+  async function fetchPosts(useQ: string, useCircleId?: string, useTopic?: string): Promise<{ items: PostItem[]; restricted: boolean }> {
     const params = new URLSearchParams();
     params.set("side", side);
     params.set("q", useQ);
     params.set("limit", "25");
-    const sid = String(useSetId || "").trim();
+    const sid = String(useCircleId || "").trim();
     if (sid) params.set("set", sid);
 
     const res = await fetch("/api/search/posts?" + params.toString(), { cache: "no-store" });
@@ -232,11 +232,11 @@ const qs = params.toString();
   async function runSearch(opts?: { q?: string; tab?: TabId; setId?: string; topic?: string }) {
     const useQ = normQ(typeof opts?.q === "string" ? opts.q : q);
     const useTab = typeof opts?.tab === "string" ? opts.tab : tab;
-    const useSetId = typeof opts?.setId === "string" ? opts.setId : filterSetId;
+    const useCircleId = typeof opts?.setId === "string" ? opts.setId : filterCircleId;
     const useTopic = side === "public" ? String((opts as any)?.topic ?? filterTopic).trim() : "";
 
     setErr(null);
-    updateUrl(useQ, useTab, useSetId, useTopic);
+    updateUrl(useQ, useTab, useCircleId, useTopic);
 
     if (!useQ || useQ.length < 2) {
       setRestricted(false);
@@ -252,7 +252,7 @@ const qs = params.toString();
       const [setsOut, usersOut, postsOut] = await Promise.all([
         fetchSetsFiltered(useQ),
         fetchUsers(useQ),
-        fetchPosts(useQ, useSetId, useTopic),
+        fetchPosts(useQ, useCircleId, useTopic),
       ]);
 
       const anyRestr = Boolean(setsOut.restricted) || Boolean(usersOut.restricted) || Boolean(postsOut.restricted);
@@ -265,7 +265,7 @@ const qs = params.toString();
       // reset selection whenever results change
       setActiveIdx(-1);
 
-      if (useSetId && !filterSetLabel) void resolveSetLabel(useSetId);
+      if (useCircleId && !filterSetLabel) void resolveSetLabel(useCircleId);
     } catch {
       setErr("Search failed (network).");
       setRestricted(false);
@@ -281,8 +281,8 @@ const qs = params.toString();
   // Clear set filter when Side changes (set ids are side-scoped)
   useEffect(() => {
     let did = false;
-    if (filterSetId) {
-      setFilterSetId("");
+    if (filterCircleId) {
+      setFilterCircleId("");
       setFilterSetLabel("");
       did = true;
     }
@@ -359,7 +359,7 @@ const qs = params.toString();
         out.push({
           key: "s:" + String(it.id),
           kind: "sets",
-          href: "/siddes-sets/" + it.id,
+          href: "/siddes-circles/" + it.id,
           primary: it.label,
           secondary: it.members.slice(0, 6).join(", "),
         });
@@ -394,7 +394,7 @@ const qs = params.toString();
   function clearQuery() {
     setQ("");
     setTab("all");
-    setFilterSetId("");
+    setFilterCircleId("");
     setFilterSetLabel("");
     setErr(null);
     setRestricted(false);
@@ -515,18 +515,18 @@ const qs = params.toString();
             </button>
           </div>
 
-          {filterSetId ? (
+          {filterCircleId ? (
             <div className="mt-3 flex items-center gap-2">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-200 bg-gray-50 text-xs font-extrabold text-gray-700">
                 <LayersIcon size={14} className="text-gray-500" />
-                Set: {filterSetLabel || filterSetId}
+                Set: {filterSetLabel || filterCircleId}
                 <button
                   type="button"
                   className="p-1 rounded-full hover:bg-white border border-transparent hover:border-gray-200"
                   aria-label="Clear set filter"
                   title="Clear set"
                   onClick={() => {
-                    setFilterSetId("");
+                    setFilterCircleId("");
                     setFilterSetLabel("");
                     void runSearch({ setId: "" });
                   }}
@@ -552,7 +552,7 @@ const qs = params.toString();
                 </div>
               </div>
               <div className="p-3 rounded-2xl border border-gray-200 bg-gray-50">
-                <div className="text-xs font-extrabold text-gray-700">Set names</div>
+                <div className="text-xs font-extrabold text-gray-700">Circle names</div>
                 <div className="text-xs text-gray-500 mt-1">
                   Try <span className="font-mono">Gym Buddies</span>
                 </div>
@@ -578,7 +578,7 @@ const qs = params.toString();
                     onClick={() => {
                       setTab(t.id);
                       setActiveIdx(-1);
-                      updateUrl(qn, t.id, filterSetId, filterTopic);
+                      updateUrl(qn, t.id, filterCircleId, filterTopic);
                     }}
                     className={
                       "px-4 py-2 rounded-full border text-xs font-extrabold flex items-center gap-2 whitespace-nowrap transition-all " +
@@ -682,7 +682,7 @@ const qs = params.toString();
                               <button
                                 type="button"
                                 onClick={() => {
-                                  setFilterSetId(it.id);
+                                  setFilterCircleId(it.id);
                                   setFilterSetLabel(it.label);
                                   setTab("posts");
                                   setActiveIdx(-1);
@@ -694,7 +694,7 @@ const qs = params.toString();
                                 Filter
                               </button>
                               <Link
-                                href={"/siddes-sets/" + it.id}
+                                href={"/siddes-circles/" + it.id}
                                 className="px-3 py-2 rounded-full bg-white border border-gray-200 text-xs font-extrabold text-gray-700 hover:bg-gray-100"
                               >
                                 Open

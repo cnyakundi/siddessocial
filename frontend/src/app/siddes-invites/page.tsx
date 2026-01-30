@@ -6,7 +6,7 @@ import { Check, RefreshCcw, X } from "lucide-react";
 
 import type { InviteAction, InviteDirection, SetInvite } from "@/src/lib/inviteProvider";
 import { getInviteProvider } from "@/src/lib/inviteProvider";
-import { getSetsProvider } from "@/src/lib/setsProvider";
+import { getCirclesProvider } from "@/src/lib/circlesProvider";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -28,7 +28,7 @@ function actionLabel(a: InviteAction): string {
 
 export default function SiddesInvitesPage() {
   const invites = useMemo(() => getInviteProvider(), []);
-  const sets = useMemo(() => getSetsProvider(), []);
+  const sets = useMemo(() => getCirclesProvider(), []);
 
   const [direction, setDirection] = useState<InviteDirection>("incoming");
   const [items, setItems] = useState<SetInvite[]>([]);
@@ -217,7 +217,7 @@ export default function SiddesInvitesPage() {
                     <div className="flex flex-col items-end gap-2">
                       {inv.status === "accepted" ? (
                         <Link
-                          href={`/siddes-sets/${encodeURIComponent(inv.setId)}`}
+                          href={`/siddes-circles/${encodeURIComponent(inv.setId)}`}
                           className="px-3 py-1.5 rounded-full text-xs font-black border bg-gray-900 text-white border-gray-900 hover:opacity-95 whitespace-nowrap"
                         >
                           Open Set

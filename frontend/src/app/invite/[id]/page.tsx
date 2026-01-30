@@ -73,7 +73,7 @@ export default function InviteAcceptPage({ params }: { params: { id: string } })
             <Link href="/siddes-invites" className="text-sm font-bold text-gray-700 hover:underline">
               Invites
             </Link>
-            <Link href="/siddes-sets" className="text-sm font-bold text-gray-700 hover:underline">
+            <Link href="/siddes-circles" className="text-sm font-bold text-gray-700 hover:underline">
               Sets
             </Link>
           </div>
@@ -197,7 +197,7 @@ export default function InviteAcceptPage({ params }: { params: { id: string } })
               {item.status === "accepted" ? (
                 <div className="mt-4">
                   <Link
-                    href={`/siddes-sets/${encodeURIComponent(item.setId)}`}
+                    href={`/siddes-circles/${encodeURIComponent(item.setId)}`}
                     className="inline-flex items-center justify-center w-full px-3 py-2 rounded-full bg-gray-900 text-white font-black text-sm hover:opacity-95"
                   >
                     Open Set

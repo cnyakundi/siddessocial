@@ -42,7 +42,7 @@ Generate keys (one-time):
 npx web-push generate-vapid-keys
 ```
 
-Set:
+Circle:
 - Frontend `.env.local`:
   - `NEXT_PUBLIC_VAPID_PUBLIC_KEY=<Public Key>`
 - Backend env:

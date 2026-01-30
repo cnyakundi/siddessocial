@@ -50,7 +50,7 @@ export function InviteLinksPanel({
   setLabel?: string;
   canManage: boolean;
 }) {
-  const safeSetId = useMemo(() => encodeURIComponent(setId || ""), [setId]);
+  const safeCircleId = useMemo(() => encodeURIComponent(setId || ""), [setId]);
 
   const [items, setItems] = useState<InviteLinkItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -61,11 +61,11 @@ export function InviteLinksPanel({
   const [expiresDays, setExpiresDays] = useState(14);
 
   const refresh = async () => {
-    if (!safeSetId) return;
+    if (!safeCircleId) return;
     setLoading(true);
     setErr(null);
     try {
-      const res = await fetch(`/api/sets/${safeSetId}/invite-links`, { cache: "no-store" });
+      const res = await fetch(`/api/circles/${safeCircleId}/invite-links`, { cache: "no-store" });
       if (res.status === 401 || res.status === 403) {
         setItems([]);
         setErr("Restricted.");
@@ -105,16 +105,16 @@ export function InviteLinksPanel({
   useEffect(() => {
     void refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [safeSetId]);
+  }, [safeCircleId]);
 
   const create = async () => {
     if (!canManage) return;
-    if (!safeSetId) return;
+    if (!safeCircleId) return;
     setBusy(true);
     setErr(null);
     try {
       const body = { maxUses, expiresDays };
-      const res = await fetch(`/api/sets/${safeSetId}/invite-links`, {
+      const res = await fetch(`/api/circles/${safeCircleId}/invite-links`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(body),
@@ -139,11 +139,11 @@ export function InviteLinksPanel({
 
   const revoke = async (token: string) => {
     if (!canManage) return;
-    if (!safeSetId || !token) return;
+    if (!safeCircleId || !token) return;
     setBusy(true);
     setErr(null);
     try {
-      const res = await fetch(`/api/sets/${safeSetId}/invite-links/${encodeURIComponent(token)}/revoke`, {
+      const res = await fetch(`/api/circles/${safeCircleId}/invite-links/${encodeURIComponent(token)}/revoke`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({}),
@@ -183,7 +183,7 @@ export function InviteLinksPanel({
     await copyText(url);
   };
 
-  const title = setLabel ? `Join “${setLabel}” on Siddes` : "Join this Set on Siddes";
+  const title = setLabel ? `Join “${setLabel}” on Siddes` : "Join this Circle on Siddes";
   const shareText = setLabel ? `Join my Set: ${setLabel}` : "Join my Set on Siddes";
 
   return (
@@ -194,7 +194,7 @@ export function InviteLinksPanel({
             <Link2 size={18} /> Invite links
           </div>
           <div className="text-xs text-gray-500 mt-1">
-            Share a link that lets people join this Set. You can cap uses and set an expiry.
+            Share a link that lets people join this Circle. You can cap uses and set an expiry.
           </div>
         </div>
 
@@ -214,7 +214,7 @@ export function InviteLinksPanel({
 
       {!canManage ? (
         <div className="mt-3 p-3 rounded-2xl border border-gray-200 bg-gray-50 text-gray-700 text-sm">
-          Only the Set owner can create or revoke invite links.
+          Only the Circle owner can create or revoke invite links.
         </div>
       ) : (
         <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -269,7 +269,7 @@ export function InviteLinksPanel({
         {!items.length ? (
           <div className="p-4 rounded-2xl border border-dashed border-gray-200 text-center">
             <div className="font-black text-gray-900 mb-1">No invite links yet</div>
-            <div className="text-sm text-gray-500">Create one to share this Set.</div>
+            <div className="text-sm text-gray-500">Create one to share this Circle.</div>
           </div>
         ) : (
           items.map((l) => {

@@ -4,7 +4,7 @@
 Siddes must win where other social products died:
 - **No clerical work** (no “taxonomy homework”)
 - **No trust violations** (no private graph harvesting)
-- **Fast cold-start** (people + Sets appear quickly)
+- **Fast cold-start** (people + Circles appear quickly)
 
 This document defines a strict architecture boundary:
 
@@ -15,7 +15,7 @@ Runs on the user’s device (browser/PWA now; native later). Handles anything th
 
 **Examples (must be on-device):**
 - Suggesting whether a matched person is likely **Work / Close / Friends**
-- Clustering matched people into **Suggested Sets**
+- Clustering matched people into **Suggested Circles**
 - Naming/labeling those clusters
 - Explaining suggestions (“why this set?”)
 
@@ -40,8 +40,8 @@ Runs on server-side data that is inherently platform-scoped.
 - Contact matching remains tokenized (HMAC). The backend never stores the user’s raw pasted identifiers.
 
 2) **On-device produces suggestions; server stores truth only after acceptance**
-- The device computes Suggested Sets.
-- When the user taps **Accept**, we create real Sets via `/api/sets`.
+- The device computes Suggested Circles.
+- When the user taps **Accept**, we create real Circles via `/api/circles`.
 
 3) **Server “suggestion seeding” is opt-in only (dev/experiments)**
 - Even derived hints can drift into “creepy” if overused.
@@ -73,9 +73,9 @@ Default is **OFF**.
 Flow:
 1) User pastes identifiers on `/onboarding`
 2) We call `/api/contacts/match`
-3) We compute Suggested Sets **on-device** (domain clusters, surname clusters, etc.)
-4) The Suggested Sets sheet opens
-5) **Accept** → POST `/api/sets` (real Set created)
+3) We compute Suggested Circles **on-device** (domain clusters, surname clusters, etc.)
+4) The Suggested Circles sheet opens
+5) **Accept** → POST `/api/circles` (real Circle created)
 6) **Skip** → stored locally (won’t nag again)
 
 ---
@@ -94,7 +94,7 @@ Flow:
 
 You should see:
 - Matches list
-- A “Suggested Sets” sheet generated **locally**
+- A “Suggested Circles” sheet generated **locally**
 
 ---
 

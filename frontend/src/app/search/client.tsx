@@ -106,7 +106,7 @@ export default function SearchPage() {
   }
 
   async function fetchSets(side: SideId, useQ: string): Promise<{ items: SetItem[]; restricted: boolean }> {
-    const res = await fetch("/api/sets?side=" + side, { cache: "no-store" });
+    const res = await fetch("/api/circles?side=" + side, { cache: "no-store" });
     const data = (await res.json().catch(() => ({}))) as SetsResp;
     const isRestr = Boolean(data?.restricted);
     if (!res.ok) return { items: [], restricted: isRestr };
@@ -421,7 +421,7 @@ export default function SearchPage() {
                                   </div>
                                 </div>
                                 <Link
-                                  href={"/siddes-sets/" + it.id}
+                                  href={"/siddes-circles/" + it.id}
                                   className="px-3 py-2 rounded-full bg-white border border-gray-200 text-xs font-extrabold text-gray-700 hover:bg-gray-100"
                                 >
                                   Open

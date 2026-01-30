@@ -16,14 +16,14 @@ This file is the **structure**. Each overlay zip implements one small chunk and 
 ## Phase 2 — Feed + PostCard + context chips
 - 2.1 Side feeds (Public/Friends/Close/Work)
 - 2.2 PostCard spine + structure
-- 2.3 Context chips (Set/Mention/Doc/Urgent) + overflow +N sheet
+- 2.3 Context chips (Circle/Mention/Doc/Urgent) + overflow +N sheet
 
 ## Phase 3 — Signals + Echo loop
 - 3.1 Signals counter + Signals sheet (tabs)
 - 3.2 Echo sheet (Echo / Quote / Share externally)
 - 3.3 Quote Echo composer attach (source preview)
 
-## Phase 4 — Sets + contact DNA
+## Phase 4 — Circles + contact DNA
 - 4.1 Friends sets chips + counts + filter
 - 4.2 Guided set creation flow
 - 4.3 Contact matching endpoint (HMAC tokens)
@@ -45,6 +45,6 @@ This file is the **structure**. Each overlay zip implements one small chunk and 
 - 7.3 Offline post queue (optional)
 
 ## Phase 8 — Compose Intelligence Engine
-- 8.1 Suggestion bar (Side/Set/Urgent) as you type
+- 8.1 Suggestion bar (Side/Circle/Urgent) as you type
 - 8.2 Rules + confidence thresholds
 - 8.3 Embeddings + optional LLM fallback (later)

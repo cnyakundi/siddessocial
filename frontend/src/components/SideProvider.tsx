@@ -72,7 +72,7 @@ export function SideProvider({ children }: { children: React.ReactNode }) {
   };
 
   // sd_782_fix_post_detail_freeze_side_lock: avoid infinite render loops on pages that set a route-level side lock
-  // (e.g., /siddes-post/[id], /siddes-sets/[id]).
+  // (e.g., /siddes-post/[id], /siddes-circles/[id]).
   // We make setters stable (useCallback) && no-op when the lock is unchanged.
   const setSideLock = useCallback((lock: { side: SideId; reason?: string }) => {
     const next: SideLock = { enabled: true, side: lock.side, reason: lock.reason || null };

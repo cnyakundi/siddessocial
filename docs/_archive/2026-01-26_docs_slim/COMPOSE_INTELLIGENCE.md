@@ -1,10 +1,10 @@
-# Compose Intelligence Engine (Side/Set suggestions as you type)
+# Compose Intelligence Engine (Side/Circle suggestions as you type)
 **Updated:** 2026-01-09
 
 ## Goal
 As the user types, Siddes suggests the correct:
 - Side (Work/Friends/Close/Public)
-- Set (Gym Squad, Colleagues, etc.)
+- Circle (Gym Squad, Colleagues, etc.)
 - Context chips (Urgent, Doc, Mention)
 
 Principle: **suggest only**. Never auto-switch or auto-tag.

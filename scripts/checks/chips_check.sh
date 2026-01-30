@@ -5,7 +5,7 @@ echo "== Check: Context chips + overflow sheet =="
 
 REQ=(
   "frontend/src/lib/chips.ts"
-  "frontend/src/lib/setThemes.ts"
+  "frontend/src/lib/circleThemes.ts"
   "frontend/src/components/ChipOverflowSheet.tsx"
   "frontend/src/components/PostCard.tsx"
 )

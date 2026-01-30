@@ -11,13 +11,13 @@ import type { SideId } from "@/src/lib/sides";
 import { SIDES, SIDE_THEMES } from "@/src/lib/sides";
 import { PostCard } from "@/src/components/PostCard";
 import { PublicTuneSheet } from "@/src/components/PublicTuneSheet";
-import { SetFilterBar } from "@/src/components/SetFilterBar";
-import { ImportSetSheet } from "@/src/components/ImportSetSheet";
+import { CircleFilterBar } from "@/src/components/CircleFilterBar";
+import { ImportCircleSheet } from "@/src/components/ImportCircleSheet";
 import { FeedComposerRow } from "@/src/components/FeedComposerRow";
 
-import type { SetDef, SetId } from "@/src/lib/sets";
-import { DEFAULT_SETS } from "@/src/lib/sets";
-import { getSetsProvider } from "@/src/lib/setsProvider";
+import type { CircleDef, CircleId } from "@/src/lib/circles";
+import { DEFAULT_CIRCLES } from "@/src/lib/circles";
+import { getCirclesProvider } from "@/src/lib/circlesProvider";
 import { getLastSeenId, setLastSeenId } from "@/src/lib/lastSeen";
 import { fetchMe } from "@/src/lib/authMe";
 import type { FeedItem, FeedPage } from "@/src/lib/feedProvider";
@@ -108,7 +108,7 @@ function EmptyState({ side, onCreateSet, composeHref, canPost }: { side: SideId;
             onClick={onCreateSet}
             className="px-4 py-2 rounded-full text-sm font-extrabold bg-white border border-gray-200 text-gray-800 shadow-sm hover:bg-gray-100 transition"
           >
-            Create Set
+            Create Circle
           </button>) : null}
 </div>
     </div>
@@ -164,7 +164,7 @@ export function SideFeed() {
   useReturnScrollRestore();
 
   // Audience filter (Sets for private sides; Topics for Public)
-  const [activeSet, setActiveSet] = useState<SetId | null>(null);
+  const [activeSet, setActiveSet] = useState<CircleId | null>(null);
 
   const [publicChannel, setPublicChannel] = useState<"all" | PublicChannelId>("all");
   const [publicTuneOpen, setPublicTuneOpen] = useState(false);
@@ -204,7 +204,7 @@ export function SideFeed() {
   }, [side]);
 
   const pickSet = useCallback(
-    (next: SetId | null) => {
+    (next: CircleId | null) => {
       setActiveSet(next);
       try { setStoredLastSetForSide(side, next); } catch {}
       try { emitAudienceChanged({ side, setId: next, topic: null, source: "SideFeed" }); } catch {}
@@ -290,8 +290,8 @@ export function SideFeed() {
   const [publicCalm, setPublicCalm] = useState<PublicCalmUiState | null>(null);
 
   // Feed modules tick: bumped when a module is dismissed/undismissed
-  const setsProvider = useMemo(() => getSetsProvider(), []);
-  const [sets, setSets] = useState<SetDef[]>(() => DEFAULT_SETS);
+  const setsProvider = useMemo(() => getCirclesProvider(), []);
+  const [sets, setSets] = useState<CircleDef[]>(() => DEFAULT_CIRCLES);
   const [setsLoaded, setSetsLoaded] = useState(false);
 
   const provider = useMemo(() => getFeedProvider(), []);
@@ -939,7 +939,7 @@ export function SideFeed() {
   const posts = useMemo(() => {
     let out = rawPosts;
 
-    // Enrich posts with Set metadata (label/color) so ContextStamp shows real Set names.
+    // Enrich posts with Set metadata (label/color) so ContextStamp shows real Circle names.
     // Presentational only: access control remains server-side.
     if (side !== "public" && Array.isArray(sets) && sets.length) {
       const byId = new Map(sets.map((s) => [s.id, s] as const));
@@ -1052,7 +1052,7 @@ export function SideFeed() {
     return () => window.clearTimeout(t);
   }, [side, rawPosts]);
 
-  const addSetToState = (s: SetDef) => {
+  const addSetToState = (s: CircleDef) => {
     setSets((prev) => [s, ...prev.filter((x) => x.id !== s.id)]);
   };
 
@@ -1070,18 +1070,18 @@ export function SideFeed() {
 
   return (
     <div className="w-full min-h-full bg-white">
-            {/* Sets-as-filter (Step 2): SetFilterBar for private sides */}
+            {/* Sets-as-filter (Step 2): CircleFilterBar for private sides */}
 {side !== "public" ? (
   <div className="px-3 pt-3">
-    <SetFilterBar
+    <CircleFilterBar
       sets={(sets || []).filter((s) => s.side === side)}
       activeSet={activeSet}
       onSetChange={pickSet}
       onNewSet={() => {
         if (process.env.NODE_ENV !== "production") setImportOpen(true);
-        else router.push("/siddes-sets?create=1");
+        else router.push("/siddes-circles?create=1");
       }}
-      label="Group"
+      label="Circle"
       allLabel={`All ${SIDES[side].label}`}
     />
   </div>
@@ -1291,7 +1291,7 @@ export function SideFeed() {
           <>
             <EmptyState side={side} canPost={side !== "public" || isAuthed} composeHref={composeHref} onCreateSet={() => {
               if (process.env.NODE_ENV !== "production") setImportOpen(true);
-              else router.push("/siddes-sets?create=1");
+              else router.push("/siddes-circles?create=1");
             }} />
           </>
         )}
@@ -1322,7 +1322,7 @@ export function SideFeed() {
       </div>
 
       {/* New Set flow */}
-      <ImportSetSheet
+      <ImportCircleSheet
         open={importOpen}
         onClose={() => setImportOpen(false)}
         onFinish={({ name, members }) => {

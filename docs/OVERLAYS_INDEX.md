@@ -24,11 +24,11 @@ Rule: Apply overlays with `scripts/apply_overlay.sh`. The script appends a row a
 | 2026-01-09 07:46:52 | sd_002_find_next_root_fix_v0.1.4.zip | Fix `scripts/find_next_root.py` syntax so Next.js root discovery works (unblocks SideProvider checks). |
 | 2026-01-09 07:53:03 | sd_002_entry_discovery_unblock_v0.1.5.zip | Stop relying on `next` dependency detection; auto-discover Next entry file (layout/_app) directly and patch/check it. |
 | 2026-01-09 08:03:44 | sd_000_frontend_next_bootstrap_v0.1.0.zip | Bootstrap a minimal Next.js (App Router) frontend under `frontend/` so Siddes overlays can actually run. |
-| 2026-01-09 08:09:29 | sd_005_context_chips_priority_overflow_v0.1.0.zip | Add Context Chips to PostCard (Set/Mention/Doc/Urgent) with max-2 display + tappable +N overflow sheet. |
+| 2026-01-09 08:09:29 | sd_005_context_chips_priority_overflow_v0.1.0.zip | Add Context Chips to PostCard (Circle/Mention/Doc/Urgent) with max-2 display + tappable +N overflow sheet. |
 | 2026-01-09 08:26:23 | sd_006_signals_counter_and_sheet_tabs_v0.1.0.zip | Add Signals counter to PostCard + Signals sheet with tabs (Likes / Echoes / Replies) showing faces list. |
 | 2026-01-09 10:53:49 | sd_007_echo_sheet_quote_share_v0.1.0.zip | Add EchoSheet (Echo / Quote Echo / Share externally) and wire the Echo button on PostCard. |
-| 2026-01-09 10:56:38 | sd_008_sets_chips_filter_counts_v0.1.0.zip | Add Friends Sets chips row (All / Gym Squad / Weekend Crew / + New Set) with counts + feed filtering. |
-| 2026-01-09 11:03:22 | sd_009_import_sheet_guided_set_creation_v0.1.0.zip | Add guided Set creation flow (Import → Select → Name) and wire Friends “New Set” to open it. |
+| 2026-01-09 10:56:38 | sd_008_sets_chips_filter_counts_v0.1.0.zip | Add Friends Circles chips row (All / Gym Squad / Weekend Crew / + New Circle) with counts + feed filtering. |
+| 2026-01-09 11:03:22 | sd_009_import_sheet_guided_set_creation_v0.1.0.zip | Add guided Circle creation flow (Import → Select → Name) and wire Friends “New Circle” to open it. |
 | 2026-01-09 11:13:05 | sd_010_contact_matching_hmac_tokens_v0.1.0.zip | Add privacy-first contact hashing (HMAC tokens) module + matching helpers + full docs + test check. |
 | 2026-01-09 11:16:07 | sd_010_contact_hash_pythonpath_fix_v0.1.1.zip | Fix contact hashing demo/test imports by using PYTHONPATH=backend and importing `siddes_contacts.*` (no `backend.` package requirement). |
 | 2026-01-09 11:23:25 | sd_011_profile_side_strip_access_gate_v0.1.0.zip | Side-aware Profile view with Side strip + access gating (no private leakage) + demo route `/siddes-profile`. |
@@ -41,8 +41,8 @@ Rule: Apply overlays with `scripts/apply_overlay.sh`. The script appends a row a
 | 2026-01-09 12:02:15 | sd_011_profile_lucide_typing_fix_v0.1.1.zip | Fix TypeScript typecheck errors in ProfileView Side icon mapping (use `LucideIcon` type). |
 | 2026-01-09 12:06:06 | sd_011_profile_searchparams_suspense_fix_v0.1.2.zip | Fix Next build error by wrapping useSearchParams() in a Suspense boundary on /siddes-profile. |
 | 2026-01-09 12:22:31 | sd_016_offline_post_queue_v0.1.0.zip | Offline post queue (localStorage) + retry-on-online + minimal Compose stub page. |
-| 2026-01-09 12:22:48 | sd_017_compose_intent_suggestion_bar_v0.1.0.zip | Compose Intelligence v0 — suggestion bar (Side/Set/Urgent) as you type, tap-to-apply only. |
-| 2026-01-09 12:28:21 | sd_018_set_suggestions_after_sync_v0.1.0.zip | Suggested Sets immediately after “Sync Contacts” (Accept / Rename / Skip), with user confirmation (no silent labeling). |
+| 2026-01-09 12:22:48 | sd_017_compose_intent_suggestion_bar_v0.1.0.zip | Compose Intelligence v0 — suggestion bar (Side/Circle/Urgent) as you type, tap-to-apply only. |
+| 2026-01-09 12:28:21 | sd_018_set_suggestions_after_sync_v0.1.0.zip | Suggested Circles immediately after “Sync Contacts” (Accept / Rename / Skip), with user confirmation (no silent labeling). |
 | 2026-01-09 12:38:56 | sd_019_push_vapid_api_stubs_v0.1.0.zip | Add Next.js API stubs for Web Push (GET /api/push/vapid, POST /api/push/subscribe, POST /api/push/unsubscribe) and wire PushSettings to them |
 | 2026-01-09 12:43:01 | sd_020_backend_push_models_stub_v0.1.0.zip | Add backend-ready push subscription storage/model sketch + service module stubs (framework-agnostic) + docs + tests. |
 | 2026-01-09 12:47:12 | sd_020_push_pythonpath_fix_v0.1.1.zip | Fix push backend demo/test imports by using PYTHONPATH=backend and importing `siddes_push.*` (no `backend.` package requirement). |
@@ -67,7 +67,7 @@ Rule: Apply overlays with `scripts/apply_overlay.sh`. The script appends a row a
 | 2026-01-09 15:18:10 | sd_038_next_api_posts_store_and_feed_merge_v0.1.0.zip | Summary: |
 | 2026-01-09 15:31:40 | sd_039_backend_stub_visibility_on_api_feed_v0.1.0.zip | Add basic visibility enforcement to Next API stubs (/api/feed, /api/post/[id]) using a stub viewer cookie to prevent Friends/Close/Work leak |
 | 2026-01-09 16:34:34 | sd_040_backend_stub_visibility_on_reply_routes_v0.1.0.zip | Apply stub visibility enforcement to Next reply routes: |
-| 2026-01-09 16:59:03 | sd_043_notifications_grouping_v0.1.0.zip | Group notifications by recency (Today / Earlier) and add lightweight dedupe (same actor+type) to reduce noise. |
+| 2026-01-09 16:59:03 | sd_043_notifications_grouping_v0.1.0.zip | Circle notifications by recency (Today / Earlier) and add lightweight dedupe (same actor+type) to reduce noise. |
 | 2026-01-09 17:08:24 | sd_045_inbox_stub_v0.1.0.zip | Add Inbox page stub + thread placeholder + Side-aware entry links. |
 | 2026-01-09 17:13:38 | sd_046_nav_links_in_shell_v0.1.0.zip | Add a lightweight TopNav (Feed / Compose / Notifs / Inbox / Profile) and render it globally via AppProviders. |
 | 2026-01-09 17:18:26 | sd_047_inbox_thread_composer_stub_v0.1.0.zip | Add message composer stub to inbox thread view + local-only message list (per thread) + optional offline queue reuse. |
@@ -178,20 +178,20 @@ Rule: Apply overlays with `scripts/apply_overlay.sh`. The script appends a row a
 | 2026-01-11 12:51:39 | sd_133_public_trust_gates_v0.9.5.zip | Adds **Public Trust Gates**: minimal, server-enforced capabilities for Public writes (posts + replies) in the Next.js API stubs. |
 | 2026-01-11 12:57:03 | sd_133a_reply_visibility_sd_viewer_gate_fix_v0.9.6.zip | The gate `scripts/checks/reply_visibility_stub_check.sh` asserts that both reply routes contain the literal string `sd_viewer`. |
 | 2026-01-11 13:32:01 | sd_134_sets_backend_scaffold_v0.9.7.zip | ```bash |
-| 2026-01-11 15:18:27 | sd_135a_sets_provider_interface_v0.9.8.zip | Sets provider interface + hydration-safe loads (still local). |
-| 2026-01-11 15:31:22 | sd_135b_sets_api_stubs_v0.9.9.zip | Add Next.js `/api/sets/*` stub endpoints + in-memory server store for Sets (preps server enforcement + history). |
-| 2026-01-11 15:47:49 | sd_135c_sets_backend_stub_provider_v0.9.10.zip | Wire Sets `backend_stub` provider to the Next.js `/api/sets/*` stubs. |
-| 2026-01-11 16:35:30 | sd_136a_sets_provider_update_and_events_v0.9.11.zip | Extend Sets provider with get/update/events + add a local Sets event log so we can build the history UI next. |
-| 2026-01-11 18:10:09 | sd_137a_sets_django_server_enforcement_wiring_v0.9.13.zip | Sets Django server enforcement wiring (DRF router + app install + PATCH CORS). |
-| 2026-01-11 18:30:47 | sd_137b_sets_backendstub_use_django_base_fallback_v0.9.14.zip | Frontend Sets backend_stub provider uses NEXT_PUBLIC_API_BASE (Django) with fallback to Next stubs. |
-| 2026-01-12 04:33:19 | sd_138a_sets_invites_and_suggestions_base_v0.9.15.zip | Sets Invites scaffold (Django DRF + Next.js stubs) with invite link UI and accept flow. |
-| 2026-01-12 04:37:26 | sd_136c_sets_members_parse_regex_fix_v0.9.12a.zip | Fixes an ESLint/TS parser error in Sets pages caused by a multiline regex literal. |
-| 2026-01-12 04:55:12 | sd_138b_sets_detail_regex_fix_v0.9.15a.zip | Fixes unterminated regex literal in the Sets detail page member parsing so `next lint` passes. |
-| 2026-01-12 05:26:57 | sd_138c_invites_inbox_ui_and_suggestion_prefill_v0.9.16.zip | Adds /siddes-invites page (incoming/outgoing actions), TopNav Invites entry, suggestion prefill in Set invites, and invite accept banners. |
-| 2026-01-12 07:49:18 | sd_139a_a_sets_membership_store_db_v0.9.17.zip | Sets DB store now lists/reads Sets for owner OR explicit member; seed only for canonical owner. |
-| 2026-01-12 07:49:18 | sd_139a_b_sets_membership_views_check_state_v0.9.17.zip | Sets GET routes are membership-based; adds sd_139a harness check and records milestone in STATE. |
-| 2026-01-12 08:13:10 | sd_139b_a_sets_readonly_list_ui_v0.9.18.zip | Adds stubViewerClient helper and makes /siddes-sets hide Create/Import when sd_viewer != me in backend_stub mode. |
-| 2026-01-12 08:13:10 | sd_139b_b_sets_readonly_detail_ui_check_state_v0.9.18.zip | Makes /siddes-sets/[id] read-only for non-owners in backend_stub and adds a harness check + STATE update. |
+| 2026-01-11 15:18:27 | sd_135a_sets_provider_interface_v0.9.8.zip | Circles provider interface + hydration-safe loads (still local). |
+| 2026-01-11 15:31:22 | sd_135b_sets_api_stubs_v0.9.9.zip | Add Next.js `/api/circles/*` stub endpoints + in-memory server store for Circles (preps server enforcement + history). |
+| 2026-01-11 15:47:49 | sd_135c_sets_backend_stub_provider_v0.9.10.zip | Wire Circles `backend_stub` provider to the Next.js `/api/circles/*` stubs. |
+| 2026-01-11 16:35:30 | sd_136a_sets_provider_update_and_events_v0.9.11.zip | Extend Circles provider with get/update/events + add a local Circles event log so we can build the history UI next. |
+| 2026-01-11 18:10:09 | sd_137a_sets_django_server_enforcement_wiring_v0.9.13.zip | Circles Django server enforcement wiring (DRF router + app install + PATCH CORS). |
+| 2026-01-11 18:30:47 | sd_137b_sets_backendstub_use_django_base_fallback_v0.9.14.zip | Frontend Circles backend_stub provider uses NEXT_PUBLIC_API_BASE (Django) with fallback to Next stubs. |
+| 2026-01-12 04:33:19 | sd_138a_sets_invites_and_suggestions_base_v0.9.15.zip | Circles Invites scaffold (Django DRF + Next.js stubs) with invite link UI and accept flow. |
+| 2026-01-12 04:37:26 | sd_136c_sets_members_parse_regex_fix_v0.9.12a.zip | Fixes an ESLint/TS parser error in Circles pages caused by a multiline regex literal. |
+| 2026-01-12 04:55:12 | sd_138b_sets_detail_regex_fix_v0.9.15a.zip | Fixes unterminated regex literal in the Circles detail page member parsing so `next lint` passes. |
+| 2026-01-12 05:26:57 | sd_138c_invites_inbox_ui_and_suggestion_prefill_v0.9.16.zip | Adds /siddes-invites page (incoming/outgoing actions), TopNav Invites entry, suggestion prefill in Circle invites, and invite accept banners. |
+| 2026-01-12 07:49:18 | sd_139a_a_sets_membership_store_db_v0.9.17.zip | Circles DB store now lists/reads Circles for owner OR explicit member; seed only for canonical owner. |
+| 2026-01-12 07:49:18 | sd_139a_b_sets_membership_views_check_state_v0.9.17.zip | Circles GET routes are membership-based; adds sd_139a harness check and records milestone in STATE. |
+| 2026-01-12 08:13:10 | sd_139b_a_sets_readonly_list_ui_v0.9.18.zip | Adds stubViewerClient helper and makes /siddes-circles hide Create/Import when sd_viewer != me in backend_stub mode. |
+| 2026-01-12 08:13:10 | sd_139b_b_sets_readonly_detail_ui_check_state_v0.9.18.zip | Makes /siddes-circles/[id] read-only for non-owners in backend_stub and adds a harness check + STATE update. |
 | 2026-01-12 09:06:31 | sd_140a_a_sets_joined_banner_v0.9.19.zip |  |
 | 2026-01-12 09:06:31 | sd_140a_b_sets_member_count_invite_text_v0.9.19.zip |  |
 | 2026-01-12 09:06:31 | sd_140a_c_sets_joined_ui_check_state_v0.9.19.zip |  |
@@ -206,8 +206,8 @@ Rule: Apply overlays with `scripts/apply_overlay.sh`. The script appends a row a
 | 2026-01-12 10:23:32 | sd_140b_e_state_doc_sd_140b_token_fix_v0.9.20b.zip | Patch helper to add missing `sd_140b` mention into docs/STATE.md (fixes sets_membership_propagation_check). |
 | 2026-01-12 10:41:09 | sd_141b_a_invites_set_label_resolution_ui_v0.9.22.zip |  |
 | 2026-01-12 10:41:09 | sd_141b_b_invites_set_label_check_state_v0.9.22.zip |  |
-| 2026-01-12 14:20:34 | sd_141c_a_invites_setlabel_snapshot_backend_v0.9.23.zip | Adds invite set_label field + migration; store outputs setLabel and snapshots Set label on create; views accept direction filter. |
-| 2026-01-12 14:20:34 | sd_141c_b_invites_setlabel_snapshot_frontend_core_v0.9.23.zip | Adds SetInvite.setLabel; providers parse/return it; Next stub store snapshots Set label at create-time. |
+| 2026-01-12 14:20:34 | sd_141c_a_invites_setlabel_snapshot_backend_v0.9.23.zip | Adds invite set_label field + migration; store outputs setLabel and snapshots Circle label on create; views accept direction filter. |
+| 2026-01-12 14:20:34 | sd_141c_b_invites_setlabel_snapshot_frontend_core_v0.9.23.zip | Adds SetInvite.setLabel; providers parse/return it; Next stub store snapshots Circle label at create-time. |
 | 2026-01-12 14:20:34 | sd_141c_c_invites_setlabel_snapshot_ui_check_state_v0.9.23.zip | UI prefers inv.setLabel while keeping hydrateSetLabels/sets.get; adds sd_141c check + updates STATE. |
 | 2026-01-12 19:56:49 | sd_tooling_overlay_builder_v0.1.1.zip | Add a local overlay builder script + time-limit playbook so you can package micro-overlays instantly without packaging/tooling limits. |
 | 2026-01-13 06:30:00 | sd_142_feed_drf_api_base_v0.9.24.zip | Feed DRF endpoint + frontend API base fallback. |
@@ -222,10 +222,10 @@ Rule: Apply overlays with `scripts/apply_overlay.sh`. The script appends a row a
 | 2026-01-13 12:25:56 | sd_146b_posts_db_wiring_v0.9.30.zip | Wire posts/replies endpoints to SD_POST_STORE; handle post_not_found safely |
 | 2026-01-13 12:39:03 | sd_146c_posts_db_persistence_smoke_v0.9.31.zip | Add posts DB persistence smoke test |
 | 2026-01-13 12:55:14 | sd_147a_smoke_env_autoload_v0.9.32.zip | Smoke scripts auto-load ops/docker/.env to avoid port confusion |
-| 2026-01-13 13:50:39 | sd_148a_rooms_term_ban_v0.9.33.zip | Ban Rooms term globally; use Sets |
-| 2026-01-13 14:11:03 | sd_148b_fix_readonly_copy_v0.9.34a.zip | Restore Sets read-only banner copy |
-| 2026-01-13 14:43:34 | sd_148b_fix_sets_page_rebuild_v0.9.34c.zip | Fix Sets page JSX parse error (rebuild page, keep guided creator) |
-| 2026-01-13 14:51:53 | sd_148b_fix_sets_jsx_parent_v0.9.34d.zip | Fix Sets page JSX parent parse error |
+| 2026-01-13 13:50:39 | sd_148a_rooms_term_ban_v0.9.33.zip | Ban Rooms term globally; use Circles |
+| 2026-01-13 14:11:03 | sd_148b_fix_readonly_copy_v0.9.34a.zip | Restore Circles read-only banner copy |
+| 2026-01-13 14:43:34 | sd_148b_fix_sets_page_rebuild_v0.9.34c.zip | Fix Circles page JSX parse error (rebuild page, keep guided creator) |
+| 2026-01-13 14:51:53 | sd_148b_fix_sets_jsx_parent_v0.9.34d.zip | Fix Circles page JSX parent parse error |
 | 2026-01-13 15:52:03 | sd_148c_docs_ai_workflow_hardening_v0.9.35.zip | Docs: no remote zips; apply-helper workflow; add check |
 | 2026-01-13 16:07:56 | sd_148d_repo_hygiene_ignore_artifacts_v0.9.36.zip | Docs: no remote zips; apply-helper workflow; add check |
 | 2026-01-13 16:22:08 | sd_148e_django_tests_minimal_api_v0.9.37.zip | Docs: no remote zips; apply-helper workflow; add check |\n| 2026-01-13 19:43:43 | sd_148f_django_tests_debug_override_v0.9.38.zip | Fix Django tests: force DEBUG=True in tests so x-sd-viewer header auth works in Docker |\n| 2026-01-13 18:29:18 | sd_149d_homepage_launchpad_v0.9.43.zip | Docs: no remote zips; apply-helper workflow; add check |
@@ -241,7 +241,7 @@ These are the overlays applied/created during the current session (evidence: ter
 - sd_377_on_device_token_clustering_v2 - on-device group suggestions (token clustering) + ML_PART_2 doc
 - sd_378_fix_proxy_import_paths - fixed proxyJson relative paths (introduced double-quote typo)
 - sd_379_fix_proxy_double_quote - fixed the broken proxyJson import lines
-- sd_381_remove_mock_suggestions_use_ondevice_engine - removed mock "Gym Squad" suggestions; use on-device engine in Import Set
+- sd_381_remove_mock_suggestions_use_ondevice_engine - removed mock "Gym Squad" suggestions; use on-device engine in Import Circle
 - sd_382_fix_desktop_siderail_search_icon - missing lucide Search import (typecheck)
 - sd_383_cce_v12_bulk_accept_undo_delete_sets_telemetry_knob - bulk accept + Undo + delete + telemetry knob (pending apply)
 - sd_384_docs_refresh_status_pack - added status refresh doc + ML part docs

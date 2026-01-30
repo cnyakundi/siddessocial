@@ -52,7 +52,7 @@ Severity:
 ---
 
 ### P1.2 Icons are hard to click (BottomNav tap targets too small)
-**Symptom:** you “miss” taps on Now/Sets/Inbox/Me; feels like icons are broken.
+**Symptom:** you “miss” taps on Now/Circles/Inbox/Me; feels like icons are broken.
 
 **Evidence:**  
 `frontend/src/components/BottomNav.tsx`:
@@ -92,7 +92,7 @@ Severity:
 ### P2.1 Other bottom sheets can overflow the viewport
 Same missing `max-h/overflow-y` pattern exists in:
 - `frontend/src/components/ChipOverflowSheet.tsx`
-- `frontend/src/components/SetPickerSheet.tsx`
+- `frontend/src/components/CirclePickerSheet.tsx`
 - `frontend/src/components/ProfileActionsSheet.tsx`
 
 **Fix:** apply the same `max-h + overflow-y-auto` treatment.

@@ -16,7 +16,7 @@ const NAV = [
   { href: "/siddes-notifications", label: "Alerts", icon: Bell },
   { href: "/siddes-inbox", label: "Inbox", icon: Inbox },
   { href: "/siddes-invites", label: "Invites", icon: UserPlus },
-  { href: "/siddes-sets", label: "Sets", icon: Users },
+  { href: "/siddes-circles", label: "Sets", icon: Users },
   { href: "/siddes-profile", label: "Me", icon: User },
 ];
 
