@@ -5,7 +5,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, ChevronDown, RefreshCw, Search as SearchIcon, Lock as LockIcon } from "lucide-react";
+import { ArrowLeft, Bell, ChevronDown, RefreshCw, Search as SearchIcon, Lock as LockIcon } from "lucide-react";
 
 import { SideSwitcherSheet } from "@/src/components/SideSwitcherSheet";
 import { CirclePickerSheet } from "@/src/components/CirclePickerSheet";
@@ -13,6 +13,7 @@ import { CirclePickerSheet } from "@/src/components/CirclePickerSheet";
 import { useSide } from "@/src/components/SideProvider";
 import { useSideActivity } from "@/src/hooks/useSideActivity";
 import { useNotificationsActivity } from "@/src/hooks/useNotificationsActivity";
+import { useSmartBack } from "@/src/hooks/useSmartBack";
 import { SIDES, SIDE_THEMES } from "@/src/lib/sides";
 import type { CircleDef, CircleId } from "@/src/lib/circles";
 import { getCirclesProvider } from "@/src/lib/circlesProvider";
@@ -46,12 +47,29 @@ export function AppTopBar(_props: { onOpenNotificationsDrawer?: () => void } = {
   const { unread } = useNotificationsActivity();
 
   const isSiddes = pathname.startsWith("/siddes-");
+  const isAppSurface = isSiddes || pathname.startsWith("/u/") || pathname.startsWith("/me") || pathname.startsWith("/search");
   const isNow = pathname === "/siddes-feed" || pathname.startsWith("/siddes-feed/");
   const showSetScope = false; // sd_790: Feed scope lives in SideFeed (CircleFilterBar / Public Tune)
+  const isRootSurface =
+    pathname === "/siddes-feed" ||
+    pathname === "/siddes-inbox" ||
+    pathname === "/siddes-sets" ||
+    pathname === "/siddes-search" ||
+    pathname === "/search" ||
+    pathname === "/siddes-notifications" ||
+    pathname === "/siddes-profile" ||
+    pathname === "/me";
+
+  const showBack = isAppSurface && !isRootSurface;
+  const goBack = useSmartBack("/siddes-feed");
+
 
   const pageTitle = useMemo(() => {
-    if (!isSiddes) return "";
+    if (!isAppSurface) return "";
     if (isNow) return "";
+    if (pathname.startsWith("/siddes-post/")) return "Post";
+    if (pathname.startsWith("/u/")) return "Profile";
+    if (pathname.startsWith("/me")) return "Me";
     if (pathname.startsWith("/siddes-circles")) return "Circles";
     if (pathname.startsWith("/siddes-inbox")) return "Inbox";
     if (pathname.startsWith("/siddes-profile/prism")) return "Identity";
@@ -62,7 +80,7 @@ if (pathname.startsWith("/siddes-profile")) return "Me";
     if (pathname.startsWith("/siddes-compose")) return "Create";
     if (pathname.startsWith("/siddes-notifications")) return "Alerts";
     return "";
-  }, [isSiddes, isNow, pathname]);
+  }, [isAppSurface, isNow, pathname]);
 
   const [sideSheetOpen, setSideSheetOpen] = useState(false);
 
@@ -135,14 +153,26 @@ if (pathname.startsWith("/siddes-profile")) return "Me";
       <div className="max-w-[430px] mx-auto px-4 h-14 flex items-center justify-between gap-3">
         {/* Left: Brand + Side */}
         <div className="flex items-center gap-2">
-          <Link
-            href="/siddes-feed"
-            aria-label="Home"
-            title="Home"
-            className="w-9 h-9 rounded-xl bg-gray-900 text-white font-black text-lg flex items-center justify-center shadow-sm hover:opacity-95 active:scale-[0.98] transition"
-          >
-            S
-          </Link>
+          {showBack ? (
+            <button
+              type="button"
+              onClick={goBack}
+              aria-label="Back"
+              title="Back"
+              className="w-9 h-9 rounded-xl bg-gray-900 text-white font-black text-lg flex items-center justify-center shadow-sm hover:opacity-95 active:scale-[0.98] transition"
+            >
+              <ArrowLeft size={18} strokeWidth={2.5} />
+            </button>
+          ) : (
+            <Link
+              href="/siddes-feed"
+              aria-label="Home"
+              title="Home"
+              className="w-9 h-9 rounded-xl bg-gray-900 text-white font-black text-lg flex items-center justify-center shadow-sm hover:opacity-95 active:scale-[0.98] transition"
+            >
+              S
+            </Link>
+          )}
           <div className="relative">
           <button
             type="button"
