@@ -1082,7 +1082,7 @@ export function SideFeed() {
         </div>
       ) : null}
 
-      // sd_910_feed_v2_dev_badge
+      {/* sd_910_feed_v2_dev_badge */}
 
             {/* Sets-as-filter (Step 2): CircleFilterBar for private sides */}
 {side !== "public" ? (
