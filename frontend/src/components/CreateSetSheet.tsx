@@ -132,14 +132,14 @@ export function CreateSetSheet(props: {
         role="dialog"
         aria-modal="true"
         tabIndex={-1}
-        aria-labelledby="create-set-title"
+        aria-labelledby="create-circle-title"
         className="relative w-full md:max-w-lg bg-white rounded-t-3xl md:rounded-3xl shadow-2xl border border-gray-200 max-h-[92vh] overflow-y-auto"
       >
         {/* Header */}
         <div className="px-4 pt-4 pb-3 border-b border-gray-100">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <div id="create-set-title" className="text-sm font-black text-gray-900">New Group</div>
+              <div id="create-circle-title" className="text-sm font-black text-gray-900">New Group</div>
               <div className="text-[11px] text-gray-500 mt-1">
                 Quick create • Name + optional members
               </div>

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "== Check: CreateSetSheet guided flow (sd_148b) =="
+echo "== Check: CreateSetSheet guided flow (Circles naming) =="
 
 REQ=(
   "frontend/src/components/CreateSetSheet.tsx"
@@ -20,7 +20,7 @@ for f in "${REQ[@]}"; do
 done
 [[ "$missing" -ne 0 ]] && exit 1
 
-grep -q "CreateSetSheet" frontend/src/app/siddes-sets/page.tsx && echo "✅ Sets page references CreateSetSheet" || (echo "❌ Sets page missing CreateSetSheet" && exit 1)
+grep -q "CreateSetSheet" frontend/src/app/siddes-sets/page.tsx && echo "✅ Circles page references CreateSetSheet" || (echo "❌ Circles page missing CreateSetSheet" && exit 1)
 grep -q "Guided flow" frontend/src/app/siddes-sets/page.tsx && echo "✅ Guided flow CTA present" || (echo "❌ Guided flow CTA missing" && exit 1)
 
-echo "✅ create set sheet check passed"
+echo "✅ create circle sheet check passed"

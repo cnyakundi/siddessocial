@@ -11,8 +11,9 @@
 
 import React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation"; import { Globe, Users, Star, Briefcase, Plus, Settings, Home, Mail, User, Layers } from "lucide-react";
-import { useSide } from "@/src/components/SideProvider";
+import { usePathname } from "next/navigation"; import { Globe, Users, Star, Briefcase, Plus, Settings, Home, Mail, User } from "lucide-react";
+
+import { CirclesMark } from "@/src/components/icons/CirclesMark";import { useSide } from "@/src/components/SideProvider";
 import type { SideId } from "@/src/lib/sides";
 import { SIDES, SIDE_THEMES } from "@/src/lib/sides";
 import { useSideActivity } from "@/src/hooks/useSideActivity";
@@ -37,7 +38,7 @@ const SIDE_ITEMS: Array<{ id: SideId; icon: IconType }> = [
 // sd_469a: Desktop nav declutter — unify alerts into Inbox (keep UI simple)
 const PRIMARY_NAV: Array<{ href: string; label: string; icon: IconType }> = [
   { href: "/siddes-feed", label: "Home", icon: Home },
-  { href: "/siddes-sets", label: "Sets", icon: Layers },
+  { href: "/siddes-sets", label: "Circles", icon: CirclesMark },
   { href: "/siddes-inbox", label: "Inbox", icon: Mail },
 ];
 

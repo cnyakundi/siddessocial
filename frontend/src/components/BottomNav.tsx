@@ -10,7 +10,8 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Home, MessageCircle, Plus, type LucideIcon } from "lucide-react";
+
+import { CirclesMark } from "@/src/components/icons/CirclesMark";import { Bell, Home, MessageCircle, Plus, type LucideIcon } from "lucide-react";
 import { useSide } from "@/src/components/SideProvider";
 import { SIDE_THEMES, type SideId } from "@/src/lib/sides";
 import { getStoredLastPublicTopic, getStoredLastSetForSide } from "@/src/lib/audienceStore";

@@ -251,7 +251,7 @@ function SiddesSetsPageInner() {
       </div>
     </div>
     <div className="text-xs leading-relaxed text-slate-600">
-      <span className="font-bold">Create disabled (read-only)</span> — only the owner can create or edit Sets in this view.
+      <span className="font-bold">Create disabled (read-only)</span> — only the owner can create or edit circles in this view.
     </div>
   </div>
 ) : null}

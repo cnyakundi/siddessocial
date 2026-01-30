@@ -65,7 +65,7 @@ export function SetsChipsRow({
         className="px-3 py-1.5 rounded-full border border-dashed border-gray-300 text-gray-500 text-sm font-medium hover:border-emerald-300 hover:text-emerald-700 inline-flex items-center gap-1"
       >
         <Plus size={14} />
-        New Set
+        New Circle
       </button>
     </div>
   );

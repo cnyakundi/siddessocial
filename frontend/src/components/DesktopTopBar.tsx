@@ -21,7 +21,7 @@ function cn(...parts: Array<string | undefined | false | null>) {
 }
 
 function titleFor(pathname: string): string {
-  if (pathname.startsWith("/siddes-sets")) return "Groups";
+  if (pathname.startsWith("/siddes-sets")) return "Circles";
     if (pathname.startsWith("/siddes-notifications")) return "Alerts";
   if (pathname.startsWith("/siddes-inbox")) return "Inbox";
   if (pathname.startsWith("/siddes-profile/prism")) return "Identity";

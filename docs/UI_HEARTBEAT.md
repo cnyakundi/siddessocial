@@ -8,12 +8,12 @@ If you hand this repo to a collaborator or move it to a new environment, read th
 ## The core model
 
 **Side = context mode.**  
-**Set = subgroup inside a Side.**  
+**Circle = subgroup inside a Side.**  
 **Topics = Public-only categories** (implementation detail: currently `publicChannel`).
 
 **Never** confuse these:
 - Side answers: *“Who am I talking to?”*
-- Set answers: *“Which subset inside this Side?”*
+- Circle answers: *“Which subset inside this Side?”*
 - Topic answers: *“What is this about?”* (Public only)
 
 ---
@@ -22,20 +22,20 @@ If you hand this repo to a collaborator or move it to a new environment, read th
 
 Do **not** use:
 - Siders / Siding
-- Circles
+- Sets (internal model only)
 - Stories / Rings
 
 Use:
 - **Side** (verb), **Sided**, **Unside** (confirm)
 - **Siders** (owner-only), **Siding** (owner-only)
-- **Sets**
+- **Circles**
 - **Topics** (Public-only)
 
 ---
 
 ## UI hierarchy
 
-**Side (global)** → **Set (optional)** → **Feed**
+**Side (global)** → **Circle (optional)** → **Feed**
 
 ---
 

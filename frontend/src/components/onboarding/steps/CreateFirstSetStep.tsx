@@ -28,7 +28,7 @@ export default function CreateFirstSetStep({
 
   return (
     <div className="flex flex-col min-h-full px-10 pt-28 text-center pb-12">
-      <h2 className="text-4xl font-black text-gray-900 tracking-tight mb-3 leading-tight">Create your first Set</h2>
+      <h2 className="text-4xl font-black text-gray-900 tracking-tight mb-3 leading-tight">Create your first Circle</h2>
       <p className="text-gray-500 mb-10 font-semibold leading-relaxed">
         A Set is a private room inside a Side.
         <br />
@@ -84,7 +84,7 @@ export default function CreateFirstSetStep({
 
       <div className="flex flex-col items-center gap-4">
         <PrimaryButton
-          label={busy ? "Creating..." : "Create Set"}
+          label={busy ? "Creating..." : "Create Circle"}
           onClick={() => onCreate({ side: selectedSide, name: setName.trim() })}
           disabled={!can}
           icon={ArrowRight}

@@ -11,7 +11,7 @@ BANNED=(
   "bring your circle"
   "smaller circles"
   "circle health"
-  "circles inside a side"
+  # "circles inside a side"  # allowed (Circles feature)
 )
 
 python3 - <<'PY'
@@ -23,8 +23,7 @@ banned = [
   r"bring\s+your\s+circle",
   r"smaller\s+circles",
   r"circle\s+health",
-  r"circles\s+inside\s+a\s+side",
-]
+  ]
 
 file_exts = (".ts", ".tsx", ".js", ".jsx", ".py")
 ignore_dirs = {".next", ".next_build", "node_modules", "__pycache__"}

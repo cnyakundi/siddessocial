@@ -3,7 +3,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Mail, User, Layers, Plus, Users as UsersIcon, Sparkles } from "lucide-react";
+
+import { CirclesMark } from "@/src/components/icons/CirclesMark";import { Home, Mail, User, Plus, Users as UsersIcon, Sparkles } from "lucide-react";
 import { useSide } from "@/src/components/SideProvider";
 import { SIDES, SIDE_THEMES } from "@/src/lib/sides";
 import { SIDE_UX } from "@/src/lib/sideUx";
@@ -94,7 +95,7 @@ export function DesktopWorkspaceNav() {
         <WorkspaceNavItem href="/siddes-inbox" label="Inbox" icon={Mail} active={pathname.startsWith("/siddes-inbox")} theme={theme} />
         <WorkspaceNavItem href="/me" label="Me" icon={User} active={pathname.startsWith("/me") || (pathname.startsWith("/siddes-profile") && !pathname.startsWith("/siddes-profile/prism"))} theme={theme} />
         <WorkspaceNavItem href="/siddes-profile/prism" label="Prism" icon={Sparkles} active={pathname.startsWith("/siddes-profile/prism")} theme={theme} />
-        <WorkspaceNavItem href="/siddes-sets" label="Groups" icon={Layers} active={pathname.startsWith("/siddes-sets")} theme={theme} />
+        <WorkspaceNavItem href="/siddes-sets" label="Circles" icon={CirclesMark} active={pathname.startsWith("/siddes-sets")} theme={theme} />
 
         <div className="mt-8 mb-4 px-4 text-[10px] font-black text-gray-300 uppercase tracking-widest">Groups</div>
 
