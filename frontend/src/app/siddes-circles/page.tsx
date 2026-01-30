@@ -79,8 +79,8 @@ function SiddesCirclesPageInner() {
   const activeTheme = SIDE_THEMES[ctxSide];
   const router = useRouter();
 
-  // sd_465d1: prefetch Set hub route on intent (hover/touch) for instant open feel
-  const prefetchSetHub = (id: string) => {
+  // sd_465d1: prefetch Circle hub route on intent (hover/touch) for instant open feel
+  const prefetchCircleHub = (id: string) => {
     try {
       router.prefetch(`/siddes-circles/${encodeURIComponent(id)}`);
     } catch {
@@ -200,7 +200,7 @@ function SiddesCirclesPageInner() {
       setCreating(false);
     }
   };
-  // sd_913_pull_to_refresh_sets: pull-to-refresh Sets list.
+  // sd_913_pull_to_refresh_sets: pull-to-refresh Circles list.
   const pullEnabled = Boolean(FLAGS.pullToRefresh);
 
   const doPullRefresh = async () => {
@@ -266,10 +266,10 @@ function SiddesCirclesPageInner() {
                 "px-4 py-2.5 rounded-full font-extrabold text-sm text-white shadow-sm active:scale-95 transition-all flex items-center gap-2",
                 activeTheme.primaryBg
               )}
-              aria-label="New group"
+              aria-label="New circle"
             >
               <Plus size={16} />
-              New group
+              New circle
             </button>
           ) : null}
 
@@ -309,7 +309,7 @@ function SiddesCirclesPageInner() {
 
         
         <div className="text-[11px] text-gray-500 -mt-2 mb-4 text-right">
-          Guided flow • Name → Side → Theme → Members → Create
+          Quick create • Name → Create
         </div>
         {advanced ? (
           <div className="mb-4">
@@ -353,7 +353,7 @@ function SiddesCirclesPageInner() {
                   )}
                 >
                   <Plus size={16} className="inline-block mr-2 -mt-0.5" />
-                  New group
+                  New circle
                 </button>
               ) : null}
               {advanced ? (
@@ -382,8 +382,8 @@ function SiddesCirclesPageInner() {
                 <Link
                   key={s.id}
                   href={"/siddes-circles/" + encodeURIComponent(s.id)}
-                  onMouseEnter={() => prefetchSetHub(s.id)}
-                  onTouchStart={() => prefetchSetHub(s.id)}
+                  onMouseEnter={() => prefetchCircleHub(s.id)}
+                  onTouchStart={() => prefetchCircleHub(s.id)}
                   className="block"
                 >
                   <div

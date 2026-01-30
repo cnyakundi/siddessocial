@@ -4,7 +4,7 @@ set -euo pipefail
 echo "== Check: Circle suggestions after sync =="
 
 REQ=(
-  "frontend/src/lib/setSuggestions.ts"
+  "frontend/src/lib/circleSuggestions.ts"
   "frontend/src/components/SuggestedCirclesSheet.tsx"
   "frontend/src/components/ImportCircleSheet.tsx"
 )
