@@ -213,7 +213,7 @@ export default function SiddesSetHubPage({ params }: { params: { id: string } })
         setOutInvites([]);
       }
     } catch (e: any) {
-      setErr(e?.message || "Failed to load Set.");
+      setErr(e?.message || "Failed to load group.");
       setItem(null);
       setEvents([]);
       setOutInvites([]);
@@ -385,7 +385,7 @@ export default function SiddesSetHubPage({ params }: { params: { id: string } })
   const leaveSet = async () => {
     if (!item) return;
     if (isOwner) {
-      toast.error("Owners can't leave their own Set. Delete it instead.");
+      toast.error("Owners can't leave their own group. Delete it instead.");
       return;
     }
 
@@ -402,7 +402,7 @@ export default function SiddesSetHubPage({ params }: { params: { id: string } })
       }
 
       emitSetsChanged();
-      toast.success("Left Set.");
+      toast.success("Left group.");
       router.push("/siddes-sets");
     } catch (e: any) {
       toast.error(e?.message || "Leave failed.");
@@ -412,7 +412,7 @@ export default function SiddesSetHubPage({ params }: { params: { id: string } })
   const deleteSet = async () => {
     if (!item) return;
     if (!isOwner) {
-      toast.error("Only the Set owner can delete.");
+      toast.error("Only the group owner can delete.");
       return;
     }
 
@@ -439,7 +439,7 @@ export default function SiddesSetHubPage({ params }: { params: { id: string } })
   const revokeInvite = async (inviteId: string) => {
     if (!item) return;
     if (!isOwner) {
-      toast.error("Only the Set owner can revoke invites.");
+      toast.error("Only the group owner can revoke invites.");
       return;
     }
 

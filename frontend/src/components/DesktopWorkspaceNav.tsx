@@ -94,9 +94,9 @@ export function DesktopWorkspaceNav() {
         <WorkspaceNavItem href="/siddes-inbox" label="Inbox" icon={Mail} active={pathname.startsWith("/siddes-inbox")} theme={theme} />
         <WorkspaceNavItem href="/me" label="Me" icon={User} active={pathname.startsWith("/me") || (pathname.startsWith("/siddes-profile") && !pathname.startsWith("/siddes-profile/prism"))} theme={theme} />
         <WorkspaceNavItem href="/siddes-profile/prism" label="Prism" icon={Sparkles} active={pathname.startsWith("/siddes-profile/prism")} theme={theme} />
-        <WorkspaceNavItem href="/siddes-sets" label="Sets" icon={Layers} active={pathname.startsWith("/siddes-sets")} theme={theme} />
+        <WorkspaceNavItem href="/siddes-sets" label="Groups" icon={Layers} active={pathname.startsWith("/siddes-sets")} theme={theme} />
 
-        <div className="mt-8 mb-4 px-4 text-[10px] font-black text-gray-300 uppercase tracking-widest">Active Sets</div>
+        <div className="mt-8 mb-4 px-4 text-[10px] font-black text-gray-300 uppercase tracking-widest">Groups</div>
 
         <div className="space-y-1">
           {sets.length ? (
@@ -115,7 +115,7 @@ export function DesktopWorkspaceNav() {
               </Link>
             ))
           ) : (
-            <div className="px-4 py-2 text-xs font-bold text-gray-400">No sets yet.</div>
+            <div className="px-4 py-2 text-xs font-bold text-gray-400">No groups yet.</div>
           )}
 
           <Link

@@ -52,7 +52,7 @@ export function AppTopBar(_props: { onOpenNotificationsDrawer?: () => void } = {
   const pageTitle = useMemo(() => {
     if (!isSiddes) return "";
     if (isNow) return "";
-    if (pathname.startsWith("/siddes-sets")) return "Sets";
+    if (pathname.startsWith("/siddes-sets")) return "Groups";
     if (pathname.startsWith("/siddes-inbox")) return "Inbox";
     if (pathname.startsWith("/siddes-profile/prism")) return "Identity";
     if (pathname.startsWith("/siddes-profile/account")) return "Account";

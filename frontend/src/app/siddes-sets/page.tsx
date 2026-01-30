@@ -69,12 +69,12 @@ function initialsFromHandle(raw: string): string {
 }
 
 function SiddesSetsPageInner() {
-  // sd_464c: restore scroll when returning to Sets list
+  // sd_464c: restore scroll when returning to Groups list
   useReturnScrollRestore();
   const sp = useSearchParams();
   const { side: ctxSide } = useSide();
 
-  // sd_543a: MVP default — keep Sets calm; unlock power tools via ?advanced=1
+  // sd_543a: MVP default — keep Groups calm; unlock power tools via ?advanced=1
   const advanced = sp.get("advanced") === "1";
   const activeTheme = SIDE_THEMES[ctxSide];
   const router = useRouter();
@@ -135,7 +135,7 @@ function SiddesSetsPageInner() {
       const got = await setsProvider.list(opts);
       setItems(got);
     } catch (e: any) {
-      setErr(e?.message || "Failed to load Sets.");
+      setErr(e?.message || "Failed to load groups.");
       setItems([]);
     } finally {
       setLoading(false);
@@ -266,10 +266,10 @@ function SiddesSetsPageInner() {
                 "px-4 py-2.5 rounded-full font-extrabold text-sm text-white shadow-sm active:scale-95 transition-all flex items-center gap-2",
                 activeTheme.primaryBg
               )}
-              aria-label="Create new set"
+              aria-label="New group"
             >
               <Plus size={16} />
-              Create new set
+              New group
             </button>
           ) : null}
 
@@ -324,9 +324,9 @@ function SiddesSetsPageInner() {
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Search sets or people"
+                placeholder="Search groups or people"
                 className="w-full pl-9 pr-3 py-2 rounded-full bg-white border border-gray-200 text-sm font-semibold text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
-                aria-label="Search Sets"
+                aria-label="Search Groups"
               />
             </div>
           </div>
@@ -339,9 +339,9 @@ function SiddesSetsPageInner() {
             </div>
           ) : filtered.length === 0 ? (
             <div className="p-5 rounded-2xl bg-white border border-gray-200">
-              <div className="font-extrabold text-gray-900">No Sets yet</div>
+              <div className="font-extrabold text-gray-900">No groups yet</div>
               <div className="text-sm text-gray-600 mt-1">
-                Create a Set to group people inside <span className={cn("font-bold", activeTheme.text)}>{SIDES[ctxSide].label}</span>.
+                Create a group to group people inside <span className={cn("font-bold", activeTheme.text)}>{SIDES[ctxSide].label}</span>.
               </div>
               {canWrite ? (
                 <button
@@ -353,7 +353,7 @@ function SiddesSetsPageInner() {
                   )}
                 >
                   <Plus size={16} className="inline-block mr-2 -mt-0.5" />
-                  Create new set
+                  New group
                 </button>
               ) : null}
               {advanced ? (
@@ -480,7 +480,7 @@ export default function SiddesSetsPage() {
     <Suspense
       fallback={
         <div className="p-6 text-sm text-gray-500">
-          Loading Sets...
+          Loading groups...
         </div>
       }
     >

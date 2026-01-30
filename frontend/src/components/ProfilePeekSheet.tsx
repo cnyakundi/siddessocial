@@ -318,9 +318,9 @@ export function ProfilePeekSheet(props: {
               {locked ? (
                 <div className="mt-3 text-xs text-gray-600">
                   <span className="font-extrabold text-gray-800">Locked.</span>{" "}
-                  You can’t view {SIDES[(((data as any)?.requestedSide as SideId | undefined) || (side as SideId))].label} unless they’ve placed you there.
+                  You can’t view {sideMeta.label} unless they’ve placed you there.
                   <div className="mt-1 text-[11px] text-gray-500">
-                    Allowed: {allowedSides.map((s) => SIDES[s as SideId].label).join(", ")}
+                    Allowed: {(Array.isArray(allowedSides) ? allowedSides : []).map((raw) => { const k = String(raw) as keyof typeof SIDES; return (SIDES as any)[k]?.label ?? String(raw); }).join(", ")}
                   </div>
                 </div>
               ) : restricted ? (

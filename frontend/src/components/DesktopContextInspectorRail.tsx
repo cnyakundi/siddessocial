@@ -189,19 +189,19 @@ export function DesktopContextInspectorRail({ expanded, onExpandedChange }: Prop
         {/* Sets module (side-aware) */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <div className="text-xs font-extrabold text-gray-400 uppercase tracking-widest">Sets</div>
+            <div className="text-xs font-extrabold text-gray-400 uppercase tracking-widest">Groups</div>
             <Link
               href="/siddes-sets"
               className="text-xs font-bold text-gray-500 hover:text-gray-900 hover:underline"
-              aria-label="Manage sets"
-              title="Manage sets"
+              aria-label="Manage groups"
+              title="Manage groups"
             >
               Manage
             </Link>
           </div>
 
           {setsErr ? (
-            <div className="text-xs text-gray-500">Couldn't load sets.</div>
+            <div className="text-xs text-gray-500">Couldn't load groups.</div>
           ) : sets.length ? (
             <div className="space-y-3">
               {sets.map((s) => (
@@ -222,7 +222,7 @@ export function DesktopContextInspectorRail({ expanded, onExpandedChange }: Prop
             </div>
           ) : (
             <div className="text-xs text-gray-500">
-              No sets yet.{" "}
+              No groups yet.{" "}
               <Link href="/siddes-sets" className="font-bold hover:underline">
                 Create one
               </Link>

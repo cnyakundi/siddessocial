@@ -303,7 +303,7 @@ export function BottomNav({ onToggleNotificationsDrawer, notificationsDrawerOpen
     const base = `/siddes-compose?side=${encodeURIComponent(side)}`;
     let href = base;
 
-    // Prefer the explicit Set context when on a Set page
+    // Prefer the explicit Group context when on a group page
     const m = pathname.match(/^\/siddes-sets\/([^\/]+)/);
     if (m && side !== "public") {
       try {

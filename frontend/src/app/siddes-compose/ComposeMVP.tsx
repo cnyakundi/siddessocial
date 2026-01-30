@@ -641,7 +641,7 @@ export default function ComposeMVP() {
               onClick={openAudience}
               disabled={mismatch || (side === "public" && !FLAGS.publicChannels)}
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors min-w-0 disabled:opacity-50 disabled:cursor-not-allowed"
-              aria-label={side === "public" ? "Choose topic" : "Choose set"}
+              aria-label={side === "public" ? "Choose topic" : "Choose group"}
               title={side === "public" ? "Topic" : "Set"}
             >
               <span className={cn("w-2 h-2 rounded-full", theme.primaryBg)} aria-hidden="true" />
@@ -830,7 +830,7 @@ export default function ComposeMVP() {
         activeSet={selectedSetId}
         onPick={(next) => setSelectedSetId(next)}
         onNewSet={() => router.push("/siddes-sets?create=1")}
-        title="Set"
+        title="Group"
         allLabel={`All ${SIDES[side].label}`}
       />
 

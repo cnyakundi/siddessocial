@@ -306,7 +306,7 @@ export function CreateSetSheet(props: {
 
                 <div className={cn("mt-3 p-3 rounded-2xl border", theme.border, theme.bg)}>
                   <div className={cn("text-sm font-black", theme.text)}>Preview</div>
-                  <div className="text-xs text-gray-600 mt-1">Set chips and cards will use this theme color.</div>
+                  <div className="text-xs text-gray-600 mt-1">Group chips and cards will use this theme color.</div>
                 </div>
               </div>
             </div>
@@ -324,7 +324,7 @@ export function CreateSetSheet(props: {
             )}
           >
             <Check size={16} />
-            {creating ? "Creating..." : "Create Set"}
+            {creating ? "Creating..." : "Create group"}
           </button>
         </div>
       </div>

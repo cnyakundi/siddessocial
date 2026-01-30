@@ -6,6 +6,16 @@ html, body {
   height: 100%;
 }
 
+/* sd_806_ios_no_input_zoom: prevent iOS auto-zoom on small inputs (helps PWA feel app-like) */
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 640px) {
+    input, textarea, select {
+      font-size: 16px;
+    }
+  }
+}
+
+
 /* sd_736_app_like_touch_polish: reduce “webby” feel on mobile */
 html {
   -webkit-text-size-adjust: 100%;

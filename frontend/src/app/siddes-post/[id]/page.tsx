@@ -186,19 +186,13 @@ function SentReplies({ postId, onReplyTo, onCountChange }: { postId: string; onR
 
   return (
     <div className="mt-6" data-testid="sent-replies">
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-baseline gap-2 mb-3">
         <div className="text-[11px] font-black text-gray-900">{replies.length === 1 ? "1 Reply" : `${replies.length} Replies`}</div>
-        <button
-          type="button"
-          className="text-xs font-extrabold text-gray-600 hover:underline"
-          onClick={refresh}
-          disabled={loading}
-        >
-          {loading ? "Refreshing…" : "Refresh"}
-        </button>
       </div>
 
-      {replies.length ? (
+            {loading && !replies.length ? (
+        <div className="text-sm text-gray-400">Loading…</div>
+      ) : replies.length ? (
         <div className="space-y-2">
           {replies.map((r) => {
             const mine = viewerId ? r.authorId === viewerId : isStubMe(r.authorId);
@@ -279,18 +273,20 @@ function SentReplies({ postId, onReplyTo, onCountChange }: { postId: string; onR
 
                       {/* sd_924_no_nested_reply_action: backend limits nesting; hide Reply on depth>0 */}
 
-                      {depth === 0 ? (
-
-                        <div className="mt-3"><button
-                          type="button"
-                          className="text-xs font-extrabold text-gray-500 hover:text-gray-900 hover:underline"
-                          onClick={() => onReplyTo?.(r.id, name)}
-                        >
-                          Reply
-                        </button></div>
-
-                      ) : null}
-
+                      {/* sd_927_no_nested_reply_action: backend limits nesting; hide Reply on depth>0 */}
+{depth === 0 ? (
+  <div className="mt-3">
+    <button
+      type="button"
+      className="px-3 py-2 rounded-full border border-gray-200 bg-white text-xs font-extrabold text-gray-800 hover:bg-gray-50 active:bg-gray-50/70"
+      onClick={() => onReplyTo?.(r.id, name)}
+      aria-label="Reply"
+      title="Reply"
+    >
+      Reply
+    </button>
+  </div>
+) : null}
                     </div>
                   </div>
                 </div>
@@ -327,7 +323,7 @@ function SideMismatchBanner({
             This post is in <span className={cn("font-black", theme.text)}>{t.label}</span>.
           </div>
           <div className="text-xs text-gray-600 mt-1">
-            You're currently in <span className="font-bold">{a.label}</span>. To reply safely, enter {t.label}.
+            You're currently in <span className="font-bold">{a.label}</span>. To reply, enter {t.label}.
           </div>
         </div>
         <button

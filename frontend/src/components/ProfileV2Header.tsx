@@ -21,6 +21,7 @@ import type { PrismFacet } from "@/src/components/PrismProfile";
 
 // sd_717_profile_v2_header: hero header for /u/[username] (Profile V2)
 // sd_730_profile_v2_header_parity: headline + initials fallback + Close Vault access stat + pulse styling + message button + variant support
+// sd_822: hard-fix syntax + declutter (Details/More collapsers)
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -157,31 +158,48 @@ export function ProfileV2Header(props: {
             {bio || "No bio yet."}
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 mt-4 text-xs text-gray-500 font-medium">
-            {location ? (
-              <div className="flex items-center gap-1">
-                <MapPin size={14} /> {location}
-              </div>
-            ) : null}
-            {website ? (
-              <a
-                href={safeWebsiteHref(website)}
-                target="_blank"
-                rel="noreferrer"
-                className={cn("flex items-center gap-1 font-extrabold hover:underline", theme.text)}
-              >
-                <LinkIcon size={14} /> {website}
-              </a>
-            ) : null}
-            <div className="flex items-center gap-1 text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
-              <ShieldCheck size={10} /> {SIDES[displaySide]?.privacyHint || "Visible"}
-            </div>
+          {/* Declutter: keep privacy visible, hide location/website behind Details */}
+          <div className="mt-4 inline-flex items-center gap-1 px-3 py-1 rounded-full border text-xs font-semibold bg-gray-50 border-gray-100 text-gray-600">
+            {SIDES[displaySide]?.isPrivate ? <Lock size={12} /> : <ShieldCheck size={12} />}{" "}
+            {SIDES[displaySide]?.privacyHint || "Visible"}
           </div>
+
+          {(location || website) ? (
+            <details className="mt-3 text-xs text-gray-600">
+              <summary className="cursor-pointer select-none font-extrabold text-gray-500 hover:text-gray-700">
+                Details
+              </summary>
+              <div className="mt-2 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-gray-500 font-medium">
+                {location ? (
+                  <div className="flex items-center gap-1">
+                    <MapPin size={14} /> {location}
+                  </div>
+                ) : null}
+                {website ? (
+                  <a
+                    href={safeWebsiteHref(website)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={cn("flex items-center gap-1 font-extrabold hover:underline", theme.text)}
+                  >
+                    <LinkIcon size={14} /> {website}
+                  </a>
+                ) : null}
+              </div>
+            </details>
+          ) : null}
 
           {/* Directional clarity */}
           {!isOwner ? (
             <div className="mt-4 flex flex-wrap gap-2 justify-center">
-              <div className={cn("inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-extrabold", theme.lightBg, theme.border, theme.text)}>
+              <div
+                className={cn(
+                  "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-extrabold",
+                  theme.lightBg,
+                  theme.border,
+                  theme.text
+                )}
+              >
                 <ShieldCheck className="w-3.5 h-3.5" />
                 They show you {theyShow}
               </div>
@@ -223,7 +241,6 @@ export function ProfileV2Header(props: {
               </div>
             </div>
           ) : null}
-
         </div>
       </div>
     );
@@ -331,7 +348,8 @@ export function ProfileV2Header(props: {
             </a>
           ) : null}
           <div className="flex items-center gap-1 text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
-            {SIDES[displaySide]?.isPrivate ? <Lock size={10} /> : <ShieldCheck size={10} />} {SIDES[displaySide]?.privacyHint || "Visible"}
+            {SIDES[displaySide]?.isPrivate ? <Lock size={10} /> : <ShieldCheck size={10} />}{" "}
+            {SIDES[displaySide]?.privacyHint || "Visible"}
           </div>
         </div>
 
@@ -388,42 +406,53 @@ export function ProfileV2Header(props: {
           </div>
         ) : null}
 
-        {/* Shared Sets */}
-        {sharedSets && sharedSets.length > 0 ? (
-          <div className="mt-6">
-            <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-2">Shared Sets</div>
-            <div className="flex flex-wrap gap-1.5">
-              {sharedSets.slice(0, 8).map((s) => (
-                <span
-                  key={s}
-                  className="px-2 py-1 rounded-full bg-gray-100 text-[10px] font-extrabold text-gray-700 border border-gray-200"
-                  title="Shared Set"
-                >
-                  {s}
-                </span>
-              ))}
-              {sharedSets.length > 8 ? (
-                <span className="px-2 py-1 rounded-full bg-gray-50 text-[10px] font-extrabold text-gray-500 border border-gray-200">
-                  +{sharedSets.length - 8}
-                </span>
+        {/* Declutter: Shared Sets + Pulse moved into a "More" disclosure */}
+        {(!!(sharedSets && sharedSets.length > 0) || !!(pulse && (pulse.label || pulse.text))) ? (
+          <details className="mt-6">
+            <summary className="cursor-pointer select-none text-[11px] font-extrabold text-gray-500 hover:text-gray-700">
+              More
+            </summary>
+
+            <div className="mt-3">
+              {/* Shared Sets */}
+              {sharedSets && sharedSets.length > 0 ? (
+                <div className="mt-3">
+                  <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-2">Shared Sets</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {sharedSets.slice(0, 8).map((s) => (
+                      <span
+                        key={s}
+                        className="px-2 py-1 rounded-full bg-gray-100 text-[10px] font-extrabold text-gray-700 border border-gray-200"
+                        title="Shared Set"
+                      >
+                        {s}
+                      </span>
+                    ))}
+                    {sharedSets.length > 8 ? (
+                      <span className="px-2 py-1 rounded-full bg-gray-50 text-[10px] font-extrabold text-gray-500 border border-gray-200">
+                        +{sharedSets.length - 8}
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
+
+              {/* Pulse */}
+              {pulse && (pulse.label || pulse.text) ? (
+                <div className="mt-5">
+                  <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-2">
+                    {displaySide === "public" ? "Recent Town Hall" : "Recent Pulse"}
+                  </div>
+                  <div className={cn("p-4 rounded-2xl bg-gray-50 border-l-4", theme.accentBorder)}>
+                    <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                      <Mic size={10} /> {pulse.label || (displaySide === "public" ? "Town Hall" : "Pulse")}
+                    </div>
+                    <div className="text-sm font-extrabold text-gray-900">{pulse.text ? `“${pulse.text}”` : ""}</div>
+                  </div>
+                </div>
               ) : null}
             </div>
-          </div>
-        ) : null}
-
-        {/* Pulse */}
-        {pulse && (pulse.label || pulse.text) ? (
-          <div className="mt-6">
-            <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-2">
-              {displaySide === "public" ? "Recent Town Hall" : "Recent Pulse"}
-            </div>
-            <div className={cn("p-4 rounded-2xl bg-gray-50 border-l-4", theme.accentBorder)}>
-              <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                <Mic size={10} /> {pulse.label || (displaySide === "public" ? "Town Hall" : "Pulse")}
-              </div>
-              <div className="text-sm font-extrabold text-gray-900">{pulse.text ? `“${pulse.text}”` : ""}</div>
-            </div>
-          </div>
+          </details>
         ) : null}
       </div>
     </div>

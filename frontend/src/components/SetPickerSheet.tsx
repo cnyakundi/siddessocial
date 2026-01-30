@@ -217,7 +217,7 @@ export function SetPickerSheet({
       const provider = getSetsProvider();
       const members = parseMembers(raw);
       const created = await provider.create({ side: s, label: lab.trim(), members, color: c || color });
-      toast("Set created", { variant: "success" });
+      toast("Group created", { variant: "success" });
       try {
         emitSetsChanged();
       } catch {}
@@ -330,7 +330,7 @@ export function SetPickerSheet({
                         "px-3 py-2 rounded-full border text-xs font-black inline-flex items-center gap-2",
                         isActive ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-800 border-gray-200 hover:bg-gray-50"
                       )}
-                      aria-label={`Recent set: ${s.label}`}
+                      aria-label={`Recent group: ${s.label}`}
                     >
                       <span className={cn("w-2.5 h-2.5 rounded-full", isActive ? "bg-white" : theme.bg)} />
                       <span className="max-w-[10rem] truncate">{s.label}</span>
