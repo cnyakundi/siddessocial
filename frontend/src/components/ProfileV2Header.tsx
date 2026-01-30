@@ -6,22 +6,21 @@ import React from "react";
 import {
   Globe,
   Users,
-  Heart,
+  Star,
   Briefcase,
   ShieldCheck,
+  Lock,
   MapPin,
   Link as LinkIcon,
   MessageSquare,
   Mic,
-  Lock,
 } from "lucide-react";
 
 import { SIDES, SIDE_THEMES, type SideId } from "@/src/lib/sides";
 import type { PrismFacet } from "@/src/components/PrismProfile";
 
-// sd_717_profile_v2_header: hero header for /u/[username] (Profile V2)
-// sd_730_profile_v2_header_parity: headline + initials fallback + Close Vault access stat + pulse styling + message button + variant support
-// sd_822: hard-fix syntax + declutter (Details/More collapsers)
+// sd_790_public_profile_header_polish
+// Goal: make /u/<username> feel premium + calm (Threads-level cleanliness), without breaking existing props.
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -45,11 +44,11 @@ function safeWebsiteHref(website: string) {
 const SIDE_ICON: Record<SideId, React.ComponentType<any>> = {
   public: Globe,
   friends: Users,
-  close: Heart,
+  close: Star,
   work: Briefcase,
 };
 
-// Tailwind-safe static cover gradients
+// Tailwind-safe static cover gradients (kept, but used subtly)
 const COVER_V2: Record<SideId, string> = {
   public: "bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600",
   friends: "bg-gradient-to-br from-emerald-500 via-teal-500 to-emerald-600",
@@ -57,7 +56,23 @@ const COVER_V2: Record<SideId, string> = {
   work: "bg-gradient-to-br from-slate-700 via-slate-800 to-black",
 };
 
+const NEUTRAL_COVER = "bg-gradient-to-br from-gray-50 via-white to-gray-100";
+
 export type ProfileV2HeaderVariant = "hero" | "clean";
+
+function Stat(props: { label: string; value: React.ReactNode; subtle?: boolean }) {
+  const { label, value, subtle } = props;
+  return (
+    <div className={cn("flex flex-col", subtle ? "opacity-80" : "")}>
+      <span className="text-lg font-black text-gray-900 leading-none tabular-nums">{value}</span>
+      <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-1">{label}</span>
+    </div>
+  );
+}
+
+function PillsRow(props: { children: React.ReactNode }) {
+  return <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-semibold text-gray-500">{props.children}</div>;
+}
 
 export function ProfileV2Header(props: {
   variant?: ProfileV2HeaderVariant;
@@ -107,325 +122,274 @@ export function ProfileV2Header(props: {
   const theme = SIDE_THEMES[displaySide];
   const Icon = SIDE_ICON[displaySide];
 
-  const name = (facet?.displayName || "").trim() || handle || "User";
-  const headline = (facet?.headline || "").trim();
-  const bio = (facet?.bio || "").trim();
-  const location = (facet?.location || "").trim();
-  const website = (facet?.website || "").trim();
-  const coverImage = (facet?.coverImage || "").trim();
-  const avatarImage = (String((facet as any)?.avatarImage || "") || "").trim();
-  const pulse = facet?.pulse || null;
+  const safeHandle = (handle || "").trim();
+  const name = (String((facet as any)?.displayName || "").trim() || safeHandle.replace(/^@/, "").trim() || "User").trim();
+  const headline = String((facet as any)?.headline || "").trim();
+  const bio = String((facet as any)?.bio || "").trim();
+  const location = String((facet as any)?.location || "").trim();
+  const website = String((facet as any)?.website || "").trim();
+  const coverImage = String((facet as any)?.coverImage || "").trim();
+  const avatarImage = String((facet as any)?.avatarImage || "").trim();
+  const pulse = (facet as any)?.pulse || null;
 
   const youShow = viewerSidedAs ? (SIDES[viewerSidedAs]?.label || viewerSidedAs) : "Public";
   const theyShow = SIDES[viewSide]?.label || viewSide;
 
   const showAccessStat = viewSide === "close" || typeof siders === "string";
   const shownPosts = typeof postsCount === "number" ? postsCount : undefined;
+  const shownSiders = typeof siders === "number" ? siders : typeof siders === "string" ? siders : undefined;
+
+  const showRelationship = !isOwner && (viewSide !== "public" || !!viewerSidedAs);
+
+  const privacyPill = (
+    <div
+      className={cn(
+        "inline-flex items-center gap-2 px-3 py-1 rounded-full border text-[11px] font-extrabold",
+        "bg-white/90 backdrop-blur",
+        "border-gray-200 text-gray-900"
+      )}
+      title={SIDES[displaySide]?.privacyHint || ""}
+    >
+      <span className={cn("w-2 h-2 rounded-full", theme.primaryBg)} aria-hidden />
+      <span className="uppercase tracking-widest">{SIDES[displaySide]?.label || displaySide}</span>
+      <span className="text-gray-300">•</span>
+      <span className="inline-flex items-center gap-1 text-gray-600">
+        {SIDES[displaySide]?.isPrivate ? <Lock size={12} /> : <ShieldCheck size={12} />}
+        {SIDES[displaySide]?.privacyHint || "Visible"}
+      </span>
+    </div>
+  );
+
+  const ctaMessage = onMessage ? (
+    <button
+      type="button"
+      onClick={onMessage}
+      disabled={!!messageDisabled}
+      aria-disabled={!!messageDisabled}
+      className={cn(
+        "w-12 h-11 rounded-2xl bg-gray-100 text-gray-900 inline-flex items-center justify-center font-extrabold transition-colors",
+        messageDisabled ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-200"
+      )}
+      aria-label="Message"
+      title="Message"
+    >
+      <MessageSquare size={18} />
+    </button>
+  ) : messageHref ? (
+    <a
+      href={messageHref}
+      className="w-12 h-11 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-900 inline-flex items-center justify-center font-extrabold transition-colors"
+      aria-label="Message"
+      title="Message"
+    >
+      <MessageSquare size={18} />
+    </a>
+  ) : null;
+
+  const metaLine = location || website ? (
+    <PillsRow>
+      {location ? (
+        <div className="flex items-center gap-1 min-w-0">
+          <MapPin size={14} /> <span className="truncate">{location}</span>
+        </div>
+      ) : null}
+      {website ? (
+        <a
+          href={safeWebsiteHref(website)}
+          target="_blank"
+          rel="noreferrer"
+          className={cn("flex items-center gap-1 font-extrabold hover:underline min-w-0", theme.text)}
+        >
+          <LinkIcon size={14} /> <span className="truncate">{website}</span>
+        </a>
+      ) : null}
+    </PillsRow>
+  ) : null;
+
+  const relationship = showRelationship ? (
+    <div className="mt-4 flex flex-wrap gap-2">
+      <div className={cn("inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-extrabold", theme.lightBg, theme.border, theme.text)}>
+        <ShieldCheck className="w-3.5 h-3.5" />
+        They show you {theyShow}
+      </div>
+      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-extrabold bg-gray-50 border-gray-200 text-gray-700">
+        <ShieldCheck className="w-3.5 h-3.5" />
+        You show them {youShow}
+      </div>
+    </div>
+  ) : null;
+
+  const stats =
+    typeof shownPosts !== "undefined" || typeof shownSiders !== "undefined" || (sharedSets && sharedSets.length) ? (
+      <div className="mt-6 flex gap-8 pb-6 border-b border-gray-100">
+        <Stat label="Posts" value={typeof shownPosts === "undefined" ? "—" : shownPosts} />
+        {showAccessStat ? (
+          <Stat label="Private Set" value={typeof shownSiders === "string" ? shownSiders : "Close Vault"} subtle />
+        ) : (
+          <Stat label="Sided" value={typeof shownSiders === "undefined" ? "—" : shownSiders} />
+        )}
+        {Array.isArray(sharedSets) && sharedSets.length ? <Stat label="Shared" value={sharedSets.length} subtle /> : null}
+      </div>
+    ) : null;
+
+  const pulseBlock =
+    pulse && (String(pulse.label || "").trim() || String(pulse.text || "").trim()) ? (
+      <div className="mt-6">
+        <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-2">
+          {displaySide === "public" ? "Recent Town Hall" : "Recent Pulse"}
+        </div>
+        <div className={cn("p-4 rounded-2xl bg-gray-50 border border-gray-200")}>
+          <div className="text-[10px] font-extrabold text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+            <Mic size={10} /> {String(pulse.label || "").trim() || (displaySide === "public" ? "Town Hall" : "Pulse")}
+          </div>
+          <div className="text-sm font-extrabold text-gray-900">
+            {String(pulse.text || "").trim() ? `“${String(pulse.text || "").trim()}”` : ""}
+          </div>
+        </div>
+      </div>
+    ) : null;
+
+  const sharedSetsBlock =
+    Array.isArray(sharedSets) && sharedSets.length ? (
+      <div className="mt-6">
+        <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-2">Shared Sets</div>
+        <div className="flex flex-wrap gap-2">
+          {sharedSets.slice(0, 8).map((s) => (
+            <span key={s} className="px-3 py-1 rounded-full text-[11px] font-extrabold bg-gray-50 text-gray-700 border border-gray-200 truncate max-w-[220px]">
+              {s}
+            </span>
+          ))}
+          {sharedSets.length > 8 ? (
+            <span className="px-2 py-1 rounded-full bg-gray-50 text-[10px] font-extrabold text-gray-500 border border-gray-200">
+              +{sharedSets.length - 8}
+            </span>
+          ) : null}
+        </div>
+      </div>
+    ) : null;
+
+  const avatar = avatarImage ? (
+    <img
+      src={avatarImage}
+      alt={name}
+      className="w-24 h-24 rounded-[1.6rem] border border-gray-100 object-cover bg-white shadow-md"
+    />
+  ) : (
+    <div
+      className={cn(
+        "w-24 h-24 rounded-[1.6rem] border border-gray-100 bg-white flex items-center justify-center font-black text-2xl select-none shadow-md",
+        theme.lightBg,
+        theme.text
+      )}
+      aria-label={name}
+    >
+      {initialsFrom(name || safeHandle)}
+    </div>
+  );
 
   if (variant === "clean") {
     return (
       <div className="w-full">
-        <div className="pt-3">
-          <div className="flex items-center gap-5">
-            {/* Avatar + Side badge */}
-            <div className="relative">
-              <div className={cn("absolute inset-0 rounded-[32px] blur-md opacity-20", theme.lightBg)} aria-hidden="true" />
-              <div className="relative">
-                <div className="w-24 h-24 rounded-[32px] overflow-hidden border-4 border-white shadow-sm bg-gray-100 flex items-center justify-center select-none">
-                  {avatarImage ? (
-                    <img src={avatarImage} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className={cn("text-2xl font-black", theme.text)}>{initialsFrom(name)}</span>
-                  )}
+        <div className="rounded-3xl border border-gray-200 bg-white shadow-sm p-5 sm:p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-4 min-w-0">
+              <div className="relative shrink-0">
+                {avatar}
+                <div className="absolute -bottom-2 -right-2">
+                  <div className="w-10 h-10 rounded-full bg-white shadow flex items-center justify-center border-4 border-white">
+                    <Icon className={cn("w-5 h-5", theme.text)} />
+                  </div>
                 </div>
+              </div>
 
-                <div className={cn("absolute -bottom-1 -right-1 w-9 h-9 rounded-2xl border-4 border-white flex items-center justify-center shadow-md", theme.lightBg, theme.text)}>
-                  <Icon size={16} strokeWidth={3} />
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="text-xl font-black text-gray-900 truncate">{name}</div>
+                  {privacyPill}
                 </div>
+                <div className="text-sm text-gray-500 font-semibold mt-1 truncate">{safeHandle}</div>
+                {headline ? <div className="text-sm text-gray-700 font-semibold mt-2">{headline}</div> : null}
               </div>
             </div>
 
-            {/* Identity */}
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-black tracking-tight text-gray-900 truncate">{name}</h1>
-              <div className="text-sm text-gray-500 font-bold truncate">{handle}</div>
-
-              {/* Primary actions + Message */}
-              {(actions || onMessage || messageHref) ? (
-                <div className="mt-3 flex gap-2">
-                  <div className="flex-1 min-w-0">{actions}</div>
-
-                  {onMessage ? (
-                    <button
-                      type="button"
-                      onClick={onMessage}
-                      disabled={!!messageDisabled}
-                      className={cn(
-                        "w-11 h-11 rounded-2xl border border-gray-200 bg-white text-gray-600 flex items-center justify-center active:scale-[0.98] transition",
-                        messageDisabled ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-50"
-                      )}
-                      aria-label="Message"
-                      title="Message"
-                    >
-                      <MessageSquare size={18} strokeWidth={2.5} />
-                    </button>
-                  ) : messageHref ? (
-                    <a
-                      href={messageHref}
-                      className="w-11 h-11 rounded-2xl border border-gray-200 bg-white text-gray-600 flex items-center justify-center active:scale-[0.98] transition hover:bg-gray-50"
-                      aria-label="Message"
-                      title="Message"
-                    >
-                      <MessageSquare size={18} strokeWidth={2.5} />
-                    </a>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
+            <div className="flex items-center gap-2 shrink-0">{ctaMessage}</div>
           </div>
 
-          {/* Headline + Bio */}
-          {headline ? <div className="mt-5 text-sm font-semibold text-gray-700">{headline}</div> : null}
-          <p className={cn("mt-3 text-[15px] leading-relaxed", bio ? "text-gray-700" : "text-gray-400")}>{bio || "No bio yet."}</p>
+          <p className={cn("mt-4 text-[15px] leading-relaxed whitespace-pre-line", bio ? "text-gray-700" : "text-gray-400")}>
+            {bio || "No bio yet."}
+          </p>
 
-          {/* Meta row */}
-          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-gray-500 font-semibold">
-            {location ? (
-              <div className="flex items-center gap-1">
-                <MapPin size={14} /> {location}
-              </div>
-            ) : null}
+          <div className="mt-4">{metaLine}</div>
+          {relationship}
+          {stats}
 
-            {/* Website is Public-only (keeps private Sides clean + safe) */}
-            {displaySide === "public" && website ? (
-              <a
-                href={safeWebsiteHref(website)}
-                target="_blank"
-                rel="noreferrer"
-                className={cn("flex items-center gap-1 font-extrabold hover:underline", theme.text)}
-              >
-                <LinkIcon size={14} /> {website}
-              </a>
-            ) : null}
+          {actions ? <div className="mt-5">{actions}</div> : null}
 
-            <div className="flex items-center gap-1 text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
-              {SIDES[displaySide]?.isPrivate ? <Lock size={10} /> : <ShieldCheck size={10} />} {SIDES[displaySide]?.privacyHint || "Visible"}
-            </div>
-          </div>
+          {pulseBlock}
+          {sharedSetsBlock}
         </div>
       </div>
     );
   }
 
+  // HERO (default)
+  const cover = coverImage ? (
+    <img src={coverImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
+  ) : (
+    <>
+      <div className={cn("absolute inset-0", NEUTRAL_COVER)} />
+      <div className={cn("absolute inset-0 opacity-25", COVER_V2[displaySide])} />
+    </>
+  );
+
   return (
     <div className="w-full rounded-3xl overflow-hidden border border-gray-200 bg-white shadow-sm">
-      {/* Hero cover */}
-      <div
-        className={cn(
-          "relative h-[220px]",
-          coverImage ? "bg-gray-900 bg-cover bg-center" : COVER_V2[displaySide]
-        )}
-        style={coverImage ? ({ backgroundImage: "url(" + coverImage + ")" } as any) : undefined}
-      >
-        {/* Soft fade into content */}
-        <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-white to-transparent" />
+      <div className="relative h-36 sm:h-40">
+        {cover}
+        <div className="absolute inset-0 bg-black/5" />
+        <div className="absolute inset-0 bg-gradient-to-t from-white via-white/0 to-white/0" />
 
-        {/* Safety pill */}
-        <div className="absolute bottom-4 right-5">
-          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/95 backdrop-blur shadow-sm border border-gray-100">
-            <span className={cn("w-2.5 h-2.5 rounded-full", theme.primaryBg)} />
-            <span className="text-[11px] font-black text-gray-900 uppercase tracking-widest">
-              Viewing as {SIDES[displaySide]?.label || displaySide}
-            </span>
+        {/* viewer pill */}
+        <div className="absolute bottom-4 right-4">{privacyPill}</div>
+
+        {/* avatar */}
+        <div className="absolute left-5 bottom-[-2.75rem]">
+          <div className="relative">
+            <div className="p-1.5 bg-white rounded-[2rem] shadow-md">{avatar}</div>
+            <div className="absolute -bottom-2 -right-2">
+              <div className="w-10 h-10 rounded-full bg-white shadow flex items-center justify-center border-4 border-white">
+                <Icon className={cn("w-5 h-5", theme.text)} />
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="px-5 sm:px-6 -mt-10 pb-6">
-        {/* Avatar */}
-        <div className="relative">
-          <div className="inline-block">
-            <div className="p-1.5 bg-white rounded-3xl shadow-md">
-              <div
-                className={cn(
-                  "w-24 h-24 rounded-[1.6rem] bg-gray-100 overflow-hidden flex items-center justify-center border border-gray-100 font-black text-xl select-none"
-                )}
-                aria-hidden="true"
-                title={name}
-              >
-                {avatarImage ? <img src={avatarImage} alt="" className="w-full h-full object-cover" /> : initialsFrom(name)}
-              </div>
-            </div>
-          </div>
-          <div className="absolute -bottom-1 -right-1">
-            <div className={cn("w-9 h-9 rounded-full bg-white shadow flex items-center justify-center border-4 border-white")}>
-              <Icon className={cn("w-4 h-4", theme.text)} />
-            </div>
-          </div>
-        </div>
-
-        {/* Identity */}
-        <div className="mt-5 flex items-start justify-between gap-4">
+      <div className="pt-14 px-5 pb-6">
+        <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <h1 className="text-2xl font-black text-gray-900 tracking-tight leading-none truncate">{name}</h1>
-            <div className="text-sm text-gray-500 font-semibold mt-1">{handle}</div>
+            <div className="text-sm text-gray-500 font-semibold mt-1 truncate">{safeHandle}</div>
             {headline ? <div className="text-sm text-gray-700 font-semibold mt-2">{headline}</div> : null}
           </div>
 
-          {/* Identity chip */}
-          <div className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-xl border", theme.lightBg, theme.border)}>
-            <Icon size={14} className={cn(theme.text)} />
-            <span className={cn("text-[10px] font-extrabold uppercase tracking-wider", theme.text)}>
-              {SIDES[displaySide]?.label || displaySide} identity
-            </span>
-          </div>
+          <div className="flex items-center gap-2 shrink-0">{ctaMessage}</div>
         </div>
 
-        {/* Directional clarity */}
-        {!isOwner ? (
-          <div className="mt-4 flex flex-wrap gap-2">
-            <div className={cn("inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-extrabold", theme.lightBg, theme.border, theme.text)}>
-              <ShieldCheck className="w-3.5 h-3.5" />
-              They show you {theyShow}
-            </div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-extrabold bg-gray-50 border-gray-200 text-gray-700">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              You show them {youShow}
-            </div>
-          </div>
-        ) : null}
-
-        {/* Bio */}
-        <p className={cn("mt-4 text-[15px] leading-relaxed", bio ? "text-gray-700" : "text-gray-400")}>
+        <p className={cn("mt-4 text-[15px] leading-relaxed whitespace-pre-line", bio ? "text-gray-700" : "text-gray-400")}>
           {bio || "No bio yet."}
         </p>
 
-        {/* Meta */}
-        <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-xs text-gray-500 font-semibold">
-          {location ? (
-            <div className="flex items-center gap-1">
-              <MapPin size={14} /> {location}
-            </div>
-          ) : null}
-          {website ? (
-            <a
-              href={safeWebsiteHref(website)}
-              target="_blank"
-              rel="noreferrer"
-              className={cn("flex items-center gap-1 font-extrabold hover:underline", theme.text)}
-            >
-              <LinkIcon size={14} /> {website}
-            </a>
-          ) : null}
-          <div className="flex items-center gap-1 text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
-            {SIDES[displaySide]?.isPrivate ? <Lock size={10} /> : <ShieldCheck size={10} />}{" "}
-            {SIDES[displaySide]?.privacyHint || "Visible"}
-          </div>
-        </div>
+        <div className="mt-4">{metaLine}</div>
+        {relationship}
+        {stats}
 
-        {/* Stats */}
-        <div className="mt-6 flex gap-8 pb-6 border-b border-gray-100">
-          <div className="flex flex-col">
-            <span className="text-lg font-black text-gray-900 leading-none tabular-nums">{shownPosts ?? "—"}</span>
-            <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-1">Posts</span>
-          </div>
+        {actions ? <div className="mt-5">{actions}</div> : null}
 
-          {showAccessStat ? (
-            <div className="flex flex-col">
-              <span className="text-lg font-black text-gray-900 leading-none tabular-nums">Close Vault</span>
-              <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-1">Private Set</span>
-            </div>
-          ) : (
-            <div className="flex flex-col">
-              <span className="text-lg font-black text-gray-900 leading-none tabular-nums">{siders ?? "—"}</span>
-              <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-1">Siders</span>
-            </div>
-          )}
-        </div>
-
-        {/* Actions (+ Message) */}
-        {actions ? (
-          <div className="mt-5">
-            <div className="flex gap-3">
-              <div className="flex-1">{actions}</div>
-              {onMessage ? (
-                <button
-                  type="button"
-                  onClick={onMessage}
-                  disabled={!!messageDisabled}
-                  className={cn(
-                    "w-12 h-11 rounded-2xl bg-gray-100 text-gray-900 inline-flex items-center justify-center font-extrabold transition-colors",
-                    messageDisabled ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-200"
-                  )}
-                  aria-label="Message"
-                  title="Message"
-                >
-                  <MessageSquare size={18} />
-                </button>
-              ) : messageHref ? (
-                <a
-                  href={messageHref}
-                  className="w-12 h-11 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-900 inline-flex items-center justify-center font-extrabold transition-colors"
-                  aria-label="Message"
-                  title="Message"
-                >
-                  <MessageSquare size={18} />
-                </a>
-              ) : null}
-            </div>
-          </div>
-        ) : null}
-
-        {/* Declutter: Shared Sets + Pulse moved into a "More" disclosure */}
-        {(!!(sharedSets && sharedSets.length > 0) || !!(pulse && (pulse.label || pulse.text))) ? (
-          <details className="mt-6">
-            <summary className="cursor-pointer select-none text-[11px] font-extrabold text-gray-500 hover:text-gray-700">
-              More
-            </summary>
-
-            <div className="mt-3">
-              {/* Shared Sets */}
-              {sharedSets && sharedSets.length > 0 ? (
-                <div className="mt-3">
-                  <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-2">Shared Sets</div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {sharedSets.slice(0, 8).map((s) => (
-                      <span
-                        key={s}
-                        className="px-2 py-1 rounded-full bg-gray-100 text-[10px] font-extrabold text-gray-700 border border-gray-200"
-                        title="Shared Set"
-                      >
-                        {s}
-                      </span>
-                    ))}
-                    {sharedSets.length > 8 ? (
-                      <span className="px-2 py-1 rounded-full bg-gray-50 text-[10px] font-extrabold text-gray-500 border border-gray-200">
-                        +{sharedSets.length - 8}
-                      </span>
-                    ) : null}
-                  </div>
-                </div>
-              ) : null}
-
-              {/* Pulse */}
-              {pulse && (pulse.label || pulse.text) ? (
-                <div className="mt-5">
-                  <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-2">
-                    {displaySide === "public" ? "Recent Town Hall" : "Recent Pulse"}
-                  </div>
-                  <div className={cn("p-4 rounded-2xl bg-gray-50 border-l-4", theme.accentBorder)}>
-                    <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                      <Mic size={10} /> {pulse.label || (displaySide === "public" ? "Town Hall" : "Pulse")}
-                    </div>
-                    <div className="text-sm font-extrabold text-gray-900">{pulse.text ? `“${pulse.text}”` : ""}</div>
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          </details>
-        ) : null}
+        {pulseBlock}
+        {sharedSetsBlock}
       </div>
     </div>
   );
 }
+
