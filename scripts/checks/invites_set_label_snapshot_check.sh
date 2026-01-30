@@ -35,7 +35,7 @@ grep -q "getSet" frontend/src/lib/server/invitesStore.ts && echo "✅ invitesSto
 
 # UI should prefer invite.setLabel
 grep -q "inv\.setLabel" frontend/src/app/siddes-invites/page.tsx && echo "✅ Invites list prefers inv.setLabel" || (echo "❌ Invites list missing inv.setLabel" && exit 1)
-grep -q "item\.setLabel" frontend/src/app/invite/[id]/page.tsx && echo "✅ Invite detail uses item.setLabel" || (echo "❌ Invite detail missing item.setLabel" && exit 1)
+grep -q "item\.setLabel" frontend/src/app/invite/[id]/page.tsx && echo "✅ Invite detail uses item.circleLabel" || (echo "❌ Invite detail missing item.setLabel" && exit 1)
 
 # Backend should persist set_label snapshot
 grep -q "set_label" backend/siddes_invites/models.py && echo "✅ Django model has set_label" || (echo "❌ Django model missing set_label" && exit 1)

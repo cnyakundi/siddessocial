@@ -200,7 +200,7 @@ export default function InviteAcceptPage({ params }: { params: { id: string } })
                     href={`/siddes-circles/${encodeURIComponent(item.setId)}`}
                     className="inline-flex items-center justify-center w-full px-3 py-2 rounded-full bg-gray-900 text-white font-black text-sm hover:opacity-95"
                   >
-                    Open Set
+                    Open Circle
                   </Link>
                 </div>
               ) : null}

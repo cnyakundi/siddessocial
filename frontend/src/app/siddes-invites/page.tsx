@@ -220,7 +220,7 @@ export default function SiddesInvitesPage() {
                           href={`/siddes-circles/${encodeURIComponent(inv.setId)}`}
                           className="px-3 py-1.5 rounded-full text-xs font-black border bg-gray-900 text-white border-gray-900 hover:opacity-95 whitespace-nowrap"
                         >
-                          Open Set
+                          Open Circle
                         </Link>
                       ) : null}
 

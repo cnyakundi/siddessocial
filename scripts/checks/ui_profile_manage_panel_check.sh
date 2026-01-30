@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "== Check: UI Profile Manage Panel + Settings route (sd_151b) =="
+echo "== Check: UI Profile Manage Panel + Circletings route (sd_151b) =="
 
 REQ=(
   "docs/UI_LAUNCH_MVP.md"
