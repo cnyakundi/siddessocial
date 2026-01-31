@@ -411,6 +411,22 @@ function PostDetailInner() {
   const [queuedCount, setQueuedCount] = useState(0);
   const [sentReplyCount, setSentReplyCount] = useState<number | null>(null);
 
+
+/* sd_957_reply_json_helper: Response body can only be consumed once — cache it safely. */
+const __sd_reply_json_cache = new WeakMap<Response, any>();
+async function __sd_read_reply_json_once(res: Response): Promise<any> {
+  if (__sd_reply_json_cache.has(res)) return __sd_reply_json_cache.get(res);
+  let j: any = null;
+  try {
+    const txt = await res.text();
+    j = txt ? JSON.parse(txt) : null;
+  } catch {
+    j = null;
+  }
+  __sd_reply_json_cache.set(res, j);
+  return j;
+}
+
 const sendReplyNow = useCallback(async () => {
   if (!found) return;
 
@@ -457,7 +473,23 @@ const sendReplyNow = useCallback(async () => {
     });
 
     if (res.ok) {
-      const data = await res.json().catch(() => null);
+
+      // sd_955_reply_json_once: Response body can only be read once — cache it.
+      let __sd_reply_body_read = false;
+      let __sd_reply_json: any = null;
+      const __sd_read_reply_json_once = async (): Promise<any> => {
+        if (__sd_reply_body_read) return __sd_reply_json;
+        __sd_reply_body_read = true;
+        try {
+          const txt = await res.text();
+          __sd_reply_json = txt ? JSON.parse(txt) : null;
+        } catch {
+          __sd_reply_json = null;
+        }
+        return __sd_reply_json;
+      };
+
+      const data = await __sd_read_reply_json_once(res);
       if (!data || data.ok !== false) {
         setReplyText("");
         setReplyTo(null);
@@ -472,7 +504,7 @@ const sendReplyNow = useCallback(async () => {
       }
     }
 
-    const j = await res.json().catch(() => null);
+    const j = await __sd_read_reply_json_once(res);
     const code = j && typeof j.error === "string" ? j.error : "request_failed";
 
     if (res.status === 400) {
@@ -801,14 +833,16 @@ useEffect(() => {
 
         <SideMismatchBanner active={activeSide} target={postSide} onEnter={enterSide} />
 
-        <PostCard
+        <div className="mt-4 rounded-3xl border border-gray-100 bg-white shadow-sm overflow-hidden" data-testid="thread-card">
+
+          <PostCard
           post={found.post}
           side={found.side}
           showAccentBorder={false}
           calmHideCounts={found.side === "public" && FLAGS.publicCalmUi && !(publicCalm?.showCounts)}
         />
 
-        <div className="mt-4 rounded-3xl border border-gray-100 bg-white p-5">
+          <div className="p-5">
           <div className="flex items-center justify-between">
             <div>
               <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Replies{typeof sentReplyCount === "number" ? ` (${sentReplyCount})` : ""}</div>
@@ -922,6 +956,7 @@ useEffect(() => {
   onCountChange={setSentReplyCount}
 />
         </div>
+        </div>
       </ContentColumn>
 
 </div>
@@ -935,3 +970,9 @@ export default function SiddesPostDetailPage() {
     </Suspense>
   );
 }
+
+
+// sd_970_fix_post_detail_reply_json_once_missing_helper
+
+
+// sd_971_fix_post_detail_reply_json_once_helper
