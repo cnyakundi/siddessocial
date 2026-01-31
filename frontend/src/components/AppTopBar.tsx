@@ -281,7 +281,7 @@ export function AppTopBar(props: { onOpenNotificationsDrawer?: () => void } = {}
               <Bell size={18} className="text-gray-500" aria-hidden />
               {unread > 0 ? (
                 <span
-                  className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-red-500 border-2 border-white"
+                  className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-gray-900 border-2 border-white"
                   aria-label="New notifications"
                 />
               ) : null}
