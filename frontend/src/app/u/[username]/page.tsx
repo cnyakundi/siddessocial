@@ -25,6 +25,7 @@ import { useReturnScrollRestore } from "@/src/hooks/returnScroll";
 
 import { ProfileActionsSheet } from "@/src/components/ProfileActionsSheet";
 import { toast } from "@/src/lib/toast";
+import { fetchMe } from "@/src/lib/authMe";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
@@ -51,6 +52,7 @@ export default function UserProfilePage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
+  const [meUsername, setMeUsername] = useState<string>(""); // sd_830_p0_ui_safety_pack
   const [loadingMore, setLoadingMore] = useState(false);
 
   const [activeIdentitySide, setActiveIdentitySide] = useState<SideId>("public");
@@ -115,6 +117,23 @@ export default function UserProfilePage() {
       mounted = false;
     };
   }, [handle, activeIdentitySide]);
+  // sd_830_p0_ui_safety_pack_owner_effect: client-side owner detection (defense in depth)
+  useEffect(() => {
+    let alive = true;
+
+    (async () => {
+      const me = await fetchMe().catch(() => ({ ok: false, authenticated: false } as any));
+      if (!alive) return;
+
+      const u = me?.authenticated && me?.user?.username ? String(me.user.username).trim().toLowerCase() : "";
+      setMeUsername(u);
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, []);
+
 
   const viewSide = (data?.viewSide || "public") as SideId;
   const displaySide = ((data as any)?.requestedSide || viewSide) as SideId;
@@ -122,7 +141,13 @@ export default function UserProfilePage() {
   const facet = data?.facet;
   const user = data?.user;
 
-  const isOwner = !!(data as any)?.isOwner;
+  // sd_830_p0_ui_safety_pack: treat isOwner as (server OR /me match)
+  const serverIsOwner = !!(data as any)?.isOwner;
+  const meU = String(meUsername || "" ).replace(/^@/, "" ).trim().toLowerCase();
+  const handleU = String(handle || "" ).replace(/^@/, "" ).trim().toLowerCase();
+  const isOwnerByMe = Boolean(meU && handleU && meU === handleU);
+  const isOwner = serverIsOwner || isOwnerByMe;
+
 
   const viewerSidedAs = (data?.viewerSidedAs || null) as SideId | null;
   const sharedSets = data?.sharedSets || [];
@@ -165,7 +190,9 @@ export default function UserProfilePage() {
         let msg = res.status === 429 ? "Slow down." : "Could not update Side.";
         if (j?.error === "friends_required") msg = "Friends first (then Close).";
         if (j?.error === "confirm_required") msg = "Confirmation required for Close/Work.";
+        if (j?.error === "cannot_side_self") msg = "That\'s you.";
         if (res.status === 401 || j?.error === "restricted") msg = "Login required.";
+        if (j?.error === "cannot_request_self") msg = "That\'s you.";
         toast.error(msg);
         throw new Error(msg);
       }

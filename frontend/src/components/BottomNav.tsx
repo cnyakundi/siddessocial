@@ -1,5 +1,7 @@
 "use client";
 
+// sd_941_bottomnav_calm_badges
+
 // sd_785_tab_route_memory
 
 
@@ -9,9 +11,10 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
-import { CirclesMark } from "@/src/components/icons/CirclesMark";import { Bell, Home, MessageCircle, Plus, type LucideIcon } from "lucide-react";
+import { CirclesMark } from "@/src/components/icons/CirclesMark";
+import { Bell, Home, MessageCircle, Plus, type LucideIcon } from "lucide-react";
 import { useSide } from "@/src/components/SideProvider";
 import { SIDE_THEMES, type SideId } from "@/src/lib/sides";
 import { getStoredLastPublicTopic, getStoredLastSetForSide } from "@/src/lib/audienceStore";
@@ -112,7 +115,7 @@ function MeTabLink({ href = "/me", active, side }: { href?: string; active: bool
         >
           {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : initials}
         </div>
-        <span className={cn("text-[9px] font-black uppercase tracking-tighter", activeLocal ? "opacity-100" : "opacity-60")}>
+        <span className={cn("text-[10px] font-semibold tracking-normal", activeLocal ? "opacity-100" : "opacity-60")}>
           Me
         </span>
       </Link>
@@ -121,22 +124,24 @@ function MeTabLink({ href = "/me", active, side }: { href?: string; active: bool
 }
 
 function TabLink({
-  href,
+href,
   label,
   Icon,
   active,
   badge,
+  showCounts = false,
 }: {
-  href: string;
+href: string;
   label: string;
   Icon: LucideIcon;
   active: boolean;
   badge?: number;
+  showCounts?: boolean;
 }) {
   const sw = active ? 2.5 : 2;
   const n = Number.isFinite(badge as any) ? Math.max(0, Math.floor(badge as any)) : 0;
-  const showDot = n > 0 && n < 10;
-  const showCount = n >= 10;
+  const showCount = Boolean(showCounts) && n >= 10;
+  const showDot = n > 0 && !showCount;
   const display = n > 99 ? "99+" : String(n);
   return (
     <Link
@@ -151,20 +156,20 @@ function TabLink({
         <Icon size={24} strokeWidth={sw} />
         {showDot ? (
           <span
-            className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-red-500 border-2 border-white"
+            className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-gray-900 border-2 border-white"
             aria-label={"New " + label}
           />
         ) : null}
         {showCount ? (
           <span
-            className="absolute -top-2 -right-3 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center border-2 border-white"
+            className="absolute -top-2 -right-3 min-w-[18px] h-[18px] px-1 rounded-full bg-gray-900 text-white text-[10px] font-black flex items-center justify-center border-2 border-white"
             aria-label={display + " unread " + label}
           >
             {display}
           </span>
         ) : null}
       </div>
-      <span className={cn("text-[9px] font-black uppercase tracking-tighter", active ? "opacity-100" : "opacity-60")}>
+      <span className={cn("text-[10px] font-semibold tracking-normal", active ? "opacity-100" : "opacity-60")}>
         {label}
       </span>
     </Link>
@@ -173,22 +178,24 @@ function TabLink({
 
 
 function TabButton({
-  label,
+label,
   Icon,
   active,
   badge,
+  showCounts = false,
   onClick,
 }: {
-  label: string;
+label: string;
   Icon: LucideIcon;
   active: boolean;
   badge?: number;
+  showCounts?: boolean;
   onClick: () => void;
 }) {
   const sw = active ? 2.5 : 2;
   const n = Number.isFinite(badge as any) ? Math.max(0, Math.floor(badge as any)) : 0;
-  const showDot = n > 0 && n < 10;
-  const showCount = n >= 10;
+  const showCount = Boolean(showCounts) && n >= 10;
+  const showDot = n > 0 && !showCount;
   const display = n > 99 ? "99+" : String(n);
   return (
     <button
@@ -204,20 +211,20 @@ function TabButton({
         <Icon size={24} strokeWidth={sw} />
         {showDot ? (
           <span
-            className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-red-500 border-2 border-white"
+            className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-gray-900 border-2 border-white"
             aria-label={"New " + label}
           />
         ) : null}
         {showCount ? (
           <span
-            className="absolute -top-2 -right-3 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center border-2 border-white"
+            className="absolute -top-2 -right-3 min-w-[18px] h-[18px] px-1 rounded-full bg-gray-900 text-white text-[10px] font-black flex items-center justify-center border-2 border-white"
             aria-label={display + " unread " + label}
           >
             {display}
           </span>
         ) : null}
       </div>
-      <span className={cn("text-[9px] font-black uppercase tracking-tighter", active ? "opacity-100" : "opacity-60")}>
+      <span className={cn("text-[10px] font-semibold tracking-normal", active ? "opacity-100" : "opacity-60")}>
         {label}
       </span>
     </button>
@@ -232,6 +239,8 @@ function TabButton({
  */
 export function BottomNav({ onToggleNotificationsDrawer, notificationsDrawerOpen = false }: { onToggleNotificationsDrawer?: () => void; notificationsDrawerOpen?: boolean } = {}) {
   const pathname = usePathname() || "";
+  const sp = useSearchParams();
+  const advanced = (sp.get("advanced") || "").trim() === "1"; // sd_941_bottomnav_calm_badges
   const { side } = useSide();
   const theme = SIDE_THEMES[side];
   const { unread } = useNotificationsActivity();
@@ -352,7 +361,7 @@ export function BottomNav({ onToggleNotificationsDrawer, notificationsDrawerOpen
               onClick={() => onToggleNotificationsDrawer()}
             />
           ) : (
-            <TabLink href={tabHrefs.alerts} label="Alerts" Icon={Bell} active={isNotifs} badge={unread} />
+            <TabLink href={tabHrefs.alerts} label="Alerts" Icon={Bell} active={isNotifs} badge={unread}  showCounts={advanced} />
           )}
 
           {/* MAGIC PLUS */}
@@ -374,7 +383,7 @@ export function BottomNav({ onToggleNotificationsDrawer, notificationsDrawerOpen
             </span>
             <span
               className={cn(
-                "text-[9px] font-black uppercase tracking-tighter",
+                "text-[10px] font-semibold tracking-normal",
                 isCompose ? "text-gray-900" : "text-gray-400",
                 "opacity-70"
               )}
@@ -383,7 +392,7 @@ export function BottomNav({ onToggleNotificationsDrawer, notificationsDrawerOpen
             </span>
           </Link>
 
-          <TabLink href={tabHrefs.inbox} label="Inbox" Icon={MessageCircle} active={isInbox} badge={inbox.unreadThreads} />
+          <TabLink href={tabHrefs.inbox} label="Inbox" Icon={MessageCircle} active={isInbox} badge={inbox.unreadThreads}  showCounts={advanced} />
 
           <MeTabLink active={isMe} side={side} href={tabHrefs.me} />
         </div>

@@ -88,7 +88,9 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 ## Feed ladder (DRF cutover series)
 - **sd_142:** Feed DRF endpoint + API-base-aware Next proxy (client calls same-origin /api/feed; Next proxies to Django via SD_INTERNAL_API_BASE / NEXT_PUBLIC_API_BASE)
 
-## NEXT overlay\n- **sd_935_postcard_row_metadata_clean:** PostCard row: remove redundant Side stamp; show circle/topic only; move signal chips behind +N for cleaner feed rows.\n
+## NEXT overlay
+- **sd_941_bottomnav_calm_badges:** BottomNav: calm badges (dot by default; counts only with ?advanced=1); neutral badge color; soften tab labels.
+\n- **sd_939_app_topbar_declutter:** AppTopBar: hide Refresh behind ?advanced=1; normalize topbar action buttons (rounded-xl); fix goBack/pageTitle formatting.\n\n- **sd_935_postcard_row_metadata_clean:** PostCard row: remove redundant Side stamp; show circle/topic only; move signal chips behind +N for cleaner feed rows.\n
 
 - **sd_958:** Profile: add pins/highlights grid + locked inline card (no dialogs); tabs icons-only.
 
