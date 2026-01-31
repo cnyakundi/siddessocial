@@ -1,5 +1,7 @@
 "use client";
 
+// sd_947_sidefeed_header_declutter
+
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import Link from "next/link";
@@ -1088,7 +1090,7 @@ export function SideFeed() {
       currentSide={side}
       onSetChange={pickSet}
       onNewSet={() => {
-        if (process.env.NODE_ENV !== "production") setImportOpen(true);
+        if (process.env.NODE_ENV !== "production" && advanced) setImportOpen(true);
         else router.push("/siddes-circles?create=1");
       }}
       label="Circle"
