@@ -211,7 +211,28 @@ function SentReplies({ postId, onReplyTo, onCountChange }: { postId: string; onR
             })();
             const profileHref = profileSlug ? `/u/${encodeURIComponent(profileSlug)}` : null;
 
-            const depth = Math.max(0, Math.min(3, Number((r as any).depth || 0)));
+            const depth = (() => {
+              const raw = Number((r as any).depth);
+              if (Number.isFinite(raw) && raw > 0) return Math.max(0, Math.min(3, raw));
+
+              const pid0 = String((r as any).parentId || (r as any).parent_id || "").trim();
+              if (!pid0) return 0;
+
+              let d = 1;
+              let cur = pid0;
+              const seen = new Set<string>();
+              seen.add(String(r.id));
+              while (cur && !seen.has(cur) && d < 3) {
+                seen.add(cur);
+                const parent = replies.find((x) => String((x as any).id) === cur);
+                if (!parent) break;
+                const next = String((parent as any).parentId || (parent as any).parent_id || "").trim();
+                if (!next) break;
+                cur = next;
+                d += 1;
+              }
+              return Math.max(0, Math.min(3, d));
+            })();
             const indentPx = depth * 18;
 
             const when = (() => {
