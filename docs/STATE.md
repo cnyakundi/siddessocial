@@ -90,6 +90,12 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 
 ## NEXT overlay
 
+- **sd_956:** Profile relationship clarity (no dialogs): restore /u/:username base; Add Friend is one-tap (Friends); Follow is one-tap; Side/Profile actions sheets disabled; write docs/RELATIONSHIP_GRAPH.md.
+
+- **sd_955:** Profile relationship clarity: no dialogs on /u/:username (remove About + SideWithSheet + ProfileActionsSheet); inline locked card with Request; actions are one-tap Follow + Add Friend.
+
+- **sd_954:** Profile: no dialogs for relationship actions — remove SideWithSheet; SideActionButtons becomes one-tap Add Friend/Friends toggle; Follow remains one-tap.
+
 - **sd_949c:** Profile: remove leftover About UI refs (setAboutOpen/aboutOpen) so /u/:username stays build-clean.
 
 - **sd_949b:** Profile design canon shell: room pill + room sheet; remove About + PrismSideTabs; icon tabs (posts/media); clean CTA copy.

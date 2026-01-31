@@ -4,25 +4,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import {
-Globe,
-  Users,
-  Lock,
-  
-  Heart,Briefcase,
-  Shield,
-  MapPin,
-  Link as LinkIcon,
-  Music,
-  PlayCircle,
-  Mic,
-  Plus,
-  ChevronDown,
-  X,
-  Check,
-  Copy,
-  Pencil,
-} from "lucide-react";
+import { Globe, Users, Lock, Heart, Briefcase, Shield, MapPin, Link as LinkIcon, Music, PlayCircle, Mic, Plus, ChevronDown, X, Check, Copy, Pencil, UserPlus } from "lucide-react";
 import type { SideId } from "@/src/lib/sides";
 import { SIDE_ORDER, SIDES, SIDE_THEMES } from "@/src/lib/sides";
 import type { FeedPost } from "@/src/lib/feedTypes";
@@ -988,27 +970,29 @@ export function CopyLinkButton({ href, label, messageHref }: { href: string; lab
 }
 export function SideActionButtons(props: {
   viewerSidedAs: SideId | null;
-  onOpenSheet: () => void;
+  onOpenSheet: () => void; // profile page wires this as a 1-tap action (no sheet)
 }) {
   const { viewerSidedAs, onOpenSheet } = props;
 
-  // sd_949b_design_canon: remove internal jargon from CTA
+  // sd_957: design canon wording
   const sided = viewerSidedAs && viewerSidedAs !== "public" ? viewerSidedAs : null;
 
   if (sided) {
-    const th = SIDE_THEMES[sided];
+    const t = SIDE_THEMES[sided];
     return (
       <button
         type="button"
         onClick={onOpenSheet}
         className={cn(
-          "flex-1 h-11 rounded-2xl font-extrabold text-sm text-white shadow-md active:scale-95 transition-all flex items-center justify-center gap-2",
-          th.primaryBg
+          "flex-1 h-11 rounded-2xl font-extrabold text-sm border transition-all flex items-center justify-center gap-2 active:scale-95",
+          t.lightBg,
+          t.border,
+          t.text
         )}
-        aria-label={`${SIDES[sided]?.label || sided}`}
-        title={`${SIDES[sided]?.label || sided}`}
+        aria-label={SIDES[sided]?.label || sided}
+        title={SIDES[sided]?.label || sided}
       >
-        {SIDES[sided]?.label || sided} <ChevronDown size={16} />
+        <Check size={16} /> {SIDES[sided]?.label || sided}
       </button>
     );
   }
@@ -1017,14 +1001,17 @@ export function SideActionButtons(props: {
     <button
       type="button"
       onClick={onOpenSheet}
-      className="flex-1 h-11 rounded-2xl font-extrabold text-sm bg-gray-100 text-gray-900 hover:bg-gray-200 transition-all flex items-center justify-center gap-2"
+      className="flex-1 h-11 rounded-2xl font-extrabold text-sm bg-gray-900 text-white border border-gray-900 hover:opacity-90 transition-all flex items-center justify-center gap-2 active:scale-95"
       aria-label="Add Friend"
       title="Add Friend"
     >
-      <Plus size={16} /> Add Friend
+      <UserPlus size={16} /> Add Friend
     </button>
   );
 }
+
+
+
 
 
 export function EditFacetButton({ onClick }: { onClick: () => void }) {

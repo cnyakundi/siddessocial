@@ -339,7 +339,7 @@ export default function UserProfilePage() {
                         type="button"
                         onClick={() => {
                           setLockedSide(null);
-                          setSideSheet(true);
+                          setSideSheet(false);
                         }}
                         className="px-4 py-3 rounded-xl bg-white border border-gray-200 text-gray-800 font-extrabold text-sm hover:bg-gray-50"
                       >
@@ -360,15 +360,12 @@ export default function UserProfilePage() {
             {/* sd_717_profile_v2_shell_header_tabs */}
             <div className="mt-4">
               <ProfileV2Header
-                variant="clean"
                 displaySide={displaySide}
                 viewSide={viewSide}
                 handle={user.handle}
                 facet={facet}
                 siders={data?.siders ?? null}
                 postsCount={postsCount}
-                publicFollowers={((data as any)?.publicFollowers ?? null)}
-                publicFollowing={((data as any)?.publicFollowing ?? null)}
                 sharedSets={sharedSets}
                 isOwner={isOwner}
                 viewerSidedAs={viewerSidedAs}
@@ -390,9 +387,9 @@ export default function UserProfilePage() {
                         <CopyLinkButton href={href} />
                         <button
                           type="button"
-                          onClick={() => setActionsOpen(true)}
+                          onClick={() => setActionsOpen(false)}
                           className="px-4 py-3 rounded-2xl bg-gray-100 text-gray-700 font-extrabold text-sm hover:bg-gray-200 transition-all flex items-center justify-center gap-2"
-                          aria-label="More actions"
+                          aria-label="More actions" hidden
                         >
                           <MoreHorizontal size={18} />
                         </button>
@@ -401,15 +398,15 @@ export default function UserProfilePage() {
                   ) : (
                     <div className="flex flex-col gap-3">
                       <div className="flex gap-3">
-                        <SideActionButtons viewerSidedAs={viewerSidedAs} onOpenSheet={() => setSideSheet(true)} />
+                        <SideActionButtons viewerSidedAs={viewerSidedAs} onOpenSheet={() => { if (viewerSidedAs && viewerSidedAs !== "public") { try { window.location.href = "/siddes-settings/prism-people"; } catch {} return; } void doPickSide("friends"); }} />
                       </div>
                       <div className="flex gap-3">
                         <CopyLinkButton href={href} />
                         <button
                           type="button"
-                          onClick={() => setActionsOpen(true)}
+                          onClick={() => setActionsOpen(false)}
                           className="px-4 py-3 rounded-2xl bg-gray-100 text-gray-700 font-extrabold text-sm hover:bg-gray-200 transition-all flex items-center justify-center gap-2"
-                          aria-label="More actions"
+                          aria-label="More actions" hidden
                         >
                           <MoreHorizontal size={18} />
                         </button>
@@ -419,7 +416,7 @@ export default function UserProfilePage() {
                 }
               />
 
-              <ProfileV2Tabs side={displaySide} active={contentTab} onPick={setContentTab} mode="icons" showSets={false} />
+              <ProfileV2Tabs side={displaySide} active={contentTab} onPick={setContentTab} />
 
               {/* Content */}
               <div className="mt-4">
