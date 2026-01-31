@@ -459,7 +459,7 @@ def patch_list_page(path: str, title: str):
 
     # when request fails, reset hidden
     if "setHidden(false);" not in t:
-        t = re.sub(r'(setTrouble\(j\?\.\error \|\| \(res\.status === 404 \? "not_found" : "request_failed"\)\);\n)',
+        t = re.sub(r'(setTrouble\(j\?\.error \|\| \(res\.status === 404 \? "not_found" : "request_failed"\)\);\n)',
                    r'\1          setHidden(false);\n',
                    t, count=1)
 
