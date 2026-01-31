@@ -317,3 +317,7 @@ These are the overlays applied/created during the current session (evidence: ter
 - **sd_969_sidefeed_advanced_gate_dev_and_public_tune:** SideFeed: gate DEV badge + dev import sheet behind ?advanced=1; Public Tune shows Topics normally; Trust/Counts only in advanced mode.
 
 - **sd_970_circlesmark_topbar_and_compose:** UI: add CirclesMark to AppTopBar circle picker + Compose audience pill (when present); calm alerts dot color/copy.
+
+- **sd_971_sidefeed_header_calm_advanced_gate:** SideFeed header: gate DEV badge + dev import sheet behind ?advanced=1; Public Tune shows Topics normally; Trust/Counts only in advanced mode.
+
+- **sd_972b_feed_empty_state_single_cta_robust:** SideFeed EmptyState: remove secondary 'Create Circle' CTA; keep single primary action; circle creation stays in Circle picker / Circles page.
