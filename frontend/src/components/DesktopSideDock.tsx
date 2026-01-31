@@ -154,31 +154,21 @@ export function DesktopSideDock() {
         </Link>
       </div>
 
-      {/* sd_765_face_banner: identity is explicit — “you are wearing X face” */}
+      
+{/* sd_765_face_banner (sd_788_declutter): keep identity explicit, but as a single calm pill */}
       <div className="w-full px-2 -mt-1">
         <div
           className={cn(
-            "w-full rounded-2xl border px-2.5 py-2 text-center",
-            "shadow-[0_10px_30px_rgba(0,0,0,0.03)]",
-            currentTheme.border,
-            currentTheme.lightBg
+            "mx-auto inline-flex items-center gap-1.5 px-2 py-1 rounded-full border",
+            currentTheme.lightBg,
+            currentTheme.border
           )}
           aria-label={`Wearing ${currentMeta.label} face`}
+          title={`${currentMeta.label}${lockedSide ? " (Locked)" : ""}${!lockedSide && currentMeta.desc ? " — " + currentMeta.desc : ""}`}
         >
-          <div className="text-[8px] font-black uppercase tracking-[0.22em] text-gray-400">Wearing</div>
-          <div className="mt-1 flex items-center justify-center gap-2">
-            <span className={cn("w-2.5 h-2.5 rounded-full", currentTheme.primaryBg)} aria-hidden />
-            <span className="text-[11px] font-black text-gray-900 truncate">{currentMeta.label}</span>
-          </div>
-
-          {lockedSide ? (
-            <div className="mt-1 inline-flex items-center justify-center gap-1 text-[8px] font-black uppercase tracking-[0.22em] text-gray-400">
-              <LockIcon size={10} className="text-gray-300" aria-hidden />
-              <span>Locked</span>
-            </div>
-          ) : (
-            <div className="mt-1 text-[9px] font-semibold text-gray-500 truncate">{currentMeta.desc}</div>
-          )}
+          <span className={cn("w-2 h-2 rounded-full", currentTheme.primaryBg)} aria-hidden />
+          <span className="text-[11px] font-black text-gray-900">{currentMeta.label}</span>
+          {lockedSide ? <LockIcon size={12} className="text-gray-300" aria-hidden /> : null}
         </div>
       </div>
 
