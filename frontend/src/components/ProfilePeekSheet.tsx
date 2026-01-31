@@ -9,6 +9,7 @@ import { ChevronDown, ChevronUp, ExternalLink, Globe, Lock, Users, X } from "luc
 import type { SideId } from "@/src/lib/sides";
 import { SIDES, SIDE_THEMES } from "@/src/lib/sides";
 import { toast } from "@/src/lib/toast";
+import { fetchMe } from "@/src/lib/authMe";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { useDialogA11y } from "@/src/hooks/useDialogA11y";
 
@@ -72,6 +73,20 @@ export function ProfilePeekSheet(props: {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
+  // sd_847_profile_peek_p0_fix_me_effect: cache current username to prevent self-actions even if profile payload mis-detects
+  useEffect(() => {
+    if (!open || !mounted) return;
+    let alive = true;
+    (async () => {
+      const me = await fetchMe().catch(() => ({ ok: false, authenticated: false } as any));
+      if (!alive) return;
+      const u = me?.authenticated && me?.user?.username ? String(me.user.username).trim().toLowerCase() : "";
+      setMeUsername(u);
+    })();
+    return () => { alive = false; };
+  }, [open, mounted]);
+
+
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [data, setData] = useState<ProfileView | null>(null);
@@ -80,6 +95,7 @@ export function ProfilePeekSheet(props: {
   const [followBusy, setFollowBusy] = useState(false);
   const [following, setFollowing] = useState(false);
   const [followers, setFollowers] = useState<number | null>(null);
+  const [meUsername, setMeUsername] = useState<string>(""); // sd_847_profile_peek_p0_fix
 
   useLockBodyScroll(open && mounted);
 
@@ -172,7 +188,8 @@ export function ProfilePeekSheet(props: {
       (data && (data.viewerSidedAs || data.viewSide))
   );
 
-  const canFollow = Boolean((data as any)?.viewerAuthed) && !Boolean((data as any)?.isOwner);
+  const isSelf = Boolean(meUsername && String(uname || "").trim().toLowerCase() === String(meUsername || "").trim().toLowerCase());
+  const canFollow = Boolean((data as any)?.viewerAuthed) && !Boolean((data as any)?.isOwner) && !isSelf;
   const canToggleFollow = canFollow && !locked && !restricted;
 
   const goFullProfile = () => {
@@ -185,6 +202,8 @@ export function ProfilePeekSheet(props: {
   const doToggleFollow = async () => {
     if (!uname) return;
     if (!canToggleFollow) return;
+    // sd_847_profile_peek_p0_fix_self_guard: never follow yourself
+    if (isSelf) { toast.error("That\\'s you."); return; }
     if (followBusy) return;
 
     const want = !following;
@@ -199,7 +218,7 @@ export function ProfilePeekSheet(props: {
       });
       const j = await res.json().catch(() => null);
       if (!res.ok || !j || j.ok !== true) {
-        const msg = res.status === 429 ? "Slow down." : "Could not update subscribe.";
+        const msg = (j as any)?.error === "cannot_follow_self" ? "That\'s you." : (res.status === 429 ? "Slow down." : "Could not update subscribe.");
         throw new Error(msg);
       }
 
@@ -228,6 +247,7 @@ export function ProfilePeekSheet(props: {
           // sd_713_backdrop_clickthrough: consume pointerdown to prevent ghost taps (close on click)
           e.preventDefault();
           e.stopPropagation();
+          onClose();
         }}
         onTouchStart={(e) => {
           e.preventDefault();

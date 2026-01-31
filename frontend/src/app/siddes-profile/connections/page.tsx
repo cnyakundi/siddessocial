@@ -32,15 +32,48 @@ const SIDE_LABEL: Record<SideKey, string> = {
   work: "Work",
 };
 
-const SIDE_BADGE: Record<SideKey, string> = {
-  friends: "bg-emerald-50 text-emerald-800 border-emerald-200",
-  close: "bg-rose-50 text-rose-800 border-rose-200",
-  work: "bg-slate-50 text-slate-800 border-slate-200",
+// sd_948c: calmer connection stamps (dot + light text), instead of pill badges
+const SIDE_STAMP: Record<SideKey, { dot: string; text: string }> = {
+  friends: { dot: "bg-emerald-500", text: "text-emerald-800" },
+  close: { dot: "bg-rose-500", text: "text-rose-800" },
+  work: { dot: "bg-slate-500", text: "text-slate-800" },
 };
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
 }
+
+
+// sd_962: calm relationship tag (replaces noisy badge pills)
+// Shows a tiny colored dot + "You/Them/They • SideLabel"
+type RelSide = "public" | "friends" | "close" | "work";
+
+const REL_META: Record<RelSide, { label: string; dot: string }> = {
+  public: { label: "Public", dot: "bg-gray-400" },
+  friends: { label: "Friends", dot: "bg-blue-500" },
+  close: { label: "Close", dot: "bg-rose-500" },
+  work: { label: "Work", dot: "bg-slate-600" },
+};
+
+function normalizeRelSide(v: any): RelSide {
+  const s = String(v || "public").toLowerCase().trim();
+  if (s === "friends" || s === "close" || s === "work" || s === "public") return s as RelSide;
+  return "public";
+}
+
+function RelTag({ side, who }: { side: any; who: string }) {
+  const k = normalizeRelSide(side);
+  const meta = REL_META[k];
+  return (
+    <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-gray-600">
+      <span className={"w-1.5 h-1.5 rounded-full " + meta.dot} aria-hidden="true" />
+      <span className="text-gray-500">{who}</span>
+      <span className="text-gray-300">•</span>
+      <span className="font-extrabold text-gray-900">{meta.label}</span>
+    </span>
+  );
+}
+
 
 function initialsFrom(nameOrHandle: string) {
   const s = String(nameOrHandle || "").replace(/^@/, "").trim();
@@ -99,25 +132,6 @@ const SIDE_DOT: Record<SideKey, string> = {
   close: "bg-rose-500",
   work: "bg-slate-500",
 };
-
-function Badge({ children, side }: { children: React.ReactNode; side: SideKey }) {
-  const dot = SIDE_DOT[side] || "bg-gray-300";
-  return (
-    <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-gray-600">
-      <span className={"w-1.5 h-1.5 rounded-full " + dot} aria-hidden="true" />
-      <span className="text-gray-700">{children}</span>
-    </span>
-  );
-}
-
-function BadgePill({ children, side }: { children: React.ReactNode; side: SideKey }) {
-  return (
-    <span className={cn("inline-flex items-center px-2 py-1 rounded-full border text-[10px] font-extrabold", SIDE_BADGE[side])}>
-      {children}
-    </span>
-  );
-}
-
 export default function ConnectionsPage() {
   const [followers, setFollowers] = useState<LedgerResp | null>(null);
   const [following, setFollowing] = useState<LedgerResp | null>(null);
@@ -279,8 +293,8 @@ export default function ConnectionsPage() {
                         <div className="font-black text-gray-900 truncate">{label}</div>
                         <div className="text-xs text-gray-500 font-mono truncate">{m.handle}</div>
                         <div className="mt-2 flex flex-wrap gap-2">
-                          <Badge side={m.youSide}>You → {SIDE_LABEL[m.youSide]}</Badge>
-                          <Badge side={m.theySide}>Them → {SIDE_LABEL[m.theySide]}</Badge>
+                          <RelTag side={m.youSide} who="You" />
+                          <RelTag side={m.theySide} who="Them" />
                         </div>
                       </div>
                     </div>
@@ -312,7 +326,7 @@ export default function ConnectionsPage() {
                         <div className="font-black text-gray-900 truncate">{label}</div>
                         <div className="text-xs text-gray-500 font-mono truncate">{it.handle}</div>
                         <div className="mt-2">
-                          <Badge side={it.side}>They → {SIDE_LABEL[it.side]}</Badge>
+                          <RelTag side={it.side} who="They" />
                         </div>
                       </div>
                     </div>
@@ -341,7 +355,7 @@ export default function ConnectionsPage() {
                       <div className="font-black text-gray-900 truncate">{label}</div>
                       <div className="text-xs text-gray-500 font-mono truncate">{it.handle}</div>
                       <div className="mt-2">
-                        <Badge side={it.side}>You → {SIDE_LABEL[it.side]}</Badge>
+                        <RelTag side={it.side} who="You" />
                       </div>
                     </div>
                   </div>
@@ -357,5 +371,9 @@ export default function ConnectionsPage() {
   );
 }
 
-
 // sd_948b_connections_directional_ui_safe
+
+// sd_948c_connections_directional_ui_safe
+
+
+// sd_951_connections_cleanup_badgepills

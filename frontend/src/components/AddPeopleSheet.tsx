@@ -5,6 +5,7 @@ import { Mic, Plus, X } from "lucide-react";
 import type { CircleDef } from "@/src/lib/circles";
 import { getCirclesProvider } from "@/src/lib/circlesProvider";
 import { toast } from "@/src/lib/toast";
+import { fetchMe } from "@/src/lib/authMe";
 import { normalizeHandle } from "@/src/lib/mentions";
 import { emitCirclesChanged } from "@/src/lib/circlesSignals";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
@@ -48,6 +49,8 @@ export function AddPeopleSheet(props: {
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  const [meHandle, setMeHandle] = useState<string>(""); // sd_848_addpeople_self_guard
+
   useLockBodyScroll(open);
 
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -59,6 +62,14 @@ export function AddPeopleSheet(props: {
     setRaw("");
     setErr(null);
     setSaving(false);
+
+    // sd_848_addpeople_self_guard_me_effect: prevent adding yourself to your own Circle
+    (async () => {
+      const me = await fetchMe().catch(() => ({ ok: false, authenticated: false } as any));
+      const u = me?.authenticated && me?.user?.username ? String(me.user.username).trim() : "";
+      const h = u ? normalizeHandle("@" + u) : "";
+      setMeHandle(h || "");
+    })();
   }, [open]);
 
   const existing = useMemo(() => {
@@ -192,6 +203,10 @@ export function AddPeopleSheet(props: {
             <div className="text-[11px] text-gray-400 mt-1">
               We auto-add “@”. Existing members won’t be duplicated.
             </div>
+
+            {meHandle && parseHandles(raw).includes(meHandle) ? (
+              <div className="text-[11px] text-amber-600 mt-1">Note: you can’t add yourself — your handle is ignored.</div> // sd_848_addpeople_self_guard_hint
+            ) : null}
           </div>
 
           {toAdd.length ? (

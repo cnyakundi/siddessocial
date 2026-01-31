@@ -49,7 +49,7 @@ function SidePopover({
 
   return (
     <>
-      <button hidden
+      <button
         type="button"
         aria-label="Close"
         className="fixed inset-0 z-[95]"
