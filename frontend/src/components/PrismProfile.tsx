@@ -999,11 +999,15 @@ export function CopyLinkButton({ href, label, messageHref }: { href: string; lab
   );
 }
 export function SideActionButtons(props: {
+  isSelf?: boolean; // sd_836
   viewerSidedAs: SideId | null;
   onOpenSheet: () => void; // profile page wires this as a 1-tap action (no sheet)
 }) {
   const { viewerSidedAs, onOpenSheet } = props;
 
+
+  // sd_836_self_guard: never show "Add Friend" / side actions on your own profile
+  if (props.isSelf) return null;
   // sd_957: design canon wording
   const sided = viewerSidedAs && viewerSidedAs !== "public" ? viewerSidedAs : null;
 
