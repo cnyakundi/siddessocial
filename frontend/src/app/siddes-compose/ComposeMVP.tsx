@@ -764,7 +764,7 @@ export default function ComposeMVP() {
               aria-label="Choose audience"
               title="Choose audience"
             >
-              <span className={cn("w-2 h-2 rounded-full", theme.primaryBg)} aria-hidden="true" />
+              <CirclesMark size={16} className="text-gray-400 shrink-0" />
               <span className={cn("text-sm font-extrabold", theme.text)}>{SIDES[side].label}</span>
               <span className="text-gray-300">•</span>
               <span className="text-sm font-bold text-gray-900 truncate max-w-[260px]">{audienceLabel}</span>

@@ -313,3 +313,7 @@ These are the overlays applied/created during the current session (evidence: ter
 - **sd_965_next_item_feed_row_clean:** Next item: PostCard row cleanup (hide @handle + inline signal chips; context-only stamp in rows) + fix missing RelTag.
 
 - **sd_968_circlesmark_topbar_and_compose:** UI polish: add CirclesMark icon to AppTopBar circle picker (and Compose audience pill when available); calm alerts dot color/copy.
+
+- **sd_969_sidefeed_advanced_gate_dev_and_public_tune:** SideFeed: gate DEV badge + dev import sheet behind ?advanced=1; Public Tune shows Topics normally; Trust/Counts only in advanced mode.
+
+- **sd_970_circlesmark_topbar_and_compose:** UI: add CirclesMark to AppTopBar circle picker + Compose audience pill (when present); calm alerts dot color/copy.

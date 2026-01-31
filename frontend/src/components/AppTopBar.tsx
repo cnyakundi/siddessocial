@@ -240,7 +240,8 @@ export function AppTopBar(props: { onOpenNotificationsDrawer?: () => void } = {}
                 aria-label="Choose circle"
                 title="Choose circle"
               >
-                <span className="truncate max-w-[180px]">{activeSetLabel}</span>
+                <CirclesMark size={16} className="text-gray-400 shrink-0" />
+                  <span className="truncate max-w-[180px]">{activeSetLabel}</span>
                 <ChevronDown size={14} className="text-gray-400" aria-hidden />
               </button>
             ) : (
