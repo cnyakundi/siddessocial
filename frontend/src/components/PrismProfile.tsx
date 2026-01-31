@@ -1006,6 +1006,9 @@ export function SideActionButtons(props: {
   const { viewerSidedAs, onOpenSheet } = props;
 
 
+
+  // sd_839_self_guard: never show "Add Friend"/Side controls on your own profile
+  if (props.isSelf) return null;
   // sd_836_self_guard: never show "Add Friend" / side actions on your own profile
   if (props.isSelf) return null;
   // sd_957: design canon wording
