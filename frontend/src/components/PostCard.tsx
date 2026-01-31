@@ -1703,7 +1703,8 @@ export function PostCard({
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    toggleEcho();
+                    // sd_974_row_echo_chooser: open chooser (Echo vs Quote Echo) instead of instant toggle
+                    setOpenEcho(true);
                   }}
                   disabled={echoBusy}
                 >
