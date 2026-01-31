@@ -321,3 +321,5 @@ These are the overlays applied/created during the current session (evidence: ter
 - **sd_971_sidefeed_header_calm_advanced_gate:** SideFeed header: gate DEV badge + dev import sheet behind ?advanced=1; Public Tune shows Topics normally; Trust/Counts only in advanced mode.
 
 - **sd_972b_feed_empty_state_single_cta_robust:** SideFeed EmptyState: remove secondary 'Create Circle' CTA; keep single primary action; circle creation stays in Circle picker / Circles page.
+
+- **sd_974_feed_circle_filter_single_pill:** Feed: replace Circle chips row with a single 'Circle ▾' pill (CirclesMark + dot) that opens CirclePickerSheet.

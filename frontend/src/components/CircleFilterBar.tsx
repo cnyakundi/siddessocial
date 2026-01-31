@@ -1,5 +1,8 @@
 "use client";
 
+// sd_974_feed_circle_filter_single_pill
+// Goal: replace horizontal chip row with ONE calm pill that opens CirclePickerSheet.
+
 import React, { useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
 
@@ -7,20 +10,20 @@ import type { CircleDef, CircleId } from "@/src/lib/circles";
 import type { SideId } from "@/src/lib/sides";
 import { getCircleTheme } from "@/src/lib/circleThemes";
 import { CirclePickerSheet } from "@/src/components/CirclePickerSheet";
+import { CirclesMark } from "@/src/components/icons/CirclesMark";
 
 function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
 }
 
-function Dot({ colorClass }: { colorClass: string }) {
-  return <span className={cn("w-2 h-2 rounded-full bg-current", colorClass)} aria-hidden="true" />;
+function Dot({ cls }: { cls: string }) {
+  return <span className={cn("w-1.5 h-1.5 rounded-full", cls)} aria-hidden="true" />;
 }
 
 /**
- * sd_946_feed_circle_pill:
- * - Replace horizontal chips row with ONE calm "Circle ▾" pill
- * - Tap opens CirclePickerSheet (recents + inline create)
- * - Keeps feed scroll clean on mobile
+ * Single control:
+ * - Label: All / Circle name
+ * - Opens: CirclePickerSheet (recents + create inside sheet)
  */
 export function CircleFilterBar({
   sets,
@@ -34,26 +37,24 @@ export function CircleFilterBar({
   sets: CircleDef[];
   activeSet: CircleId | null;
   onSetChange: (next: CircleId | null) => void;
-  /** Optional escape hatch: manage circles (power-user). */
   onNewSet?: () => void;
   label?: string;
   allLabel?: string;
-  /** Optional; if omitted we infer from data best-effort. */
   currentSide?: SideId;
 }) {
   const list = useMemo(() => (Array.isArray(sets) ? sets : []), [sets]);
 
   const effectiveActive = useMemo<CircleId | null>(() => {
     if (!activeSet) return null;
-    return list.some((s) => s.id === activeSet) ? activeSet : null;
+    return list.some((c) => c.id === activeSet) ? activeSet : null;
   }, [activeSet, list]);
 
   const active = useMemo(() => {
     if (!effectiveActive) return null;
-    return list.find((s) => s.id === effectiveActive) || null;
+    return list.find((c) => c.id === effectiveActive) || null;
   }, [effectiveActive, list]);
 
-  const contextSide: SideId = useMemo(() => {
+  const side: SideId = useMemo(() => {
     if (currentSide) return currentSide;
     if (active?.side) return active.side;
     const first = list[0]?.side;
@@ -62,10 +63,11 @@ export function CircleFilterBar({
 
   const title = active ? active.label : allLabel;
 
-  const dotClass = useMemo(() => {
-    if (!active) return "text-gray-400";
+  const dotCls = useMemo(() => {
+    if (!active) return "bg-gray-400";
     const t = getCircleTheme(active.color);
-    return t?.text || "text-gray-700";
+    // fallback to neutral if theme missing
+    return (t?.primaryBg || "bg-gray-700").replace("text-", "bg-");
   }, [active]);
 
   const [open, setOpen] = useState(false);
@@ -75,14 +77,15 @@ export function CircleFilterBar({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 hover:bg-gray-100 text-sm font-extrabold text-gray-700 transition-colors min-w-0"
+        className="h-9 inline-flex items-center gap-2 px-3 rounded-full bg-gray-50 hover:bg-gray-100 border border-gray-100 transition-colors min-w-0"
         aria-label={`${label}: ${title}`}
         title="Choose circle"
         data-testid="set-filter-bar"
       >
-        <Dot colorClass={dotClass} />
-        <span className="truncate">{title}</span>
-        <ChevronDown className="w-4 h-4 text-gray-400" aria-hidden="true" />
+        <CirclesMark size={16} className="text-gray-400 shrink-0" />
+        <Dot cls={dotCls} />
+        <span className="text-sm font-extrabold text-gray-900 truncate">{title}</span>
+        <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" aria-hidden="true" />
       </button>
 
       <CirclePickerSheet
@@ -94,7 +97,7 @@ export function CircleFilterBar({
         onNewSet={onNewSet}
         title={label}
         allLabel={allLabel}
-        currentSide={contextSide}
+        currentSide={side}
       />
     </>
   );
