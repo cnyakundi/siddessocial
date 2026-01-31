@@ -90,6 +90,8 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 
 ## NEXT overlay
 
+- **sd_947:** Profile declutter cleanroom — hide PrismSideTabs; force ProfileV2Header clean variant; remove header meta clutter/pulse/shared blocks; fix JSX comment dirt in /u/:username.
+
 - **sd_946:** UI: SideActionButtons copy + sizing ("Add Friend" / "Friends" etc), remove "Sided:" prefix, match Profile V2 action row.
 
 - **sd_945b:** Profile (/u/:username): robust Room pill + sheet (handles already-migrated pill); hide PrismSideTabs; ensure Back/Share visible.

@@ -220,11 +220,11 @@ export function ProfileV2Header(props: {
     <div className="mt-4 flex flex-wrap gap-2">
       <div className={cn("inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-extrabold", theme.lightBg, theme.border, theme.text)}>
         <ShieldCheck className="w-3.5 h-3.5" />
-        They show you {theyShow}
+         {theyShow}
       </div>
       <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-extrabold bg-gray-50 border-gray-200 text-gray-700">
         <ShieldCheck className="w-3.5 h-3.5" />
-        You show them {youShow}
+         {youShow}
       </div>
     </div>
   ) : null;
@@ -259,26 +259,8 @@ export function ProfileV2Header(props: {
       </div>
     );
   })();
-  const sharedSetsBlock =
-    Array.isArray(sharedSets) && sharedSets.length ? (
-      <div className="mt-6">
-        <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider mb-2">Shared Circles</div>
-        <div className="flex flex-wrap gap-2">
-          {sharedSets.slice(0, 8).map((s) => (
-            <span key={s} className="px-3 py-1 rounded-full text-[11px] font-extrabold bg-gray-50 text-gray-700 border border-gray-200 truncate max-w-[220px]">
-              {s}
-            </span>
-          ))}
-          {sharedSets.length > 8 ? (
-            <span className="px-2 py-1 rounded-full bg-gray-50 text-[10px] font-extrabold text-gray-500 border border-gray-200">
-              +{sharedSets.length - 8}
-            </span>
-          ) : null}
-        </div>
-      </div>
-    ) : null;
-
-  const avatar = avatarImage ? (
+  const sharedSetsBlock = null;
+const avatar = avatarImage ? (
     <img
       src={avatarImage}
       alt={name}
@@ -338,7 +320,7 @@ if (variant === "clean") {
 
           {actions ? <div className="mt-5">{actions}</div> : null}
 
-          {pulseBlock}
+          {/* sd_947_hide_pulse */}
         </div>
       </div>
     );
@@ -398,8 +380,8 @@ if (variant === "clean") {
 
         {actions ? <div className="mt-5">{actions}</div> : null}
 
-        {pulseBlock}
-        {sharedSetsBlock}
+        {/* sd_947_hide_pulse */}
+        {/* sd_947_hide_shared */}
       </div>
     </div>
   );
