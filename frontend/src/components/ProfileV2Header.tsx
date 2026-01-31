@@ -3,6 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import React from "react";
+import Link from "next/link";
 import { Globe, Users, Star, Briefcase, ShieldCheck, Lock, MapPin, Link as LinkIcon, MessageSquare, Mic, Pin } from "lucide-react";
 
 import { SIDES, SIDE_THEMES, type SideId } from "@/src/lib/sides";
@@ -54,8 +55,8 @@ export type ProfileV2HeaderVariant = "hero" | "clean";
 function Stat(props: { label: string; value: React.ReactNode; subtle?: boolean; href?: string; locked?: boolean }) {
   const { label, value, subtle, href, locked } = props;
 
-  const Wrapper: any = href && !locked ? "a" : "div";
-  const wrapperProps: any = href && !locked ? { href } : {};
+  const Wrapper: any = href && !locked ? Link : "div";
+  const wrapperProps: any = href && !locked ? { href, "aria-label": `Open ${label}`, title: `Open ${label}` } : {};
 
   return (
     <Wrapper
@@ -257,8 +258,8 @@ const ctaMessage = canMessage && onMessage ? (
         <Stat label="Posts" value={typeof shownPosts === "undefined" ? "—" : shownPosts} />
         {isPublic ? (
           <>
-            <Stat label="Siders" value={typeof shownFollowers === "undefined" ? "—" : shownFollowers} subtle href={followersHref} locked={publicRostersHidden} />
-            <Stat label="Side With" value={typeof shownFollowing === "undefined" ? "—" : shownFollowing} subtle href={followingHref} locked={publicRostersHidden} />
+            <Stat label="Followers" value={typeof shownFollowers === "undefined" ? "—" : shownFollowers} subtle href={followersHref} locked={publicRostersHidden} />
+            <Stat label="Following" value={typeof shownFollowing === "undefined" ? "—" : shownFollowing} subtle href={followingHref} locked={publicRostersHidden} />
           </>
         ) : showAccessStat ? (
           <Stat label="Private Set" value={typeof shownSiders === "string" ? shownSiders : "Close Vault"} subtle />

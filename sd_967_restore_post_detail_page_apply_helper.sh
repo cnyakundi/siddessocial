@@ -18,11 +18,5 @@ echo "== ${SD_ID} =="
 echo "Backup: $BK/$FILE"
 echo ""
 
-# Restore from git (works on old + new git)
 git restore "$FILE" 2>/dev/null || git checkout -- "$FILE"
-
 echo "✅ Restored from git: $FILE"
-echo ""
-echo "Next:"
-echo "  cd frontend && npm run typecheck && npm run build"
-echo "  cd .. && bash scripts/run_tests.sh --smoke"

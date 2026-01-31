@@ -492,26 +492,18 @@ const sendReplyNow = useCallback(async () => {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ text: t, parentId, client_key: `reply_${Date.now().toString(36)}` }),
     });
+    // sd_959_reply_send_parse_once: response body can only be consumed once.
+    let data: any = null;
+    try {
+      const txt = await res.text();
+      data = txt ? JSON.parse(txt) : null;
+    } catch {
+      data = null;
+    }
+    const j = data as any;
 
     if (res.ok) {
-
-      // sd_955_reply_json_once: Response body can only be read once — cache it.
-      let __sd_reply_body_read = false;
-      let __sd_reply_json: any = null;
-      const __sd_read_reply_json_once = async (): Promise<any> => {
-        if (__sd_reply_body_read) return __sd_reply_json;
-        __sd_reply_body_read = true;
-        try {
-          const txt = await res.text();
-          __sd_reply_json = txt ? JSON.parse(txt) : null;
-        } catch {
-          __sd_reply_json = null;
-        }
-        return __sd_reply_json;
-      };
-
-      const data = await __sd_read_reply_json_once(res);
-      if (!data || data.ok !== false) {
+      if (!j || (j as any).ok !== false) {
         setReplyText("");
         setReplyTo(null);
         setReplyBusy(false);
@@ -525,8 +517,8 @@ const sendReplyNow = useCallback(async () => {
       }
     }
 
-    const j = await __sd_read_reply_json_once(res);
-    const code = j && typeof j.error === "string" ? j.error : "request_failed";
+    const code = j && typeof (j as any).error === "string" ? String((j as any).error) : "request_failed";
+
 
     if (res.status === 400) {
       if (code === "too_long" && j && typeof j.max === "number") {

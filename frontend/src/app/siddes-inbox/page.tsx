@@ -495,7 +495,7 @@ const filtered = useMemo(() => {
 
 
   return (
-    <div className="p-4 relative" style={pullStyle}>
+    <div className="p-4 pb-[calc(120px+env(safe-area-inset-bottom))] relative" style={pullStyle}>
       {/* sd_913_pull_to_refresh_inbox indicator */}
       {pullEnabled ? (
         <div className="pointer-events-none flex justify-center" style={{ height: 0 }}>
