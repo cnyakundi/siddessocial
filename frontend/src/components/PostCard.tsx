@@ -412,7 +412,6 @@ function MediaGrid({ items, ownerId }: { items: MediaItem[]; ownerId: string }) 
     return () => window.removeEventListener("popstate", onPop);
   }, [readUrlIndex]);
 
-
   const shown = all.slice(0, 4);
   const more = Math.max(0, count - shown.length);
   const isSingle = shown.length === 1;
@@ -496,7 +495,9 @@ function MediaGrid({ items, ownerId }: { items: MediaItem[]; ownerId: string }) 
         for (const e of entries) {
           if (e && e.isIntersecting) {
             prefetchOnce();
-            try { obs.disconnect(); } catch {}
+            try {
+              obs.disconnect();
+            } catch {}
             break;
           }
         }
@@ -506,7 +507,9 @@ function MediaGrid({ items, ownerId }: { items: MediaItem[]; ownerId: string }) 
 
     obs.observe(el);
     return () => {
-      try { obs.disconnect(); } catch {}
+      try {
+        obs.disconnect();
+      } catch {}
     };
   }, [prefetchOnce]);
 
@@ -539,10 +542,10 @@ function MediaGrid({ items, ownerId }: { items: MediaItem[]; ownerId: string }) 
   return (
     <>
       <div
-         ref={prefetchRootRef}
-         className={cn("w-full mb-3 lg:mb-4")}
-         onMouseEnter={() => prefetchOnce()}
-         onTouchStart={() => prefetchOnce()}
+        ref={prefetchRootRef}
+        className={cn("w-full mb-3 lg:mb-4")}
+        onMouseEnter={() => prefetchOnce()}
+        onTouchStart={() => prefetchOnce()}
         onMouseDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
       >
@@ -654,6 +657,7 @@ function MediaGrid({ items, ownerId }: { items: MediaItem[]; ownerId: string }) 
     </>
   );
 }
+
 
 // ---- Link preview helpers (no external fetch) ----
 type LinkInfo = { href: string; domain: string; display: string };
