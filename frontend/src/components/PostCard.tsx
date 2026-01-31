@@ -780,8 +780,29 @@ function Avatar({ name, handle, avatarUrl }: { name?: string; handle?: string; a
   );
 }
 
-function ContextStamp({ side, context }: { side: SideId; context?: string | null }) {
+function ContextStamp({ side, context, mode = "full" }: { side: SideId; context?: string | null; mode?: "full" | "context" }) {
   const theme = SIDE_THEMES[side];
+
+  // sd_935_postcard_row_metadata_clean: row variant wants context-only (no redundant Side label)
+  if (mode === "context") {
+    if (!context) return null;
+    return (
+      <span
+        className={cn(
+          "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] border",
+          theme.lightBg,
+          theme.text,
+          theme.border
+        )}
+        aria-label={context}
+        title={context}
+      >
+        <span className={cn("w-1.5 h-1.5 rounded-full", theme.primaryBg)} aria-hidden="true" />
+        <span className="font-semibold truncate max-w-[180px]">{context}</span>
+      </span>
+    );
+  }
+
   return (
     <span
       className={cn(
@@ -887,9 +908,10 @@ export function PostCard({
   const contextChip = side === "public" ? (topicChip || setChip) : setChip;
 
   // Keep chips for signals (Mention/Doc/Urgent), with overflow sheet.
+  // sd_935_postcard_row_metadata_clean: keep feed rows calm; signals live behind +N.
   const signalChips = allChips.filter((c) => c.id !== "topic" && c.id !== "set");
-  const visible = signalChips.slice(0, 1);
-  const overflow = signalChips.slice(1);
+  const visible = isRow ? [] : signalChips.slice(0, 1);
+  const overflow = isRow ? signalChips : signalChips.slice(1);
   const overflowCount = overflow.length;
 
   const [openOverflow, setOpenOverflow] = useState(false);
@@ -1335,8 +1357,22 @@ export function PostCard({
                 </>
               ) : null}
 
-              <span className="text-gray-300 text-[10px]">•</span>
-              <ContextStamp side={side} context={contextChip?.label || null} />
+              {(!isRow || contextChip?.label) ? (
+
+
+                <>
+
+
+                  <span className="text-gray-300 text-[10px]">•</span>
+
+
+                  <ContextStamp side={side} context={contextChip?.label || null} mode={isRow ? "context" : "full"} />
+
+
+                </>
+
+
+              ) : null}
 
               {!isRow && visible.map((c) => (
                 <span

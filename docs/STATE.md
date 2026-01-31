@@ -88,7 +88,7 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 ## Feed ladder (DRF cutover series)
 - **sd_142:** Feed DRF endpoint + API-base-aware Next proxy (client calls same-origin /api/feed; Next proxies to Django via SD_INTERNAL_API_BASE / NEXT_PUBLIC_API_BASE)
 
-## NEXT overlay
+## NEXT overlay\n- **sd_935_postcard_row_metadata_clean:** PostCard row: remove redundant Side stamp; show circle/topic only; move signal chips behind +N for cleaner feed rows.\n
 
 - **sd_958:** Profile: add pins/highlights grid + locked inline card (no dialogs); tabs icons-only.
 
