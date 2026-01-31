@@ -425,7 +425,7 @@ export default function UserProfilePage() {
                   ) : (
                     <div className="flex flex-col gap-3">
                       <div className="flex gap-3">
-                        <SideActionButtons viewerSidedAs={viewerSidedAs} onOpenSheet={() => { if (viewerSidedAs && viewerSidedAs !== "public") { try { window.location.href = "/siddes-settings/prism-people"; } catch {} return; } void doPickSide("friends"); }} />
+                        <SideActionButtons isSelf={isOwner} viewerSidedAs={viewerSidedAs} onOpenSheet={() => { if (viewerSidedAs && viewerSidedAs !== "public") { try { window.location.href = "/siddes-settings/prism-people"; } catch {} return; } void doPickSide("friends"); }} />
                       </div>
                       <div className="flex gap-3">
                         <CopyLinkButton href={href} />

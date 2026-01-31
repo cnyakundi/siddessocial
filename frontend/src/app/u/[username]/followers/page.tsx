@@ -166,7 +166,7 @@ if (isHidden) {
         <div className="mt-3">
           <div className="text-lg font-black text-gray-900 flex items-center gap-2">Followers {hidden ? <Lock size={16} className="text-gray-300" /> : null}</div>
           <div className="text-xs text-gray-500 mt-1">
-            Public followers (does not grant Friends/Close/Work access).{" "}
+            Public Siders (Public Side only; does not grant Friends/Close/Work access).{" "}
             {typeof total === "number" ? <span className="font-mono">Total: {total}</span> : null}
           </div>
         </div>
@@ -177,7 +177,7 @@ if (isHidden) {
           <div className="text-sm text-gray-500">Loading…</div>
         ) : trouble ? (
           <div className="rounded-2xl border border-red-200 bg-red-50 p-4">
-            <div className="text-sm font-black text-red-800">Couldn’t load followers</div>
+            <div className="text-sm font-black text-red-800">Couldn’t load siders</div>
             <div className="text-xs text-red-700 mt-1">Try refreshing.</div>
           </div>
         ) : hidden ? (
@@ -211,7 +211,7 @@ if (isHidden) {
             })}
           </div>
         ) : (
-          <div className="text-sm text-gray-500">No followers yet.</div>
+          <div className="text-sm text-gray-500">No siders yet.</div>
         )}
 
         {nextCursor && !trouble ? (
@@ -242,3 +242,6 @@ if (isHidden) {
 
 
 // sd_940_fix_hidden_list_pages_v4
+
+
+// sd_941_finish_sd940_hidden_rosters_ui

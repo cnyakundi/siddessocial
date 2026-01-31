@@ -257,8 +257,8 @@ const ctaMessage = canMessage && onMessage ? (
         <Stat label="Posts" value={typeof shownPosts === "undefined" ? "—" : shownPosts} />
         {isPublic ? (
           <>
-            <Stat label="Followers" value={typeof shownFollowers === "undefined" ? "—" : shownFollowers} subtle href={followersHref} locked={publicRostersHidden} />
-            <Stat label="Following" value={typeof shownFollowing === "undefined" ? "—" : shownFollowing} subtle href={followingHref} locked={publicRostersHidden} />
+            <Stat label="Siders" value={typeof shownFollowers === "undefined" ? "—" : shownFollowers} subtle href={followersHref} locked={publicRostersHidden} />
+            <Stat label="Side With" value={typeof shownFollowing === "undefined" ? "—" : shownFollowing} subtle href={followingHref} locked={publicRostersHidden} />
           </>
         ) : showAccessStat ? (
           <Stat label="Private Set" value={typeof shownSiders === "string" ? shownSiders : "Close Vault"} subtle />
@@ -390,3 +390,6 @@ if (variant === "clean") {
   );
 }
 
+
+
+// sd_941_finish_sd940_hidden_rosters_ui
