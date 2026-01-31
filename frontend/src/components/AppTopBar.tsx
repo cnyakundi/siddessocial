@@ -254,7 +254,7 @@ export function AppTopBar(props: { onOpenNotificationsDrawer?: () => void } = {}
           {showRefresh ? (
             <button
               type="button"
-              className="min-w-[44px] min-h-[44px] inline-flex items-center justify-center p-2 rounded-full hover:bg-gray-100 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900/20"
+              className="min-w-[44px] min-h-[44px] inline-flex items-center justify-center p-2 rounded-xl hover:bg-gray-100 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900/20"
               aria-label="Refresh"
               title="Refresh"
               onClick={() => {
@@ -272,7 +272,7 @@ export function AppTopBar(props: { onOpenNotificationsDrawer?: () => void } = {}
 
           <button
             type="button"
-            className="min-w-[44px] min-h-[44px] inline-flex items-center justify-center p-2 rounded-full hover:bg-gray-100 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900/20"
+            className="min-w-[44px] min-h-[44px] inline-flex items-center justify-center p-2 rounded-xl hover:bg-gray-100 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900/20"
             aria-label="Alerts"
             title="Alerts"
             onClick={openAlerts}
@@ -290,7 +290,7 @@ export function AppTopBar(props: { onOpenNotificationsDrawer?: () => void } = {}
 
           <Link
             href="/siddes-search"
-            className="min-w-[44px] min-h-[44px] inline-flex items-center justify-center p-2 rounded-full hover:bg-gray-100 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900/20"
+            className="min-w-[44px] min-h-[44px] inline-flex items-center justify-center p-2 rounded-xl hover:bg-gray-100 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900/20"
             aria-label="Search"
             title="Search"
           >
