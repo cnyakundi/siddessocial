@@ -90,6 +90,8 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 
 ## NEXT overlay
 
+- **sd_946:** UI: SideActionButtons copy + sizing ("Add Friend" / "Friends" etc), remove "Sided:" prefix, match Profile V2 action row.
+
 - **sd_945b:** Profile (/u/:username): robust Room pill + sheet (handles already-migrated pill); hide PrismSideTabs; ensure Back/Share visible.
 
 - **sd_941:** Activity/Alerts: redesign NotificationsView header + rows (avatar bubble, unread dot, New/Earlier), add Side pill switcher; hide Inbox header on Alerts tab.

@@ -992,31 +992,43 @@ export function SideActionButtons(props: {
   onOpenSheet: () => void;
 }) {
   const { viewerSidedAs, onOpenSheet } = props;
-  if (viewerSidedAs && viewerSidedAs !== "public") {
-    const t = SIDE_THEMES[viewerSidedAs];
+
+  // Design canon:
+  // - Unsided -> "Add Friend" (clear CTA, opens sheet to choose Friends/Close/Work)
+  // - Sided -> show the Side label only (no "Sided:" prefix)
+  const sided = viewerSidedAs && viewerSidedAs !== "public" ? viewerSidedAs : null;
+
+  if (sided) {
+    const t = SIDE_THEMES[sided];
     return (
       <button
         type="button"
         onClick={onOpenSheet}
         className={cn(
-          "flex-1 py-2.5 rounded-xl font-extrabold text-sm text-white shadow-md active:scale-95 transition-all flex items-center justify-center gap-2",
+          "flex-1 h-11 rounded-2xl font-extrabold text-sm text-white shadow-md active:scale-95 transition-all flex items-center justify-center gap-2",
           t.primaryBg
         )}
+        aria-label={`Sided: ${SIDES[sided].label}`}
+        title={`Sided: ${SIDES[sided].label}`}
       >
-        Sided: {SIDES[viewerSidedAs].label} <ChevronDown size={16} />
+        {SIDES[sided].label} <ChevronDown size={16} />
       </button>
     );
   }
+
   return (
     <button
       type="button"
       onClick={onOpenSheet}
-      className="flex-1 py-2.5 rounded-xl font-extrabold text-sm text-white shadow-md active:scale-95 transition-all flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-900"
+      className="flex-1 h-11 rounded-2xl font-extrabold text-sm bg-gray-100 text-gray-900 hover:bg-gray-200 transition-all flex items-center justify-center gap-2"
+      aria-label="Add Friend"
+      title="Add Friend"
     >
-      <Plus size={16} /> Side
+      <Plus size={16} /> Add Friend
     </button>
   );
 }
+
 export function EditFacetButton({ onClick }: { onClick: () => void }) {
   return (
     <button type="button" onClick={onClick} className="flex-1 py-2.5 rounded-xl font-extrabold text-sm text-white shadow-md active:scale-95 transition-all flex items-center justify-center gap-2 bg-gray-900 hover:bg-black">
