@@ -285,3 +285,5 @@ These are the overlays applied/created during the current session (evidence: ter
 - **sd_785_tab_route_memory:** FB-like tab stacks: BottomNav + DesktopSideDock return you to the last route you visited within each tab (Feed includes /siddes-post).
 
 - sd_786 — Inbox DM mirror delivery guardrails (doc sync for checks)
+
+- **sd_943_apptopbar_repair_and_gate_refresh:** Repair AppTopBar; gate Refresh behind ?advanced=1; normalize 44px icon buttons to rounded-xl; fix goBack/pageTitle formatting.
