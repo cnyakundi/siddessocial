@@ -506,7 +506,89 @@ const tid = String(j?.thread?.id || "").trim();
   return (
     <div className="min-h-screen bg-white">
       <div className="sticky top-0 z-[80] bg-white/90 backdrop-blur border-b border-gray-100">
-        <div className="max-w-xl mx-auto px-4 py-3 flex items-center justify-between">
+        
+      {roomSheetOpen ? (
+        <div className="fixed inset-0 z-[95] flex items-end justify-center md:items-center">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+            onClick={() => setRoomSheetOpen(false)}
+            aria-label="Close"
+          />
+          <div className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-4">
+            <div className="flex items-center justify-between mb-3 px-1">
+              <div className="text-xs font-black text-gray-500 uppercase tracking-widest">View Room</div>
+              <button
+                type="button"
+                onClick={() => setRoomSheetOpen(false)}
+                className="p-2 rounded-full hover:bg-gray-100"
+                aria-label="Close"
+              >
+                <X size={18} className="text-gray-500" />
+              </button>
+            </div>
+
+            <div className="space-y-1">
+              {(["public", "friends", "close", "work"] as SideId[]).map((s) => {
+                const allowed = s === "public" ? true : (Array.isArray(allowedSides) ? allowedSides.includes(s) : false);
+                const active = String(displaySide) === String(s);
+
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => {
+                      setRoomSheetOpen(false);
+                      if (allowed) setActiveIdentitySide(s);
+                      else setLockedSide(s);
+                    }}
+                    className={
+                      "w-full flex items-center justify-between px-3 py-3 rounded-2xl border transition-colors " +
+                      (active ? "bg-gray-50 border-gray-200" : "bg-white border-gray-100 hover:bg-gray-50")
+                    }
+                    aria-label={allowed ? `Switch to ${SIDES[s]?.label || s}` : `Locked: ${SIDES[s]?.label || s}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={
+                          "w-10 h-10 rounded-full flex items-center justify-center border " +
+                          (allowed ? "bg-black text-white border-black" : "bg-gray-100 text-gray-400 border-gray-200")
+                        }
+                      >
+                        {allowed ? (
+                          <span className="text-[10px] font-black">{(SIDES[s]?.label || s).slice(0, 1)}</span>
+                        ) : (
+                          <Lock size={16} />
+                        )}
+                      </div>
+                      <div className="text-left">
+                        <div className={"text-sm font-black capitalize " + (allowed ? "text-gray-900" : "text-gray-400")}>
+                          {SIDES[s]?.label || s}
+                        </div>
+                        {!allowed ? <div className="text-[11px] font-semibold text-gray-400">Locked</div> : null}
+                      </div>
+                    </div>
+
+                    {active ? (
+                      <div className="w-6 h-6 rounded-full bg-black text-white flex items-center justify-center">
+                        <span className="text-[12px] font-black">✓</span>
+                      </div>
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="mt-3 text-[11px] font-semibold text-gray-500 px-1">
+              Switching rooms changes what you can see of {user?.handle}.
+            </div>
+
+            {/* sd_942_room_sheet_overlay */}
+          </div>
+        </div>
+      ) : null}
+
+<div className="max-w-xl mx-auto px-4 py-3 flex items-center justify-between">
           <button
             type="button"
             onClick={() => { try { router.back(); } catch {} }}
@@ -640,7 +722,7 @@ const tid = String(j?.thread?.id || "").trim();
             {/* sd_912_remove_prism_side_tabs */}
 {!isOwner && lockedSide ? (
               <div className="fixed inset-0 z-[97] flex items-end justify-center md:items-center">
-                <button hidden
+                <button
                   type="button"
                   className="absolute inset-0 bg-black/30 backdrop-blur-sm"
                   onClick={() => setLockedSide(null)}
@@ -795,7 +877,7 @@ isOwner={isOwner}
 
               {aboutOpen ? (
                 <div className="fixed inset-0 z-[98] flex items-end justify-center md:items-center">
-                  <button hidden
+                  <button
                     type="button"
                     className="absolute inset-0 bg-black/30 backdrop-blur-sm"
                     onClick={() => setAboutOpen(false)}
