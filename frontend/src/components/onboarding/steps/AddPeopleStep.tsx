@@ -32,6 +32,15 @@ function parseIdentifiers(raw: string): string[] {
   return out;
 }
 
+
+// sd_850_fix_onboarding_addpeople_self_guard_syntax: normalize + self-filter helpers
+function normalizeHandle(raw: string): string {
+  const t = String(raw || "").trim();
+  if (!t) return "";
+  const h = t.startsWith("@") ? t : "@" + t;
+  return h.replace(/^@+/, "@").trim().toLowerCase();
+}
+
 export default function AddPeopleStep({
   setName,
   sideId,
@@ -143,6 +152,12 @@ export default function AddPeopleStep({
     }
 
   function toggle(handle: string, name?: string) {
+    // sd_850_fix_onboarding_addpeople_self_guard_syntax_toggle: normalize handles + ignore self
+    const me = normalizeHandle(String(myHandle || ""));
+    const hNorm = normalizeHandle(handle);
+    if (!hNorm) return;
+    if (me && hNorm === me) return;
+    handle = hNorm;
     const h = String(handle || "").trim();
     if (!h) return;
     setAdded((prev) => {
@@ -363,7 +378,7 @@ export default function AddPeopleStep({
       <div className="space-y-4 px-4 flex flex-col items-center">
         <PrimaryButton
           label={added.size ? `Finished (${added.size})` : "Continue"}
-          onClick={() => onContinue({ handles: Array.from(added), contactSyncDone })}
+          onClick={() => onContinue({ handles: Array.from(added).filter((h) => normalizeHandle(h) !== normalizeHandle(String(myHandle || ""))).filter((h) => normalizeHandle(h) !== normalizeHandle(String(myHandle || ""))), contactSyncDone })}
           icon={ArrowRight}
         />
         <button onClick={onSkip} className="text-sm font-bold text-gray-400 hover:text-gray-900 transition-colors uppercase tracking-widest">

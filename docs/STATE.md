@@ -307,3 +307,5 @@ These are the overlays applied/created during the current session (evidence: ter
 - **sd_959c_alerts_drawer_header_actions:** Alerts drawer: header owns 'Mark all read (N)' and NotificationsView supports hideHeader for drawer embed (no stacked headers).
 
 - **sd_963_next_item_calm_unread_and_fix_reltag:** Next item: fix missing RelTag in Connections page; calm unread indicators (dot-only + neutral) in AppTopBar + BottomNav.
+
+- **sd_964_next_item_fix_reltag_and_run_gates:** Fix RelTag missing in connections page; neutralize unread dots (no red panic) in AppTopBar + BottomNav; gates green.
