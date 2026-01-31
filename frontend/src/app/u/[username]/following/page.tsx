@@ -245,3 +245,6 @@ if (isHidden) {
 
 
 // sd_941_finish_sd940_hidden_rosters_ui
+
+
+// sd_945_fix_public_rosters_hidden_pages

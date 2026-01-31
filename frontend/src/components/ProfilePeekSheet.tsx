@@ -221,7 +221,7 @@ export function ProfilePeekSheet(props: {
 
   return createPortal(
     <div className="fixed inset-0 z-[99] flex items-end justify-center md:items-center" data-testid="profile-peek-sheet">
-      <button hidden
+      <button
         type="button"
         className="absolute inset-0 bg-black/30 backdrop-blur-sm"
         onPointerDown={(e) => {
