@@ -90,6 +90,8 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 
 ## NEXT overlay
 
+- **sd_945b:** Profile (/u/:username): robust Room pill + sheet (handles already-migrated pill); hide PrismSideTabs; ensure Back/Share visible.
+
 - **sd_941:** Activity/Alerts: redesign NotificationsView header + rows (avatar bubble, unread dot, New/Earlier), add Side pill switcher; hide Inbox header on Alerts tab.
 
 - **sd_940:** Inbox: MVP clean default — hide chips/context-risk/pin UI unless ?advanced=1; hide tabs+lock helper on mobile; reset filter/query when advanced off.
