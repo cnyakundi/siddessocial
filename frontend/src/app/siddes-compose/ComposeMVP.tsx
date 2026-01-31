@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 
 import { useSide } from "@/src/components/SideProvider";
-import { CirclePickerSheet } from "@/src/components/CirclePickerSheet";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { usePrismAvatar } from "@/src/hooks/usePrismAvatar";
 
@@ -28,7 +27,7 @@ import type { PublicChannelId } from "@/src/lib/publicChannels";
 import { PUBLIC_CHANNELS, labelForPublicChannel } from "@/src/lib/publicChannels";
 import type { CircleDef, CircleId } from "@/src/lib/circles";
 import { getCirclesProvider } from "@/src/lib/circlesProvider";
-import { getStoredLastPublicTopic, getStoredLastSetForSide } from "@/src/lib/audienceStore";
+import { emitAudienceChanged, getStoredLastPublicTopic, getStoredLastSetForSide, pushStoredRecentSetForSide, setStoredLastPublicTopic, setStoredLastSetForSide } from "@/src/lib/audienceStore";
 
 import { formatDurationMs, useComposeMedia } from "./useComposeMedia";
 
@@ -112,16 +111,32 @@ function clearDraft(side: SideId) {
   }
 }
 
-function TopicPickerSheet({
+function AudiencePickerSheet({
   open,
   onClose,
-  value,
-  onPick,
+  side,
+  setSide,
+  circles,
+  circlesLoaded,
+  selectedCircleId,
+  onPickCircle,
+  publicChannel,
+  onPickTopic,
+  topicsEnabled,
+  onNewCircle,
 }: {
   open: boolean;
   onClose: () => void;
-  value: PublicChannelId;
-  onPick: (next: PublicChannelId) => void;
+  side: SideId;
+  setSide: (next: SideId) => void;
+  circles: CircleDef[];
+  circlesLoaded: boolean;
+  selectedCircleId: CircleId | null;
+  onPickCircle: (next: CircleId | null) => void;
+  publicChannel: PublicChannelId;
+  onPickTopic: (next: PublicChannelId) => void;
+  topicsEnabled: boolean;
+  onNewCircle: () => void;
 }) {
   useLockBodyScroll(open);
 
@@ -135,11 +150,15 @@ function TopicPickerSheet({
   }, [open, onClose]);
 
   if (!open) return null;
+
+  const SIDE_ORDER: SideId[] = ["public", "friends", "close", "work"];
+  const filtered = Array.isArray(circles) ? circles.filter((c) => c && c.side === side) : [];
+
   return (
     <div className="fixed inset-0 z-[125] flex items-end justify-center md:items-center">
       <button
         type="button"
-        aria-label="Close topic picker"
+        aria-label="Close audience picker"
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
         onPointerDown={(e) => {
           e.preventDefault();
@@ -150,9 +169,12 @@ function TopicPickerSheet({
           onClose();
         }}
       />
-      <div className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200">
+      <div className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 animate-in slide-in-from-bottom-full duration-200 max-h-[70dvh] md:max-h-[80vh] overflow-y-auto overscroll-contain">
         <div className="flex items-center justify-between gap-3 mb-4">
-          <h3 className="text-lg font-bold text-gray-900">Topic</h3>
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">Audience</h3>
+            <div className="text-xs text-gray-500 mt-1">Pick a Side, then optionally a Circle.</div>
+          </div>
           <button
             type="button"
             onClick={onClose}
@@ -163,39 +185,148 @@ function TopicPickerSheet({
           </button>
         </div>
 
-        <div className="space-y-2">
-          {PUBLIC_CHANNELS.map((c) => {
-            const active = value === c.id;
-            return (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => {
-                  onPick(c.id);
-                  onClose();
-                }}
-                className={cn(
-                  "w-full text-left p-4 rounded-2xl border transition-all flex items-center justify-between gap-3",
-                  active ? "border-gray-900 bg-gray-900 text-white" : "border-gray-200 bg-white hover:bg-gray-50"
-                )}
-                title={c.desc}
-              >
-                <div className="min-w-0">
-                  <div className={cn("font-bold truncate", active ? "text-white" : "text-gray-900")}>{c.label}</div>
-                  <div className={cn("text-[11px] truncate", active ? "text-white/80" : "text-gray-500")}>{c.desc}</div>
-                </div>
-                {active ? (
-                  <span className="w-2.5 h-2.5 rounded-full bg-white" />
-                ) : (
-                  <span className="w-2.5 h-2.5 rounded-full bg-gray-300" />
-                )}
-              </button>
-            );
-          })}
+        <div className="mb-5">
+          <div className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400 mb-2">Side</div>
+          <div className="flex gap-2 p-1 rounded-2xl bg-gray-50/80 border border-gray-100">
+            {SIDE_ORDER.map((id) => {
+              const t = SIDE_THEMES[id];
+              const active = side === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setSide(id)}
+                  className={cn(
+                    "flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[11px] font-extrabold transition-all border",
+                    active ? "bg-white border-gray-200 shadow-sm" : "bg-transparent border-transparent text-gray-400 hover:text-gray-700 hover:bg-white/60"
+                  )}
+                  aria-label={SIDES[id].label}
+                  title={SIDES[id].privacyHint}
+                >
+                  <span className={cn("w-2 h-2 rounded-full", t.primaryBg)} aria-hidden="true" />
+                  <span className={cn(active ? t.text : "")}>{SIDES[id].label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        <button type="button" onClick={onClose} className="w-full mt-3 py-3 font-semibold text-gray-500 hover:bg-gray-50 rounded-xl">
-          Cancel
+        {side === "public" ? (
+          <div>
+            <div className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400 mb-2">Topic</div>
+
+            {!topicsEnabled ? (
+              <div className="p-4 rounded-2xl border border-gray-200 bg-gray-50 text-sm text-gray-600">
+                Topics are disabled in this build.
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {PUBLIC_CHANNELS.map((c) => {
+                  const active = publicChannel === c.id;
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => {
+                        onPickTopic(c.id);
+                        onClose();
+                      }}
+                      className={cn(
+                        "w-full text-left p-4 rounded-2xl border transition-all flex items-center justify-between gap-3",
+                        active ? "border-gray-900 bg-gray-900 text-white" : "border-gray-200 bg-white hover:bg-gray-50"
+                      )}
+                      title={c.desc}
+                    >
+                      <div className="min-w-0">
+                        <div className={cn("font-bold truncate", active ? "text-white" : "text-gray-900")}>{c.label}</div>
+                        <div className={cn("text-[11px] truncate", active ? "text-white/80" : "text-gray-500")}>{c.desc}</div>
+                      </div>
+                      {active ? <span className="w-2.5 h-2.5 rounded-full bg-white" /> : <span className="w-2.5 h-2.5 rounded-full bg-gray-300" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div>
+            <div className="flex items-end justify-between gap-3 mb-2">
+              <div className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400">Circle</div>
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onNewCircle();
+                }}
+                className="text-[11px] font-extrabold text-gray-700 hover:text-gray-900 hover:underline"
+              >
+                New circle
+              </button>
+            </div>
+
+            {!circlesLoaded ? (
+              <div className="p-4 rounded-2xl border border-gray-200 bg-gray-50 text-sm text-gray-600">Loading circles…</div>
+            ) : (
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onPickCircle(null);
+                    onClose();
+                  }}
+                  className={cn(
+                    "w-full text-left p-4 rounded-2xl border transition-all flex items-center justify-between gap-3",
+                    !selectedCircleId ? "border-gray-900 bg-gray-900 text-white" : "border-gray-200 bg-white hover:bg-gray-50"
+                  )}
+                  title={SIDES[side].privacyHint}
+                >
+                  <div className="min-w-0">
+                    <div className={cn("font-bold truncate", !selectedCircleId ? "text-white" : "text-gray-900")}>All {SIDES[side].label}</div>
+                    <div className={cn("text-[11px] truncate", !selectedCircleId ? "text-white/80" : "text-gray-500")}>{SIDES[side].privacyHint}</div>
+                  </div>
+                  {!selectedCircleId ? <span className="w-2.5 h-2.5 rounded-full bg-white" /> : <span className="w-2.5 h-2.5 rounded-full bg-gray-300" />}
+                </button>
+
+                {filtered.map((c) => {
+                  const active = selectedCircleId === c.id;
+                  const members = (c as any) && Array.isArray((c as any).members) ? (c as any).members.length : 0;
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => {
+                        onPickCircle(c.id);
+                        onClose();
+                      }}
+                      className={cn(
+                        "w-full text-left p-4 rounded-2xl border transition-all flex items-center justify-between gap-3",
+                        active ? "border-gray-900 bg-gray-900 text-white" : "border-gray-200 bg-white hover:bg-gray-50"
+                      )}
+                      title={c.label}
+                    >
+                      <div className="min-w-0">
+                        <div className={cn("font-bold truncate", active ? "text-white" : "text-gray-900")}>{c.label}</div>
+                        <div className={cn("text-[11px] truncate", active ? "text-white/80" : "text-gray-500")}>
+                          {members ? `${members} people` : "Circle"}
+                        </div>
+                      </div>
+                      {active ? <span className="w-2.5 h-2.5 rounded-full bg-white" /> : <span className="w-2.5 h-2.5 rounded-full bg-gray-300" />}
+                    </button>
+                  );
+                })}
+
+                {filtered.length === 0 ? (
+                  <div className="p-4 rounded-2xl border border-dashed border-gray-200 bg-white text-sm text-gray-500">
+                    No circles yet. Create one to target a smaller group.
+                  </div>
+                ) : null}
+              </div>
+            )}
+          </div>
+        )}
+
+        <button type="button" onClick={onClose} className="w-full mt-4 py-3 font-semibold text-gray-500 hover:bg-gray-50 rounded-xl">
+          Done
         </button>
       </div>
     </div>
@@ -240,9 +371,7 @@ export default function ComposeMVP() {
   const [setsLoaded, setSetsLoaded] = useState(false);
   const [selectedCircleId, setSelectedCircleId] = useState<CircleId | null>(null);
   const [publicChannel, setPublicChannel] = useState<PublicChannelId>("general");
-
-  const [setPickerOpen, setSetPickerOpen] = useState(false);
-  const [topicPickerOpen, setTopicPickerOpen] = useState(false);
+  const [audiencePickerOpen, setAudiencePickerOpen] = useState(false);
 
   const { fileInputRef, mediaItems, mediaBusy, mediaKeys, mediaMeta, pickMedia, addMediaFiles, removeMedia, clearMedia } = useComposeMedia();
 
@@ -408,15 +537,10 @@ export default function ComposeMVP() {
 
   const audienceLabel =
     side === "public"
-      ? FLAGS.publicChannels
-        ? labelForPublicChannel(publicChannel)
-        : "Public"
+      ? (FLAGS.publicChannels ? labelForPublicChannel(publicChannel) : "All")
       : selectedSet
         ? selectedSet.label
-        : `All ${SIDES[side].label}`;
-
-  const lockTextSimple = side === "public" ? "Everyone" : `${SIDES[side].label} only`;
-
+        : "All";
   const maxChars = side === "public" ? 800 : 5000;
   const charCount = text.length;
   const overLimit = charCount > maxChars;
@@ -426,12 +550,7 @@ export default function ComposeMVP() {
 
   const openAudience = () => {
     if (mismatch) return;
-    if (side === "public") {
-      if (!FLAGS.publicChannels) return;
-      setTopicPickerOpen(true);
-      return;
-    }
-    setSetPickerOpen(true);
+    setAudiencePickerOpen(true);
   };
 
   async function postNow(raw: string) {
@@ -494,7 +613,7 @@ export default function ComposeMVP() {
       if (res.ok) {
         const msg =
           `Posted: ${SIDES[side].label}` +
-          (selectedSet ? ` • Set: ${selectedSet.label}` : "") +
+          (selectedSet ? ` • Circle: ${selectedSet.label}` : "") +
           (side === "public" && FLAGS.publicChannels ? ` • Topic: ${labelForPublicChannel(publicChannel)}` : "");
         reset();
         setPosting(false);
@@ -616,7 +735,7 @@ export default function ComposeMVP() {
               Cancel
             </button>
 
-            <div className={cn("text-sm font-extrabold", theme.text)}>{SIDES[side].label}</div>
+            <div className="text-sm font-extrabold text-gray-900">{title}</div>
 
             <button
               type="button"
@@ -635,23 +754,25 @@ export default function ComposeMVP() {
           </div>
 
           {/* Audience row */}
-          <div className="px-6 md:px-8 pt-3 pb-2 flex items-center justify-between gap-3">
+          <div className="px-6 md:px-8 pt-3 pb-3">
             <button
               type="button"
               onClick={openAudience}
-              disabled={mismatch || (side === "public" && !FLAGS.publicChannels)}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors min-w-0 disabled:opacity-50 disabled:cursor-not-allowed"
-              aria-label={side === "public" ? "Choose topic" : "Choose group"}
-              title={side === "public" ? "Topic" : "Set"}
+              disabled={mismatch}
+              className="w-full inline-flex items-center gap-2 px-3 py-2 rounded-full bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors min-w-0 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Choose audience"
+              title="Choose audience"
             >
               <span className={cn("w-2 h-2 rounded-full", theme.primaryBg)} aria-hidden="true" />
+              <span className={cn("text-sm font-extrabold", theme.text)}>{SIDES[side].label}</span>
+              <span className="text-gray-300">•</span>
               <span className="text-sm font-bold text-gray-900 truncate max-w-[260px]">{audienceLabel}</span>
-              <ChevronDown size={16} className="text-gray-400 shrink-0" />
+              <ChevronDown size={16} className="text-gray-400 shrink-0 ml-auto" />
             </button>
 
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 shrink-0">
-              <Lock size={12} />
-              <span>{lockTextSimple}</span>
+            <div className="mt-2 flex items-center gap-1.5 text-[11px] text-gray-400 font-semibold">
+              {side === "public" ? <Globe size={12} className="text-gray-300" /> : <Lock size={12} className="text-gray-300" />}
+              <span>{SIDES[side].privacyHint}</span>
             </div>
           </div>
 
@@ -821,20 +942,30 @@ export default function ComposeMVP() {
         }}
       />
 
-      {/* Audience sheets */}
-      <CirclePickerSheet
-        open={setPickerOpen}
-        currentSide={side}
-        onClose={() => setSetPickerOpen(false)}
-        sets={sets}
-        activeSet={selectedCircleId}
-        onPick={(next) => setSelectedCircleId(next)}
-        onNewSet={() => router.push("/siddes-circles?create=1")}
-        title="Circle"
-        allLabel={`All ${SIDES[side].label}`}
+      {/* Audience sheet */}
+      <AudiencePickerSheet
+        open={audiencePickerOpen}
+        onClose={() => setAudiencePickerOpen(false)}
+        side={side}
+        setSide={setSide}
+        circles={sets}
+        circlesLoaded={setsLoaded}
+        selectedCircleId={selectedCircleId}
+        onPickCircle={(next) => {
+          setSelectedCircleId(next);
+          try { setStoredLastSetForSide(side, next); } catch {}
+          try { if (next) pushStoredRecentSetForSide(side, next); } catch {}
+          try { emitAudienceChanged({ side, setId: next, topic: null, source: "ComposeMVP" }); } catch {}
+        }}
+        publicChannel={publicChannel}
+        onPickTopic={(next) => {
+          setPublicChannel(next);
+          try { setStoredLastPublicTopic(next || null); } catch {}
+          try { emitAudienceChanged({ side: "public", setId: null, topic: next || null, source: "ComposeMVP" }); } catch {}
+        }}
+        topicsEnabled={FLAGS.publicChannels}
+        onNewCircle={() => router.push("/siddes-circles?create=1")}
       />
-
-      <TopicPickerSheet open={topicPickerOpen} onClose={() => setTopicPickerOpen(false)} value={publicChannel} onPick={(next) => setPublicChannel(next)} />
-    </>
+</>
   );
 }
