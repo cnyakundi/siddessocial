@@ -1,3 +1,42 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SD_ID="sd_833_add_api_diag_endpoint"
+TS="$(date +%Y%m%d_%H%M%S)"
+
+find_repo_root() {
+  local d="$PWD"
+  while [[ "$d" != "/" ]]; do
+    if [[ -d "$d/frontend" ]] && [[ -d "$d/backend" ]] && [[ -d "$d/scripts" ]]; then
+      echo "$d"
+      return 0
+    fi
+    d="$(cd "$d/.." && pwd)"
+  done
+  return 1
+}
+
+ROOT="$(find_repo_root || true)"
+if [[ -z "${ROOT:-}" ]]; then
+  echo "ERROR: Run from inside the repo (must contain ./frontend ./backend ./scripts)." >&2
+  echo "Tip: cd /Users/cn/Downloads/sidesroot" >&2
+  exit 1
+fi
+
+cd "$ROOT"
+
+DIR="frontend/src/app/api/_diag"
+FILE="${DIR}/route.ts"
+
+BK=".backup_${SD_ID}_${TS}"
+mkdir -p "$BK/${DIR}"
+if [[ -f "$FILE" ]]; then
+  cp -a "$FILE" "$BK/${FILE}"
+fi
+
+mkdir -p "$DIR"
+
+cat > "$FILE" <<'EOF'
 import { NextResponse } from "next/server";
 
 // sd_833_add_api_diag_endpoint
@@ -116,3 +155,17 @@ export async function GET() {
     headers: { "cache-control": "no-store" },
   });
 }
+EOF
+
+echo "✅ ${SD_ID}: wrote ${FILE}"
+echo "Backup: ${BK}"
+echo ""
+echo "Next (VS Code terminal):"
+echo "  cd \"$ROOT/frontend\" && npm run typecheck"
+echo "  cd \"$ROOT/frontend\" && npm run build"
+echo ""
+echo "Verify (dev):"
+echo "  curl -s http://localhost:3000/api/_diag | python3 -m json.tool | head -n 80"
+echo ""
+echo "Prod note:"
+echo "  - /api/_diag returns 404 in production unless SIDDES_DIAG_ENABLED=1"

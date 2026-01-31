@@ -129,6 +129,8 @@ export function SideFeed() {
   const { side } = useSide();
   const router = useRouter();
   const sp = useSearchParams();
+  const advanced = (sp.get("advanced") || "").trim() === "1"; // sd_947_sidefeed_public_tune_declutter
+
   const activeTagRaw = (sp.get("tag") || "").trim();
   const activeTagLabel = activeTagRaw ? activeTagRaw.replace(/^#/, "").trim() : "";
   const activeTag = activeTagLabel ? activeTagLabel.toLowerCase() : null;
@@ -1070,7 +1072,7 @@ export function SideFeed() {
 
   return (
     <div className="w-full min-h-full bg-white">
-      {process.env.NODE_ENV !== "production" ? (
+      {process.env.NODE_ENV !== "production" && advanced ? (
         <div className="px-3 pt-2">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black text-white text-[10px] font-extrabold tracking-widest">
             <span>DEV</span>
@@ -1105,7 +1107,7 @@ export function SideFeed() {
 {/* Public tune */}
 
 
-{side === "public" && (FLAGS.publicChannels || FLAGS.publicTrustDial || FLAGS.publicCalmUi) ? (
+{side === "public" && (FLAGS.publicChannels || (advanced && (FLAGS.publicTrustDial || FLAGS.publicCalmUi))) ? (
   <div className="px-3 pt-3">
     <button
       type="button"
@@ -1125,8 +1127,8 @@ export function SideFeed() {
         open={publicTuneOpen}
         onClose={() => setPublicTuneOpen(false)}
         showTopics={side === "public" && FLAGS.publicChannels}
-        showTrust={side === "public" && FLAGS.publicTrustDial}
-        showCounts={side === "public" && FLAGS.publicCalmUi}
+        showTrust={side === "public" && FLAGS.publicTrustDial && advanced}
+        showCounts={side === "public" && FLAGS.publicCalmUi && advanced}
         publicChannel={publicChannel}
         onPublicChannel={pickPublicChannel}
         trustMode={trustMode}

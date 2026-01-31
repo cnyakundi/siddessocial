@@ -289,3 +289,5 @@ These are the overlays applied/created during the current session (evidence: ter
 - **sd_943_apptopbar_repair_and_gate_refresh:** Repair AppTopBar; gate Refresh behind ?advanced=1; normalize 44px icon buttons to rounded-xl; fix goBack/pageTitle formatting.
 
 - **sd_946_feed_circle_pill:** Feed: replace Circle chips row with a single 'Circle ▾' pill that opens CirclePickerSheet.
+
+- **sd_947_sidefeed_public_tune_declutter:** SideFeed: Public Tune declutter — Topics normal; Trust+Counts only when ?advanced=1; gate dev-only UI behind advanced.
