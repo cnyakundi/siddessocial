@@ -297,3 +297,5 @@ These are the overlays applied/created during the current session (evidence: ter
 - **sd_947_sidefeed_header_declutter:** SideFeed: gate DEV badge + dev import behind ?advanced=1; Public Tune shows Topics normally; Trust/Counts only in advanced mode.
 
 - **sd_955_feed_empty_state_single_cta_v2:** SideFeed EmptyState: remove 'Create Circle' CTA; keep single primary action; circle creation lives in Circle picker / Circles page.
+
+- **sd_956_calm_unread_badges:** UI: Calm unread indicators — replace red badges with neutral; standardize a11y copy to “alerts”.

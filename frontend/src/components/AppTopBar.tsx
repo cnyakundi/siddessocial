@@ -282,7 +282,7 @@ export function AppTopBar(props: { onOpenNotificationsDrawer?: () => void } = {}
               {unread > 0 ? (
                 <span
                   className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-gray-900 border-2 border-white"
-                  aria-label="New notifications"
+                  aria-label="New alerts"
                 />
               ) : null}
             </span>
