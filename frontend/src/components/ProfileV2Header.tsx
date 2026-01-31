@@ -253,6 +253,11 @@ const ctaMessage = canMessage && onMessage ? (
 
     if (!hasCore) return null;
 
+    // sd_972_profile_follow_stats_links: make Public followers/following stats clickable
+    const slug = safeHandle.replace(/^@/, "").split(/\s+/)[0]?.trim() || "";
+    const followersHref = slug ? `/u/${encodeURIComponent(slug)}/followers` : undefined;
+    const followingHref = slug ? `/u/${encodeURIComponent(slug)}/following` : undefined;
+
     return (
       <div className="mt-6 flex gap-8 pb-6 border-b border-gray-100">
         <Stat label="Posts" value={typeof shownPosts === "undefined" ? "—" : shownPosts} />

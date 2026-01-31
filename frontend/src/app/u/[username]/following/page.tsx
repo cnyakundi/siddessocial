@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { ChevronLeft, Lock } from "lucide-react";
 
 type FollowItem = {
@@ -64,8 +64,6 @@ function Avatar({ item }: { item: { handle: string; displayName?: string; avatar
 
 export default function PublicFollowingPage() {
   const params = useParams() as { username?: string };
-  const router = useRouter();
-
   const raw = String(params?.username || "");
   const username = useMemo(() => decodeURIComponent(raw || "").replace(/^@/, "").trim(), [raw]);
   const handle = useMemo(() => (username ? `@${username}` : ""), [username]);
@@ -147,18 +145,13 @@ if (isHidden) {
     <div className="min-h-dvh">
       <div className="px-4 pt-4 pb-3 sticky top-0 z-10 bg-[#F8F9FA]/90 backdrop-blur border-b border-gray-100">
         <div className="flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => {
-              try {
-                router.push(backHref);
-              } catch {}
-            }}
+          <Link
+            href={backHref}
             className="inline-flex items-center gap-2 text-sm font-extrabold text-gray-700 hover:text-gray-900"
             aria-label="Back to profile"
           >
             <ChevronLeft size={18} /> Back
-          </button>
+          </Link>
 
           <div className="text-xs font-extrabold text-gray-500">{handle || ""}</div>
         </div>
@@ -172,7 +165,7 @@ if (isHidden) {
         </div>
       </div>
 
-      <div className="px-4 py-4 max-w-[520px] mx-auto">
+      <div className="px-4 py-4 pb-[calc(120px+env(safe-area-inset-bottom))] max-w-[520px] mx-auto">
         {loading ? (
           <div className="text-sm text-gray-500">Loading…</div>
         ) : trouble ? (

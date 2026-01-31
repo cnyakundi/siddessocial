@@ -397,8 +397,8 @@ export default function UserProfilePage() {
                 facet={facet}
                 siders={data?.siders ?? null}
                 postsCount={postsCount}
-                publicFollowers={publicFollowers}
-                publicFollowing={publicFollowing}
+                publicFollowers={(user as any)?.publicFollowers ?? null}
+                publicFollowing={(user as any)?.publicFollowing ?? null}
                 sharedSets={sharedSets}
                 isOwner={isOwner}
                 viewerSidedAs={viewerSidedAs}

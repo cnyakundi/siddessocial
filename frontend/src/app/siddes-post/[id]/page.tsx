@@ -1,4 +1,26 @@
 "use client";
+
+/**
+ * sd_973: reply JSON helper (safe single-consume)
+ * - Some flows read reply JSON more than once; Response.json() can only be consumed once.
+ * - Cache the promise per Response so subsequent reads reuse the same payload.
+ */
+const __sd_replyJsonOnceCache_v2 = new WeakMap<Response, Promise<any>>();
+
+async function __sd_read_reply_json_once_v2(res: Response) {
+  try {
+    if (!res) return null;
+    const cached = __sd_replyJsonOnceCache_v2.get(res);
+    if (cached) return await cached;
+    const p = res.json().catch(() => null);
+    __sd_replyJsonOnceCache_v2.set(res, p);
+    return await p;
+  } catch {
+    return null;
+  }
+}
+
+
 export const dynamic = "force-dynamic";
 
 import React, { Suspense, useCallback, useEffect, useState } from "react";
@@ -435,7 +457,7 @@ function PostDetailInner() {
 
 /* sd_957_reply_json_helper: Response body can only be consumed once — cache it safely. */
 const __sd_reply_json_cache = new WeakMap<Response, any>();
-async function __sd_read_reply_json_once(res: Response): Promise<any> {
+async function __sd_read_reply_json_once_v2(res: Response): Promise<any> {
   if (__sd_reply_json_cache.has(res)) return __sd_reply_json_cache.get(res);
   let j: any = null;
   try {
