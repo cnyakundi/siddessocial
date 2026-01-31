@@ -291,3 +291,5 @@ These are the overlays applied/created during the current session (evidence: ter
 - **sd_946_feed_circle_pill:** Feed: replace Circle chips row with a single 'Circle ▾' pill that opens CirclePickerSheet.
 
 - **sd_947_sidefeed_public_tune_declutter:** SideFeed: Public Tune declutter — Topics normal; Trust+Counts only when ?advanced=1; gate dev-only UI behind advanced.
+
+- **sd_948_feed_empty_state_single_cta:** SideFeed EmptyState: remove secondary 'Create Circle' CTA; keep single primary action for clarity; creation stays in Circle picker/siddes-circles.

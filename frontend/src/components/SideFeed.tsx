@@ -57,7 +57,8 @@ function cn(...parts: Array<string | undefined | false | null>) {
   return parts.filter(Boolean).join(" ");
 }
 
-function EmptyState({ side, onCreateSet, composeHref, canPost }: { side: SideId; onCreateSet?: () => void; composeHref?: string; canPost?: boolean }) {
+function EmptyState({ side, composeHref, canPost }: { side: SideId; composeHref?: string; canPost?: boolean }) {
+  // sd_948_feed_empty_state_single_cta
   // sd_201: actionable empty state (build the graph, ethically)
   const meta = SIDES[side];
   const theme = SIDE_THEMES[side];
@@ -102,14 +103,6 @@ function EmptyState({ side, onCreateSet, composeHref, canPost }: { side: SideId;
             Sign in to post
           </Link>
         )}
-
-        {side !== "public" ? (<button
-            type="button"
-            onClick={onCreateSet}
-            className="px-4 py-2 rounded-full text-sm font-extrabold bg-white border border-gray-200 text-gray-800 shadow-sm hover:bg-gray-100 transition"
-          >
-            Create Circle
-          </button>) : null}
 </div>
     </div>
   );
@@ -1306,10 +1299,8 @@ export function SideFeed() {
           </div>
         ) : (
           <>
-            <EmptyState side={side} canPost={side !== "public" || isAuthed} composeHref={composeHref} onCreateSet={() => {
-              if (process.env.NODE_ENV !== "production") setImportOpen(true);
-              else router.push("/siddes-circles?create=1");
-            }} />
+            <EmptyState side={side} canPost={side !== "public" || isAuthed} composeHref={composeHref}
+/>
           </>
         )}
 

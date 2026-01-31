@@ -8,7 +8,7 @@
  * Result: instant app shell + offline fallback, without any cross-user/Side cache contamination.
  */
 
-const VERSION = "15cbfe7fde28";
+const VERSION = "57a3363195d4";
 const CORE_CACHE = `siddes-core-${VERSION}`;
 const STATIC_CACHE = `siddes-static-${VERSION}`;
 
