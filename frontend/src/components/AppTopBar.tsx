@@ -41,16 +41,6 @@ export function AppTopBar(props: { onOpenNotificationsDrawer?: () => void } = {}
   const { onOpenNotificationsDrawer } = props;
 
   const pathname = usePathname() || "/";
-  // sd_975: advanced UI gate via ?advanced=1
-  const [advanced, setAdvanced] = useState(false);
-  useEffect(() => {
-    try {
-      const q = new URLSearchParams(window.location.search || "");
-      setAdvanced((q.get("advanced") || "").trim() === "1");
-    } catch {
-      setAdvanced(false);
-    }
-  }, [pathname]);
   const router = useRouter(); // sd_746_pwa_refresh
   const { side, setSide, sideLock } = useSide();
   const theme = SIDE_THEMES[side];
@@ -185,9 +175,6 @@ export function AppTopBar(props: { onOpenNotificationsDrawer?: () => void } = {}
         {/* Left: Brand + Side */}
         <div className="flex items-center gap-2">
           {showBack ? (
-
-            {process.env.NODE_ENV !== "production" && advanced ? (
-
             <button
               type="button"
               onClick={goBack}
@@ -283,8 +270,6 @@ export function AppTopBar(props: { onOpenNotificationsDrawer?: () => void } = {}
             >
               <RefreshCw size={18} className="text-gray-500" aria-hidden />
             </button>
-
-            ) : null} {/* sd_975_refresh_gated */}
           ) : null}
 
           <button

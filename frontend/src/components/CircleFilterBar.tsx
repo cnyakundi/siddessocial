@@ -67,7 +67,7 @@ export function CircleFilterBar({
     if (!active) return "bg-gray-400";
     const t = getCircleTheme(active.color);
     // fallback to neutral if theme missing
-    return (t?.primaryBg || "bg-gray-700").replace("text-", "bg-");
+    return (t?.text || "text-gray-700").replace("text-", "bg-");
   }, [active]);
 
   const [open, setOpen] = useState(false);
