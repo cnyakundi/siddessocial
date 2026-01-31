@@ -472,7 +472,7 @@ export default function SiddesCircleHubPage({ params }: { params: { id: string }
               className="px-3 py-2 rounded-full bg-white border border-gray-200 text-gray-700 font-bold text-sm hover:bg-gray-50 flex items-center gap-2"
             >
               <ArrowLeft size={16} />
-              Sets
+              Circles
             </Link>
 
             <div className="min-w-0">

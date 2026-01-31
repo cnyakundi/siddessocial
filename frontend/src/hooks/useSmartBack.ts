@@ -61,7 +61,7 @@ export function useSmartBack(fallbackHref = "/siddes-feed") {
         // 1) Prefer returnScroll path (best "where I was" experience)
         const p = readSafeReturnPath();
         if (p && p !== cur) {
-          router.push(p);
+          router.replace(p);
           return;
         }
 
@@ -77,7 +77,7 @@ export function useSmartBack(fallbackHref = "/siddes-feed") {
 
     // 3) Final fallback
     try {
-      router.push(fallbackHref);
+      router.replace(fallbackHref);
     } catch {
       // ignore
     }

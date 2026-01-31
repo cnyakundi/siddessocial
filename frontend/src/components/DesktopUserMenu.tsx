@@ -2,7 +2,8 @@
 
 import React, { useEffect, useRef } from "react";
 import Link from "next/link";
-import { LogOut, User, Sparkles, Link as LinkIcon, Grid3X3, FileText } from "lucide-react";
+import { LogOut, User, Sparkles, Link as LinkIcon, FileText } from "lucide-react";
+import { CirclesMark } from "@/src/components/icons/CirclesMark";
 import { clearPrivateClientCaches } from "@/src/lib/privateClientCaches";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { useDialogA11y } from "@/src/hooks/useDialogA11y";
@@ -66,7 +67,7 @@ export function DesktopUserMenu({
             <FileText size={16} className="text-gray-500" /> Account
           </Link>
           <Link href="/siddes-circles" className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-gray-50 text-sm font-bold text-gray-700">
-            <Grid3X3 size={16} className="text-gray-500" /> Sets
+            <CirclesMark size={16} className="text-gray-500" /> Circles
           </Link>
           <Link href="/siddes-invites" className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-gray-50 text-sm font-bold text-gray-700">
             <LinkIcon size={16} className="text-gray-500" /> Invites
