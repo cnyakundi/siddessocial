@@ -311,3 +311,5 @@ These are the overlays applied/created during the current session (evidence: ter
 - **sd_964_next_item_fix_reltag_and_run_gates:** Fix RelTag missing in connections page; neutralize unread dots (no red panic) in AppTopBar + BottomNav; gates green.
 
 - **sd_965_next_item_feed_row_clean:** Next item: PostCard row cleanup (hide @handle + inline signal chips; context-only stamp in rows) + fix missing RelTag.
+
+- **sd_968_circlesmark_topbar_and_compose:** UI polish: add CirclesMark icon to AppTopBar circle picker (and Compose audience pill when available); calm alerts dot color/copy.

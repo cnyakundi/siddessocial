@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 
+import { CirclesMark } from "@/src/components/icons/CirclesMark";
 import { useSide } from "@/src/components/SideProvider";
 import { useLockBodyScroll } from "@/src/hooks/useLockBodyScroll";
 import { usePrismAvatar } from "@/src/hooks/usePrismAvatar";

@@ -8,6 +8,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ArrowLeft, Bell, ChevronDown, RefreshCw, Search as SearchIcon, Lock as LockIcon } from "lucide-react";
 
+import { CirclesMark } from "@/src/components/icons/CirclesMark";
 import { SideSwitcherSheet } from "@/src/components/SideSwitcherSheet";
 import { CirclePickerSheet } from "@/src/components/CirclePickerSheet";
 
