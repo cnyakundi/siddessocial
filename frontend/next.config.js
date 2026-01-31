@@ -69,7 +69,13 @@ const nextConfig = {
   reactStrictMode: true,
   distDir: process.env.NEXT_DIST_DIR || ".next",
   poweredByHeader: false,
-  async headers() {
+  async rewrites() {
+    return [
+      { source: "/api/_diag", destination: "/api/diag" },
+    ];
+  },
+
+async headers() {
     const hdrs = [...securityHeaders];
     if (isProd) {
       hdrs.push({ key: "Content-Security-Policy", value: csp });
