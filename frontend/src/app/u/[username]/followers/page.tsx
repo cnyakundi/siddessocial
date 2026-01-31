@@ -87,6 +87,7 @@ const [hidden, setHidden] = useState(false);
       else setLoading(true);
 
       setTrouble(null);
+      setHidden(false);
       try {
         const qs = new URLSearchParams();
         qs.set("limit", "40");
@@ -235,3 +236,6 @@ if (isHidden) {
 
 
 // sd_940_fix_hidden_list_pages_v2
+
+
+// sd_940_fix_hidden_list_pages_v3
