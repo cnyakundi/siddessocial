@@ -89,6 +89,12 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 - **sd_142:** Feed DRF endpoint + API-base-aware Next proxy (client calls same-origin /api/feed; Next proxies to Django via SD_INTERNAL_API_BASE / NEXT_PUBLIC_API_BASE)
 
 ## NEXT overlay
+- **sd_951_fix:** Post detail PostHero: fix missing `side` symbol by using safe fallback "public".
+
+- **sd_951:** Thread: PostHero root post (detail hero) — replace inline root post region in post detail after SideMismatchBanner.
+
+- **sd_951:** Thread: root post hero chrome — PostCard uses a clean section style in /siddes-post (no shadow/accent) + larger body typography.
+
 - **sd_950:** Thread UI shell: sticky in-thread header + move reply composer to fixed footer (no overlap with BottomNav) + subtle Side tint in Post Detail.
 
 - **sd_941_bottomnav_calm_badges:** BottomNav: calm badges (dot by default; counts only with ?advanced=1); neutral badge color; soften tab labels.

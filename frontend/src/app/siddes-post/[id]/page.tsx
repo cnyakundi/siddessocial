@@ -40,6 +40,7 @@ import { fetchMe } from "@/src/lib/authMe";
 import { getSessionIdentity, touchSessionConfirmed, updateSessionFromMe } from "@/src/lib/sessionIdentity";
 import { getCachedPost, makePostCacheKey, setCachedPost } from "@/src/lib/postInstantCache";
 import { getCirclesProvider } from "@/src/lib/circlesProvider";
+import { PostHero } from "@/src/components/thread/PostHero";
 import {
   enqueueReply,
   countQueuedRepliesForPost,
@@ -845,6 +846,9 @@ useEffect(() => {
     <div className="relative sd-min-h-shell pb-[260px]" data-testid="thread-shell">
       <div aria-hidden className={cn("absolute inset-0 opacity-30 pointer-events-none", theme.lightBg)} />
       <ContentColumn className="relative z-10 pt-4">
+        {/* sd_951_v5_post_hero_force_replace: PostHero inserted (fallback) */}
+        <PostHero post={(found as any)?.post ?? (found as any)} side={(found as any)?.side ?? "public"} theme={theme} onReply={() => { try { replyInputRef.current?.focus(); } catch {} }} onMore={() => {}} />
+
         <div
 
           className="sticky z-30 bg-white/85 backdrop-blur border-b border-gray-100 -mx-4 px-4"
@@ -1075,3 +1079,6 @@ export default function SiddesPostDetailPage() {
 
 
 // sd_971_fix_post_detail_reply_json_once_helper
+
+
+// sd_951_v5_post_hero_force_replace
