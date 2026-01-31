@@ -242,7 +242,7 @@ const theme = SIDE_THEMES[side];
   const provider = useMemo(() => getInboxProvider(), []);
   const [viewerInput, setViewerInput] = useInboxStubViewer();
   const viewer = (viewerInput || "").trim() || undefined;
-  const showContextRisk = true;
+  const showContextRisk = advanced;
 
   const PAGE_SIZE = 25;
 
@@ -265,11 +265,12 @@ const theme = SIDE_THEMES[side];
   
   const [showSideSheet, setShowSideSheet] = useState(false);
 useEffect(() => {
-    if (!advanced) setQuery("");
+    if (!advanced) {
+      setQuery("");
+      setFilter("this");
+    }
   }, [advanced, side]);
-
-  
-  useEffect(() => {
+useEffect(() => {
     if (tab === "alerts") {
       setLoading(false);
       return;
@@ -521,7 +522,7 @@ const filtered = useMemo(() => {
 
       {debug ? <InboxStubDebugPanel viewer={viewerInput} onViewer={setViewerInput} /> : null}
 
-      <div className="mb-3" data-testid="inbox-tabs">
+      <div className="mb-3 hidden md:block" data-testid="inbox-tabs">
         <div className="inline-flex rounded-full border border-gray-200 bg-white p-1 shadow-sm">
           <button
             type="button"
@@ -552,7 +553,7 @@ const filtered = useMemo(() => {
         <NotificationsView embedded />
       ) : (
         <>
-      <div className="mb-4 px-1">
+      <div className="mb-4 px-1 hidden md:block">
         <p className="text-xs font-medium text-gray-400 flex items-center gap-1.5">
           <Lock size={12} className="text-gray-400" />
           Conversations locked to <span className={cn(theme.text, "font-semibold")}>{SIDES[side].label}</span>
@@ -708,7 +709,7 @@ const filtered = useMemo(() => {
       {loading ? <div className="text-xs text-gray-500 mb-2">Loading inbox…</div> : null}
 
       
-      <div data-testid="inbox-filter-chips" className="mb-3 flex flex-wrap items-center gap-2">
+      <div data-testid="inbox-filter-chips" className={cn("mb-3 flex flex-wrap items-center gap-2", advanced ? "" : "hidden")}>
         <button
           type="button"
           data-testid="chip-all"
@@ -802,7 +803,7 @@ const filtered = useMemo(() => {
                     {showContextRisk ? <ContextRiskBadge isPrivate={isPrivate} /> : null}
                   </div>
                   <div className="text-[13px] font-medium text-gray-600 truncate">{lastText}</div>
-                  <div className="mt-2 flex items-center gap-2"><SidePill side={lockedSide} /><ContextRiskBadge isPrivate={isPrivate} /></div>
+                  <div className="mt-2 flex items-center gap-2"><SidePill side={lockedSide} />{showContextRisk ? <ContextRiskBadge isPrivate={isPrivate} /> : null}</div>
                 </div>
                 <button
                   type="button"
@@ -816,7 +817,8 @@ const filtered = useMemo(() => {
                   }}
                   className={cn(
                     "p-2 rounded-full hover:bg-gray-100 active:scale-95 transition-transform",
-                    t.pinned ? "text-gray-900" : "text-gray-300"
+                    t.pinned ? "text-gray-900" : "text-gray-300",
+                    (advanced || t.pinned) ? "" : "hidden"
                   )}
                   aria-label={t.pinned ? "Unpin thread" : "Pin thread"}
                 >
