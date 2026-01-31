@@ -271,7 +271,7 @@ useEffect(() => {
     }
   }, [advanced, side]);
 useEffect(() => {
-    if (tab === "alerts") {
+    if (String(tab) === "alerts") {
       setLoading(false);
       return;
     }
@@ -389,7 +389,7 @@ const filtered = useMemo(() => {
 
   // Keyboard nav: j/k to move selection, Enter to open.
   useEffect(() => {
-    if (tab === "alerts") return;
+    if (String(tab) === "alerts") return;
     function onKeyDown(e: KeyboardEvent) {
       const key = e.key;
 
@@ -541,7 +541,7 @@ const filtered = useMemo(() => {
             onClick={() => setTab("alerts")}
             className={cn(
               "px-4 py-2 rounded-full text-xs font-bold",
-              tab === "alerts" ? "bg-gray-900 text-white" : "text-gray-600 hover:bg-gray-50"
+              String(tab) === "alerts" ? "bg-gray-900 text-white" : "text-gray-600 hover:bg-gray-50"
             )}
           >
             Alerts
@@ -549,7 +549,7 @@ const filtered = useMemo(() => {
         </div>
       </div>
 
-      {tab === "alerts" ? (
+      {String(tab) === "alerts" ? (
         <NotificationsView embedded />
       ) : (
         <>
@@ -562,7 +562,7 @@ const filtered = useMemo(() => {
 
       
       {/* sd_939_inbox_header_room_pill */}
-      <div className="relative mb-4">
+      <div className={cn("relative mb-4", String(tab) === "alerts" ? "hidden" : "")}>
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
             <h1 className="text-2xl font-bold tracking-tight text-gray-900">Inbox</h1>
