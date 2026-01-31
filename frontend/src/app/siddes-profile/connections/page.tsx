@@ -93,7 +93,24 @@ function Avatar({ item }: { item: { handle: string; displayName?: string; avatar
   );
 }
 
+// sd_948b_connections_directional_ui_safe: make relationship tags calm (dot + text), keep all call sites.
+const SIDE_DOT: Record<SideKey, string> = {
+  friends: "bg-emerald-500",
+  close: "bg-rose-500",
+  work: "bg-slate-500",
+};
+
 function Badge({ children, side }: { children: React.ReactNode; side: SideKey }) {
+  const dot = SIDE_DOT[side] || "bg-gray-300";
+  return (
+    <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-gray-600">
+      <span className={"w-1.5 h-1.5 rounded-full " + dot} aria-hidden="true" />
+      <span className="text-gray-700">{children}</span>
+    </span>
+  );
+}
+
+function BadgePill({ children, side }: { children: React.ReactNode; side: SideKey }) {
   return (
     <span className={cn("inline-flex items-center px-2 py-1 rounded-full border text-[10px] font-extrabold", SIDE_BADGE[side])}>
       {children}
@@ -179,8 +196,8 @@ export default function ConnectionsPage() {
 
   const tabs: Array<{ id: TabId; label: string; icon: React.ComponentType<any> }> = [
     { id: "mutual", label: "Mutual", icon: UserCheck },
-    { id: "followers", label: "Followers", icon: Users },
-    { id: "following", label: "Following", icon: UserPlus },
+    { id: "followers", label: "They → You", icon: Users },
+    { id: "following", label: "You → Them", icon: UserPlus },
   ];
 
   const pick = (id: TabId) => {
@@ -207,7 +224,7 @@ export default function ConnectionsPage() {
         <div className="mt-3">
           <div className="text-lg font-black text-gray-900">Connections</div>
           <div className="text-xs text-gray-500 mt-1">
-            Followers are people who placed you into Friends/Close/Work. Following are people you placed into your Sides.
+            They → You: people who placed you into Friends/Close/Work. You → Them: people you placed into your Sides.
           </div>
         </div>
 
@@ -304,7 +321,7 @@ export default function ConnectionsPage() {
               })}
             </div>
           ) : (
-            <div className="text-sm text-gray-500">No followers yet.</div>
+            <div className="text-sm text-gray-500">No one has added you to their Sides yet.</div>
           )
         ) : followingList.length ? (
           <div className="space-y-2">
@@ -333,9 +350,12 @@ export default function ConnectionsPage() {
             })}
           </div>
         ) : (
-          <div className="text-sm text-gray-500">You aren’t following anyone yet.</div>
+          <div className="text-sm text-gray-500">You haven’t added anyone to your Sides yet.</div>
         )}
       </div>
     </div>
   );
 }
+
+
+// sd_948b_connections_directional_ui_safe
