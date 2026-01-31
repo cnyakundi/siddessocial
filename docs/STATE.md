@@ -305,3 +305,5 @@ These are the overlays applied/created during the current session (evidence: ter
 - **sd_958_notifs_drawer_single_header:** Alerts drawer: render NotificationsView embedded + hideTitle to avoid stacked headers (drawer header remains the only title).
 
 - **sd_959c_alerts_drawer_header_actions:** Alerts drawer: header owns 'Mark all read (N)' and NotificationsView supports hideHeader for drawer embed (no stacked headers).
+
+- **sd_963_next_item_calm_unread_and_fix_reltag:** Next item: fix missing RelTag in Connections page; calm unread indicators (dot-only + neutral) in AppTopBar + BottomNav.
