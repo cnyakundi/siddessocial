@@ -1,3 +1,42 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SD_ID="sd_831_fix_apptopbar_syntax"
+echo "== ${SD_ID} =="
+
+find_repo_root() {
+  local d="$PWD"
+  while [[ "$d" != "/" ]]; do
+    if [[ -d "$d/frontend" ]] && [[ -d "$d/backend" ]] && [[ -d "$d/scripts" ]]; then
+      echo "$d"
+      return 0
+    fi
+    d="$(cd "$d/.." && pwd)"
+  done
+  return 1
+}
+
+ROOT="$(find_repo_root || true)"
+if [[ -z "${ROOT:-}" ]]; then
+  echo "ERROR: Run from inside the repo (must contain ./frontend ./backend ./scripts)." >&2
+  echo "Tip: cd /Users/cn/Downloads/sidesroot" >&2
+  exit 1
+fi
+
+cd "$ROOT"
+
+FILE="frontend/src/components/AppTopBar.tsx"
+if [[ ! -f "$FILE" ]]; then
+  echo "ERROR: Missing $FILE" >&2
+  exit 1
+fi
+
+TS="$(date +%Y%m%d_%H%M%S)"
+BK=".backup_${SD_ID}_${TS}"
+mkdir -p "${BK}/$(dirname "$FILE")"
+cp -a "$FILE" "${BK}/${FILE}"
+
+cat > "$FILE" <<'EOF'
 "use client";
 
 // sd_831_fix_apptopbar_syntax
@@ -341,3 +380,17 @@ export function AppTopBar(props: { onOpenNotificationsDrawer?: () => void } = {}
     </div>
   );
 }
+EOF
+
+echo "✅ Patched: $FILE"
+echo "Backup: $BK"
+echo ""
+echo "Next (VS Code terminal):"
+echo "  cd \"$ROOT\""
+echo "  cd frontend && npm run typecheck"
+echo "  npm run build"
+echo ""
+echo "Smoke:"
+echo "  - Open any /siddes-* page: top bar renders"
+echo "  - Tap Side chip: sheet opens"
+echo "  - Tap Alerts bell: drawer or /siddes-notifications"
