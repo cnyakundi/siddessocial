@@ -3,18 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import React from "react";
-import {
-  Globe,
-  Users,
-  Star,
-  Briefcase,
-  ShieldCheck,
-  Lock,
-  MapPin,
-  Link as LinkIcon,
-  MessageSquare,
-  Mic,
-} from "lucide-react";
+import { Globe, Users, Star, Briefcase, ShieldCheck, Lock, MapPin, Link as LinkIcon, MessageSquare, Mic, Pin } from "lucide-react";
 
 import { SIDES, SIDE_THEMES, type SideId } from "@/src/lib/sides";
 import type { PrismFacet } from "@/src/components/PrismProfile";
@@ -170,7 +159,9 @@ export function ProfileV2Header(props: {
     </div>
   );
 
-  const ctaMessage = onMessage ? (
+    const canMessage = viewSide !== "public";
+  // sd_953_can_message_guard
+const ctaMessage = canMessage && onMessage ? (
     <button
       type="button"
       onClick={onMessage}
@@ -185,7 +176,7 @@ export function ProfileV2Header(props: {
     >
       <MessageSquare size={18} />
     </button>
-  ) : messageHref ? (
+  ) : canMessage && messageHref ? (
     <a
       href={messageHref}
       className="w-12 h-11 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-900 inline-flex items-center justify-center font-extrabold transition-colors"
@@ -264,12 +255,12 @@ const avatar = avatarImage ? (
     <img
       src={avatarImage}
       alt={name}
-      className="w-24 h-24 rounded-[1.6rem] border border-gray-100 object-cover bg-white shadow-md"
+      className="w-24 h-24 rounded-full border-4 border-white object-cover bg-white shadow-md"
     />
   ) : (
     <div
       className={cn(
-        "w-24 h-24 rounded-[1.6rem] border border-gray-100 bg-white flex items-center justify-center font-black text-2xl select-none shadow-md",
+        "w-24 h-24 rounded-full border-4 border-white bg-white flex items-center justify-center font-black text-2xl select-none shadow-md",
         theme.lightBg,
         theme.text
       )}
@@ -290,11 +281,6 @@ if (variant === "clean") {
             <div className="flex items-center gap-4 min-w-0">
               <div className="relative shrink-0">
                 {avatar}
-                <div className="absolute -bottom-2 -right-2">
-                  <div className="w-10 h-10 rounded-full bg-white shadow flex items-center justify-center border-4 border-white">
-                    <Icon className={cn("w-5 h-5", theme.text)} />
-                  </div>
-                </div>
               </div>
 
               <div className="min-w-0">
@@ -342,7 +328,7 @@ if (variant === "clean") {
         <div className="absolute inset-0 bg-gradient-to-t from-white via-white/0 to-white/0" />
 
         {/* viewer pill */}
-        <div className="absolute bottom-4 right-4">{privacyPill}</div>
+        <div className="absolute bottom-4 right-4">{/* sd_953_remove_privacy_pill */}</div>
 
         {/* avatar */}
         <div className="absolute left-5 bottom-[-2.75rem]">

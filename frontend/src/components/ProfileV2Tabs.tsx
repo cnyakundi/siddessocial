@@ -9,10 +9,9 @@ function cn(...parts: Array<string | undefined | false | null>) {
 }
 
 export type ProfileV2TabId = "posts" | "media" | "sets";
-
 export type ProfileV2TabsMode = "labels" | "icons";
 
-// sd_949b_profile_tabs: design-canon tabs (posts/media icons), sets hidden by default
+// sd_953_profile_tabs_icons: design-canon tabs (posts/media icons), sets hidden by default
 export function ProfileV2Tabs(props: {
   side: SideId;
   active: ProfileV2TabId;
@@ -28,19 +27,19 @@ export function ProfileV2Tabs(props: {
   const { side, active, onPick, sticky = true, mode = "labels", showSets = false } = props;
   const t = SIDE_THEMES[side];
 
-  const tabs: Array<{ id: ProfileV2TabId; label: string; Icon: any }> = [
-    { id: "posts", label: "Posts", Icon: List },
-    { id: "media", label: "Media", Icon: Grid },
-    { id: "sets", label: "Sets", Icon: Layers },
+  const tabs: Array<{ id: ProfileV2TabId; label: string; Icon: any; isVisible: boolean }> = [
+    { id: "posts", label: "Posts", Icon: List, isVisible: true },
+    { id: "media", label: "Media", Icon: Grid, isVisible: true },
+    { id: "sets", label: "Sets", Icon: Layers, isVisible: !!showSets },
   ];
 
-  const visible = tabs.filter((x) => (x.id === "sets" ? !!showSets : true));
+  const visible = tabs.filter((x) => x.isVisible);
 
   return (
     <div className={cn("mt-5", sticky ? "sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-gray-100" : "")}>
       <div className="flex px-1">
         {visible.map((tab) => {
-          const isActive = active === tab.id || (tab.id === "posts" && active === "sets" && !showSets);
+          const isActive = active === tab.id;
           return (
             <button
               key={tab.id}
@@ -53,10 +52,8 @@ export function ProfileV2Tabs(props: {
               aria-label={tab.label}
               title={tab.label}
             >
-              {mode === "icons" && tab.id !== "sets" ? <tab.Icon size={18} /> : tab.label}
-              {isActive ? (
-                <span className={cn("absolute bottom-1 left-1/2 -translate-x-1/2 w-8 h-1 rounded-full", t.primaryBg)} />
-              ) : null}
+              {mode === "icons" ? <tab.Icon size={18} /> : tab.label}
+              {isActive ? <span className={cn("absolute bottom-1 left-1/2 -translate-x-1/2 w-8 h-1 rounded-full", t.primaryBg)} /> : null}
             </button>
           );
         })}

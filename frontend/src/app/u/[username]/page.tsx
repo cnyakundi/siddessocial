@@ -360,12 +360,15 @@ export default function UserProfilePage() {
             {/* sd_717_profile_v2_shell_header_tabs */}
             <div className="mt-4">
               <ProfileV2Header
+                variant="clean"
                 displaySide={displaySide}
                 viewSide={viewSide}
                 handle={user.handle}
                 facet={facet}
                 siders={data?.siders ?? null}
                 postsCount={postsCount}
+                publicFollowers={((data as any)?.publicFollowers ?? null)}
+                publicFollowing={((data as any)?.publicFollowing ?? null)}
                 sharedSets={sharedSets}
                 isOwner={isOwner}
                 viewerSidedAs={viewerSidedAs}
@@ -416,7 +419,7 @@ export default function UserProfilePage() {
                 }
               />
 
-              <ProfileV2Tabs side={displaySide} active={contentTab} onPick={setContentTab} />
+              <ProfileV2Tabs side={displaySide} active={contentTab} onPick={setContentTab} mode="icons" showSets={false} />
 
               {/* Content */}
               <div className="mt-4">
