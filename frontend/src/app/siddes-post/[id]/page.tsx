@@ -842,9 +842,21 @@ useEffect(() => {
   };
 
   return (
-    <div className="py-4 pb-28">
-      <ContentColumn>
-        <div className="flex items-center justify-between mb-4">
+    <div className="relative sd-min-h-shell pb-[260px]" data-testid="thread-shell">
+      <div aria-hidden className={cn("absolute inset-0 opacity-30 pointer-events-none", theme.lightBg)} />
+      <ContentColumn className="relative z-10 pt-4">
+        <div
+
+          className="sticky z-30 bg-white/85 backdrop-blur border-b border-gray-100 -mx-4 px-4"
+
+          style={{ top: "calc(env(safe-area-inset-top) + var(--siddes-topbar-h))" }}
+
+          data-testid="thread-header"
+
+        >
+
+          <div className="flex items-center justify-between py-3">
+
           <div className="flex items-center">
             <Link href={backHref} className="text-sm font-extrabold text-gray-700 hover:underline">
               ← {backLabel}
@@ -852,130 +864,9 @@ useEffect(() => {
             <Badge n={queuedCount} />
           </div>
 
-          {mismatch ? (
-            <button
-              type="button"
-              className={cn(
-                "px-4 py-2 rounded-full text-white text-sm font-extrabold hover:opacity-90",
-                theme.primaryBg
-              )}
-              onClick={enterSide}
-            >
-              Enter {postMeta.label}
-            </button>
-          ) : null}
-        </div>
+          {/* sd_950: composer moved to sticky footer */}
 
-        <SideMismatchBanner active={activeSide} target={postSide} onEnter={enterSide} />
 
-        <div className="mt-4 rounded-3xl border border-gray-100 bg-white shadow-sm overflow-hidden" data-testid="thread-card">
-
-          <PostCard
-          post={found.post}
-          side={found.side}
-          showAccentBorder={false}
-          calmHideCounts={found.side === "public" && FLAGS.publicCalmUi && !(publicCalm?.showCounts)}
-        />
-
-          <div className="p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Replies{typeof sentReplyCount === "number" ? ` (${sentReplyCount})` : ""}</div>
-              <div className="text-xs text-gray-500 mt-1">Replies stay in the same Side.</div>
-            </div>
-            {mismatch ? (
-              <button
-                type="button"
-                onClick={enterSide}
-                className={cn(
-                  "px-3 py-2 rounded-full text-sm font-extrabold text-white hover:opacity-90",
-                  theme.primaryBg
-                )}
-              >
-                Enter {postMeta.label}
-              </button>
-            ) : null}
-          </div>
-
-          
-          {mismatch ? (
-            <div className="mt-4 flex items-center justify-between gap-3">
-              <div className="text-sm font-bold text-gray-700">
-                Enter <span className={theme.text}>{postMeta.label}</span> to reply.
-              </div>
-              <button
-                type="button"
-                className={cn("px-4 py-2 rounded-full text-white text-sm font-extrabold hover:opacity-90", theme.primaryBg)}
-                onClick={enterSide}
-              >
-                Enter {postMeta.label}
-              </button>
-            </div>
-          ) : (
-            <div className="mt-4" data-testid="thread-inline-composer">
-              {replyError ? (
-                <div className="text-xs font-extrabold text-rose-600 mb-2">{replyError.message}</div>
-              ) : null}
-
-              {replyTo ? (
-                <div className="flex items-center justify-between gap-3 text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-2">
-                  <span className="truncate">Replying to {replyTo.label}</span>
-                  <button
-                    type="button"
-                    className="px-3 py-1 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    onClick={() => setReplyTo(null)}
-                  >
-                    Clear
-                  </button>
-                </div>
-              ) : null}
-
-              <div className="flex gap-3 py-4 border-t border-b border-gray-100">
-                <ReplyAvatar label="You" tone="neutral" />
-                <div className="flex-1 min-w-0">
-
-                  <textarea
-                    ref={replyInputRef}
-                    value={replyText}
-                    onChange={(e) => {
-                      setReplyText(e.target.value);
-                      try {
-                        const el = e.target as HTMLTextAreaElement;
-                        el.style.height = "auto";
-                        el.style.height = Math.min(el.scrollHeight, 160) + "px";
-                      } catch {}
-                    }}
-                    placeholder="Add a reply…"
-                    className="w-full py-2 resize-none bg-transparent outline-none text-base font-bold placeholder:text-gray-400 leading-5"
-                    rows={1}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                        e.preventDefault();
-                        sendReplyNow();
-                        return;
-                      }
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        sendReplyNow();
-                      }
-                    }}
-                    aria-label="Write a reply"
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={sendReplyNow}
-                  disabled={replyBusy || !replyText.trim()}
-                  className={cn(
-                    "px-4 py-2 rounded-full text-sm font-extrabold text-white",
-                    (replyBusy || !replyText.trim()) ? "bg-gray-200 cursor-not-allowed" : theme.primaryBg
-                  )}
-                >
-                  {replyBusy ? "Sending…" : "Send"}
-                </button>
-              </div>
-            </div>
-          )}
 
           <QueuedReplies postId={found.post.id} />
 <SentReplies
@@ -994,9 +885,182 @@ useEffect(() => {
         </div>
       </ContentColumn>
 
-</div>
+
+      <div
+
+        className="fixed left-0 right-0 z-[95] bottom-[calc(88px+env(safe-area-inset-bottom))] lg:bottom-0"
+
+        data-testid="thread-fixed-composer"
+
+      >
+
+        <div className="w-full max-w-[680px] mx-auto px-4">
+
+          <div className="bg-white border border-gray-200 rounded-3xl shadow-[0_-12px_32px_rgba(0,0,0,0.08)]">
+
+            {mismatch ? (
+
+              <div className="p-4 flex items-center justify-between gap-3">
+
+                <div className="text-sm font-bold text-gray-700">
+
+                  Enter <span className={theme.text}>{postMeta.label}</span> to reply.
+
+                </div>
+
+                <button
+
+                  type="button"
+
+                  className={cn("px-4 py-2 rounded-full text-white text-sm font-extrabold hover:opacity-90", theme.primaryBg)}
+
+                  onClick={enterSide}
+
+                >
+
+                  Enter {postMeta.label}
+
+                </button>
+
+              </div>
+
+            ) : (
+
+              <div className="p-3" data-testid="thread-inline-composer">
+
+                {replyError ? (
+
+                  <div className="text-xs font-extrabold text-rose-600 mb-2">{replyError.message}</div>
+
+                ) : null}
+
+
+                {replyTo ? (
+
+                  <div className="flex items-center justify-between gap-3 text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-2">
+
+                    <span className="truncate">Replying to {replyTo.label}</span>
+
+                    <button
+
+                      type="button"
+
+                      className="px-3 py-1 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200"
+
+                      onClick={() => setReplyTo(null)}
+
+                    >
+
+                      Clear
+
+                    </button>
+
+                  </div>
+
+                ) : null}
+
+
+                <div className="flex gap-3">
+
+                  <ReplyAvatar label="You" tone="neutral" />
+
+                  <div className="flex-1 min-w-0">
+
+                    <textarea
+
+                      ref={replyInputRef}
+
+                      value={replyText}
+
+                      onChange={(e) => {
+
+                        setReplyText(e.target.value);
+
+                        try {
+
+                          const el = e.target as HTMLTextAreaElement;
+
+                          el.style.height = "auto";
+
+                          el.style.height = Math.min(el.scrollHeight, 160) + "px";
+
+                        } catch {}
+
+                      }}
+
+                      placeholder="Add a reply…"
+
+                      className="w-full py-2 resize-none bg-transparent outline-none text-base font-bold placeholder:text-gray-400 leading-5"
+
+                      rows={1}
+
+                      onKeyDown={(e) => {
+
+                        if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+
+                          e.preventDefault();
+
+                          sendReplyNow();
+
+                          return;
+
+                        }
+
+                        if (e.key === "Enter" && !e.shiftKey) {
+
+                          e.preventDefault();
+
+                          sendReplyNow();
+
+                        }
+
+                      }}
+
+                      aria-label="Write a reply"
+
+                    />
+
+                  </div>
+
+                  <button
+
+                    type="button"
+
+                    onClick={sendReplyNow}
+
+                    disabled={replyBusy || !replyText.trim()}
+
+                    className={cn(
+
+                      "px-4 py-2 rounded-full text-sm font-extrabold text-white",
+
+                      (replyBusy || !replyText.trim()) ? "bg-gray-200 cursor-not-allowed" : theme.primaryBg
+
+                    )}
+
+                  >
+
+                    {replyBusy ? "Sending…" : "Send"}
+
+                  </button>
+
+                </div>
+
+              </div>
+
+            )}
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      </div>
   );
 }
+
 
 export default function SiddesPostDetailPage() {
   return (
