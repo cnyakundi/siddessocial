@@ -416,7 +416,43 @@ export default function UserProfilePage() {
                 }
               />
 
-              <ProfileV2Tabs side={displaySide} active={contentTab} onPick={setContentTab} />
+              
+        {/* sd_958_pins_grid: design-canon pins/highlights */}
+        {(() => {
+          const pins = (facet as any)?.pulse || (data as any)?.pulse || [];
+          const arr = Array.isArray(pins) ? pins.slice(0, 3) : [];
+          if (!arr.length) return null;
+
+          const title = displaySide === "public" ? "Highlights" : `Pinned in ${SIDES[displaySide]?.label || displaySide}`;
+          const cols = arr.length === 1 ? "grid-cols-1" : arr.length === 2 ? "grid-cols-2" : "grid-cols-3";
+          const cls = arr.length === 1 ? "aspect-[2/1]" : "aspect-[3/4]";
+
+          return (
+            <div className="mt-6">
+              <div className="px-1 mb-2 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">{title}</div>
+              <div className={`grid gap-2 ${cols}`}>
+                {arr.map((it: any, idx: number) => (
+                  <button
+                    key={String(it?.id || idx)}
+                    type="button"
+                    className={`${cls} rounded-2xl bg-gray-100 border border-gray-100 overflow-hidden relative group`}
+                    onClick={() => {
+                      // TODO: open pin detail later; safe no-op for now
+                    }}
+                    aria-label="Pinned item"
+                  >
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
+                    <div className="absolute bottom-2 left-2 text-[10px] font-extrabold text-gray-800 bg-white/80 px-2 py-1 rounded-full backdrop-blur-sm">
+                      {String(it?.label || it?.title || "Pinned")}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
+
+<ProfileV2Tabs side={displaySide} active={contentTab} onPick={setContentTab} mode="icons" showSets={false} />
 
               {/* Content */}
               <div className="mt-4">
