@@ -3,7 +3,7 @@
 import React, { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Lock, Search, UserPlus, X, Pin } from "lucide-react";
+import { Lock, Search, UserPlus, X, Pin, ChevronDown } from "lucide-react";
 
 import { useSide } from "@/src/components/SideProvider";
 import { saveReturnScroll, useReturnScrollRestore } from "@/src/hooks/returnScroll";
@@ -209,8 +209,8 @@ export default function SiddesInboxPage() {
  * - Header chrome is owned by AppTopBar/DesktopTopBar skeleton.
  */
 function SiddesInboxPageInner() {
-  const { side } = useSide();
-  const theme = SIDE_THEMES[side];
+  const { side, setSide } = useSide();
+const theme = SIDE_THEMES[side];
   const router = useRouter();
   const params = useSearchParams();
 
@@ -262,7 +262,9 @@ function SiddesInboxPageInner() {
   const [filter, setFilter] = useState<InboxFilter>("this");
 
 
-  useEffect(() => {
+  
+  const [showSideSheet, setShowSideSheet] = useState(false);
+useEffect(() => {
     if (!advanced) setQuery("");
   }, [advanced, side]);
 
@@ -555,6 +557,95 @@ const filtered = useMemo(() => {
           <Lock size={12} className="text-gray-400" />
           Conversations locked to <span className={cn(theme.text, "font-semibold")}>{SIDES[side].label}</span>
         </p>
+      </div>
+
+      
+      {/* sd_939_inbox_header_room_pill */}
+      <div className="relative mb-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <h1 className="text-2xl font-bold tracking-tight text-gray-900">Inbox</h1>
+            <button
+              type="button"
+              onClick={() => setShowSideSheet((v) => !v)}
+              className="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-full transition-colors"
+              aria-label="Choose room"
+              title="Choose room"
+            >
+              <span
+                className={cn(
+                  "w-2 h-2 rounded-full",
+                  side === "public"
+                    ? "bg-blue-600"
+                    : side === "friends"
+                      ? "bg-emerald-600"
+                      : side === "close"
+                        ? "bg-rose-600"
+                        : "bg-slate-700"
+                )}
+                aria-hidden="true"
+              />
+              <span className="text-xs font-extrabold uppercase tracking-wide text-gray-700">
+                {side === "public" ? "Public" : side === "friends" ? "Friends" : side === "close" ? "Close" : "Work"}
+              </span>
+              <ChevronDown
+                size={14}
+                className={cn("text-gray-400 transition-transform", showSideSheet ? "rotate-180" : "")}
+                aria-hidden="true"
+              />
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setFilter((cur) => (cur === "this" ? "all" : "this"))}
+            className={cn(
+              "text-xs font-semibold px-2 py-1 rounded transition-colors",
+              filter === "this" ? "text-gray-500 bg-gray-100 hover:bg-gray-200" : "bg-black text-white"
+            )}
+            aria-label={filter === "this" ? "View all rooms" : "View current room only"}
+          >
+            {filter === "this" ? "View All" : "View Current"}
+          </button>
+        </div>
+
+        {showSideSheet ? (
+          <div className="absolute top-12 left-0 right-0 z-20 bg-white shadow-xl border border-gray-100 p-2 rounded-xl animate-in fade-in zoom-in-95 duration-100">
+            <div className="flex w-full gap-2 p-1 bg-gray-50/80 rounded-xl border border-gray-100">
+              {["public", "friends", "close", "work"].map((r) => {
+                const active = side === (r as any);
+                const activeCls =
+                  r === "public"
+                    ? "bg-blue-50 text-blue-700 shadow-sm border-blue-100 ring-1 ring-blue-100"
+                    : r === "friends"
+                      ? "bg-emerald-50 text-emerald-700 shadow-sm border-emerald-100 ring-1 ring-emerald-100"
+                      : r === "close"
+                        ? "bg-rose-50 text-rose-700 shadow-sm border-rose-100 ring-1 ring-rose-100"
+                        : "bg-slate-50 text-slate-700 shadow-sm border-slate-100 ring-1 ring-slate-100";
+
+                const label = r === "public" ? "Public" : r === "friends" ? "Friends" : r === "close" ? "Close" : "Work";
+
+                return (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => {
+                      setShowSideSheet(false);
+                      setSide(r as any);
+                    }}
+                    className={cn(
+                      "flex-1 flex items-center justify-center py-2 rounded-lg text-[10px] font-black uppercase tracking-wide transition-all border",
+                      active ? activeCls : "text-gray-400 hover:text-gray-600 hover:bg-white/50 border-transparent"
+                    )}
+                    aria-current={active ? "page" : undefined}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {advanced ? (
