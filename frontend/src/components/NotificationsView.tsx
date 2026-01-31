@@ -1,5 +1,7 @@
 "use client";
 
+// sd_958_notifs_drawer_single_header
+
 import React, { useEffect, useMemo, useState } from "react";
 import { AtSign, Heart, MessageCircle, Repeat, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -186,7 +188,7 @@ function Section({
   );
 }
 
-export function NotificationsView({ embedded = false }: { embedded?: boolean }) {
+export function NotificationsView({ embedded = false, hideTitle = false }: { embedded?: boolean; hideTitle?: boolean }) {
   const router = useRouter();
   const { side, setSide } = useSide();
 const meta = SIDES[side];
@@ -347,9 +349,11 @@ return (
       <div className="mb-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
-            <h1 className={cn("text-2xl font-bold tracking-tight text-gray-900", embedded ? "" : "")}>
-              Activity
-            </h1>
+            {!hideTitle ? (
+
+              <h1 className={cn("text-2xl font-bold tracking-tight text-gray-900", embedded ? "" : "")}>Activity</h1>
+
+            ) : null}
 
             <button
               type="button"

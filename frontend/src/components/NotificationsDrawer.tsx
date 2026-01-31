@@ -121,7 +121,7 @@ export function NotificationsDrawer({
           <div className="max-w-[430px] mx-auto">
             {/* NotificationsView already fetches /api/notifications and supports mark-all-read */}
             <div className="rounded-[2.5rem] border border-gray-100 bg-white shadow-sm overflow-hidden">
-              <NotificationsView />
+              <NotificationsView embedded hideTitle />
             </div>
           </div>
         </div>

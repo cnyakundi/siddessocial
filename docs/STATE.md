@@ -301,3 +301,5 @@ These are the overlays applied/created during the current session (evidence: ter
 - **sd_956_calm_unread_badges:** UI: Calm unread indicators — replace red badges with neutral; standardize a11y copy to “alerts”.
 
 - **sd_957_calm_unread_dot_only:** Calm chrome: unread indicators are dot-only + neutral (no numeric badges); counts live inside Alerts list.
+
+- **sd_958_notifs_drawer_single_header:** Alerts drawer: render NotificationsView embedded + hideTitle to avoid stacked headers (drawer header remains the only title).
