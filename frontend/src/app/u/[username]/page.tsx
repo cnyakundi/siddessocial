@@ -23,6 +23,7 @@ import { PostCard } from "@/src/components/PostCard";
 
 import { useReturnScrollRestore } from "@/src/hooks/returnScroll";
 
+import { useSmartBack } from "@/src/hooks/useSmartBack";
 import { ProfileActionsSheet } from "@/src/components/ProfileActionsSheet";
 import { toast } from "@/src/lib/toast";
 import { fetchMe } from "@/src/lib/authMe";
