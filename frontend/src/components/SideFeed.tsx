@@ -1090,6 +1090,7 @@ export function SideFeed() {
     <CircleFilterBar
       sets={(sets || []).filter((s) => s.side === side)}
       activeSet={activeSet}
+      currentSide={side}
       onSetChange={pickSet}
       onNewSet={() => {
         if (process.env.NODE_ENV !== "production") setImportOpen(true);
