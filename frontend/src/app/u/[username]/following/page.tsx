@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Lock } from "lucide-react";
 
 type FollowItem = {
   id: number;
@@ -17,6 +17,7 @@ type FollowItem = {
 type FollowResp = {
   ok: boolean;
   error?: string;
+  hidden?: boolean;
   items?: FollowItem[];
   nextCursor?: string | null;
   total?: number | null;
@@ -73,6 +74,7 @@ export default function PublicFollowingPage() {
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [total, setTotal] = useState<number | null>(null);
 
+const [hidden, setHidden] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [trouble, setTrouble] = useState<string | null>(null);
@@ -98,10 +100,19 @@ export default function PublicFollowingPage() {
           if (!isMore) setItems([]);
           return;
         }
+const isHidden = !!(j as any).hidden;
+setHidden(isHidden);
+
 
         const got = Array.isArray(j.items) ? j.items : [];
         setTotal(typeof j.total === "number" ? j.total : null);
         setNextCursor(String(j.nextCursor || "").trim() || null);
+if (isHidden) {
+  setItems([]);
+  setNextCursor(null);
+  return;
+}
+
 
         setItems((prev) => {
           if (!isMore) return got;
@@ -152,7 +163,7 @@ export default function PublicFollowingPage() {
         </div>
 
         <div className="mt-3">
-          <div className="text-lg font-black text-gray-900">Following</div>
+          <div className="text-lg font-black text-gray-900 flex items-center gap-2">Following {hidden ? <Lock size={16} className="text-gray-300" /> : null}</div>
           <div className="text-xs text-gray-500 mt-1">
             Public following (does not grant Friends/Close/Work access).{" "}
             {typeof total === "number" ? <span className="font-mono">Total: {total}</span> : null}
@@ -167,6 +178,13 @@ export default function PublicFollowingPage() {
           <div className="rounded-2xl border border-red-200 bg-red-50 p-4">
             <div className="text-sm font-black text-red-800">Couldn’t load following</div>
             <div className="text-xs text-red-700 mt-1">Try refreshing.</div>
+          </div>
+        ) : hidden ? (
+          <div className="rounded-2xl border border-gray-200 bg-white p-4">
+            <div className="flex items-center gap-2 text-sm font-black text-gray-900">
+              <Lock size={16} className="text-gray-400" /> This list is hidden
+            </div>
+            <div className="text-xs text-gray-500 mt-1">Only the owner can see the names. Counts may still be visible.</div>
           </div>
         ) : items.length ? (
           <div className="space-y-2">
@@ -214,3 +232,6 @@ export default function PublicFollowingPage() {
     </div>
   );
 }
+
+
+// sd_940_fix_hidden_list_pages_v2
