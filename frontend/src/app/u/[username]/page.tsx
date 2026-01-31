@@ -1,6 +1,4 @@
 "use client";
-
-/* eslint-disable react/jsx-no-comment-textnodes */
 export const dynamic = "force-dynamic";
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -10,7 +8,6 @@ import { MoreHorizontal, ArrowLeft, Share2, ChevronRight, ChevronDown, X, List, 
 
 import { SIDES, type SideId } from "@/src/lib/sides";
 import {
-  PrismSideTabs,
   SideActionButtons,
   SideWithSheet,
   type ProfileViewPayload,
@@ -962,153 +959,7 @@ isOwner={isOwner}
 
 
               
-              {/* sd_820_profile_about_sheet */}
-              <button
-                type="button"
-                onClick={() => setAboutOpen(true)}
-                className="mt-3 w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-gray-900 font-extrabold text-sm flex items-center justify-between hover:bg-gray-100 transition-colors"
-                aria-label="About"
-              >
-                About
-                <ChevronRight size={18} className="text-gray-500" />
-              </button>
-
-              {aboutOpen ? (
-                <div className="fixed inset-0 z-[98] flex items-end justify-center md:items-center">
-                  <button hidden
-                    type="button"
-                    className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-                    onClick={() => setAboutOpen(false)}
-                    aria-label="Close"
-                  />
-                  <div role="dialog" aria-modal="true" className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="text-lg font-black text-gray-900">About {user?.handle}</div>
-                        <div className="text-xs text-gray-500 mt-1">{SIDES[displaySide]?.label || displaySide} identity</div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setAboutOpen(false)}
-                        className="p-2 rounded-full hover:bg-gray-100"
-                        aria-label="Close"
-                      >
-                        <span className="sr-only">Close</span>
-                        <X size={18} className="text-gray-500" />
-                      </button>
-                    </div>
-
-                    {String((facet as any)?.headline || "").trim() ? (
-                      <div className="mt-3 text-sm font-semibold text-gray-700">
-                        {String((facet as any)?.headline || "").trim()}
-                      </div>
-                    ) : null}
-
-                    <div className="mt-3 text-sm text-gray-700 leading-relaxed whitespace-pre-line">
-                      {String((facet as any)?.bio || "").trim() ? String((facet as any)?.bio || "").trim() : "No bio yet."}
-                    </div>
-
-                    <div className="mt-4 space-y-2">
-                      {String((facet as any)?.location || "").trim() ? (
-                        <div className="flex items-center justify-between text-xs">
-                          <div className="text-gray-500 font-bold">Location</div>
-                          <div className="text-gray-900 font-extrabold">{String((facet as any)?.location || "").trim()}</div>
-                        </div>
-                      ) : null}
-
-                      {String((facet as any)?.website || "").trim() ? (
-                        <div className="flex items-center justify-between text-xs">
-                          <div className="text-gray-500 font-bold">Website</div>
-                          <a
-                            className="text-gray-900 font-extrabold hover:underline"
-                            href={(() => {
-                              const w = String((facet as any)?.website || "").trim();
-                              if (!w) return "#";
-                              if (w.startsWith("http://") || w.startsWith("https://")) return w;
-                              return "https://" + w;
-                            })()}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            {String((facet as any)?.website || "").trim()}
-                          </a>
-                        </div>
-                      ) : null}
-
-                      <div className="flex items-center justify-between text-xs">
-                        <div className="text-gray-500 font-bold">Privacy</div>
-                        <div className="text-gray-900 font-extrabold">{SIDES[displaySide]?.privacyHint || "Visible"}</div>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 grid grid-cols-2 gap-3">
-                      <div className="p-3 rounded-2xl bg-gray-50 border border-gray-200">
-                        <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">Posts</div>
-                        <div className="text-lg font-black text-gray-900 tabular-nums mt-1">{postsCount ?? "—"}</div>
-                      </div>
-                      <div className="p-3 rounded-2xl bg-gray-50 border border-gray-200">
-                        <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">
-                          {viewSide === "close" || typeof (data as any)?.siders === "string" ? "Private Set" : "Connections"}
-                        </div>
-                        <div className="text-lg font-black text-gray-900 tabular-nums mt-1">
-                          {typeof (data as any)?.siders === "string" ? String((data as any)?.siders) : ((data as any)?.siders ?? "—")}
-                        </div>
-                      </div>
-                    </div>
-
-                    {String((facet as any)?.pulse?.text || "").trim() ? (
-                      <div className="mt-4 p-4 rounded-2xl bg-white border border-gray-200">
-                        <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">
-                          {String((facet as any)?.pulse?.label || (displaySide === "public" ? "Town Hall" : "Pulse")).trim()}
-                        </div>
-                        <div className="mt-1 text-sm font-extrabold text-gray-900">
-                          {String((facet as any)?.pulse?.text || "").trim()}
-                        </div>
-                      </div>
-                    ) : null}
-
-                    <button
-                      type="button"
-                      onClick={() => setAboutOpen(false)}
-                      className="w-full mt-5 py-3 rounded-xl bg-gray-900 text-white font-extrabold text-sm shadow-md active:scale-95 transition-all"
-                    >
-                      Close
-                    </button>
-                  </div>
-                </div>
-              ) : null}
-
-
-              
-              {/* sd_912_profile_content_tabs */}
-              <div className="mt-6 sticky top-[52px] z-[70] bg-white/90 backdrop-blur border-b border-gray-100 rounded-2xl overflow-hidden">
-                <div className="flex">
-                  <button
-                    type="button"
-                    onClick={() => setContentTab("posts")}
-                    className={
-                      "flex-1 py-3 flex items-center justify-center gap-2 text-[12px] font-black transition-colors " +
-                      (contentTab === "posts" ? "text-gray-900 bg-gray-50" : "text-gray-400 hover:text-gray-600")
-                    }
-                    aria-label="Posts"
-                  >
-                    <List size={16} /> Posts
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setContentTab("media")}
-                    className={
-                      "flex-1 py-3 flex items-center justify-center gap-2 text-[12px] font-black transition-colors " +
-                      (contentTab === "media" ? "text-gray-900 bg-gray-50" : "text-gray-400 hover:text-gray-600")
-                    }
-                    aria-label="Media"
-                  >
-                    <Grid size={16} /> Media
-                  </button>
-                </div>
-              </div>
-
-{/* Posts */}
+              {/* Posts */}
               <div className="mt-4">
 
                   {contentTab === "posts" ? (

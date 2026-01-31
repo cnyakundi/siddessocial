@@ -145,8 +145,7 @@ export function PrismSideTabs(props: {
 
   return (
     <div className="mt-4">
-      <div className="text-xs text-gray-500 font-semibold mb-2">Side = who this is for.</div>
-
+      {/* sd_948: removed helper label (design canon) */}
       {/* Prism Switch (segmented control) */}
       <div className="flex p-1.5 bg-gray-100/80 backdrop-blur rounded-[24px] border border-white shadow-sm">
         {items.map((side) => {
@@ -157,7 +156,7 @@ export function PrismSideTabs(props: {
           const locked = !isAllowed && !isActive;
 
           return (
-            <button hidden
+            <button
               key={side}
               type="button"
               onClick={() => {

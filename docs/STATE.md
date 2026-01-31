@@ -90,6 +90,8 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 
 ## NEXT overlay
 
+- **sd_948:** Profile design-canon prune — remove PrismSideTabs helper copy; unhide PrismSideTabs buttons (bug); force ProfileV2Header clean + prune meta/relationship/stats/pulse/shared; remove About block from /u/:username.
+
 - **sd_947:** Profile declutter cleanroom — hide PrismSideTabs; force ProfileV2Header clean variant; remove header meta clutter/pulse/shared blocks; fix JSX comment dirt in /u/:username.
 
 - **sd_946:** UI: SideActionButtons copy + sizing ("Add Friend" / "Friends" etc), remove "Sided:" prefix, match Profile V2 action row.

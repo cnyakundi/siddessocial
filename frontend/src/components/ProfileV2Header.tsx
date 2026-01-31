@@ -300,23 +300,21 @@ if (variant === "clean") {
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <div className="text-xl font-black text-gray-900 truncate">{name}</div>
-                  {privacyPill}
+                  {/* sd_948: privacy pill removed in clean variant */}
                 </div>
                 <div className="text-sm text-gray-500 font-semibold mt-1 truncate">{safeHandle}</div>
                 {headline ? <div className="text-sm text-gray-700 font-semibold mt-2">{headline}</div> : null}
               </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">{ctaMessage}</div>
+            <div className="flex items-center gap-2 shrink-0">{/* sd_948: header CTA removed (use actions row) */}</div>
           </div>
 
           <p className={cn("mt-4 text-[15px] leading-relaxed whitespace-pre-line", bio ? "text-gray-700" : "text-gray-400")}>
             {bio || "No bio yet."}
           </p>
-
-          <div className="mt-4">{metaLine}</div>
-          {relationship}
-          {stats}
+{/* sd_948: relationship removed */}
+          {/* sd_948: stats moved out of header */}
 
           {actions ? <div className="mt-5">{actions}</div> : null}
 
