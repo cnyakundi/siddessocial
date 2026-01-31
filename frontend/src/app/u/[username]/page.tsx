@@ -2,18 +2,23 @@
 export const dynamic = "force-dynamic";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 
-import { MoreHorizontal, ArrowLeft, Share2, ChevronRight, ChevronDown, X, List, Grid, Play, Lock } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
 
 import { SIDES, type SideId } from "@/src/lib/sides";
 import {
+  CopyLinkButton,
+  PrismSideTabs,
   SideActionButtons,
   SideWithSheet,
   type ProfileViewPayload,
 } from "@/src/components/PrismProfile";
 
 import { ProfileV2Header } from "@/src/components/ProfileV2Header";
+import { ProfileV2Tabs, type ProfileV2TabId } from "@/src/components/ProfileV2Tabs";
+
+
 import { PostCard } from "@/src/components/PostCard";
 
 import { useReturnScrollRestore } from "@/src/hooks/returnScroll";
@@ -21,19 +26,12 @@ import { useReturnScrollRestore } from "@/src/hooks/returnScroll";
 import { ProfileActionsSheet } from "@/src/components/ProfileActionsSheet";
 import { toast } from "@/src/lib/toast";
 
-
-function Checkmark() {
-  return (
-    <div className="w-6 h-6 rounded-full bg-black text-white flex items-center justify-center">
-      <span className="text-[12px] font-black">✓</span>
-    </div>
-  );
+function cn(...parts: Array<string | undefined | false | null>) {
+  return parts.filter(Boolean).join(" ");
 }
 
 export default function UserProfilePage() {
   const params = useParams() as { username?: string };
-
-  const router = useRouter();
   const raw = String(params?.username || "");
 
   useReturnScrollRestore();
@@ -57,40 +55,13 @@ export default function UserProfilePage() {
 
   const [activeIdentitySide, setActiveIdentitySide] = useState<SideId>("public");
 
-  // sd_801_profile_side_from_url: allow deep-linking into a specific Side identity
-  // (e.g. clicking an avatar in the Feed should open the matching identity view).
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const u = new URL(window.location.href);
-      const raw = String(u.searchParams.get("side") || "").trim().toLowerCase();
-      if (!raw) return;
-      if (raw === "public" || raw === "friends" || raw === "close" || raw === "work") {
-        setActiveIdentitySide(raw as SideId);
-      }
-    } catch {}
-  }, []);
-
-
   const [sideSheet, setSideSheet] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  const [followBusy, setFollowBusy] = useState(false);
+  const [actionsOpen, setActionsOpen] = useState(false); // sd_424_profile_actions
+  const [lockedSide, setLockedSide] = useState<SideId | null>(null); // sd_529_locked_tab_explainer
 
-  const [msgBusy, setMsgBusy] = useState(false);
-
-  const [actionsOpen, setActionsOpen] = useState(false);
-  const [lockedSide, setLockedSide] = useState<SideId | null>(null);
-  const [accessReqBusy, setAccessReqBusy] = useState(false);
-  const [accessReqSentFor, setAccessReqSentFor] = useState<SideId | null>(null);
-
-  const [aboutOpen, setAboutOpen] = useState(false);
-
-  // sd_912_profile_tabs: Posts vs Media
-  const [contentTab, setContentTab] = useState<"posts" | "media">("posts");
-
-  // sd_912_room_pill_sheet: switch identity side via a compact pill
-  const [roomSheetOpen, setRoomSheetOpen] = useState(false);
+  const [contentTab, setContentTab] = useState<ProfileV2TabId>("posts"); // sd_717_profile_v2_shell
 
 
   useEffect(() => {
@@ -112,6 +83,7 @@ export default function UserProfilePage() {
         const j = (await res.json().catch(() => null)) as any;
         if (!mounted) return;
 
+        // sd_538_locked_403_fallback: locked side requested (e.g. URL) -> fall back to viewSide
         if (j && typeof j === "object" && j.ok === false && j.error === "locked") {
           const fallback = (j.viewSide || "public") as SideId;
           const requested = (j.requestedSide || activeIdentitySide || "public") as SideId;
@@ -152,52 +124,24 @@ export default function UserProfilePage() {
 
   const isOwner = !!(data as any)?.isOwner;
 
-  const viewerFollowsPublic = !!(data as any)?.viewerFollowsPublic;
-  const publicFollowers = typeof (data as any)?.publicFollowers === "number" ? (data as any).publicFollowers : null;
-  const publicFollowing = typeof (data as any)?.publicFollowing === "number" ? (data as any).publicFollowing : null;
-
   const viewerSidedAs = (data?.viewerSidedAs || null) as SideId | null;
+  const sharedSets = data?.sharedSets || [];
 
   const postsPayload = data?.posts || null;
   const posts = postsPayload?.items || [];
 
   const postsCount = typeof postsPayload?.count === "number" ? postsPayload.count : posts.length;
 
+
   const avatarUrl = String((facet as any)?.avatarImage || "").trim() || null;
 
-  const doToggleFollow = async () => {
-    if (!user?.handle) return;
-    if (followBusy) return;
-    const want = !viewerFollowsPublic;
-    setFollowBusy(true);
-    try {
-      const res = await fetch("/api/follow", {
-        method: "POST",
-        cache: "no-store",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ username: user.handle, follow: want }),
-      });
-      const j = (await res.json().catch(() => null)) as any;
-      if (!res.ok || !j || j.ok !== true) {
-        const msg = res.status === 401 ? "Log in to follow." : res.status === 429 ? "Slow down." : "Could not update follow.";
-        toast.error(msg);
-        return;
-      }
-      setData((prev) => {
-        if (!prev || !prev.ok) return prev;
-        return {
-          ...(prev as any),
-          viewerFollowsPublic: !!j.following,
-          publicFollowers: typeof j.publicFollowers === "number" ? j.publicFollowers : (prev as any).publicFollowers,
-          publicFollowing: typeof j.publicFollowing === "number" ? j.publicFollowing : (prev as any).publicFollowing,
-        } as any;
-      });
-    } catch {
-      toast.error("Could not update follow.");
-    } finally {
-      setFollowBusy(false);
-    }
-  };
+
+  // sd_717_profile_v2_shell: reset content tab when identity side changes
+  useEffect(() => {
+    setContentTab("posts");
+  }, [displaySide]);
+
+
 
   const doPickSide = async (side: SideId | "public", opts?: { silent?: boolean }) => {
     if (!user?.handle) return;
@@ -206,39 +150,20 @@ export default function UserProfilePage() {
 
     setBusy(true);
     try {
-      const postSide = async (wanted: SideId | "public") => {
-        const res = await fetch("/api/side", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-          targetUserId: user?.id || null,
-            username: user.handle,
-            side: wanted,
-            confirm: wanted === "close" || wanted === "work" ? true : undefined,
-          }),
-        });
-        const j = (await res.json().catch(() => null)) as any;
-        return { res, j };
-      };
-
-      let out = await postSide(side);
-      let res = out.res;
-      let j = out.j;
-
-      if ((!res.ok || !j || j.ok !== true) && side === "close" && j?.error === "friends_required") {
-        toast.info("Close is inside Friends — adding to Friends first…");
-        try {
-          await postSide("friends");
-        } catch {
-          // ignore
-        }
-        out = await postSide("close");
-        res = out.res;
-        j = out.j;
-      }
+      const res = await fetch("/api/side", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          username: user.handle,
+          side,
+          confirm: side === "close" || side === "work" ? true : undefined,
+        }),
+      });
+      const j = (await res.json().catch(() => null)) as any;
 
       if (!res.ok || !j || j.ok !== true) {
         let msg = res.status === 429 ? "Slow down." : "Could not update Side.";
+        if (j?.error === "friends_required") msg = "Friends first (then Close).";
         if (j?.error === "confirm_required") msg = "Confirmation required for Close/Work.";
         if (res.status === 401 || j?.error === "restricted") msg = "Login required.";
         toast.error(msg);
@@ -256,7 +181,7 @@ export default function UserProfilePage() {
         const nextKey = (nextSide || "public") as any;
         if (String(beforeKey) !== String(nextKey)) {
           const nextLabel = nextSide ? (SIDES[nextSide]?.label || nextSide) : "Public";
-          toast.undo(`Sharing as: ${nextLabel}`, () => {
+          toast.undo(`You show them: ${nextLabel}`, () => {
             void doPickSide((before || "public") as any, { silent: true });
             toast.success("Undone");
           });
@@ -267,118 +192,8 @@ export default function UserProfilePage() {
     }
   };
 
-  const doRequestAccess = async (side: SideId) => {
-    if (!user?.handle) return;
-    const s = String(side || "").toLowerCase() as SideId;
-    if (s === "public") return;
 
-    setAccessReqBusy(true);
-    try {
-      const res = await fetch("/api/access-requests", {
-        method: "POST",
-        cache: "no-store",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          targetUserId: user?.id || null, username: user.handle, side: s }),
-      });
-      const j = (await res.json().catch(() => null)) as any;
-      if (!res.ok || !j || j.ok !== true) {
-        let msg = res.status === 429 ? "Slow down." : "Could not send request.";
-        if (res.status === 401 || j?.error === "restricted") msg = "Login required.";
-        toast.error(msg);
-        return;
-      }
-      setAccessReqSentFor(s);
-      toast.success("Request sent.");
-      setLockedSide(null);
-    } catch {
-      toast.error("Could not send request.");
-    } finally {
-      setAccessReqBusy(false);
-    }
-  };
 
-  const doMessage = async () => {
-    if (!user?.handle) return;
-    if (msgBusy) return;
-
-    setMsgBusy(true);
-    try {
-      // Default-safe: DM thread lives in the side you show them (falls back to Friends).
-      const locked: SideId = viewerSidedAs && viewerSidedAs !== "public" ? viewerSidedAs : "friends";
-
-      const displayName =
-        (facet?.displayName || "").trim() || String(user.handle || "").replace(/^@/, "").trim() || "User";
-
-      const res = await fetch("/api/inbox/threads", {
-        method: "POST",
-        cache: "no-store",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          targetUserId: user?.id || null,
-          targetHandle: user.handle,
-          lockedSide: locked,
-          displayName,
-        }),
-      });
-
-      const j = (await res.json().catch(() => null)) as any;
-      if (!res.ok || !j) {
-        const host = (() => {
-          try {
-            return String(window.location.hostname || "").toLowerCase();
-          } catch {
-            return "";
-          }
-        })();
-        const isLocal = host === "localhost" || host === "127.0.0.1" || host === "[::1]";
-
-        // sd_756_inbox_store_unavailable_ui: backend/store failures should not masquerade as login.
-        if (res.status >= 500) {
-          toast.error(isLocal ? "Inbox backend unavailable (run migrations + restart backend)." : "Inbox temporarily unavailable.");
-          return;
-        }
-
-        toast.error(res.status === 401 ? "Login required." : "Could not start message.");
-        return;
-      }
-
-      // sd_756_inbox_store_unavailable_ui: explicit store failure payload (rare if server returns 200).
-      if (j?.ok === false && j?.error === "store_unavailable") {
-        toast.error("Inbox backend unavailable. Try again after backend is healthy.");
-        return;
-      }
-      if (j?.restricted) {
-        const host = (() => {
-          try {
-            return String(window.location.hostname || "").toLowerCase();
-          } catch {
-            return "";
-          }
-        })();
-        const isLocal = host === "localhost" || host === "127.0.0.1" || host === "[::1]";
-        toast.error(isLocal ? "Login required (local stub viewer not set). Refresh once." : "Login required.");
-        if (!isLocal) {
-          try {
-            router.push("/login");
-          } catch {}
-        }
-        return;
-      }
-
-const tid = String(j?.thread?.id || "").trim();
-      if (!tid) {
-        toast.error("Could not start message.");
-        return;
-      }
-
-      router.push(`/siddes-inbox/${encodeURIComponent(tid)}`);
-    } catch {
-      toast.error("Could not start message.");
-    } finally {
-      setMsgBusy(false);
-    }
-  };
 
   const loadMore = async () => {
     if (!handle || loadingMore) return;
@@ -446,262 +261,8 @@ const tid = String(j?.thread?.id || "").trim();
     return window.location.href;
   }, []);
 
-  const shareProfile = async () => {
-    const url =
-      href ||
-      (() => {
-        try {
-          return typeof window !== "undefined" ? String(window.location.href || "") : "";
-        } catch {
-          return "";
-        }
-      })();
-
-    if (!url) {
-      toast.error("No link yet.");
-      return;
-    }
-
-    // Try native share first (mobile/PWA)
-    try {
-      const nav: any = typeof navigator !== "undefined" ? (navigator as any) : null;
-      if (nav && typeof nav.share === "function") {
-        await nav.share({ url });
-        return;
-      }
-    } catch {
-      // fall through to copy
-    }
-
-    // Clipboard copy
-    try {
-      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(url);
-        toast.success("Link copied.");
-        return;
-      }
-    } catch {}
-
-    // Fallback copy
-    try {
-      const ta = document.createElement("textarea");
-      ta.value = url;
-      ta.style.position = "fixed";
-      ta.style.left = "-9999px";
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
-      toast.success("Link copied.");
-      return;
-    } catch {
-      toast.error("Couldn't copy link.");
-    }
-  };
-
-
   return (
     <div className="min-h-screen bg-white">
-      <div className="sticky top-0 z-[80] bg-white/90 backdrop-blur border-b border-gray-100">
-        
-      {roomSheetOpen ? (
-        <div className="fixed inset-0 z-[95] flex items-end justify-center md:items-center">
-          <button
-            type="button"
-            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-            onClick={() => setRoomSheetOpen(false)}
-            aria-label="Close"
-          />
-          <div className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-4">
-            <div className="flex items-center justify-between mb-3 px-1">
-              <div className="text-xs font-black text-gray-500 uppercase tracking-widest">View Room</div>
-              <button
-                type="button"
-                onClick={() => setRoomSheetOpen(false)}
-                className="p-2 rounded-full hover:bg-gray-100"
-                aria-label="Close"
-              >
-                <X size={18} className="text-gray-500" />
-              </button>
-            </div>
-
-            <div className="space-y-1">
-              {(["public", "friends", "close", "work"] as SideId[]).map((s) => {
-                const allowed = s === "public" ? true : (Array.isArray(allowedSides) ? allowedSides.includes(s) : false);
-                const active = String(displaySide) === String(s);
-
-                return (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => {
-                      setRoomSheetOpen(false);
-                      if (allowed) setActiveIdentitySide(s);
-                      else setLockedSide(s);
-                    }}
-                    className={
-                      "w-full flex items-center justify-between px-3 py-3 rounded-2xl border transition-colors " +
-                      (active ? "bg-gray-50 border-gray-200" : "bg-white border-gray-100 hover:bg-gray-50")
-                    }
-                    aria-label={allowed ? `Switch to ${SIDES[s]?.label || s}` : `Locked: ${SIDES[s]?.label || s}`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={
-                          "w-10 h-10 rounded-full flex items-center justify-center border " +
-                          (allowed ? "bg-black text-white border-black" : "bg-gray-100 text-gray-400 border-gray-200")
-                        }
-                      >
-                        {allowed ? (
-                          <span className="text-[10px] font-black">{(SIDES[s]?.label || s).slice(0, 1)}</span>
-                        ) : (
-                          <Lock size={16} />
-                        )}
-                      </div>
-                      <div className="text-left">
-                        <div className={"text-sm font-black capitalize " + (allowed ? "text-gray-900" : "text-gray-400")}>
-                          {SIDES[s]?.label || s}
-                        </div>
-                        {!allowed ? <div className="text-[11px] font-semibold text-gray-400">Locked</div> : null}
-                      </div>
-                    </div>
-
-                    {active ? (
-                      <div className="w-6 h-6 rounded-full bg-black text-white flex items-center justify-center">
-                        <span className="text-[12px] font-black">✓</span>
-                      </div>
-                    ) : null}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="mt-3 text-[11px] font-semibold text-gray-500 px-1">
-              Switching rooms changes what you can see of {user?.handle}.
-            </div>
-
-            {/* sd_942_room_sheet_overlay */}
-          </div>
-        </div>
-      ) : null}
-
-<div className="max-w-xl mx-auto px-4 py-3 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => { try { router.back(); } catch {} }}
-            className="w-11 h-11 rounded-full hover:bg-gray-100 inline-flex items-center justify-center transition-colors"
-            aria-label="Back"
-          >
-            <ArrowLeft size={20} className="text-gray-700" />
-          </button>
-
-                    <button
-            type="button"
-            onClick={() => setRoomSheetOpen(true)}
-            className="flex items-center gap-2 bg-gray-100/70 hover:bg-gray-100 px-3 py-1.5 rounded-full border border-gray-200 transition-colors"
-            aria-label="Switch profile room"
-          >
-            <div
-              className={
-                "w-2 h-2 rounded-full " +
-                (displaySide === "public"
-                  ? "bg-blue-600"
-                  : displaySide === "friends"
-                    ? "bg-emerald-600"
-                    : displaySide === "close"
-                      ? "bg-rose-600"
-                      : "bg-slate-700")
-              }
-              aria-hidden="true"
-            />
-            <span className="text-[11px] font-black uppercase tracking-widest text-gray-700">
-              {SIDES[displaySide]?.label || displaySide}
-            </span>
-            <ChevronDown size={14} className="text-gray-400" />
-            {/* sd_912_room_pill */}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => void shareProfile()}
-            className="w-11 h-11 rounded-full hover:bg-gray-100 inline-flex items-center justify-center transition-colors"
-            aria-label="Share profile"
-          >
-            <Share2 size={18} className="text-gray-700" />
-          </button>
-        </div>
-
-      {roomSheetOpen ? (
-        <div className="fixed inset-0 z-[95] flex items-end justify-center md:items-center">
-          <button
-            type="button"
-            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-            onClick={() => setRoomSheetOpen(false)}
-            aria-label="Close"
-          />
-          <div className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-4">
-            <div className="flex items-center justify-between mb-3 px-1">
-              <div className="text-xs font-black text-gray-500 uppercase tracking-widest">View Room</div>
-              <button
-                type="button"
-                onClick={() => setRoomSheetOpen(false)}
-                className="p-2 rounded-full hover:bg-gray-100"
-                aria-label="Close"
-              >
-                <X size={18} className="text-gray-500" />
-              </button>
-            </div>
-
-            <div className="space-y-1">
-              {(["public","friends","close","work"] as SideId[]).map((s) => {
-                const allowed = s === "public" ? true : (Array.isArray(allowedSides) ? allowedSides.includes(s) : false);
-                const active = String(displaySide) === String(s);
-                return (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => {
-                      setRoomSheetOpen(false);
-                      if (allowed) setActiveIdentitySide(s);
-                      else setLockedSide(s);
-                    }}
-                    className={
-                      "w-full flex items-center justify-between px-3 py-3 rounded-2xl border transition-colors " +
-                      (active ? "bg-gray-50 border-gray-200" : "bg-white border-gray-100 hover:bg-gray-50")
-                    }
-                    aria-label={allowed ? `Switch to ${SIDES[s]?.label || s}` : `Locked: ${SIDES[s]?.label || s}`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={
-                        "w-10 h-10 rounded-full flex items-center justify-center border " +
-                        (allowed ? "bg-black text-white border-black" : "bg-gray-100 text-gray-400 border-gray-200")
-                      }>
-                        {allowed ? (
-                          <span className="text-[10px] font-black">{(SIDES[s]?.label || s).slice(0,1)}</span>
-                        ) : (
-                          <Lock size={16} />
-                        )}
-                      </div>
-                      <div className="text-left">
-                        <div className={"text-sm font-black capitalize " + (allowed ? "text-gray-900" : "text-gray-400")}>
-                          {SIDES[s]?.label || s}
-                        </div>
-                        {!allowed ? <div className="text-[11px] font-semibold text-gray-400">Locked</div> : null}
-                      </div>
-                    </div>
-
-                    {active ? <Checkmark /> : null}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* sd_912_room_sheet_overlay */}
-          </div>
-        </div>
-      ) : null}
-
-      </div>
       <div className="max-w-xl mx-auto px-4 py-6">
         {loading ? (
           <div className="rounded-3xl border border-gray-200 bg-white p-6">
@@ -716,8 +277,16 @@ const tid = String(j?.thread?.id || "").trim();
           </div>
         ) : (
           <>
-            {/* sd_912_remove_prism_side_tabs */}
-{!isOwner && lockedSide ? (
+            <PrismSideTabs
+              active={displaySide}
+              allowedSides={allowedSides}
+              onPick={(side) => setActiveIdentitySide(side)}
+              onLockedPick={(side) => setLockedSide(side)}
+            />
+
+
+            {/* sd_529_locked_tab_explainer: locked identity tabs never open Side sheet */}
+            {!isOwner && lockedSide ? (
               <div className="fixed inset-0 z-[97] flex items-end justify-center md:items-center">
                 <button
                   type="button"
@@ -742,313 +311,160 @@ const tid = String(j?.thread?.id || "").trim();
                       aria-label="Close"
                     >
                       <span className="sr-only">Close</span>
-                      <X size={18} className="text-gray-500" />
+                      <MoreHorizontal size={18} className="text-gray-400" />
                     </button>
                   </div>
 
                   <div className="mt-4 space-y-3">
                     <div className="p-4 rounded-2xl border border-gray-200 bg-gray-50 text-sm text-gray-700">
-                      <div className="font-extrabold text-gray-900">Locked</div>
+                      <div className="font-extrabold text-gray-900">How this works</div>
                       <div className="text-xs text-gray-600 mt-1 leading-relaxed">
-                        Only <span className="font-bold">{user?.handle}</span> can add you to their{" "}
-                        <span className="font-bold">{SIDES[lockedSide]?.label || lockedSide}</span> Side.
+                        Only <span className="font-bold">{user?.handle}</span> can place you into their {SIDES[lockedSide]?.label || lockedSide} Side.
+                        Nothing you click here unlocks it.
                       </div>
                       <div className="mt-2 text-xs text-gray-600">
-                        You can currently see:{" "}
-                        <span className="font-black text-gray-900">{SIDES[viewSide]?.label || viewSide}</span>
+                        They currently show you: <span className="font-black text-gray-900">{SIDES[viewSide]?.label || viewSide}</span>
                       </div>
                     </div>
 
-                    {lockedSide && lockedSide !== "public" ? (
+                    <div className="flex gap-3">
                       <button
                         type="button"
-                        disabled={accessReqBusy || accessReqSentFor === lockedSide}
-                        onClick={() => void doRequestAccess(lockedSide)}
-                        className="w-full py-3 rounded-xl bg-white border border-gray-200 text-gray-900 font-extrabold text-sm hover:bg-gray-50 disabled:opacity-50"
+                        onClick={() => setLockedSide(null)}
+                        className="flex-1 py-3 rounded-xl bg-gray-900 text-white font-extrabold text-sm shadow-md active:scale-95 transition-all"
                       >
-                        {accessReqSentFor === lockedSide ? "Request sent" : accessReqBusy ? "Sending…" : "Request access"}
+                        Got it
                       </button>
-                    ) : null}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLockedSide(null);
+                          setSideSheet(true);
+                        }}
+                        className="px-4 py-3 rounded-xl bg-white border border-gray-200 text-gray-800 font-extrabold text-sm hover:bg-gray-50"
+                      >
+                        Manage what you show them
+                      </button>
+                    </div>
 
-                    <button
-                      type="button"
-                      onClick={() => setLockedSide(null)}
-                      className="w-full py-3 rounded-xl bg-gray-900 text-white font-extrabold text-sm shadow-md active:scale-95 transition-all"
-                    >
-                      Close
-                    </button>
+                    <div className="text-[11px] text-gray-500">
+                      Tip: Your <span className="font-bold">Side</span> action controls what <span className="font-bold">they</span> can access of you.
+                    </div>
                   </div>
                 </div>
               </div>
             ) : null}
 
-{/* sd_717_profile_v2_shell_header_tabs */}
-{/* sd_732_fix_profile_messageHref */}
 
+            
+            {/* sd_717_profile_v2_shell_header_tabs */}
             <div className="mt-4">
-
               <ProfileV2Header
-                variant="clean"
                 displaySide={displaySide}
                 viewSide={viewSide}
                 handle={user.handle}
                 facet={facet}
                 siders={data?.siders ?? null}
                 postsCount={postsCount}
-isOwner={isOwner}
+                sharedSets={sharedSets}
+                isOwner={isOwner}
                 viewerSidedAs={viewerSidedAs}
-                onMessage={!isOwner ? doMessage : null}
-                messageDisabled={msgBusy}
                 actions={
                   isOwner ? (
-                    <div className="flex gap-3">
+                    <div className="flex flex-col gap-3">
                       <button
                         type="button"
                         onClick={() => {
                           try {
-                            router.replace("/siddes-profile/prism");
+                            window.location.href = "/siddes-profile/prism";
                           } catch {}
                         }}
-                        className="flex-1 py-3 rounded-2xl font-extrabold text-sm text-white shadow-md active:scale-95 transition-all bg-slate-800 hover:bg-slate-900"
+                        className="w-full py-3 rounded-2xl font-extrabold text-sm text-white shadow-md active:scale-95 transition-all bg-slate-800 hover:bg-slate-900"
                       >
                         Edit identities
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => setActionsOpen(true)}
-                        className="w-12 h-11 rounded-2xl bg-gray-100 text-gray-700 font-extrabold text-sm hover:bg-gray-200 transition-all flex items-center justify-center"
-                        aria-label="More actions"
-                      >
-                        <MoreHorizontal size={18} />
-
-              </button>
-                    </div>
-                  ) : (
-                    <div className="flex gap-3">
-                      <div className="flex-1">
-                        <SideActionButtons viewerSidedAs={viewerSidedAs} onOpenSheet={() => setSideSheet(true)} />
-                      </div>
-
-                      {/* sd_790_follow_button */}
-                      {viewSide === "public" ? (
+                      <div className="flex gap-3">
+                        <CopyLinkButton href={href} />
                         <button
                           type="button"
-                          onClick={() => void doToggleFollow()}
-                          disabled={followBusy}
-                          className={
-                            (viewerFollowsPublic
-                              ? "px-4 h-11 rounded-2xl font-extrabold text-sm transition-all flex items-center justify-center bg-gray-900 text-white border border-gray-900 hover:opacity-90"
-                              : "px-4 h-11 rounded-2xl font-extrabold text-sm transition-all flex items-center justify-center bg-white text-gray-900 border border-gray-200 hover:bg-gray-50") +
-                            (followBusy ? " opacity-60 cursor-not-allowed" : "")
-                          }
-                          aria-label={viewerFollowsPublic ? "Following" : "Follow"}
+                          onClick={() => setActionsOpen(true)}
+                          className="px-4 py-3 rounded-2xl bg-gray-100 text-gray-700 font-extrabold text-sm hover:bg-gray-200 transition-all flex items-center justify-center gap-2"
+                          aria-label="More actions"
                         >
-                          {viewerFollowsPublic ? "Following" : "Follow"}
+                          <MoreHorizontal size={18} />
                         </button>
-                      ) : null}
-
-                      <button
-                        type="button"
-                        onClick={() => setActionsOpen(true)}
-                        className="w-12 h-11 rounded-2xl bg-gray-100 text-gray-700 font-extrabold text-sm hover:bg-gray-200 transition-all flex items-center justify-center"
-                        aria-label="More actions"
-                      >
-                        <MoreHorizontal size={18} />
-                      </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-3">
+                      <div className="flex gap-3">
+                        <SideActionButtons viewerSidedAs={viewerSidedAs} onOpenSheet={() => setSideSheet(true)} />
+                      </div>
+                      <div className="flex gap-3">
+                        <CopyLinkButton href={href} />
+                        <button
+                          type="button"
+                          onClick={() => setActionsOpen(true)}
+                          className="px-4 py-3 rounded-2xl bg-gray-100 text-gray-700 font-extrabold text-sm hover:bg-gray-200 transition-all flex items-center justify-center gap-2"
+                          aria-label="More actions"
+                        >
+                          <MoreHorizontal size={18} />
+                        </button>
+                      </div>
                     </div>
                   )
                 }
               />
 
+              <ProfileV2Tabs side={displaySide} active={contentTab} onPick={setContentTab} />
 
-              {/* sd_814_about_sheet (hidden by sd_912) */}
-              <button
-                type="button"
-                onClick={() => setAboutOpen(true)}
-                className="mt-3 w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-gray-900 font-extrabold text-sm flex items-center justify-between hover:bg-gray-100 transition-colors"
-                aria-label="About"
-              >
-                About
-                <ChevronRight size={18} className="text-gray-500" />
-              </button>
-
-              {aboutOpen ? (
-                <div className="fixed inset-0 z-[98] flex items-end justify-center md:items-center">
-                  <button
-                    type="button"
-                    className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-                    onClick={() => setAboutOpen(false)}
-                    aria-label="Close"
-                  />
-                  <div className="relative w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="text-lg font-black text-gray-900">About {user?.handle}</div>
-                        <div className="text-xs text-gray-500 mt-1">{SIDES[displaySide]?.label || displaySide} identity</div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setAboutOpen(false)}
-                        className="p-2 rounded-full hover:bg-gray-100"
-                        aria-label="Close"
-                      >
-                        <span className="sr-only">Close</span>
-                        <X size={18} className="text-gray-500" />
-                      </button>
-                    </div>
-
-                    {String((facet as any)?.headline || "").trim() ? (
-                      <div className="mt-3 text-sm font-semibold text-gray-700">
-                        {String((facet as any)?.headline || "").trim()}
-                      </div>
-                    ) : null}
-
-                    <div className="mt-3 text-sm text-gray-700 leading-relaxed whitespace-pre-line">
-                      {String((facet as any)?.bio || "").trim() ? String((facet as any)?.bio || "").trim() : "No bio yet."}
-                    </div>
-
-                    <div className="mt-4 space-y-2">
-                      {String((facet as any)?.location || "").trim() ? (
-                        <div className="flex items-center justify-between text-xs">
-                          <div className="text-gray-500 font-bold">Location</div>
-                          <div className="text-gray-900 font-extrabold">{String((facet as any)?.location || "").trim()}</div>
-                        </div>
-                      ) : null}
-
-                      {String((facet as any)?.website || "").trim() ? (
-                        <div className="flex items-center justify-between text-xs">
-                          <div className="text-gray-500 font-bold">Website</div>
-                          <a hidden
-                            className="text-gray-900 font-extrabold hover:underline"
-                            href={(() => {
-                              const w = String((facet as any)?.website || "").trim();
-                              if (!w) return "#";
-                              if (w.startsWith("http://") || w.startsWith("https://")) return w;
-                              return "https://" + w;
-                            })()}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            {String((facet as any)?.website || "").trim()}
-                          </a>
-                        </div>
-                      ) : null}
-
-                      <div className="flex items-center justify-between text-xs">
-                        <div className="text-gray-500 font-bold">Privacy</div>
-                        <div className="text-gray-900 font-extrabold">{SIDES[displaySide]?.privacyHint || "Visible"}</div>
-                      </div>
-                    </div>
-
-                                        <div className="mt-4 p-3 rounded-2xl bg-gray-50 border border-gray-200">
-                      <div className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">Posts</div>
-                      <div className="text-lg font-black text-gray-900 tabular-nums mt-1">{postsCount ?? "—"}</div>
-                    </div>
-
-<button hidden
-                      type="button"
-                      onClick={() => setAboutOpen(false)}
-                      className="w-full mt-5 py-3 rounded-xl bg-gray-900 text-white font-extrabold text-sm shadow-md active:scale-95 transition-all"
-                    >
-                      Close
-                    </button>
-                  </div>
-                </div>
-              ) : null}
-
-
-
-              
-              {/* Posts */}
+              {/* Content */}
               <div className="mt-4">
-
-                  {contentTab === "posts" ? (
-                    <div className="bg-white">
-                <div className="bg-white">
-                  {posts.length ? (
-                    <>
-                      {posts.map((post) => (
-                        <PostCard key={post.id} post={post} side={displaySide} variant="row" avatarUrl={avatarUrl} />
-                      ))}
-                      {postsPayload?.hasMore ? (
-                        <div className="py-4 flex justify-center border-t border-gray-100 bg-white">
-                          <button
-                            type="button"
-                            onClick={loadMore}
-                            disabled={loadingMore}
-                            className="px-4 py-2.5 rounded-xl bg-gray-900 text-white font-extrabold text-sm shadow-sm hover:opacity-90 disabled:opacity-50"
-                          >
-                            {loadingMore ? "Loading…" : "Load more"}
-                          </button>
-                        </div>
-                      ) : null}
-                    </>
-                  ) : (
-                    <div className="py-14 text-center px-6 rounded-3xl border border-gray-200 bg-white">
-                      <div className="text-sm font-extrabold text-gray-900">No posts visible</div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        Nothing visible in {SIDES[displaySide]?.label || displaySide}.
-                      </div>
-                    </div>
-                  )}
-                </div>
-              
-                    </div>
-                  ) : (
-                    <div className="mt-4">
-                      <div className="grid grid-cols-3 gap-1 rounded-2xl overflow-hidden border border-gray-100 bg-gray-50">
-                        {(() => {
-                          const items: Array<{ postId: string; media: any }> = [];
-                          for (const p of posts as any[]) {
-                            const mm = Array.isArray((p as any)?.media) ? (p as any).media : [];
-                            for (const m of mm) {
-                              const url = String((m as any)?.url || "").trim();
-                              if (!url) continue;
-                              items.push({ postId: String((p as any)?.id || ""), media: m });
-                            }
-                          }
-                          return items;
-                        })().slice(0, 120).map((it, idx) => (
-                          <button
-                            key={it.postId + ":" + idx}
-                            type="button"
-                            onClick={() => {
-                              try { router.push(`/siddes-post/${encodeURIComponent(String(it.postId))}?from=profile`); } catch {}
-                            }}
-                            className="relative aspect-square bg-gray-100"
-                            aria-label="Open post"
-                          >
-                            {String((it.media as any)?.kind || "") === "video" ? (
-                              <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
-                                <Play size={18} className="text-gray-700" />
-                              </div>
-                            ) : (
-                              <img src={String((it.media as any)?.url)} alt="" className="absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" />
-                            )}
-                          </button>
+                {contentTab === "posts" ? (
+                  <div className="bg-white">
+                    {posts.length ? (
+                      <>
+                        {posts.map((post) => (
+                          <PostCard key={post.id} post={post} side={displaySide} variant="row" avatarUrl={avatarUrl} />
                         ))}
-                      </div>
-
-                      {/* sd_912_media_grid */}
-                      {(() => {
-                        let count = 0;
-                        for (const p of posts as any[]) {
-                          const mm = Array.isArray((p as any)?.media) ? (p as any).media : [];
-                          count += mm.length;
-                        }
-                        return count;
-                      })() === 0 ? (
-                        <div className="py-14 text-center px-6 rounded-3xl border border-gray-200 bg-white mt-4">
-                          <div className="text-sm font-extrabold text-gray-900">No media visible</div>
-                          <div className="text-xs text-gray-500 mt-1">Nothing with photos or videos in this Room.</div>
+                        {postsPayload?.hasMore ? (
+                          <div className="py-4 flex justify-center border-t border-gray-100 bg-white">
+                            <button
+                              type="button"
+                              onClick={loadMore}
+                              disabled={loadingMore}
+                              className="px-4 py-2.5 rounded-xl bg-gray-900 text-white font-extrabold text-sm shadow-sm hover:opacity-90 disabled:opacity-50"
+                            >
+                              {loadingMore ? "Loading…" : "Load more"}
+                            </button>
+                          </div>
+                        ) : null}
+                      </>
+                    ) : (
+                      <div className="py-14 text-center px-6 rounded-3xl border border-gray-200 bg-white">
+                        <div className="text-sm font-extrabold text-gray-900">No posts visible</div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          Nothing visible in {SIDES[displaySide]?.label || displaySide}.
                         </div>
-                      ) : null}
-                    </div>
-                  )}
-
-                </div>
-
+                      </div>
+                    )}
+                  </div>
+                ) : contentTab === "media" ? (
+                  <div className="py-14 text-center px-6 rounded-3xl border border-gray-200 bg-white">
+                    <div className="text-sm font-extrabold text-gray-900">Media</div>
+                    <div className="text-xs text-gray-500 mt-1">Media grid ships in the next overlay.</div>
+                  </div>
+                ) : (
+                  <div className="py-14 text-center px-6 rounded-3xl border border-gray-200 bg-white">
+                    <div className="text-sm font-extrabold text-gray-900">Sets</div>
+                    <div className="text-xs text-gray-500 mt-1">Sets tab ships in the next overlay.</div>
+                  </div>
+                )}
+              </div>
             </div>
+
+
+            {/* sd_718: removed legacy PrismIdentityCard + duplicate profile feed (Profile V2 handles header/tabs/content) */}
 
 {!isOwner ? (
             <SideWithSheet
@@ -1067,6 +483,7 @@ onPick={doPickSide}
               displayName={facet.displayName || user.handle}
               href={href}
             />
+            
 
                       </>
         )}

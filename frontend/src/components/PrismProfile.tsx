@@ -992,25 +992,23 @@ export function SideActionButtons(props: {
 }) {
   const { viewerSidedAs, onOpenSheet } = props;
 
-  // Design canon:
-  // - Unsided -> "Add Friend" (clear CTA, opens sheet to choose Friends/Close/Work)
-  // - Sided -> show the Side label only (no "Sided:" prefix)
+  // sd_949b_design_canon: remove internal jargon from CTA
   const sided = viewerSidedAs && viewerSidedAs !== "public" ? viewerSidedAs : null;
 
   if (sided) {
-    const t = SIDE_THEMES[sided];
+    const th = SIDE_THEMES[sided];
     return (
       <button
         type="button"
         onClick={onOpenSheet}
         className={cn(
           "flex-1 h-11 rounded-2xl font-extrabold text-sm text-white shadow-md active:scale-95 transition-all flex items-center justify-center gap-2",
-          t.primaryBg
+          th.primaryBg
         )}
-        aria-label={`Sided: ${SIDES[sided].label}`}
-        title={`Sided: ${SIDES[sided].label}`}
+        aria-label={`${SIDES[sided]?.label || sided}`}
+        title={`${SIDES[sided]?.label || sided}`}
       >
-        {SIDES[sided].label} <ChevronDown size={16} />
+        {SIDES[sided]?.label || sided} <ChevronDown size={16} />
       </button>
     );
   }
@@ -1027,6 +1025,7 @@ export function SideActionButtons(props: {
     </button>
   );
 }
+
 
 export function EditFacetButton({ onClick }: { onClick: () => void }) {
   return (

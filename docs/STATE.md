@@ -90,6 +90,10 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 
 ## NEXT overlay
 
+- **sd_949c:** Profile: remove leftover About UI refs (setAboutOpen/aboutOpen) so /u/:username stays build-clean.
+
+- **sd_949b:** Profile design canon shell: room pill + room sheet; remove About + PrismSideTabs; icon tabs (posts/media); clean CTA copy.
+
 - **sd_948:** Profile design-canon prune — remove PrismSideTabs helper copy; unhide PrismSideTabs buttons (bug); force ProfileV2Header clean + prune meta/relationship/stats/pulse/shared; remove About block from /u/:username.
 
 - **sd_947:** Profile declutter cleanroom — hide PrismSideTabs; force ProfileV2Header clean variant; remove header meta clutter/pulse/shared blocks; fix JSX comment dirt in /u/:username.
