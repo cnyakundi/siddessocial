@@ -18,7 +18,7 @@ echo "== ${SD_ID} =="
 echo "Backup saved to: $BK/$FILE"
 echo ""
 
-# Restore file from git (works on both newer and older git)
+# Restore from git (works on old + new git)
 git restore "$FILE" 2>/dev/null || git checkout -- "$FILE"
 
 echo "✅ Restored from git: $FILE"
