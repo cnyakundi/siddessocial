@@ -156,9 +156,6 @@ export default function UserProfilePage() {
   const posts = postsPayload?.items || [];
 
   const postsCount = typeof postsPayload?.count === "number" ? postsPayload.count : posts.length;
-
-
-
   const publicFollowers = typeof (data as any)?.publicFollowers === "number" ? (data as any).publicFollowers : null;
   const publicFollowing = typeof (data as any)?.publicFollowing === "number" ? (data as any).publicFollowing : null;
 
@@ -397,8 +394,8 @@ export default function UserProfilePage() {
                 facet={facet}
                 siders={data?.siders ?? null}
                 postsCount={postsCount}
-                publicFollowers={(user as any)?.publicFollowers ?? null}
-                publicFollowing={(user as any)?.publicFollowing ?? null}
+                publicFollowers={publicFollowers}
+                publicFollowing={publicFollowing}
                 sharedSets={sharedSets}
                 isOwner={isOwner}
                 viewerSidedAs={viewerSidedAs}
