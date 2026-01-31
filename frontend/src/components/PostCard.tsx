@@ -1322,7 +1322,7 @@ export function PostCard({
               onTouchEnd={endProfilePeek}
             >
               <span className={cn("font-black text-gray-900 truncate hover:underline", isRow ? "text-[15px]" : "text-[15px] lg:text-[20px]")}>{post.author}</span>
-              <span className="text-gray-400 truncate hover:underline text-[12px] font-bold">{post.handle}</span>
+              {!isRow ? <span className="text-gray-400 truncate hover:underline text-[12px] font-bold">{post.handle}</span> : null}
             </button>
 
             {/* Metadata row (time + stamp + chips) */}
@@ -1338,7 +1338,7 @@ export function PostCard({
               <span className="text-gray-300 text-[10px]">•</span>
               <ContextStamp side={side} context={contextChip?.label || null} />
 
-              {visible.map((c) => (
+              {!isRow && visible.map((c) => (
                 <span
                   key={c.id}
                   className={cn(
@@ -1353,7 +1353,7 @@ export function PostCard({
                 </span>
               ))}
 
-              {overflowCount > 0 ? (
+              {!isRow && overflowCount > 0 ? (
                 <button
                   type="button"
                   onClick={(e) => {
@@ -1573,14 +1573,14 @@ export function PostCard({
           <div className="mt-3 pt-2 border-t border-gray-100 grid grid-cols-[1fr_auto] items-center gap-2">
             {/* Counts (secondary, readable) */}
             <div className="min-w-0 min-h-[18px] text-[11px] font-semibold text-gray-500 tabular-nums truncate">
-              {!hideCounts && (replyCount || likeCount) ? (
+              {!hideCounts && (replyCount || likeCount || (canEcho && echoCount)) ? (
                 <span className="inline-flex items-center gap-1.5">
                   {replyCount ? (
                     <span>
                       {replyCount} {replyCount === 1 ? "reply" : "replies"}
                     </span>
                   ) : null}
-                  {replyCount && likeCount ? <span className="text-gray-300">•</span> : null}
+                  {replyCount && (likeCount || (canEcho && echoCount)) ? <span className="text-gray-300">•</span> : null}
                   {likeCount ? (
                     <span>
                       {likeCount}{" "}
@@ -1593,26 +1593,18 @@ export function PostCard({
                           : "likes"}
                     </span>
                   ) : null}
+                  {likeCount && canEcho && echoCount ? <span className="text-gray-300">•</span> : null}
+                  {canEcho && echoCount ? (
+                    <span>
+                      {echoCount} {echoCount === 1 ? "echo" : "echoes"}
+                    </span>
+                  ) : null}
                 </span>
               ) : null}
             </div>
 
-            {/* Actions (primary, always visible) */}
+            {/* Actions (primary, icon-only) */}
             <div className="flex items-center gap-1">
-              <button
-                type="button"
-                className={cn(ACTION_BASE, "text-gray-400 hover:text-gray-700 hover:bg-gray-50")}
-                aria-label={replyCount ? `Reply (${replyCount})` : "Reply"}
-                title="Reply"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  openReply();
-                }}
-              >
-                <MessageCircle size={18} strokeWidth={2.5} />
-              </button>
-
               <button
                 type="button"
                 className={cn(
@@ -1642,6 +1634,55 @@ export function PostCard({
                 ) : (
                   <Heart size={18} strokeWidth={2.5} fill={liked ? "currentColor" : "none"} />
                 )}
+              </button>
+
+              <button
+                type="button"
+                className={cn(ACTION_BASE, "text-gray-400 hover:text-gray-700 hover:bg-gray-50")}
+                aria-label={replyCount ? `Reply (${replyCount})` : "Reply"}
+                title="Reply"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  openReply();
+                }}
+              >
+                <MessageCircle size={18} strokeWidth={2.5} />
+              </button>
+
+              {canEcho ? (
+                <button
+                  type="button"
+                  className={cn(
+                    ACTION_BASE,
+                    "hover:bg-gray-50 disabled:opacity-60",
+                    echoed ? theme.text : "text-gray-400 hover:text-gray-700"
+                  )}
+                  aria-label={echoCount ? (echoed ? `Un-echo (${echoCount})` : `Echo (${echoCount})`) : (echoed ? "Un-echo" : "Echo")}
+                  title={echoed ? "Un-echo" : "Echo"}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleEcho();
+                  }}
+                  disabled={echoBusy}
+                >
+                  <Repeat size={18} strokeWidth={2.5} />
+                </button>
+              ) : null}
+
+              <button
+                type="button"
+                className={cn(ACTION_BASE, "text-gray-400 hover:text-gray-700 hover:bg-gray-50")}
+                aria-label="Share"
+                title="Share"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  void doShare();
+                }}
+              >
+                <Share2 size={18} strokeWidth={2.5} />
               </button>
             </div>
           </div>
