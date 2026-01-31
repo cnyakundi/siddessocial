@@ -30,6 +30,9 @@ class PrismFacet(models.Model):
 
     avatar_media_key = models.CharField(max_length=512, blank=True, default="")
 
+    # Public-only: hide follower/following lists (counts stay visible)
+    public_rosters_hidden = models.BooleanField(default=False)
+
     anthem_title = models.CharField(max_length=96, blank=True, default="")
     anthem_artist = models.CharField(max_length=96, blank=True, default="")
 

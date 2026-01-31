@@ -299,6 +299,7 @@ def _facet_dict(f: PrismFacet) -> Dict[str, Any]:
         "coverImage": (f.cover_image_url or None),
         "avatarMediaKey": (str(getattr(f, "avatar_media_key", "") or "").strip() or None),
         "avatarImage": _avatar_url_for_facet(f),
+        "publicRostersHidden": bool(getattr(f, "public_rosters_hidden", False)),
         "anthem": (
             {"title": f.anthem_title, "artist": f.anthem_artist}
             if (f.anthem_title or f.anthem_artist)
@@ -364,6 +365,14 @@ class PrismView(APIView):
         _set_str("cover_image_url", "coverImage", 300)
         _set_str("avatar_image_url", "avatarImage", 300)
         _set_str("avatar_media_key", "avatarMediaKey", 512)
+
+        # sd_940_public_rosters_hidden: allow owner to hide public follower/following lists
+        if side == "public" and "publicRostersHidden" in body:
+            want = body.get("publicRostersHidden")
+            try:
+                f.public_rosters_hidden = bool(want) if isinstance(want, (bool, int)) else _truthy(str(want))
+            except Exception:
+                f.public_rosters_hidden = False
         anthem = body.get("anthem") if isinstance(body.get("anthem"), dict) else None
         if anthem is not None:
             at = str(anthem.get("title") or "").strip()[:96]
@@ -898,6 +907,25 @@ class PublicFollowersView(APIView):
             except Exception:
                 pass
 
+        # sd_940_public_rosters_hidden_rosters: if target hides rosters, return counts only (owner can still see)
+        hidden = False
+        try:
+            pf = PrismFacet.objects.filter(user=target, side="public").first()
+            hidden = bool(getattr(pf, "public_rosters_hidden", False)) if pf else False
+        except Exception:
+            hidden = False
+
+        if hidden and (not viewer or getattr(viewer, "id", None) != getattr(target, "id", None)):
+            total = None
+            try:
+                total = int(UserFollow.objects.filter(target=target).count())
+            except Exception:
+                total = None
+            resp = Response({"ok": True, "hidden": True, "items": [], "nextCursor": None, "total": total}, status=status.HTTP_200_OK)
+            resp["Cache-Control"] = "private, no-store"
+            resp["Vary"] = "Cookie, Authorization"
+            return resp
+
         lim_raw = str(getattr(request, "query_params", {}).get("limit") or "").strip()
         try:
             lim = int(lim_raw) if lim_raw else 40
@@ -1020,6 +1048,25 @@ class PublicFollowingView(APIView):
                     return Response({"ok": False, "error": "not_found"}, status=status.HTTP_404_NOT_FOUND)
             except Exception:
                 pass
+
+        # sd_940_public_rosters_hidden_rosters: if target hides rosters, return counts only (owner can still see)
+        hidden = False
+        try:
+            pf = PrismFacet.objects.filter(user=target, side="public").first()
+            hidden = bool(getattr(pf, "public_rosters_hidden", False)) if pf else False
+        except Exception:
+            hidden = False
+
+        if hidden and (not viewer or getattr(viewer, "id", None) != getattr(target, "id", None)):
+            total = None
+            try:
+                total = int(UserFollow.objects.filter(follower=target).count())
+            except Exception:
+                total = None
+            resp = Response({"ok": True, "hidden": True, "items": [], "nextCursor": None, "total": total}, status=status.HTTP_200_OK)
+            resp["Cache-Control"] = "private, no-store"
+            resp["Vary"] = "Cookie, Authorization"
+            return resp
 
         lim_raw = str(getattr(request, "query_params", {}).get("limit") or "").strip()
         try:

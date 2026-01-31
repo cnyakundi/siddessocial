@@ -76,6 +76,7 @@ export type PrismFacet = {
   pulse?: { label: string; text: string } | null;
   updatedAt?: string | null;
   avatarMediaKey?: string | null;
+  publicRostersHidden?: boolean | null;
 };
 export type PrismOwnerPayload = {
   ok: boolean;
@@ -446,6 +447,7 @@ export function PrismFacetEditSheet(props: {
     anthem: { title: string; artist: string };
     pulse: { label: string; text: string };
     avatarMediaKey?: string;
+    publicRostersHidden?: boolean;
   }) => Promise<void>;
 }) {
   const { open, onClose, side, facet, onSave } = props;
@@ -466,6 +468,7 @@ export function PrismFacetEditSheet(props: {
   const [anthemArtist, setAnthemArtist] = useState("");
   const [pulseLabel, setPulseLabel] = useState("");
   const [pulseText, setPulseText] = useState("");
+  const [publicRostersHidden, setPublicRostersHidden] = useState(false);
   useEffect(() => {
     if (!open) return;
     setErr(null);
@@ -508,6 +511,7 @@ export function PrismFacetEditSheet(props: {
         avatarImage: avatarImage.trim(),
         anthem: { title: anthemTitle.trim(), artist: anthemArtist.trim() },
         pulse: { label: pulseLabel.trim(), text: pulseText.trim() },
+        ...(side === "public" ? { publicRostersHidden: !!publicRostersHidden } : {}),
       });
       onClose();
     } catch (e: any) {
@@ -645,7 +649,33 @@ export function PrismFacetEditSheet(props: {
             <textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={4} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900" />
             <div className="text-[11px] text-gray-500 mt-1">Keep it calm. No cross-Side leakage.</div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          
+          {side === "public" ? (
+            <div className="p-4 rounded-2xl border border-gray-200 bg-white flex items-center justify-between">
+              <div className="min-w-0">
+                <div className="text-sm font-bold text-gray-900">Hide follower/following lists</div>
+                <div className="text-[11px] text-gray-500 mt-1">Counts stay visible. Names are hidden to everyone else.</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPublicRostersHidden((v) => !v)}
+                className={cn(
+                  "w-12 h-7 rounded-full p-1 transition-colors flex items-center",
+                  publicRostersHidden ? "bg-gray-900" : "bg-gray-300"
+                )}
+                aria-label={publicRostersHidden ? "Lists hidden" : "Lists visible"}
+              >
+                <span
+                  className={cn(
+                    "w-5 h-5 bg-white rounded-full shadow-sm transition-transform",
+                    publicRostersHidden ? "translate-x-5" : "translate-x-0"
+                  )}
+                />
+              </button>
+            </div>
+          ) : null}
+
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <div className="text-sm font-bold text-gray-900 mb-1">Location</div>
               <input value={location} onChange={(e) => setLocation(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900" />

@@ -100,6 +100,7 @@ export default function SiddesProfilePage() {
     anthem: { title: string; artist: string };
     pulse: { label: string; text: string };
     avatarMediaKey?: string;
+    publicRostersHidden?: boolean;
   }) => {
     const res = await fetch("/api/prism", {
       method: "PATCH",

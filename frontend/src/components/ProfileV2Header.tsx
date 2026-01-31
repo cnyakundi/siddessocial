@@ -51,13 +51,28 @@ const NEUTRAL_COVER = "bg-gradient-to-br from-gray-50 via-white to-gray-100";
 
 export type ProfileV2HeaderVariant = "hero" | "clean";
 
-function Stat(props: { label: string; value: React.ReactNode; subtle?: boolean }) {
-  const { label, value, subtle } = props;
+function Stat(props: { label: string; value: React.ReactNode; subtle?: boolean; href?: string; locked?: boolean }) {
+  const { label, value, subtle, href, locked } = props;
+
+  const Wrapper: any = href && !locked ? "a" : "div";
+  const wrapperProps: any = href && !locked ? { href } : {};
+
   return (
-    <div className={cn("flex flex-col", subtle ? "opacity-80" : "")}>
+    <Wrapper
+      {...wrapperProps}
+      className={cn(
+        "flex flex-col",
+        subtle ? "opacity-80" : "",
+        href && !locked ? "hover:opacity-90 active:opacity-80 transition-opacity" : "",
+        locked ? "opacity-80 cursor-default" : ""
+      )}
+    >
       <span className="text-lg font-black text-gray-900 leading-none tabular-nums">{value}</span>
-      <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-1">{label}</span>
-    </div>
+      <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mt-1 inline-flex items-center gap-1">
+        {label}
+        {locked ? <Lock size={11} className="text-gray-300" /> : null}
+      </span>
+    </Wrapper>
   );
 }
 
@@ -136,6 +151,10 @@ export function ProfileV2Header(props: {
   const shownPosts = typeof postsCount === "number" ? postsCount : undefined;
   const shownFollowers = typeof publicFollowers === "number" ? publicFollowers : undefined;
   const shownFollowing = typeof publicFollowing === "number" ? publicFollowing : undefined;
+  const publicRostersHidden = displaySide === "public" ? !!((facet as any)?.publicRostersHidden) : false;
+  const uSlug = (safeHandle || "").replace(/^@/, "").trim();
+  const followersHref = uSlug ? `/u/${encodeURIComponent(uSlug)}/followers` : undefined;
+  const followingHref = uSlug ? `/u/${encodeURIComponent(uSlug)}/following` : undefined;
   const shownSiders = typeof siders === "number" ? siders : typeof siders === "string" ? siders : undefined;
 
   const showRelationship = !isOwner && (viewSide !== "public" || !!viewerSidedAs);
@@ -238,8 +257,8 @@ const ctaMessage = canMessage && onMessage ? (
         <Stat label="Posts" value={typeof shownPosts === "undefined" ? "—" : shownPosts} />
         {isPublic ? (
           <>
-            <Stat label="Followers" value={typeof shownFollowers === "undefined" ? "—" : shownFollowers} subtle />
-            <Stat label="Following" value={typeof shownFollowing === "undefined" ? "—" : shownFollowing} subtle />
+            <Stat label="Followers" value={typeof shownFollowers === "undefined" ? "—" : shownFollowers} subtle href={followersHref} locked={publicRostersHidden} />
+            <Stat label="Following" value={typeof shownFollowing === "undefined" ? "—" : shownFollowing} subtle href={followingHref} locked={publicRostersHidden} />
           </>
         ) : showAccessStat ? (
           <Stat label="Private Set" value={typeof shownSiders === "string" ? shownSiders : "Close Vault"} subtle />
