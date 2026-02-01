@@ -1,9 +1,10 @@
+// sd_962_like_counts
 // sd_961_threadtree_root_sort
 "use client";
 
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
-import { CornerDownRight } from "lucide-react";
+import { CornerDownRight, Heart } from "lucide-react";
 import { getStubViewerCookie, isStubMe } from "@/src/lib/stubViewerClient";
 
 // sd_952: ThreadTree
@@ -177,6 +178,8 @@ export function ThreadTree({
     const mine = isMine(r.authorId);
     const { name, handle, profileHref } = computeName(r, mine);
     const when = fmtTime(Number(r.createdAt || 0));
+    const likeCount = Number((r as any).likeCount ?? (r as any).likes ?? 0);
+
 
     const kids = tree.childrenById.get(id) || [];
     const hasKids = kids.length > 0;
@@ -238,6 +241,11 @@ export function ThreadTree({
                   Reply
                 </button>
               </div>
+              <div className="mt-2 flex items-center gap-2 text-xs font-extrabold text-gray-500">
+                <Heart className="w-3.5 h-3.5" />
+                <span>{likeCount}</span>
+              </div>
+
 </div>
           </div>
 
