@@ -1,6 +1,8 @@
+// sd_960_next_image
 "use client";
 
 import React, { useMemo, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Heart, MessageCircle, Repeat, Share2, MoreHorizontal } from "lucide-react";
 import type { SideId } from "@/src/lib/sides";
@@ -107,9 +109,9 @@ export function PostHero({
     <div className="bg-white">
       <div className="px-4 pt-4 pb-3 flex items-start justify-between gap-3">
         <button type="button" onClick={goProfile} className="flex items-start gap-3 text-left min-w-0">
-          <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 border border-gray-200 flex-shrink-0">
+          <div className="relative w-12 h-12 rounded-full overflow-hidden bg-gray-100 border border-gray-200 flex-shrink-0">
             {avatarUrl ? (
-              <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+              <Image src={avatarUrl} alt="" fill sizes="48px" className="object-cover" priority />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-400 font-black">
                 {name.slice(0, 1).toUpperCase()}
