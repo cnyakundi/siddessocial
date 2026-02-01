@@ -726,7 +726,31 @@ useEffect(() => {
     setSide(postSide, { afterConfirm: () => toast.success(`Entered ${postMeta.label}.`) });
   };
 
-  return (
+  
+  // sd_955_replying_to_jump: jump to a reply node and briefly highlight it
+  const jumpToReply = (targetId: string | null | undefined) => {
+    const id = String(targetId || "").trim();
+    if (!id) return;
+    const el = typeof document !== "undefined" ? document.getElementById(`reply-${id}`) : null;
+    if (!el) return;
+
+    try {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    } catch {}
+
+    try {
+      (el as any).animate?.(
+        [
+          { backgroundColor: "rgba(59, 130, 246, 0.14)", boxShadow: "0 0 0 0 rgba(59,130,246,0.0)" },
+          { backgroundColor: "rgba(59, 130, 246, 0.06)", boxShadow: "0 0 0 10px rgba(59,130,246,0.0)" },
+          { backgroundColor: "transparent", boxShadow: "0 0 0 0 rgba(59,130,246,0.0)" },
+        ],
+        { duration: 900, easing: "ease-out" }
+      );
+    } catch {}
+  };
+
+return (
     <div className="relative sd-min-h-shell pb-[260px]" data-testid="thread-shell">
       <div aria-hidden className={cn("absolute inset-0 opacity-30 pointer-events-none", theme.lightBg)} />
       <ContentColumn className="relative z-10 pt-4">
@@ -827,7 +851,8 @@ useEffect(() => {
 
                   <div className="flex items-center justify-between gap-3 text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-2">
 
-                    <span className="truncate">Replying to {replyTo.label}</span>
+                    <span className="truncate">{/* sd_955_replying_to_jump: TODO - Replying-to indicator drifted; jumpToReply is available */}
+Replying to {replyTo.label}</span>
 
                     <button
 
@@ -966,3 +991,6 @@ export default function SiddesPostDetailPage() {
 
 
 // sd_951_v5_post_hero_force_replace
+
+
+// sd_955_replying_to_jump

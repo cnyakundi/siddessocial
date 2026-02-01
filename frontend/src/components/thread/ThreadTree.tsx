@@ -5,7 +5,8 @@ import Link from "next/link";
 import { CornerDownRight } from "lucide-react";
 import { getStubViewerCookie, isStubMe } from "@/src/lib/stubViewerClient";
 
-// sd_952: ThreadTree renders replies as a true tree (recursive) with calm thread rails + optional collapsing.
+// sd_952: ThreadTree
+// sd_955_dom_ids_for_replies renders replies as a true tree (recursive) with calm thread rails + optional collapsing.
 // It works with today's backend (depth <= 1), and remains compatible when we unlock deeper threading later.
 
 type StoredReply = {
@@ -150,7 +151,7 @@ export function ThreadTree({
     const visualLevel = Math.max(0, Math.min(3, level));
 
     return (
-      <div key={id} className="relative">
+      <div id={`reply-${id}`} data-reply-id={id} data-depth={level} key={id} className="relative scroll-mt-24">
         <div style={{ paddingLeft: visualLevel > 0 ? 0 : 0 }}>
           <div className="flex gap-3 py-3 pr-4 group">
             <div className="relative flex-shrink-0">

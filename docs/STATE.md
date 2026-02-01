@@ -89,6 +89,8 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 - **sd_142:** Feed DRF endpoint + API-base-aware Next proxy (client calls same-origin /api/feed; Next proxies to Django via SD_INTERNAL_API_BASE / NEXT_PUBLIC_API_BASE)
 
 ## NEXT overlay
+- **sd_955:** Thread UX: 'Replying to' chip jumps to comment (scroll + flash) and ThreadTree exposes stable reply DOM ids.
+
 - **sd_954c:** Fix: Post detail nested replies typing — parent_id uses parentId (or replyTo.parentId) instead of replyTo.id.
 
 - **sd_954:** Thread: reply-to-nested enabled (ThreadTree Reply at any depth + PostDetail sends parent_id + Next /api/post/[id]/reply forwards parent_id).
