@@ -132,12 +132,10 @@ class DbReplyStore:
             if parent is None:
                 raise ValueError(f"parent_not_found:{pid}")
             # Facebook-style: one nesting level only
-            if getattr(parent, "parent_id", None):
-                raise ValueError("parent_too_deep")
+            # sd_953c: allow replying to replies (removed one-level cap)
             depth = int(getattr(parent, "depth", 0) or 0) + 1
-            if depth > 1:
+            if depth > 25:
                 raise ValueError("parent_too_deep")
-
         rec = Reply(
             id=_new_reply_id(),
             post=post,

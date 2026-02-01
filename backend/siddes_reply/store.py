@@ -52,13 +52,10 @@ class ReplyStore:
                 raise ValueError(f"parent_not_found:{pid}")
 
             # One nesting level only
-            if getattr(parent, "parent_id", None):
-                raise ValueError("parent_too_deep")
-
+            # sd_953c: allow replying to replies (removed one-level cap)
             depth = int(getattr(parent, "depth", 0) or 0) + 1
-            if depth > 1:
+            if depth > 25:
                 raise ValueError("parent_too_deep")
-
         rec = ReplyRecord(
             id=f"r_{int(time.time()*1000)}",
             post_id=post_id,
