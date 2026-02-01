@@ -89,6 +89,10 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 - **sd_142:** Feed DRF endpoint + API-base-aware Next proxy (client calls same-origin /api/feed; Next proxies to Django via SD_INTERNAL_API_BASE / NEXT_PUBLIC_API_BASE)
 
 ## NEXT overlay
+- **sd_963d:** ThreadTree: per-reply More actions sheet (Report/Mute/Block stubs) — anchor-fixed insertion after expanded state.
+
+- **sd_963:** ThreadTree: add per-reply More actions sheet (Report/Mute/Block stubs).
+
 - **sd_962:** ThreadTree: show like counts on replies (compact row under Reply button).
 
 - **sd_961:** Thread sorting: move Top/Newest to ThreadTree root-level sorting (do not reorder nested replies); SentReplies passes sortMode and stops list-wide sorting.

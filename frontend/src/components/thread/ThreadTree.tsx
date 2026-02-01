@@ -1,10 +1,11 @@
+// sd_963d_actions_sheet
 // sd_962_like_counts
 // sd_961_threadtree_root_sort
 "use client";
 
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
-import { CornerDownRight, Heart } from "lucide-react";
+import { CornerDownRight, Heart, MoreHorizontal } from "lucide-react";
 import { getStubViewerCookie, isStubMe } from "@/src/lib/stubViewerClient";
 
 // sd_952: ThreadTree
@@ -166,6 +167,10 @@ export function ThreadTree({
 
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
+  // sd_963d_actions_sheet: lightweight per-reply actions sheet (stubs)
+  const [actionsFor, setActionsFor] = useState<{ id: string; name: string; handle?: string } | null>(null);
+
+
   const toggle = (id: string) => setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
 
   const isMine = (authorId: string) => {
@@ -225,6 +230,15 @@ export function ThreadTree({
                 </div>
 
                 {when ? <span className="text-gray-400 text-xs tabular-nums shrink-0">{when}</span> : null}
+                <button
+                  type="button"
+                  onClick={() => setActionsFor({ id: String(r.id), name, handle })}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-300 hover:text-gray-700"
+                  aria-label="More actions"
+                  title="More"
+                >
+                  <MoreHorizontal className="w-4 h-4" />
+                </button>
               </div>
 
               <div className="text-sm text-gray-900 leading-relaxed mt-1 whitespace-pre-wrap">{r.text}</div>
@@ -282,5 +296,77 @@ export function ThreadTree({
     );
   };
 
-  return <>{roots.map((r) => renderNode(r, 0))}</>;
+  return <>{roots.map((r) => renderNode(r, 0))}
+      {actionsFor ? (
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          onClick={() => setActionsFor(null)}
+        >
+          <div
+            className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+              <div className="min-w-0">
+                <div className="font-black text-sm text-gray-900 truncate">{actionsFor.name}</div>
+                {actionsFor.handle ? <div className="text-xs text-gray-500 truncate">{actionsFor.handle}</div> : null}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setActionsFor(null)}
+                className="px-3 py-1.5 rounded-full bg-gray-100 text-gray-700 text-xs font-extrabold hover:bg-gray-200"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="p-2">
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    alert("Report (stub)");
+                  } finally {
+                    setActionsFor(null);
+                  }
+                }}
+                className="w-full text-left px-4 py-3 rounded-xl hover:bg-gray-50 text-sm font-extrabold text-gray-900"
+              >
+                Report
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    alert("Mute (stub)");
+                  } finally {
+                    setActionsFor(null);
+                  }
+                }}
+                className="w-full text-left px-4 py-3 rounded-xl hover:bg-gray-50 text-sm font-extrabold text-gray-900"
+              >
+                Mute
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    alert("Block (stub)");
+                  } finally {
+                    setActionsFor(null);
+                  }
+                }}
+                className="w-full text-left px-4 py-3 rounded-xl hover:bg-gray-50 text-sm font-extrabold text-rose-600"
+              >
+                Block
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+</>;
 }
