@@ -89,6 +89,8 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 - **sd_142:** Feed DRF endpoint + API-base-aware Next proxy (client calls same-origin /api/feed; Next proxies to Django via SD_INTERNAL_API_BASE / NEXT_PUBLIC_API_BASE)
 
 ## NEXT overlay
+- **sd_957:** Replies API: add optional tree format (`?tree=1`) so PostDetail can render deep threads recursively.
+
 - **sd_956g:** Fix: remove duplicate whisper state/vars after re-running overlays (dedupe replyScope + isWhisper).
 
 - **sd_956:** Thread: Whisper to Friends on Public posts (composer toggle + quote-echo to Friends-side).

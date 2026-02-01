@@ -1204,6 +1204,50 @@ class PostRepliesView(APIView):
             }
             for r in replies
         ]
+        # sd_957_tree_replies: optional tree format for deep-thread UI (?tree=1 or ?format=tree).
+        qp = getattr(request, "query_params", None)
+        getq = (qp.get if qp is not None else getattr(request, "GET", {}).get)
+        raw = str(getq("tree") or getq("format") or "").strip().lower()
+        want_tree = raw in ("1", "true", "yes", "y", "on", "tree")
+        if want_tree:
+            by_id = {}
+            nodes = []
+            for x in (out or []):
+                if not isinstance(x, dict):
+                    continue
+                node = dict(x)
+                node.setdefault("replies", [])
+                rid = str(node.get("id") or "").strip()
+                if rid:
+                    by_id[rid] = node
+                nodes.append(node)
+
+            roots = []
+            for node in nodes:
+                pid = str(node.get("parentId") or "").strip()
+                rid = str(node.get("id") or "").strip()
+                if pid and pid in by_id and pid != rid:
+                    by_id[pid].setdefault("replies", []).append(node)
+                else:
+                    roots.append(node)
+
+            def _sort_tree(n):
+                try:
+                    kids = list(n.get("replies") or [])
+                    kids.sort(key=lambda c: int((c or {}).get("createdAt") or 0))
+                    n["replies"] = kids
+                    for c in kids:
+                        if isinstance(c, dict):
+                            _sort_tree(c)
+                except Exception:
+                    return
+
+            for r0 in roots:
+                if isinstance(r0, dict):
+                    _sort_tree(r0)
+
+            return Response({"ok": True, "postId": post_id, "count": len(out), "flatCount": len(out), "format": "tree", "replies": roots, "viewerAuthed": bool(has_viewer)}, status=status.HTTP_200_OK)
+
         return Response({"ok": True, "postId": post_id, "count": len(out), "replies": out, "viewerAuthed": bool(has_viewer)}, status=status.HTTP_200_OK)
 
 
