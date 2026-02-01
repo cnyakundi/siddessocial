@@ -22,6 +22,7 @@ async function __sd_read_reply_json_once_v2(res: Response) {
 
 
 export const dynamic = "force-dynamic";
+
 import React, { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
@@ -330,8 +331,9 @@ function PostDetailInner() {
 
   const [replyText, setReplyText] = useState("");
 
-  const [replyScope, setReplyScope] = useState<"thread" | "friends">("thread"); // sd_956d_reply_scope_state
   const [replyTo, setReplyTo] = useState<{ parentId: string | null; label: string } | null>(null);
+  const [replyScope, setReplyScope] = useState<"thread" | "friends">("thread"); // sd_956f_reply_scope_state
+
   const replyInputRef = React.useRef<HTMLTextAreaElement | null>(null);
   const [replyBusy, setReplyBusy] = useState(false);
   const [replyError, setReplyError] = useState<ReplySendError | null>(null);
@@ -358,7 +360,9 @@ const sendReplyNow = useCallback(async () => {
   if (!found) return;
 
   const postSide = found.side;
-    const isWhisper = replyScope === "friends" && postSide === "public"; // sd_956d_whisper_logic
+
+
+  const isWhisper = replyScope === "friends" && postSide === "public"; // sd_956f_whisper_logic
   if (!isWhisper && activeSide !== postSide) {
     toast.error(`Enter ${SIDES[postSide].label} to reply.`);
     return;
@@ -385,9 +389,75 @@ const sendReplyNow = useCallback(async () => {
 
   // Offline: queue and keep UI truthful.
   
-  // sd_956d_whisper_logic: Whisper to Friends = quote-echo into Friends side (public original only).
   if (isWhisper) {
-    if (!onlineNow) {
+    
+    // sd_956f_whisper_logic: Whisper to Friends = quote-echo into Friends side (public original only)
+    if (isWhisper) {
+      if (!onlineNow) {
+        setReplyError({ kind: "network", message: "Whisper needs internet — try again when online." });
+        setReplyBusy(false);
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/post/${encodeURIComponent(found.post.id)}/quote`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            text: t,
+            side: "friends",
+            client_key: `whisper_${Date.now().toString(36)}`,
+          }),
+        });
+
+        const j = await res.json().catch(() => null);
+        if (res.ok && (!j || (j as any).ok !== false)) {
+          setReplyText("");
+          setReplyTo(null);
+          setReplyScope("thread");
+          setReplyBusy(false);
+          toast.success("Whispered to Friends.");
+          return;
+        }
+
+        const code = j && typeof (j as any).error === "string" ? String((j as any).error) : "request_failed";
+        if (res.status === 400) {
+          if (code === "too_long" && j && typeof (j as any).max === "number") {
+            setReplyError({ kind: "validation", message: `Too long. Max ${(j as any).max} characters.` });
+          } else if (code === "empty_text") {
+            setReplyError({ kind: "validation", message: "Write something first." });
+          } else {
+            setReplyError({ kind: "validation", message: "Couldn’t whisper — check your text." });
+          }
+          setReplyBusy(false);
+          return;
+        }
+        if (res.status === 401) {
+          setReplyError({ kind: "restricted", message: "Login required to whisper." });
+          setReplyBusy(false);
+          return;
+        }
+        if (res.status === 403) {
+          setReplyError({ kind: "restricted", message: "Restricted: you can’t whisper right now." });
+          setReplyBusy(false);
+          return;
+        }
+        if (res.status >= 500) {
+          setReplyError({ kind: "server", message: "Server error — whisper not sent. Try again." });
+          setReplyBusy(false);
+          return;
+        }
+
+        setReplyError({ kind: "unknown", message: "Couldn’t whisper — try again." });
+        setReplyBusy(false);
+        return;
+      } catch {
+        setReplyError({ kind: "network", message: "Network error — whisper not sent. Try again." });
+        setReplyBusy(false);
+        return;
+      }
+    }
+if (!onlineNow) {
       setReplyError({ kind: "network", message: "Whisper needs internet — try again when online." });
       setReplyBusy(false);
       return;
@@ -965,7 +1035,28 @@ Replying to {replyTo.label}</span>
                 ) : null}
 
 
-                <div className="flex gap-3">
+                                {/* sd_956f_whisper_toggle_ui: Public-only whisper toggle */}
+                {found.side === "public" ? (
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setReplyScope((cur) => (cur === "thread" ? "friends" : "thread"))}
+                      className={cn(
+                        "px-3 py-1.5 rounded-full border text-[11px] font-extrabold",
+                        replyScope === "friends"
+                          ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                          : "bg-blue-50 border-blue-200 text-blue-800"
+                      )}
+                      title="Toggle reply scope"
+                    >
+                      {replyScope === "friends" ? "Whisper to Friends" : "Reply to Public"}
+                    </button>
+                    <div className="text-[11px] font-bold text-gray-500 truncate">
+                      {replyScope === "friends" ? "Friends only" : "Public thread"}
+                    </div>
+                  </div>
+                ) : null}
+<div className="flex gap-3">
 
                   <ReplyAvatar label="You" tone="neutral" />
 
@@ -1088,4 +1179,3 @@ export default function SiddesPostDetailPage() {
 // sd_955_replying_to_jump
 
 
-// sd_956d_whisper_logic
