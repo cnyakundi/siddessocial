@@ -280,54 +280,7 @@ function SentReplies({ postId, onReplyTo, onCountChange }: { postId: string; onR
   }
 
 
-  function sortReplies(list: StoredReply[], mode: "top" | "newest"): StoredReply[] {
-
-    const arr = [...(list || [])];
-
-    if (mode === "newest") {
-
-      arr.sort((a, b) => {
-
-        const aa = Number((a as any)?.createdAt || 0);
-
-        const bb = Number((b as any)?.createdAt || 0);
-
-        if (bb !== aa) return bb - aa;
-
-        return String((a as any)?.id || "").localeCompare(String((b as any)?.id || ""));
-
-      });
-
-      return arr;
-
-    }
-
   
-
-    // "top"
-
-    arr.sort((a, b) => {
-
-      const la = Number((a as any)?.likeCount || 0);
-
-      const lb = Number((b as any)?.likeCount || 0);
-
-      if (lb !== la) return lb - la;
-
-      const aa = Number((a as any)?.createdAt || 0);
-
-      const bb = Number((b as any)?.createdAt || 0);
-
-      if (aa !== bb) return aa - bb;
-
-      return String((a as any)?.id || "").localeCompare(String((b as any)?.id || ""));
-
-    });
-
-    return arr;
-
-  }
-
 const refresh = useCallback(async () => {
     if (!postId) return;
     setLoading(true);
@@ -343,7 +296,7 @@ const refresh = useCallback(async () => {
       const data = await res.json();
       // sd_958_tree_consume: consume tree replies (or flat) and keep existing UI.
       const rs = flattenReplies((data as any)?.replies || []);
-      setReplies(sortReplies(rs, sortMode));
+      setReplies(rs);
 try {
         onCountChange?.(typeof (data as any)?.flatCount === "number" ? Number((data as any).flatCount) : rs.length);
       } catch {}
@@ -393,7 +346,7 @@ try {
         <div className="text-sm text-gray-400">Loading…</div>
       ) : replies.length ? (
         <div className="space-y-2">
-          <ThreadTree replies={replies} viewerId={viewerId} onReplyTo={onReplyTo} />
+          <ThreadTree replies={replies} viewerId={viewerId} onReplyTo={onReplyTo} sortMode={sortMode} />
         </div>
       ) : (
         <div className="text-sm text-gray-400">No replies yet.</div>

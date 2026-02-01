@@ -1,3 +1,4 @@
+// sd_961_threadtree_root_sort
 "use client";
 
 import React, { useMemo, useState } from "react";
@@ -120,12 +121,48 @@ export function ThreadTree({
   replies,
   viewerId,
   onReplyTo,
+  sortMode,
 }: {
   replies: StoredReply[];
   viewerId: string | null;
   onReplyTo?: (parentId: string, label: string) => void;
+  sortMode?: "top" | "newest";
 }) {
   const tree = useMemo(() => buildTree(replies || []), [replies]);
+
+  // sd_961_threadtree_root_sort: sort root-level replies only; keep nested replies chronological.
+  const roots = useMemo(() => {
+    const arr = [...(tree.roots || [])];
+    const getLike = (r: any) => Number(r?.likeCount ?? r?.likes ?? 0);
+    const getCreated = (r: any) => Number(r?.createdAt ?? 0);
+    const getId = (r: any) => String(r?.id ?? "");
+
+    if (sortMode === "newest") {
+      arr.sort((a: any, b: any) => {
+        const aa = getCreated(a);
+        const bb = getCreated(b);
+        if (bb !== aa) return bb - aa;
+        return getId(a).localeCompare(getId(b));
+      });
+      return arr;
+    }
+
+    if (sortMode === "top") {
+      arr.sort((a: any, b: any) => {
+        const la = getLike(a);
+        const lb = getLike(b);
+        if (lb !== la) return lb - la;
+        const aa = getCreated(a);
+        const bb = getCreated(b);
+        if (aa !== bb) return aa - bb;
+        return getId(a).localeCompare(getId(b));
+      });
+      return arr;
+    }
+
+    return arr;
+  }, [tree, sortMode]);
+
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   const toggle = (id: string) => setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -237,5 +274,5 @@ export function ThreadTree({
     );
   };
 
-  return <>{tree.roots.map((r) => renderNode(r, 0))}</>;
+  return <>{roots.map((r) => renderNode(r, 0))}</>;
 }

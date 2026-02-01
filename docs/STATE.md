@@ -89,6 +89,8 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 - **sd_142:** Feed DRF endpoint + API-base-aware Next proxy (client calls same-origin /api/feed; Next proxies to Django via SD_INTERNAL_API_BASE / NEXT_PUBLIC_API_BASE)
 
 ## NEXT overlay
+- **sd_961:** Thread sorting: move Top/Newest to ThreadTree root-level sorting (do not reorder nested replies); SentReplies passes sortMode and stops list-wide sorting.
+
 - **sd_960:** PostHero: replace <img> with next/image for avatar (fix LCP lint warning).
 
 - **sd_959:** Thread UI: add Top/Newest filter for replies in PostDetail (stable sort; default Top).
