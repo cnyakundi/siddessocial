@@ -154,11 +154,132 @@ function SentReplies({ postId, onReplyTo, onCountChange }: { postId: string; onR
   const [loading, setLoading] = useState(false);
   const [viewerId, setViewerId] = useState<string | null>(null);
 
-  const refresh = useCallback(async () => {
+  
+
+  // sd_958_tree_flatten_helper: accept backend tree replies (?tree=1) OR flat replies and produce a flat list with depth.
+
+  function flattenReplies(raw: any[]): StoredReply[] {
+
+    const arr = Array.isArray(raw) ? raw : [];
+
+    if (!arr.length) return [];
+
+  
+
+    const hasNested = arr.some((x) => x && Array.isArray((x as any).replies));
+
+    let roots: any[] = arr;
+
+  
+
+    // If backend didn't send a tree, build one from parentId.
+
+    if (!hasNested) {
+
+      const byId: Record<string, any> = {};
+
+      const nodes: any[] = [];
+
+      for (const x of arr) {
+
+        if (!x || typeof x !== "object") continue;
+
+        const id = String((x as any).id || "").trim();
+
+        const n = { ...(x as any), replies: [] as any[] };
+
+        if (id) byId[id] = n;
+
+        nodes.push(n);
+
+      }
+
+      const rs: any[] = [];
+
+      for (const n of nodes) {
+
+        const pid = String((n as any).parentId || "").trim();
+
+        const id = String((n as any).id || "").trim();
+
+        if (pid && byId[pid] && pid !== id) {
+
+          byId[pid].replies.push(n);
+
+        } else {
+
+          rs.push(n);
+
+        }
+
+      }
+
+      roots = rs;
+
+    }
+
+  
+
+    // Sort children by createdAt (stable-ish).
+
+    const sortTree = (n: any) => {
+
+      try {
+
+        const kids = Array.isArray(n?.replies) ? [...n.replies] : [];
+
+        kids.sort((a, b) => {
+
+          const aa = Number((a as any)?.createdAt || 0);
+
+          const bb = Number((b as any)?.createdAt || 0);
+
+          return aa - bb;
+
+        });
+
+        n.replies = kids;
+
+        for (const c of kids) sortTree(c);
+
+      } catch {}
+
+    };
+
+    for (const r of roots) sortTree(r);
+
+  
+
+    const out: any[] = [];
+
+    const walk = (nodes: any[], depth: number) => {
+
+      for (const node of nodes) {
+
+        if (!node || typeof node !== "object") continue;
+
+        const n = { ...(node as any), depth };
+
+        out.push(n);
+
+        const kids = Array.isArray((node as any).replies) ? (node as any).replies : [];
+
+        if (kids.length) walk(kids, depth + 1);
+
+      }
+
+    };
+
+    walk(roots, 0);
+
+    return out as StoredReply[];
+
+  }
+const refresh = useCallback(async () => {
     if (!postId) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/post/${encodeURIComponent(postId)}/replies`, { cache: "no-store" });
+      const res = await fetch(`/api/post/${encodeURIComponent(postId)}/replies?tree=1`, { cache: "no-store" });
       if (!res.ok) {
         setReplies([]);
         try {
@@ -167,10 +288,11 @@ function SentReplies({ postId, onReplyTo, onCountChange }: { postId: string; onR
         return;
       }
       const data = await res.json();
-      const rs = ((data.replies || []) as StoredReply[]);
+      // sd_958_tree_consume: consume tree replies (or flat) and keep existing UI.
+      const rs = flattenReplies((data as any)?.replies || []);
       setReplies(rs);
-      try {
-        onCountChange?.(rs.length);
+try {
+        onCountChange?.(typeof (data as any)?.flatCount === "number" ? Number((data as any).flatCount) : rs.length);
       } catch {}
     } finally {
       setLoading(false);
