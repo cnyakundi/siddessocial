@@ -156,7 +156,10 @@ function SentReplies({ postId, onReplyTo, onCountChange }: { postId: string; onR
 
   
 
-  // sd_958_tree_flatten_helper: accept backend tree replies (?tree=1) OR flat replies and produce a flat list with depth.
+  
+
+  const [sortMode, setSortMode] = useState<"top" | "newest">("top"); // sd_959_thread_filter
+// sd_958_tree_flatten_helper: accept backend tree replies (?tree=1) OR flat replies and produce a flat list with depth.
 
   function flattenReplies(raw: any[]): StoredReply[] {
 
@@ -275,6 +278,56 @@ function SentReplies({ postId, onReplyTo, onCountChange }: { postId: string; onR
     return out as StoredReply[];
 
   }
+
+
+  function sortReplies(list: StoredReply[], mode: "top" | "newest"): StoredReply[] {
+
+    const arr = [...(list || [])];
+
+    if (mode === "newest") {
+
+      arr.sort((a, b) => {
+
+        const aa = Number((a as any)?.createdAt || 0);
+
+        const bb = Number((b as any)?.createdAt || 0);
+
+        if (bb !== aa) return bb - aa;
+
+        return String((a as any)?.id || "").localeCompare(String((b as any)?.id || ""));
+
+      });
+
+      return arr;
+
+    }
+
+  
+
+    // "top"
+
+    arr.sort((a, b) => {
+
+      const la = Number((a as any)?.likeCount || 0);
+
+      const lb = Number((b as any)?.likeCount || 0);
+
+      if (lb !== la) return lb - la;
+
+      const aa = Number((a as any)?.createdAt || 0);
+
+      const bb = Number((b as any)?.createdAt || 0);
+
+      if (aa !== bb) return aa - bb;
+
+      return String((a as any)?.id || "").localeCompare(String((b as any)?.id || ""));
+
+    });
+
+    return arr;
+
+  }
+
 const refresh = useCallback(async () => {
     if (!postId) return;
     setLoading(true);
@@ -290,7 +343,7 @@ const refresh = useCallback(async () => {
       const data = await res.json();
       // sd_958_tree_consume: consume tree replies (or flat) and keep existing UI.
       const rs = flattenReplies((data as any)?.replies || []);
-      setReplies(rs);
+      setReplies(sortReplies(rs, sortMode));
 try {
         onCountChange?.(typeof (data as any)?.flatCount === "number" ? Number((data as any).flatCount) : rs.length);
       } catch {}
@@ -1301,3 +1354,6 @@ export default function SiddesPostDetailPage() {
 // sd_955_replying_to_jump
 
 
+
+
+// sd_959_thread_filter: TODO header insertion drifted; add Top/Newest toggle near Replies header.

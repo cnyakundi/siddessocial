@@ -89,6 +89,8 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 - **sd_142:** Feed DRF endpoint + API-base-aware Next proxy (client calls same-origin /api/feed; Next proxies to Django via SD_INTERNAL_API_BASE / NEXT_PUBLIC_API_BASE)
 
 ## NEXT overlay
+- **sd_959:** Thread UI: add Top/Newest filter for replies in PostDetail (stable sort; default Top).
+
 - **sd_958:** Frontend: consume replies tree (`?tree=1`) and flatten to depth-labeled list; allow replying at any depth (backend-enforced).
 
 - **sd_957:** Replies API: add optional tree format (`?tree=1`) so PostDetail can render deep threads recursively.
