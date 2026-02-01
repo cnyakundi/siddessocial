@@ -89,6 +89,8 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 - **sd_142:** Feed DRF endpoint + API-base-aware Next proxy (client calls same-origin /api/feed; Next proxies to Django via SD_INTERNAL_API_BASE / NEXT_PUBLIC_API_BASE)
 
 ## NEXT overlay
+- **sd_952:** Thread: recursive ThreadTree replies (tree rendering + thread rails + collapsed branches).
+
 - **sd_951_fix:** Post detail PostHero: fix missing `side` symbol by using safe fallback "public".
 
 - **sd_951:** Thread: PostHero root post (detail hero) — replace inline root post region in post detail after SideMismatchBanner.

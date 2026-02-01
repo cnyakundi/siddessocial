@@ -41,6 +41,7 @@ import { getSessionIdentity, touchSessionConfirmed, updateSessionFromMe } from "
 import { getCachedPost, makePostCacheKey, setCachedPost } from "@/src/lib/postInstantCache";
 import { getCirclesProvider } from "@/src/lib/circlesProvider";
 import { PostHero } from "@/src/components/thread/PostHero";
+import { ThreadTree } from "@/src/components/thread/ThreadTree";
 import {
   enqueueReply,
   countQueuedRepliesForPost,
@@ -217,126 +218,7 @@ function SentReplies({ postId, onReplyTo, onCountChange }: { postId: string; onR
         <div className="text-sm text-gray-400">Loading…</div>
       ) : replies.length ? (
         <div className="space-y-2">
-          {replies.map((r) => {
-            const mine = viewerId ? r.authorId === viewerId : isStubMe(r.authorId);
-
-            const name = mine
-              ? "You"
-              : (r.author || (r.handle ? String(r.handle).replace(/^@/, "") : "") || "Unknown");
-
-            const handleRaw = !mine ? String(r.handle || "").trim() : "";
-            const handle = handleRaw ? (handleRaw.startsWith("@") ? handleRaw : "@" + handleRaw) : "";
-
-            const profileSlug = (() => {
-              const raw = String(r.handle || "").trim();
-              const u = raw.replace(/^@/, "").split(/\s+/)[0];
-              return u ? u : null;
-            })();
-            const profileHref = profileSlug ? `/u/${encodeURIComponent(profileSlug)}` : null;
-
-            const depth = (() => {
-              const raw = Number((r as any).depth);
-              if (Number.isFinite(raw) && raw > 0) return Math.max(0, Math.min(3, raw));
-
-              const pid0 = String((r as any).parentId || (r as any).parent_id || "").trim();
-              if (!pid0) return 0;
-
-              let d = 1;
-              let cur = pid0;
-              const seen = new Set<string>();
-              seen.add(String(r.id));
-              while (cur && !seen.has(cur) && d < 3) {
-                seen.add(cur);
-                const parent = replies.find((x) => String((x as any).id) === cur);
-                if (!parent) break;
-                const next = String((parent as any).parentId || (parent as any).parent_id || "").trim();
-                if (!next) break;
-                cur = next;
-                d += 1;
-              }
-              return Math.max(0, Math.min(3, d));
-            })();
-            const indentPx = depth * 18;
-
-            const when = (() => {
-              try {
-                return new Date(r.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-              } catch {
-                return "";
-              }
-            })();
-
-            const header = (
-              <div className="flex items-baseline gap-2 min-w-0">
-                <span className="font-extrabold text-gray-900 text-sm truncate">{name}</span>
-                {handle ? <span className="text-xs font-bold text-gray-400 truncate">{handle}</span> : null}
-              </div>
-            );
-
-            return (
-              <div key={r.id} style={{ marginLeft: indentPx }}>
-                <div
-                  className={cn(
-                    "rounded-2xl border p-4",
-                    mine ? "bg-gray-50 border-gray-200" : "bg-white border-gray-200"
-                  )}
-                >
-                  <div className="flex items-start gap-3">
-                    {profileHref ? (
-                      <Link href={profileHref} className="shrink-0" title="View profile">
-                        <ReplyAvatar label={name} tone="neutral" />
-                      </Link>
-                    ) : (
-                      <div className="shrink-0">
-                        <ReplyAvatar label={name} tone="neutral" />
-                      </div>
-                    )}
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline justify-between gap-3">
-                        <div className="min-w-0">
-                          {profileHref ? (
-                            <Link
-                              href={profileHref}
-                              className="inline-flex items-baseline gap-2 min-w-0 hover:underline"
-                              title="View profile"
-                            >
-                              {header}
-                            </Link>
-                          ) : (
-                            header
-                          )}
-                        </div>
-
-                        {when ? (
-                          <span className="text-gray-400 text-xs tabular-nums shrink-0">{when}</span>
-                        ) : null}
-                      </div>
-
-                      <div className="text-sm text-gray-900 leading-relaxed mt-1 whitespace-pre-wrap">{r.text}</div>
-
-                      {/* sd_924_no_nested_reply_action: backend limits nesting; hide Reply on depth>0 */}
-
-                      {/* sd_927_no_nested_reply_action: backend limits nesting; hide Reply on depth>0 */}
-{depth === 0 ? (
-  <div className="mt-3">
-    <button
-      type="button"
-      className="px-3 py-2 rounded-full border border-gray-200 bg-white text-xs font-extrabold text-gray-800 hover:bg-gray-50 active:bg-gray-50/70"
-      onClick={() => onReplyTo?.(r.id, name)}
-      aria-label="Reply"
-      title="Reply"
-    >
-      Reply
-    </button>
-  </div>
-) : null}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+          <ThreadTree replies={replies} viewerId={viewerId} onReplyTo={onReplyTo} />
         </div>
       ) : (
         <div className="text-sm text-gray-400">No replies yet.</div>
