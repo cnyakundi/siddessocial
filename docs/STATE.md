@@ -89,6 +89,10 @@ This list exists mainly to satisfy gates that assert milestones are recorded.
 - **sd_142:** Feed DRF endpoint + API-base-aware Next proxy (client calls same-origin /api/feed; Next proxies to Django via SD_INTERNAL_API_BASE / NEXT_PUBLIC_API_BASE)
 
 ## NEXT overlay
+- **sd_954c:** Fix: Post detail nested replies typing — parent_id uses parentId (or replyTo.parentId) instead of replyTo.id.
+
+- **sd_954:** Thread: reply-to-nested enabled (ThreadTree Reply at any depth + PostDetail sends parent_id + Next /api/post/[id]/reply forwards parent_id).
+
 - **sd_953c:** Backend: deep reply threading safe patch (no indentation risk) — remove parent.parent_id gate + set depth limit to 25.
 
 - **sd_953b:** Fix: backend deep reply threading patch (restore + safe MAX_REPLY_DEPTH constant at module scope; no indentation break).

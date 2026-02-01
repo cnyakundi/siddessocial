@@ -188,19 +188,19 @@ export function ThreadTree({
 
               <div className="text-sm text-gray-900 leading-relaxed mt-1 whitespace-pre-wrap">{r.text}</div>
 
-              {/* Backend currently limits nesting; Reply is root-only for now */}
-              {level === 0 ? (
-                <div className="mt-3">
-                  <button
-                    type="button"
-                    className="px-3 py-2 rounded-full border border-gray-200 bg-white text-xs font-extrabold text-gray-800 hover:bg-gray-50 active:bg-gray-50/70"
-                    onClick={() => onReplyTo?.(String(r.id), name)}
-                  >
-                    Reply
-                  </button>
-                </div>
-              ) : null}
-            </div>
+              {/* sd_954_reply_any_level: Reply is allowed at any depth now that backend supports deep threading. */}
+              <div className="mt-3">
+                <button
+                  type="button"
+                  className="px-3 py-2 rounded-full border border-gray-200 bg-white text-xs font-extrabold text-gray-800 hover:bg-gray-50 active:bg-gray-50/70"
+                  onClick={() => onReplyTo?.(String(r.id), name)}
+                  aria-label="Reply"
+                  title="Reply"
+                >
+                  Reply
+                </button>
+              </div>
+</div>
           </div>
 
           {hasKids ? (

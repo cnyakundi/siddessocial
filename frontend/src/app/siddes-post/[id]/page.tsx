@@ -395,7 +395,7 @@ const sendReplyNow = useCallback(async () => {
     const res = await fetch(`/api/post/${encodeURIComponent(found.post.id)}/reply`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ text: t, parentId, client_key: `reply_${Date.now().toString(36)}` }),
+      body: JSON.stringify({ text: t, parentId, client_key: `reply_${Date.now().toString(36)}` , parent_id: parentId || null}),
     });
     // sd_959_reply_send_parse_once: response body can only be consumed once.
     let data: any = null;
@@ -471,7 +471,9 @@ const sendReplyNow = useCallback(async () => {
     setReplyBusy(false);
     return;
   }
-}, [found, activeSide, replyText, replyTo, replyBusy]);
+}
+// sd_954b_parent_id_in_post_detail
+, [found, activeSide, replyText, replyTo, replyBusy]);
 
 
 
